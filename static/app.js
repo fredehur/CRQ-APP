@@ -91,7 +91,7 @@ function renderRegionCards() {
           ${scenario ? `
           <div class="flex justify-between">
             <span class="text-gray-500">Scenario</span>
-            <span class="text-gray-300">${scenario}</span>
+            <span class="text-gray-300">${escapeHtml(scenario)}</span>
           </div>` : ''}
           <button onclick="viewReport('${region}')"
             class="mt-2 w-full text-xs bg-gray-800 hover:bg-gray-700 rounded py-1.5 transition-colors">
@@ -195,9 +195,9 @@ function connectSSE() {
   eventSource.addEventListener('pipeline', (e) => {
     const d = JSON.parse(e.data);
     appendLog('pipeline', `Pipeline ${d.status}`);
-    if (d.status === 'complete') {
-      $('pipeline-status').textContent = 'Idle';
-      $('pipeline-status').className = 'text-sm text-gray-500';
+    if (d.status === 'complete' || d.status === 'error') {
+      $('pipeline-status').textContent = d.status === 'error' ? 'Error' : 'Idle';
+      $('pipeline-status').className = d.status === 'error' ? 'text-sm text-red-400' : 'text-sm text-gray-500';
       $('btn-run-all').disabled = false;
       $('btn-run-all').className = 'bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded text-sm font-medium transition-colors';
       loadData();
@@ -212,6 +212,11 @@ function connectSSE() {
   eventSource.addEventListener('log', (e) => {
     const d = JSON.parse(e.data);
     appendLog('log', d.message);
+  });
+
+  eventSource.addEventListener('error', (e) => {
+    const d = JSON.parse(e.data);
+    appendLog('error', d.message || 'Unknown error');
   });
 
   eventSource.addEventListener('ping', () => {});
@@ -264,8 +269,40 @@ async function loadData() {
   renderGlobalSummary();
 }
 
+// ── Status Polling Fallback ─────────────────────────────────────────────
+// Recovers UI state if SSE drops and the pipeline:complete event is missed
+let _lastPolledRunning = false;
+async function pollStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const status = await res.json();
+    const wasRunning = _lastPolledRunning;
+    _lastPolledRunning = status.running;
+
+    // Pipeline finished but we missed the SSE event — sync UI
+    if (wasRunning && !status.running) {
+      $('pipeline-status').textContent = 'Idle';
+      $('pipeline-status').className = 'text-sm text-gray-500';
+      $('btn-run-all').disabled = false;
+      $('btn-run-all').className = 'bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded text-sm font-medium transition-colors';
+      loadData();
+    }
+
+    // Pipeline started externally — sync UI
+    if (!wasRunning && status.running) {
+      $('pipeline-status').textContent = 'Running...';
+      $('pipeline-status').className = 'text-sm text-green-400 pulse-dot';
+      $('btn-run-all').disabled = true;
+      $('btn-run-all').className = 'bg-gray-700 px-4 py-1.5 rounded text-sm font-medium cursor-not-allowed opacity-50';
+    }
+  } catch {
+    // Server unreachable — SSE onerror already handles this
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadData();
   connectSSE();
+  setInterval(pollStatus, 5000);
 });

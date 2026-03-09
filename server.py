@@ -2,8 +2,7 @@
 
 import asyncio
 import json
-import os
-import subprocess
+import logging
 import time
 from pathlib import Path
 from typing import Optional
@@ -16,7 +15,10 @@ from sse_starlette.sse import EventSourceResponse
 BASE = Path(__file__).resolve().parent
 OUTPUT = BASE / "output"
 REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+TOOL_TIMEOUT = 60  # seconds per subprocess
+FULL_MODE_TIMEOUT = 600  # 10 min for claude CLI
 
+log = logging.getLogger("crq")
 app = FastAPI(title="CRQ Command Center")
 
 # ── State ────────────────────────────────────────────────────────────────
@@ -27,7 +29,7 @@ pipeline_state = {
     "regions_done": [],
     "started_at": None,
 }
-event_queue: asyncio.Queue = asyncio.Queue()
+event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 
 
 def _read_json(path: Path) -> Optional[dict]:
@@ -35,6 +37,28 @@ def _read_json(path: Path) -> Optional[dict]:
         return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return None
+
+
+# ── Subprocess Helper ────────────────────────────────────────────────────
+async def _run(tool: str, *args, timeout: int = TOOL_TIMEOUT) -> int:
+    """Run a Python tool script with timeout. Returns exit code."""
+    proc = await asyncio.create_subprocess_exec(
+        "uv", "run", "python", str(BASE / "tools" / tool), *args,
+        cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        await asyncio.wait_for(proc.wait(), timeout=timeout)
+    except asyncio.TimeoutError:
+        proc.kill()
+        await proc.wait()
+        log.error("Tool %s timed out after %ds", tool, timeout)
+        await _emit("error", {"tool": tool, "message": f"Timed out after {timeout}s"})
+        return -1
+    if proc.returncode != 0:
+        stderr = (await proc.stderr.read()).decode(errors="replace").strip()
+        log.warning("Tool %s exited %d: %s", tool, proc.returncode, stderr)
+        await _emit("error", {"tool": tool, "exit_code": proc.returncode, "message": stderr[:200]})
+    return proc.returncode
 
 
 # ── API: Data ────────────────────────────────────────────────────────────
@@ -99,7 +123,12 @@ async def get_trace():
 
 # ── API: Run Pipeline ────────────────────────────────────────────────────
 async def _emit(event: str, data: dict):
-    """Push a structured SSE event."""
+    """Push a structured SSE event. Drops oldest if queue is full."""
+    if event_queue.full():
+        try:
+            event_queue.get_nowait()
+        except asyncio.QueueEmpty:
+            pass
     await event_queue.put({"event": event, "data": json.dumps(data)})
 
 
@@ -108,80 +137,58 @@ async def _run_tools_mode(regions: list[str]):
     pipeline_state.update(running=True, phase="gatekeeper", regions_pending=list(regions), regions_done=[], started_at=time.time())
     await _emit("pipeline", {"status": "started", "regions": regions})
 
-    # Phase 1-2: Gatekeeper + regional analysis
-    for r in regions:
-        await _emit("phase", {"phase": "gatekeeper", "region": r})
-        proc = await asyncio.create_subprocess_exec(
-            "uv", "run", "python", str(BASE / "tools" / "regional_search.py"), r, "--mock",
-            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        )
-        await proc.wait()
+    try:
+        # Phase 1-2: Gatekeeper + regional analysis
+        for r in regions:
+            await _emit("phase", {"phase": "gatekeeper", "region": r})
+            await _run("regional_search.py", r, "--mock")
+            await _run("threat_scorer.py", r)
 
-        proc = await asyncio.create_subprocess_exec(
-            "uv", "run", "python", str(BASE / "tools" / "threat_scorer.py"), r,
-            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        )
-        stdout, _ = await proc.communicate()
-        score_output = stdout.decode().strip()
+            # Read the feed to determine gatekeeper decision
+            feed = _read_json(BASE / "data" / "mock_threat_feeds" / f"{r.lower()}_feed.json")
+            severity = feed.get("severity", "LOW") if feed else "LOW"
+            decision = "YES" if severity in ("HIGH", "CRITICAL", "MEDIUM") else "NO"
 
-        # Read the feed to determine gatekeeper decision
-        feed = _read_json(BASE / "data" / "mock_threat_feeds" / f"{r.lower()}_feed.json")
-        severity = feed.get("severity", "LOW") if feed else "LOW"
-        decision = "YES" if severity in ("HIGH", "CRITICAL", "MEDIUM") else "NO"
+            await _emit("gatekeeper", {"region": r, "decision": decision, "severity": severity})
 
-        await _emit("gatekeeper", {"region": r, "decision": decision, "severity": severity})
+            # Write data.json
+            status = "escalated" if decision == "YES" else "clear"
+            await _run("write_region_data.py", r, status)
 
-        # Write data.json
-        status = "escalated" if decision == "YES" else "clear"
-        proc = await asyncio.create_subprocess_exec(
-            "uv", "run", "python", str(BASE / "tools" / "write_region_data.py"), r, status,
-            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        )
-        await proc.wait()
+            # Log gatekeeper event
+            event_type = "GATEKEEPER_YES" if decision == "YES" else "GATEKEEPER_NO"
+            msg = f"{r} — {'threat confirmed, escalating' if decision == 'YES' else 'no active threat, skipped'}"
+            await _run("audit_logger.py", event_type, msg)
 
-        # Log gatekeeper event
-        event_type = "GATEKEEPER_YES" if decision == "YES" else "GATEKEEPER_NO"
-        msg = f"{r} — {'threat confirmed, escalating' if decision == 'YES' else 'no active threat, skipped'}"
-        await asyncio.create_subprocess_exec(
-            "uv", "run", "python", str(BASE / "tools" / "audit_logger.py"), event_type, msg,
-            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-        )
+            pipeline_state["regions_done"].append(r)
+            pipeline_state["regions_pending"] = [x for x in pipeline_state["regions_pending"] if x != r]
 
-        pipeline_state["regions_done"].append(r)
-        pipeline_state["regions_pending"] = [x for x in pipeline_state["regions_pending"] if x != r]
+        await _emit("phase", {"phase": "gatekeeper", "status": "complete"})
 
-    await _emit("phase", {"phase": "gatekeeper", "status": "complete"})
+        # Phase 3: Cross-regional diff
+        pipeline_state["phase"] = "diff"
+        await _emit("phase", {"phase": "diff", "status": "running"})
+        await _run("report_differ.py")
+        await _emit("phase", {"phase": "diff", "status": "complete"})
 
-    # Phase 3: Cross-regional diff
-    pipeline_state["phase"] = "diff"
-    await _emit("phase", {"phase": "diff", "status": "running"})
-    proc = await asyncio.create_subprocess_exec(
-        "uv", "run", "python", str(BASE / "tools" / "report_differ.py"),
-        cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-    )
-    await proc.wait()
-    await _emit("phase", {"phase": "diff", "status": "complete"})
+        # Phase 4: Write manifest
+        pipeline_state["phase"] = "manifest"
+        await _run("write_manifest.py")
 
-    # Phase 4: Write manifest
-    pipeline_state["phase"] = "manifest"
-    proc = await asyncio.create_subprocess_exec(
-        "uv", "run", "python", str(BASE / "tools" / "write_manifest.py"),
-        cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-    )
-    await proc.wait()
+        # Phase 5: Build dashboard
+        pipeline_state["phase"] = "dashboard"
+        await _emit("phase", {"phase": "dashboard", "status": "running"})
+        await _run("build_dashboard.py")
+        await _emit("phase", {"phase": "dashboard", "status": "complete"})
 
-    # Phase 5: Build dashboard
-    pipeline_state["phase"] = "dashboard"
-    await _emit("phase", {"phase": "dashboard", "status": "running"})
-    proc = await asyncio.create_subprocess_exec(
-        "uv", "run", "python", str(BASE / "tools" / "build_dashboard.py"),
-        cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-    )
-    await proc.wait()
-    await _emit("phase", {"phase": "dashboard", "status": "complete"})
+        pipeline_state["phase"] = "complete"
+        await _emit("pipeline", {"status": "complete"})
 
-    pipeline_state.update(running=False, phase="complete")
-    await _emit("pipeline", {"status": "complete"})
+    except Exception as exc:
+        log.exception("Pipeline failed")
+        await _emit("pipeline", {"status": "error", "message": str(exc)})
+    finally:
+        pipeline_state.update(running=False)
 
 
 async def _run_full_mode(regions: list[str]):
@@ -189,20 +196,36 @@ async def _run_full_mode(regions: list[str]):
     pipeline_state.update(running=True, phase="running", regions_pending=list(regions), regions_done=[], started_at=time.time())
     await _emit("pipeline", {"status": "started", "mode": "full", "regions": regions})
 
-    proc = await asyncio.create_subprocess_exec(
-        "claude", "-p", "/run-crq",
-        cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-    )
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "claude", "-p", "/run-crq",
+            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
 
-    # Stream stdout lines as log events
-    async for line in proc.stdout:
-        text = line.decode(errors="replace").strip()
-        if text:
-            await _emit("log", {"message": text})
+        # Stream stdout lines as log events
+        async def stream_with_timeout():
+            async for line in proc.stdout:
+                text = line.decode(errors="replace").strip()
+                if text:
+                    await _emit("log", {"message": text})
+            await proc.wait()
 
-    await proc.wait()
-    pipeline_state.update(running=False, phase="complete")
-    await _emit("pipeline", {"status": "complete"})
+        try:
+            await asyncio.wait_for(stream_with_timeout(), timeout=FULL_MODE_TIMEOUT)
+        except asyncio.TimeoutError:
+            proc.kill()
+            await proc.wait()
+            await _emit("pipeline", {"status": "error", "message": f"Claude CLI timed out after {FULL_MODE_TIMEOUT}s"})
+            return
+
+        pipeline_state["phase"] = "complete"
+        await _emit("pipeline", {"status": "complete"})
+
+    except Exception as exc:
+        log.exception("Full-mode pipeline failed")
+        await _emit("pipeline", {"status": "error", "message": str(exc)})
+    finally:
+        pipeline_state.update(running=False)
 
 
 @app.post("/api/run/all")
