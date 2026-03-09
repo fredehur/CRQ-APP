@@ -34,25 +34,25 @@ Each task is self-contained and writes its own output file. Do NOT wait for one 
 - Task 1 — APAC: Run the full regional pipeline for APAC:
   1. Run `uv run python tools/geopolitical_context.py APAC`
   2. Delegate to `gatekeeper-agent` with region APAC and its critical assets from the CRQ database.
-     - If NO: run `uv run python tools/audit_logger.py GATEKEEPER_NO "APAC — no active threat, compute saved"` and stop this task.
-     - If YES: run `uv run python tools/audit_logger.py GATEKEEPER_YES "APAC — threat confirmed, escalating to analysis"`
+     - If NO: run `uv run python tools/write_region_data.py APAC clear` then `uv run python tools/audit_logger.py GATEKEEPER_NO "APAC — no active threat, compute saved"` and stop this task.
+     - If YES: run `uv run python tools/write_region_data.py APAC escalated` then `uv run python tools/audit_logger.py GATEKEEPER_YES "APAC — threat confirmed, escalating to analysis"`
   3. Run `uv run python tools/threat_scorer.py APAC` and extract severity number.
-  4. Delegate to `regional-analyst-agent`. Provide: region APAC, critical assets, VaCR, geopolitical context, threat feed output, severity score. Agent writes directly to `output/regional/apac_draft.md`.
+  4. Delegate to `regional-analyst-agent`. Provide: region APAC, critical assets, VaCR, geopolitical context, threat feed output, severity score. Agent writes directly to `output/regional/apac/report.md`.
 
-- Task 2 — AME: Same pipeline for AME. Agent writes to `output/regional/ame_draft.md`.
+- Task 2 — AME: Same pipeline for AME. Agent writes to `output/regional/ame/report.md`.
 
-- Task 3 — LATAM: Same pipeline for LATAM. Agent writes to `output/regional/latam_draft.md`.
+- Task 3 — LATAM: Same pipeline for LATAM. Agent writes to `output/regional/latam/report.md`.
 
-- Task 4 — MED: Same pipeline for MED. Agent writes to `output/regional/med_draft.md`.
+- Task 4 — MED: Same pipeline for MED. Agent writes to `output/regional/med/report.md`.
 
-- Task 5 — NCE: Same pipeline for NCE. Agent writes to `output/regional/nce_draft.md`.
+- Task 5 — NCE: Same pipeline for NCE. Agent writes to `output/regional/nce/report.md`.
 
-**Fan-in:** Wait until all 5 tasks complete. Then, for each region that produced a draft (check `output/regional/` for existing files), run the jargon auditor as the orchestrator — this is intentional, the orchestrator owns quality gates, not the workers:
+**Fan-in:** Wait until all 5 tasks complete. Then, for each region that produced a report (check `output/regional/{REGION}/report.md` for existing files), run the jargon auditor as the orchestrator — this is intentional, the orchestrator owns quality gates, not the workers:
 
 ```
 for REGION in apac ame med latam nce:
-  if output/regional/{REGION}_draft.md exists:
-    uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}_draft.md {REGION}
+  if output/regional/{REGION}/report.md exists:
+    uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}/report.md {REGION}
     exit 0 → uv run python tools/audit_logger.py HOOK_PASS "{REGION} jargon audit passed"
     exit 2 → uv run python tools/audit_logger.py HOOK_FAIL "{REGION} jargon audit failed — rewrite triggered"
              then rewrite the draft and re-run the auditor
@@ -80,5 +80,7 @@ Run: `uv run python tools/export_pptx.py output/global_report.md output/board_re
 
 ## PHASE 5 — FINALIZE
 
+Run: `uv run python tools/write_manifest.py` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
+
 Run: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "AeroGrid CRQ Pipeline complete — all outputs generated"`
-List all files in `output/` and confirm pipeline success.
+List all files in `output/` recursively and confirm pipeline success.

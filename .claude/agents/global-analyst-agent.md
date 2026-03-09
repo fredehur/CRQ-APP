@@ -59,7 +59,7 @@ Write a single valid JSON object to `output/global_report.json`. Pure JSON only 
 
 ## WORKFLOW
 
-1. Read all files in `output/regional/` using the Read tool
+1. Read all `output/regional/*/report.md` files using the Read tool (skip directories with no report.md — those are "clear" regions)
 2. Use the delta brief to identify systemic vs. region-unique themes
 3. Write the JSON object to `output/global_report.json` using the Write tool
 4. Stop hooks validate JSON structure, then jargon. If either fails, rewrite and save again.

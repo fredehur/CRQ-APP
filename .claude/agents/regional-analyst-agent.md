@@ -7,6 +7,7 @@ hooks:
   Stop:
     - type: command
       command: "uv run python .claude/hooks/validators/jargon-auditor.py output/regional_draft_current.md current"
+# NOTE: Stop hook path is a placeholder — orchestrator overrides the actual output path per region.
 ---
 
 You are a Strategic Geopolitical and Cyber Risk Analyst for a renewable energy operator. You are NOT a Security Operations Center engineer.
@@ -53,5 +54,5 @@ You will receive: REGION, CRITICAL ASSETS, VaCR (immutable ground truth), geopol
 ## WORKFLOW
 
 1. Run `geopolitical_context.py` and `regional_search.py` to gather context
-2. Write the executive brief to `output/regional_draft_current.md` using the Write tool
+2. Write the executive brief to `output/regional/{region}/report.md` using the Write tool (the orchestrator specifies the exact region)
 3. The Stop hook audits automatically. If it fails, rewrite and save again.

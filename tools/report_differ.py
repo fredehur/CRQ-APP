@@ -8,7 +8,7 @@ STOPWORDS = {"the", "and", "that", "this", "with", "from", "have", "will",
 def load_reports():
     reports = {}
     for region in REGIONS:
-        path = f"output/regional/{region}_draft.md"
+        path = f"output/regional/{region}/report.md"
         if os.path.exists(path):
             with open(path) as f:
                 reports[region] = f.read().lower()
