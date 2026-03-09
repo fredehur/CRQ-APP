@@ -1,13 +1,17 @@
-[2026-03-09T12:46:39Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — processing 5 regions
-[2026-03-09T12:47:42Z] [GATEKEEPER_YES] APAC — threat confirmed, escalating to analysis
-[2026-03-09T12:47:48Z] [GATEKEEPER_YES] AME — threat confirmed, escalating to analysis
-[2026-03-09T12:47:54Z] [GATEKEEPER_NO] LATAM — no active threat, compute saved
-[2026-03-09T12:47:56Z] [GATEKEEPER_YES] MED — threat confirmed, escalating to analysis
-[2026-03-09T12:48:00Z] [GATEKEEPER_NO] NCE — no active threat, compute saved
-[2026-03-09T12:48:16Z] [PHASE_COMPLETE] APAC — regional executive brief written to output/regional/apac/report.md
-[2026-03-09T12:48:42Z] [HOOK_PASS] apac jargon audit passed
-[2026-03-09T12:48:42Z] [HOOK_PASS] ame jargon audit passed
-[2026-03-09T12:48:43Z] [HOOK_PASS] med jargon audit passed
-[2026-03-09T12:48:53Z] [PHASE_COMPLETE] Cross-regional diff complete
-[2026-03-09T12:50:14Z] [PHASE_COMPLETE] Global JSON report validated
-[2026-03-09T12:50:46Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated
+[2026-03-09T15:07:37Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated â€” processing 5 regions
+[2026-03-09T15:08:09Z] [GATEKEEPER_YES] AME â€” threat confirmed, escalating to analysis
+[2026-03-09T15:08:11Z] [GATEKEEPER_YES] APAC â€” threat confirmed, escalating to analysis
+[2026-03-09T15:08:12Z] [GATEKEEPER_NO] LATAM â€” no active threat, compute saved
+[2026-03-09T15:08:17Z] [GATEKEEPER_NO] NCE â€” no active threat, compute saved
+[2026-03-09T15:08:18Z] [GATEKEEPER_YES] MED â€” threat confirmed, escalating to analysis
+[2026-03-09T15:09:00Z] [HOOK_PASS] apac jargon audit passed
+[2026-03-09T15:09:00Z] [HOOK_PASS] ame jargon audit passed
+[2026-03-09T15:09:01Z] [HOOK_PASS] med jargon audit passed
+[2026-03-09T15:09:11Z] [PHASE_COMPLETE] Cross-regional diff complete
+[2026-03-09T15:10:05Z] [PHASE_COMPLETE] Global JSON report validated
+[2026-03-09T15:10:24Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete â€” all outputs generated
+[2026-03-09T20:20:09Z] [GATEKEEPER_YES] APAC â€” threat confirmed, escalating
+[2026-03-09T20:20:09Z] [GATEKEEPER_YES] AME â€” threat confirmed, escalating
+[2026-03-09T20:20:09Z] [GATEKEEPER_NO] LATAM â€” no active threat, skipped
+[2026-03-09T20:20:10Z] [GATEKEEPER_YES] MED â€” threat confirmed, escalating
+[2026-03-09T20:20:10Z] [GATEKEEPER_NO] NCE â€” no active threat, skipped

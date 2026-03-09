@@ -3,8 +3,7 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
-
-REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+from config import REGIONS
 
 def build_manifest():
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")

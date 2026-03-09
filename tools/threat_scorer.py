@@ -1,9 +1,7 @@
 import sys
 import json
 import os
-
-MASTER_SCENARIOS_PATH = "data/master_scenarios.json"
-SEVERITY_MAP = {"CRITICAL": 3, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
+from config import MASTER_SCENARIOS_PATH, SEVERITY_MAP
 
 def load_master_scenarios():
     if not os.path.exists(MASTER_SCENARIOS_PATH):

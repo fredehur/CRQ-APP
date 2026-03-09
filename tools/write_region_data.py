@@ -3,20 +3,20 @@ import sys
 import json
 import os
 from datetime import datetime, timezone
+from config import SEVERITY_MAP, MOCK_FEEDS_DIR
 
 def write_data(region, status):
     region_upper = region.upper()
     region_lower = region.lower()
 
-    feed_path = f"data/mock_threat_feeds/{region_lower}_feed.json"
+    feed_path = f"{MOCK_FEEDS_DIR}/{region_lower}_feed.json"
     feed = {}
     if os.path.exists(feed_path):
         with open(feed_path) as f:
             feed = json.load(f)
 
     severity = feed.get("severity", "LOW")
-    severity_map = {"CRITICAL": 3, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
-    severity_score = severity_map.get(severity, 1)
+    severity_score = SEVERITY_MAP.get(severity, 1)
     primary_scenario = feed.get("primary_scenario", None)
     if primary_scenario == "None":
         primary_scenario = None

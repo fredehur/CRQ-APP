@@ -1,7 +1,7 @@
 {
-  "pipeline_id": "crq-2026-03-09T125038Z",
+  "pipeline_id": "crq-2026-03-09T202011Z",
   "client": "AeroGrid Wind Solutions",
-  "run_timestamp": "2026-03-09T12:50:38Z",
+  "run_timestamp": "2026-03-09T20:20:11Z",
   "status": "complete",
   "total_vacr_exposure_usd": 44700000,
   "regions": {

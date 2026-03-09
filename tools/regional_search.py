@@ -1,8 +1,7 @@
 import sys
 import json
 import os
-
-MASTER_SCENARIOS_PATH = "data/master_scenarios.json"
+from config import MASTER_SCENARIOS_PATH
 
 def load_master_scenarios():
     if not os.path.exists(MASTER_SCENARIOS_PATH):

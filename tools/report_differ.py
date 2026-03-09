@@ -1,7 +1,8 @@
 import os
 import re
+from config import REGIONS as _REGIONS
 
-REGIONS = ["apac", "ame", "latam", "med", "nce"]
+REGIONS = [r.lower() for r in _REGIONS]
 STOPWORDS = {"the", "and", "that", "this", "with", "from", "have", "will",
              "their", "which", "been", "into", "across", "business", "risk"}
 

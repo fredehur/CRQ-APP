@@ -2,7 +2,7 @@ import sys
 import json
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
-REQUIRED_KEYS = {"scenario_id", "department", "scenario_name", "critical_assets", "value_at_cyber_risk"}
+REQUIRED_KEYS = {"scenario_id", "department", "scenario_name", "critical_assets", "value_at_cyber_risk_usd"}
 
 def validate(path):
     try:

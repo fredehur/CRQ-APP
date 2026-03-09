@@ -2,12 +2,20 @@ import json
 import sys
 import os
 from datetime import datetime, timezone
+from config import REGIONS, GLOBAL_REPORT_PATH, MANIFEST_PATH, TRACE_LOG_PATH
 
-REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+# Static Tailwind class mapping — dynamic interpolation breaks Tailwind CDN purging
+SEVERITY_STYLES = {
+    "Critical": {"border": "border-red-600", "bg": "bg-red-600", "text": "text-red-600"},
+    "High":     {"border": "border-red-500", "bg": "bg-red-500", "text": "text-red-500"},
+    "Medium":   {"border": "border-amber-500", "bg": "bg-amber-500", "text": "text-amber-500"},
+    "Low":      {"border": "border-gray-400", "bg": "bg-gray-400", "text": "text-gray-400"},
+}
+DEFAULT_STYLE = {"border": "border-gray-400", "bg": "bg-gray-400", "text": "text-gray-400"}
 
 def build():
     # Read global report JSON
-    json_path = "output/global_report.json"
+    json_path = GLOBAL_REPORT_PATH
     if not os.path.exists(json_path):
         print(f"ERROR: {json_path} not found.")
         sys.exit(1)
@@ -16,14 +24,13 @@ def build():
 
     # Read run manifest if available
     manifest = None
-    manifest_path = "output/run_manifest.json"
-    if os.path.exists(manifest_path):
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+    if os.path.exists(MANIFEST_PATH):
+        with open(MANIFEST_PATH, 'r', encoding='utf-8') as f:
             manifest = json.load(f)
 
     # Read system trace log
     trace_lines = []
-    trace_path = "output/system_trace.log"
+    trace_path = TRACE_LOG_PATH
     if os.path.exists(trace_path):
         with open(trace_path, 'rb') as f:
             raw = f.read()
@@ -50,22 +57,19 @@ def build():
     # Build escalated regional cards from global_report.json
     region_cards = ""
     for r in threat_regions:
-        scenario_tags = ""
-        for s in r.get("scenario_types", []):
-            scenario_tags += f'<span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">{s}</span>'
-        if not scenario_tags and r.get("primary_scenario"):
-            scenario_tags = f'<span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">{r["primary_scenario"]}</span>'
+        scenario = r.get("primary_scenario", "")
+        scenario_tag = f'<span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">{scenario}</span>' if scenario else ""
 
         sev = r.get("severity", "N/A")
-        sev_color = "red" if sev in ("Critical", "High") else "amber" if sev == "Medium" else "gray"
+        style = SEVERITY_STYLES.get(sev, DEFAULT_STYLE)
         region_cards += f"""
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-{sev_color}-500">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 {style['border']}">
             <div class="flex justify-between items-start mb-3">
                 <h3 class="text-lg font-bold text-gray-900">{r.get("region", "Unknown")}</h3>
-                <span class="bg-{sev_color}-600 text-white text-xs font-bold px-3 py-1 rounded-full">{sev}</span>
+                <span class="{style['bg']} text-white text-xs font-bold px-3 py-1 rounded-full">{sev}</span>
             </div>
-            <p class="text-3xl font-bold text-{sev_color}-600 mb-3">${r.get("vacr_exposure", 0):,.0f}</p>
-            <div class="mb-3">{scenario_tags}</div>
+            <p class="text-3xl font-bold {style['text']} mb-3">${r.get("vacr_exposure", 0):,.0f}</p>
+            <div class="mb-3">{scenario_tag}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{r.get("strategic_assessment", "")}</p>
         </div>"""
 
@@ -196,9 +200,7 @@ def build():
         f"## Escalated Regions\n",
     ]
     for r in threat_regions:
-        scenarios = ", ".join(r.get("scenario_types", []))
-        if not scenarios and r.get("primary_scenario"):
-            scenarios = r["primary_scenario"]
+        scenarios = r.get("primary_scenario", "")
         md_lines.append(f"### {r.get('region', 'Unknown')} — ${r.get('vacr_exposure', 0):,.0f} at Risk | Severity: {r.get('severity', 'N/A')}\n")
         md_lines.append(f"**Primary Scenario:** {scenarios}\n")
         md_lines.append(f"{r.get('strategic_assessment', '')}\n")

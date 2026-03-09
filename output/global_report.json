@@ -4,34 +4,31 @@
   "reporting_date": "2026-03-09",
   "regions_analyzed": 3,
   "regions_skipped": 2,
-  "executive_summary": "AeroGrid Wind Solutions faces $44.7M in aggregate risk exposure across three operational regions, driven by financially motivated disruption campaigns in North America, state-directed supply chain interference in Asia-Pacific, and elevated insider risk in the Mediterranean. Ransomware and system intrusion together represent the two highest-impact scenario types globally, directly threatening turbine manufacturing continuity and remote service delivery. The convergence of production disruption, intellectual property loss, and service revenue erosion across all three regions signals a systemic pattern that could impair both the manufacturing core (75% of revenue) and the global maintenance business simultaneously.",
+  "executive_summary": "AeroGrid Wind Solutions faces a combined Value-at-Cyber-Risk exposure of $44.7M across three active regions, with two regions reporting no credible threats. Ransomware activity in the Americas represents the single largest concentration of financial risk at $22M, directly threatening operational continuity and revenue generation. System intrusion campaigns targeting the Asia-Pacific region carry $18.5M in exposure and pose a material risk to core wind turbine manufacturing operations. Insider misuse in the Mediterranean, while lower in frequency, presents a $4.2M exposure that warrants sustained governance attention given the region's service and maintenance role.",
   "regional_threats": [
     {
       "region": "AME",
       "vacr_exposure": 22000000,
       "severity": "Critical",
       "primary_scenario": "Ransomware",
-      "scenario_types": ["Ransomware"],
       "financial_rank": 1,
-      "strategic_assessment": "Financially motivated syndicates are targeting energy service providers, placing wind farm telemetry and remote maintenance scheduling at direct risk. Ransomware carries the highest financial impact rank globally at 37.6%, and the $22M exposure reflects recovery costs, service-level agreement breaches, and lost service revenue that would degrade AeroGrid's maintenance business across North American operations."
+      "strategic_assessment": "Ransomware remains the highest-impact scenario globally and poses an acute threat to AeroGrid's Americas operations, where supply chain coordination and customer delivery timelines are most vulnerable to disruption. A successful event could halt order fulfillment and trigger contractual penalties, making this the top priority for executive risk oversight. The $22M exposure reflects both direct recovery costs and downstream revenue loss from extended operational downtime."
     },
     {
       "region": "APAC",
       "vacr_exposure": 18500000,
       "severity": "High",
       "primary_scenario": "System intrusion",
-      "scenario_types": ["System intrusion"],
       "financial_rank": 3,
-      "strategic_assessment": "State-sponsored actors exploiting South China Sea supply chain tensions pose a direct threat to proprietary turbine aerodynamic designs and blade manufacturing plants. System intrusion ranks first in event frequency at 43.3%, making this the most probable scenario type AeroGrid faces. The $18.5M exposure encompasses production disruption, intellectual property loss, and contractual penalties across the Asia-Pacific manufacturing footprint."
+      "strategic_assessment": "System intrusion activity in APAC directly threatens the manufacturing backbone that accounts for 75% of AeroGrid's revenue, where unauthorized access to industrial control environments could disrupt turbine production schedules. The $18.5M exposure captures potential losses from production stoppages, intellectual property compromise, and reputational damage with regional energy clients. Elevated geopolitical tensions in the region increase the likelihood of state-aligned campaigns targeting critical energy infrastructure suppliers."
     },
     {
       "region": "MED",
       "vacr_exposure": 4200000,
       "severity": "Medium",
       "primary_scenario": "Insider misuse",
-      "scenario_types": ["Insider misuse"],
       "financial_rank": 4,
-      "strategic_assessment": "Regional economic instability is elevating insider risk, threatening predictive maintenance algorithms and offshore servicing contracts. While insider misuse carries a lower frequency rank of 5, its financial impact rank of 4 reflects meaningful exposure. The $4.2M at risk covers intellectual property loss and service disruption to Mediterranean offshore wind operations."
+      "strategic_assessment": "Insider misuse in the Mediterranean region presents a lower-frequency but high-consequence risk to AeroGrid's global service and maintenance operations, where privileged access to client site data and turbine diagnostics is inherent to daily workflows. The $4.2M exposure reflects potential losses from data exfiltration, sabotage of maintenance records, or unauthorized disclosure of client operational information. While severity is moderate relative to other regions, the trusted-access nature of this threat makes it resistant to purely technical controls and requires sustained governance focus."
     }
   ]
 }

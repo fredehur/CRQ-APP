@@ -3,7 +3,7 @@ import json
 import os
 
 REQUIRED_TOP_KEYS = ["total_vacr_exposure", "executive_summary", "regional_threats"]
-REQUIRED_REGIONAL_KEYS = ["region", "vacr_exposure", "severity", "scenario_types", "strategic_assessment"]
+REQUIRED_REGIONAL_KEYS = ["region", "vacr_exposure", "severity", "primary_scenario", "strategic_assessment"]
 
 def audit_json(file_path, label):
     os.makedirs("output/.retries", exist_ok=True)

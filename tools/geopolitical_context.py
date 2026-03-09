@@ -1,9 +1,7 @@
 import sys
 import json
 import os
-
-COMPANY_PROFILE_PATH = "data/company_profile.json"
-MASTER_SCENARIOS_PATH = "data/master_scenarios.json"
+from config import COMPANY_PROFILE_PATH, MASTER_SCENARIOS_PATH
 
 def load_company_profile():
     if not os.path.exists(COMPANY_PROFILE_PATH):
