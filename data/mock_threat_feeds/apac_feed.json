@@ -1,0 +1,8 @@
+{
+    "region": "APAC",
+    "severity": "HIGH",
+    "active_threats": true,
+    "primary_scenario": "System intrusion",
+    "vacr_exposure_usd": 18500000,
+    "geopolitical_context": "State-sponsored APT groups in the South China Sea are targeting regional supply chains. Elevated risk of System Intrusion targeting manufacturing IP and SCADA networks to disrupt regional turbine production."
+}

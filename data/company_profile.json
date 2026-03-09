@@ -1,0 +1,11 @@
+{
+    "company_name": "AeroGrid Wind Solutions (Anonymized)",
+    "industry": "Renewable Energy (75% Wind Turbine Manufacturing, 25% Global Service & Maintenance)",
+    "global_footprint": ["APAC", "AME", "LATAM", "MED", "NCE"],
+    "crown_jewels": [
+        "Proprietary turbine aerodynamic designs and material IP (Manufacturing)",
+        "OT/SCADA networks in global blade manufacturing plants (Manufacturing)",
+        "Real-time predictive maintenance algorithms (Service)",
+        "Live telemetry data from offshore and onshore wind farms (Service)"
+    ]
+}

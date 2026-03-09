@@ -1,0 +1,47 @@
+{
+    "APAC": [
+        {
+            "scenario_id": "APAC-001",
+            "department": "Manufacturing",
+            "scenario_name": "Manufacturing IP & SCADA Compromise",
+            "critical_assets": ["Proprietary turbine aerodynamic designs", "OT/SCADA networks in blade manufacturing plants"],
+            "value_at_cyber_risk": "$18,500,000"
+        }
+    ],
+    "AME": [
+        {
+            "scenario_id": "AME-001",
+            "department": "Service & Maintenance",
+            "scenario_name": "Wind Farm Telemetry & Maintenance Disruption",
+            "critical_assets": ["Live telemetry data from wind farms", "Remote maintenance scheduling systems"],
+            "value_at_cyber_risk": "$22,000,000"
+        }
+    ],
+    "LATAM": [
+        {
+            "scenario_id": "LATAM-001",
+            "department": "Manufacturing",
+            "scenario_name": "Regional Manufacturing Operations",
+            "critical_assets": ["Regional blade production line", "Supply chain logistics platform"],
+            "value_at_cyber_risk": "$0"
+        }
+    ],
+    "MED": [
+        {
+            "scenario_id": "MED-001",
+            "department": "Service & Maintenance",
+            "scenario_name": "Predictive Maintenance & Offshore IP Theft",
+            "critical_assets": ["Real-time predictive maintenance algorithms", "Offshore servicing contracts"],
+            "value_at_cyber_risk": "$4,200,000"
+        }
+    ],
+    "NCE": [
+        {
+            "scenario_id": "NCE-001",
+            "department": "Manufacturing",
+            "scenario_name": "European Manufacturing Hub Operations",
+            "critical_assets": ["European turbine assembly line", "Material supply chain systems"],
+            "value_at_cyber_risk": "$0"
+        }
+    ]
+}

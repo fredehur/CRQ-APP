@@ -1,0 +1,90 @@
+{
+    "meta": {
+        "description": "Master Scenario List — Empirical global baseline for cyber risk quantification",
+        "source": "Industry incident data",
+        "last_updated": "2026-03-09"
+    },
+    "scenarios": [
+        {
+            "incident_type": "System intrusion",
+            "event_frequency_pct": 43.3,
+            "frequency_rank": 1,
+            "financial_impact_pct": 21.4,
+            "financial_rank": 3,
+            "records_affected_pct": 47.35,
+            "records_rank": 2
+        },
+        {
+            "incident_type": "Ransomware",
+            "event_frequency_pct": 31.7,
+            "frequency_rank": 2,
+            "financial_impact_pct": 37.6,
+            "financial_rank": 1,
+            "records_affected_pct": 2.75,
+            "records_rank": 3
+        },
+        {
+            "incident_type": "Accidental disclosure",
+            "event_frequency_pct": 15.9,
+            "frequency_rank": 3,
+            "financial_impact_pct": 36.1,
+            "financial_rank": 2,
+            "records_affected_pct": 48.67,
+            "records_rank": 1
+        },
+        {
+            "incident_type": "Physical threat",
+            "event_frequency_pct": 3.3,
+            "frequency_rank": 4,
+            "financial_impact_pct": 0.1,
+            "financial_rank": 6,
+            "records_affected_pct": 0.01,
+            "records_rank": 8
+        },
+        {
+            "incident_type": "Insider misuse",
+            "event_frequency_pct": 2.5,
+            "frequency_rank": 5,
+            "financial_impact_pct": 4.4,
+            "financial_rank": 4,
+            "records_affected_pct": 1.08,
+            "records_rank": 4
+        },
+        {
+            "incident_type": "DoS attack",
+            "event_frequency_pct": 1.8,
+            "frequency_rank": 6,
+            "financial_impact_pct": 0.0,
+            "financial_rank": 8,
+            "records_affected_pct": 0.12,
+            "records_rank": 5
+        },
+        {
+            "incident_type": "Scam or fraud",
+            "event_frequency_pct": 1.1,
+            "frequency_rank": 7,
+            "financial_impact_pct": 0.2,
+            "financial_rank": 5,
+            "records_affected_pct": 0.02,
+            "records_rank": 6
+        },
+        {
+            "incident_type": "Defacement",
+            "event_frequency_pct": 0.3,
+            "frequency_rank": 8,
+            "financial_impact_pct": 0.0,
+            "financial_rank": 9,
+            "records_affected_pct": 0.0,
+            "records_rank": 9
+        },
+        {
+            "incident_type": "System failure",
+            "event_frequency_pct": 0.1,
+            "frequency_rank": 9,
+            "financial_impact_pct": 0.0,
+            "financial_rank": 7,
+            "records_affected_pct": 0.01,
+            "records_rank": 7
+        }
+    ]
+}

@@ -1,0 +1,8 @@
+{
+    "region": "LATAM",
+    "severity": "LOW",
+    "active_threats": false,
+    "primary_scenario": "None",
+    "vacr_exposure_usd": 0,
+    "geopolitical_context": "Routine operations. No significant geopolitical anomalies or targeted cyber campaigns detected against the renewable energy sector in this region."
+}

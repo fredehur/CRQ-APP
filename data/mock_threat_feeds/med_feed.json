@@ -1,0 +1,8 @@
+{
+    "region": "MED",
+    "severity": "MEDIUM",
+    "active_threats": true,
+    "primary_scenario": "Insider misuse",
+    "vacr_exposure_usd": 4200000,
+    "geopolitical_context": "Economic instability in southern Europe has increased the risk of corporate espionage and Insider Misuse, specifically targeting predictive maintenance algorithms and offshore servicing contracts."
+}

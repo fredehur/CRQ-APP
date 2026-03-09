@@ -1,0 +1,8 @@
+{
+    "region": "AME",
+    "severity": "CRITICAL",
+    "active_threats": true,
+    "primary_scenario": "Ransomware",
+    "vacr_exposure_usd": 22000000,
+    "geopolitical_context": "Financially motivated syndicates are targeting energy sector service providers. High risk of Ransomware attacks aimed at paralyzing live wind farm telemetry and remote maintenance scheduling."
+}
