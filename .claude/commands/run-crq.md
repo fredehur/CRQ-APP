@@ -38,8 +38,6 @@ Each task is self-contained and writes its own output file. Do NOT wait for one 
      - If YES: run `uv run python tools/audit_logger.py GATEKEEPER_YES "APAC — threat confirmed, escalating to analysis"`
   3. Run `uv run python tools/threat_scorer.py APAC` and extract severity number.
   4. Delegate to `regional-analyst-agent`. Provide: region APAC, critical assets, VaCR, geopolitical context, threat feed output, severity score. Agent writes directly to `output/regional/apac_draft.md`.
-     - On hook pass: `uv run python tools/audit_logger.py HOOK_PASS "APAC jargon audit passed"`
-     - On hook fail/rewrite: `uv run python tools/audit_logger.py HOOK_FAIL "APAC jargon audit failed — rewrite triggered"`
 
 - Task 2 — AME: Same pipeline for AME. Agent writes to `output/regional/ame_draft.md`.
 
@@ -49,7 +47,16 @@ Each task is self-contained and writes its own output file. Do NOT wait for one 
 
 - Task 5 — NCE: Same pipeline for NCE. Agent writes to `output/regional/nce_draft.md`.
 
-**Fan-in:** Poll `TaskOutput()` for all 5 task IDs. Wait until every task has completed before proceeding to Phase 2. Log any errors from individual tasks but do not halt the pipeline for a single region failure.
+**Fan-in:** Wait until all 5 tasks complete. Then, for each region that produced a draft (check `output/regional/` for existing files), run the jargon auditor as the orchestrator — this is intentional, the orchestrator owns quality gates, not the workers:
+
+```
+for REGION in apac ame med latam nce:
+  if output/regional/{REGION}_draft.md exists:
+    uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}_draft.md {REGION}
+    exit 0 → uv run python tools/audit_logger.py HOOK_PASS "{REGION} jargon audit passed"
+    exit 2 → uv run python tools/audit_logger.py HOOK_FAIL "{REGION} jargon audit failed — rewrite triggered"
+             then rewrite the draft and re-run the auditor
+```
 
 ## PHASE 2 — CROSS-REGIONAL DIFF
 
