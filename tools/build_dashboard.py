@@ -25,8 +25,10 @@ def build():
     trace_lines = []
     trace_path = "output/system_trace.log"
     if os.path.exists(trace_path):
-        with open(trace_path, 'r', encoding='utf-8') as f:
-            trace_lines = [line.strip() for line in f.readlines() if line.strip()]
+        with open(trace_path, 'rb') as f:
+            raw = f.read()
+        text = raw.decode('utf-8', errors='replace')
+        trace_lines = [line.strip() for line in text.splitlines() if line.strip()]
 
     # Read per-region data.json files
     region_data = {}

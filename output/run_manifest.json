@@ -1,0 +1,42 @@
+{
+  "pipeline_id": "crq-2026-03-09T125038Z",
+  "client": "AeroGrid Wind Solutions",
+  "run_timestamp": "2026-03-09T12:50:38Z",
+  "status": "complete",
+  "total_vacr_exposure_usd": 44700000,
+  "regions": {
+    "APAC": {
+      "status": "escalated",
+      "severity": "HIGH",
+      "vacr_usd": 18500000
+    },
+    "AME": {
+      "status": "escalated",
+      "severity": "CRITICAL",
+      "vacr_usd": 22000000
+    },
+    "LATAM": {
+      "status": "clear",
+      "severity": "LOW",
+      "vacr_usd": 0
+    },
+    "MED": {
+      "status": "escalated",
+      "severity": "MEDIUM",
+      "vacr_usd": 4200000
+    },
+    "NCE": {
+      "status": "clear",
+      "severity": "LOW",
+      "vacr_usd": 0
+    }
+  },
+  "outputs": {
+    "global_report_json": "global_report.json",
+    "global_report_md": "global_report.md",
+    "dashboard_html": "dashboard.html",
+    "board_report_pdf": "board_report.pdf",
+    "board_report_pptx": "board_report.pptx",
+    "system_trace": "system_trace.log"
+  }
+}

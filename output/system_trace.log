@@ -1,12 +1,13 @@
-[2026-03-09T11:18:10Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated - processing 5 regions
-[2026-03-09T11:18:56Z] [GATEKEEPER_YES] APAC - threat confirmed, escalating to analysis
-[2026-03-09T11:19:02Z] [GATEKEEPER_YES] AME - threat confirmed, escalating to analysis
-[2026-03-09T11:19:03Z] [GATEKEEPER_NO] LATAM - no active threat, compute saved
-[2026-03-09T11:19:08Z] [GATEKEEPER_YES] MED - threat confirmed, escalating to analysis
-[2026-03-09T11:19:09Z] [GATEKEEPER_NO] NCE - no active threat, compute saved
-[2026-03-09T11:19:41Z] [HOOK_PASS] APAC jargon audit passed
-[2026-03-09T11:19:54Z] [HOOK_PASS] MED jargon audit passed
-[2026-03-09T11:20:14Z] [HOOK_PASS] AME jargon audit passed
-[2026-03-09T11:20:22Z] [PHASE_COMPLETE] Cross-regional diff complete
-[2026-03-09T11:21:52Z] [PHASE_COMPLETE] Global JSON report validated
-[2026-03-09T11:22:50Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated
+[2026-03-09T12:46:39Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — processing 5 regions
+[2026-03-09T12:47:42Z] [GATEKEEPER_YES] APAC — threat confirmed, escalating to analysis
+[2026-03-09T12:47:48Z] [GATEKEEPER_YES] AME — threat confirmed, escalating to analysis
+[2026-03-09T12:47:54Z] [GATEKEEPER_NO] LATAM — no active threat, compute saved
+[2026-03-09T12:47:56Z] [GATEKEEPER_YES] MED — threat confirmed, escalating to analysis
+[2026-03-09T12:48:00Z] [GATEKEEPER_NO] NCE — no active threat, compute saved
+[2026-03-09T12:48:16Z] [PHASE_COMPLETE] APAC — regional executive brief written to output/regional/apac/report.md
+[2026-03-09T12:48:42Z] [HOOK_PASS] apac jargon audit passed
+[2026-03-09T12:48:42Z] [HOOK_PASS] ame jargon audit passed
+[2026-03-09T12:48:43Z] [HOOK_PASS] med jargon audit passed
+[2026-03-09T12:48:53Z] [PHASE_COMPLETE] Cross-regional diff complete
+[2026-03-09T12:50:14Z] [PHASE_COMPLETE] Global JSON report validated
+[2026-03-09T12:50:46Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated

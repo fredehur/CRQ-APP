@@ -22,17 +22,21 @@
 
     <main class="max-w-7xl mx-auto px-8 py-8">
         <!-- KPI Strip -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-red-600">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Value at Cyber Risk</p>
                 <p class="text-4xl font-black text-red-600">$44,700,000</p>
             </div>
             <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-blue-600">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Regions Analyzed</p>
-                <p class="text-4xl font-black text-blue-600">3</p>
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Regions</p>
+                <p class="text-4xl font-black text-blue-600">5</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-red-500">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Escalated</p>
+                <p class="text-4xl font-black text-red-500">3</p>
             </div>
             <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-green-600">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Regions Skipped (No Threat)</p>
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Clear</p>
                 <p class="text-4xl font-black text-green-600">2</p>
             </div>
         </div>
@@ -40,22 +44,13 @@
         <!-- Executive Summary -->
         <div class="bg-white rounded-lg shadow-md p-6 mb-8">
             <h2 class="text-lg font-bold text-gray-900 mb-3">Executive Summary</h2>
-            <p class="text-gray-700 leading-relaxed">AeroGrid Wind Solutions faces a total quantified risk exposure of $44,700,000 across three active operational regions, with the gravest concentration in North America where criminal actors are directly targeting wind farm telemetry and remote maintenance infrastructure. Across all active regions, the threat patterns converge on a common business impact: disruption of operational continuity in both the manufacturing and service segments that define AeroGrid's revenue model. The combination of IP exfiltration risk in APAC, service-disrupting encryption in AME, and insider-enabled espionage in MED creates a compound exposure across the 75% manufacturing and 25% service lines of business. The board should treat this as an enterprise-wide risk posture requiring validated recovery capabilities and governance controls proportionate to the $44,700,000 financial exposure ceiling.</p>
+            <p class="text-gray-700 leading-relaxed">AeroGrid Wind Solutions faces $44.7M in aggregate risk exposure across three operational regions, driven by financially motivated disruption campaigns in North America, state-directed supply chain interference in Asia-Pacific, and elevated insider risk in the Mediterranean. Ransomware and system intrusion together represent the two highest-impact scenario types globally, directly threatening turbine manufacturing continuity and remote service delivery. The convergence of production disruption, intellectual property loss, and service revenue erosion across all three regions signals a systemic pattern that could impair both the manufacturing core (75% of revenue) and the global maintenance business simultaneously.</p>
         </div>
 
-        <!-- Regional Threat Cards -->
-        <h2 class="text-lg font-bold text-gray-900 mb-4">Regional Threat Landscape</h2>
+        <!-- Escalated Regional Threat Cards -->
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Escalated Regions</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
-            <div class="flex justify-between items-start mb-3">
-                <h3 class="text-lg font-bold text-gray-900">APAC</h3>
-                <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">High</span>
-            </div>
-            <p class="text-3xl font-bold text-red-600 mb-3">$18,500,000</p>
-            <div class="mb-3"><span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span></div>
-            <p class="text-sm text-gray-600 leading-relaxed">State-aligned actors operating across the South China Sea corridor are actively pursuing access to AeroGrid's proprietary turbine aerodynamic designs and blade manufacturing environments, representing a direct threat to the company's core intellectual property and production continuity. A successful intrusion could erode AeroGrid's competitive differentiation in a market where turbine efficiency margins determine contract awards, while simultaneous disruption to manufacturing control environments risks cascading delivery failures and contractual penalties with government-backed energy clients. The $18,500,000 VaCR exposure reflects the quantified ceiling of financial impact under current threat conditions and geopolitical posture.</p>
-        </div>
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
             <div class="flex justify-between items-start mb-3">
                 <h3 class="text-lg font-bold text-gray-900">AME</h3>
@@ -63,36 +58,68 @@
             </div>
             <p class="text-3xl font-bold text-red-600 mb-3">$22,000,000</p>
             <div class="mb-3"><span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">Ransomware</span></div>
-            <p class="text-sm text-gray-600 leading-relaxed">Financially motivated criminal syndicates have confirmed hostile activity directed at the live wind farm telemetry and remote maintenance scheduling systems that underpin AeroGrid's North American service delivery capability, representing the single highest-consequence scenario class in the empirical global baseline at 37.6% of all financial losses. An extended disruption to these systems would impair real-time turbine performance monitoring and field service coordination, directly threatening the 25% of AeroGrid revenue derived from global service and maintenance contracts. The $22,000,000 VaCR exposure demands board-level attention given the confirmed threat activity and the direct dependency of service revenue continuity on these operational systems.</p>
+            <p class="text-sm text-gray-600 leading-relaxed">Financially motivated syndicates are targeting energy service providers, placing wind farm telemetry and remote maintenance scheduling at direct risk. Ransomware carries the highest financial impact rank globally at 37.6%, and the $22M exposure reflects recovery costs, service-level agreement breaches, and lost service revenue that would degrade AeroGrid's maintenance business across North American operations.</p>
         </div>
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
             <div class="flex justify-between items-start mb-3">
-                <h3 class="text-lg font-bold text-gray-900">MED</h3>
-                <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">Medium</span>
+                <h3 class="text-lg font-bold text-gray-900">APAC</h3>
+                <span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">High</span>
             </div>
-            <p class="text-3xl font-bold text-red-600 mb-3">$4,200,000</p>
+            <p class="text-3xl font-bold text-red-600 mb-3">$18,500,000</p>
+            <div class="mb-3"><span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">State-sponsored actors exploiting South China Sea supply chain tensions pose a direct threat to proprietary turbine aerodynamic designs and blade manufacturing plants. System intrusion ranks first in event frequency at 43.3%, making this the most probable scenario type AeroGrid faces. The $18.5M exposure encompasses production disruption, intellectual property loss, and contractual penalties across the Asia-Pacific manufacturing footprint.</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">MED</h3>
+                <span class="bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-full">Medium</span>
+            </div>
+            <p class="text-3xl font-bold text-amber-600 mb-3">$4,200,000</p>
             <div class="mb-3"><span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">Insider misuse</span></div>
-            <p class="text-sm text-gray-600 leading-relaxed">Economic instability across southern Europe has elevated the risk of insider-enabled exfiltration of the predictive maintenance algorithms and offshore servicing contract relationships that constitute AeroGrid's primary competitive advantage in the Mediterranean market. Should this proprietary knowledge be transferred to competitors, the operational differentiation built on years of field data and algorithmic refinement could be materially and irreversibly compromised, undermining both current contract performance and future award prospects. The $4,200,000 VaCR exposure, while the smallest active regional figure, carries an asymmetric loss profile given the long-term strategic value of the assets at risk.</p>
+            <p class="text-sm text-gray-600 leading-relaxed">Regional economic instability is elevating insider risk, threatening predictive maintenance algorithms and offshore servicing contracts. While insider misuse carries a lower frequency rank of 5, its financial impact rank of 4 reflects meaningful exposure. The $4.2M at risk covers intellectual property loss and service disruption to Mediterranean offshore wind operations.</p>
+        </div>
+        </div>
+
+        <!-- Clear Region Cards -->
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Clear Regions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">LATAM</h3>
+                <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">Clear</span>
+            </div>
+            <p class="text-3xl font-bold text-green-600 mb-3">$0</p>
+            <p class="text-sm text-gray-600 leading-relaxed">No credible threat identified. Gatekeeper assessment: region operating within normal risk parameters.</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">NCE</h3>
+                <span class="bg-green-600 text-white text-xs font-bold px-3 py-1 rounded-full">Clear</span>
+            </div>
+            <p class="text-3xl font-bold text-green-600 mb-3">$0</p>
+            <p class="text-sm text-gray-600 leading-relaxed">No credible threat identified. Gatekeeper assessment: region operating within normal risk parameters.</p>
         </div>
         </div>
 
         <!-- Audit Trace (Collapsible) -->
         <details class="bg-white rounded-lg shadow-md mb-8">
             <summary class="cursor-pointer p-6 text-lg font-bold text-gray-900 hover:bg-gray-50 rounded-lg">
-                System Audit Trace &mdash; 11 events
+                System Audit Trace &mdash; 12 events
             </summary>
             <div class="px-6 pb-6 max-h-96 overflow-y-auto">
-                <div class="text-blue-600 font-bold text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:18:10Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated - processing 5 regions</div>
-<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:18:56Z] [GATEKEEPER_YES] APAC - threat confirmed, escalating to analysis</div>
-<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:02Z] [GATEKEEPER_YES] AME - threat confirmed, escalating to analysis</div>
-<div class="text-green-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:03Z] [GATEKEEPER_NO] LATAM - no active threat, compute saved</div>
-<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:08Z] [GATEKEEPER_YES] MED - threat confirmed, escalating to analysis</div>
-<div class="text-green-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:09Z] [GATEKEEPER_NO] NCE - no active threat, compute saved</div>
-<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:41Z] [HOOK_PASS] APAC jargon audit passed</div>
-<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:19:54Z] [HOOK_PASS] MED jargon audit passed</div>
-<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:20:14Z] [HOOK_PASS] AME jargon audit passed</div>
-<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:20:22Z] [PHASE_COMPLETE] Cross-regional diff complete</div>
-<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T11:21:52Z] [PHASE_COMPLETE] Global JSON report validated</div>
+                <div class="text-blue-600 font-bold text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:46:39Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated � processing 5 regions</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:47:42Z] [GATEKEEPER_YES] APAC � threat confirmed, escalating to analysis</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:47:48Z] [GATEKEEPER_YES] AME � threat confirmed, escalating to analysis</div>
+<div class="text-green-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:47:54Z] [GATEKEEPER_NO] LATAM � no active threat, compute saved</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:47:56Z] [GATEKEEPER_YES] MED � threat confirmed, escalating to analysis</div>
+<div class="text-green-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:00Z] [GATEKEEPER_NO] NCE � no active threat, compute saved</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:16Z] [PHASE_COMPLETE] APAC � regional executive brief written to output/regional/apac/report.md</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:42Z] [HOOK_PASS] apac jargon audit passed</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:42Z] [HOOK_PASS] ame jargon audit passed</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:43Z] [HOOK_PASS] med jargon audit passed</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:48:53Z] [PHASE_COMPLETE] Cross-regional diff complete</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-03-09T12:50:14Z] [PHASE_COMPLETE] Global JSON report validated</div>
 
             </div>
         </details>

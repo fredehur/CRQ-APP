@@ -1,0 +1,11 @@
+{
+  "region": "APAC",
+  "status": "escalated",
+  "gatekeeper_decision": "YES",
+  "severity": "HIGH",
+  "severity_score": 3,
+  "primary_scenario": "System intrusion",
+  "vacr_exposure_usd": 18500000,
+  "report_path": "regional/apac/report.md",
+  "timestamp": "2026-03-09T12:47:42Z"
+}

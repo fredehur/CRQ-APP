@@ -82,5 +82,7 @@ Run: `uv run python tools/export_pptx.py output/global_report.md output/board_re
 
 Run: `uv run python tools/write_manifest.py` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
 
+Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
+
 Run: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "AeroGrid CRQ Pipeline complete — all outputs generated"`
-List all files in `output/` recursively and confirm pipeline success.
+List all files in `output/latest/` recursively and confirm pipeline success.

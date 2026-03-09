@@ -8,7 +8,7 @@ def log_event(event_type, message):
     os.makedirs(os.path.dirname(LOG_PATH), exist_ok=True)
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     entry = f"[{timestamp}] [{event_type}] {message}\n"
-    with open(LOG_PATH, "a") as f:
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(entry)
     print(entry.strip())
 

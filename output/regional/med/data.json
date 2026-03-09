@@ -1,0 +1,11 @@
+{
+  "region": "MED",
+  "status": "escalated",
+  "gatekeeper_decision": "YES",
+  "severity": "MEDIUM",
+  "severity_score": 2,
+  "primary_scenario": "Insider misuse",
+  "vacr_exposure_usd": 4200000,
+  "report_path": "regional/med/report.md",
+  "timestamp": "2026-03-09T12:47:55Z"
+}

@@ -16,7 +16,8 @@
       "Bash(git config:*)",
       "Bash(git branch:*)",
       "Bash(git push:*)",
-      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" repo:*)"
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" repo:*)",
+      "Bash(echo EXIT:$?:*)"
     ]
   }
 }
