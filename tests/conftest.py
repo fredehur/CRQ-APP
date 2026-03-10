@@ -1,6 +1,5 @@
 """Shared pytest fixtures — creates a minimal mock output tree in a temp dir."""
 import json
-import os
 import pytest
 
 
