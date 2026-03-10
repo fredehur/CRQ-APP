@@ -32,12 +32,15 @@ This gives you:
 Your brief MUST be structured around three paragraphs in this exact order:
 
 **Paragraph 1 — The Why (Geopolitical)**
+Open your paragraph with the heading: `## Why — Geopolitical Driver`
 What geopolitical or macro-economic condition is creating this threat environment? Reference the `geo_signals.lead_indicators`. Frame in terms of state actor intent, economic conditions, or structural pressure — not technical activity.
 
 **Paragraph 2 — The How (Cyber)**
+Open your paragraph with the heading: `## How — Cyber Vector`
 How is that condition manifesting as a threat to AeroGrid's operations? Reference the `cyber_signals.threat_vector` and `target_assets`. Frame in terms of business assets at risk — not technical attack mechanics.
 
 **Paragraph 3 — The So What (Business)**
+Open your paragraph with the heading: `## So What — Business Impact`
 What is the financial and operational consequence for AeroGrid? State the VaCR figure, cite the scenario's financial impact rank from the master scenarios, connect to manufacturing capacity or service delivery continuity.
 
 ## ADMIRALTY CITATION — MANDATORY
