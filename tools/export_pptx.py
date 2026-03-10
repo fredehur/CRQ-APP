@@ -17,6 +17,7 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.util import Inches, Pt
 from pptx.enum.text import PP_ALIGN
+from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
 
 sys.path.insert(0, os.path.dirname(__file__))
 from report_builder import build, ReportData, RegionEntry, RegionStatus
@@ -69,7 +70,7 @@ def _fill_shape(shape, color: RGBColor) -> None:
 
 def _add_rect(slide, left, top, width, height, color: RGBColor):
     shape = slide.shapes.add_shape(
-        1,  # MSO_SHAPE_TYPE.RECTANGLE
+        MSO_AUTO_SHAPE_TYPE.RECTANGLE,
         left, top, width, height
     )
     shape.line.fill.background()
@@ -94,7 +95,7 @@ def _add_text(slide, text: str, left, top, width, height,
 
 
 def _vacr_fmt(vacr: float | None) -> str:
-    if not vacr:
+    if vacr is None or vacr == 0:
         return "—"
     return f"${vacr / 1_000_000:.1f}M"
 
