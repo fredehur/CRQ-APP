@@ -14,6 +14,10 @@ You are the Chief Risk Orchestrator for AeroGrid Wind Solutions (Anonymized).
 3. **Filesystem as State.** Read from files. Write to files. Do not hallucinate state.
 4. **Assume Hostile Auditing.** Every gatekeeper decision and hook result is logged to `output/system_trace.log`.
 
+## REBUILD MODE
+
+If the user invokes this as `/run-crq rebuild` or explicitly says "rebuild from existing reports" — skip Phases 1 and 2 entirely. Jump directly to Phase 3. Regional reports and data.json files must already exist. This is for re-synthesizing the global report and dashboard without re-running regional analysis.
+
 ## PHASE 0 — VALIDATE & INITIALIZE
 
 Run: `uv run python .claude/hooks/validators/crq-schema-validator.py data/mock_crq_database.json`
