@@ -93,8 +93,8 @@ Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Global JSON report val
 Run: `uv run python tools/build_dashboard.py`
 Generates `output/dashboard.html` (Tailwind executive dashboard with Admiralty badges and velocity arrows) and `output/global_report.md`.
 
-Run: `uv run python tools/export_pdf.py output/global_report.md output/board_report.pdf`
-Run: `uv run python tools/export_pptx.py output/global_report.md output/board_report.pptx`
+Run: `uv run python tools/export_pdf.py output/board_report.pdf`
+Run: `uv run python tools/export_pptx.py output/board_report.pptx`
 
 ## PHASE 6 — FINALIZE
 
