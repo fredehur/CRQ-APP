@@ -84,6 +84,7 @@
   .kpi-value { font-size: 13pt; font-weight: 700; color: var(--brand); line-height: 1; }
   .kpi-value.red { color: var(--red); }
   .kpi-value.amber { color: var(--amber); }
+  .kpi-value.green { color: var(--green); }
 
   .region-body { flex: 1; }
   .pillar { margin-bottom: 5mm; }
@@ -236,7 +237,7 @@
       </div>
       <div class="kpi-cell">
         <div class="kpi-label">Velocity</div>
-        <div class="kpi-value {% if r.velocity == 'accelerating' %}red{% elif r.velocity == 'improving' %}vel-down{% else %}{% endif %}">
+        <div class="kpi-value {% if r.velocity == 'accelerating' %}red{% elif r.velocity == 'improving' %}green{% else %}{% endif %}">
           {% if r.velocity == "accelerating" %}↑ Accel.
           {% elif r.velocity == "improving"  %}↓ Impr.
           {% else %}→ {{ r.velocity | title if r.velocity else "—" }}
