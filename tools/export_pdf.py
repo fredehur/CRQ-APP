@@ -50,7 +50,10 @@ def export(output_path: str = DEFAULT_OUT) -> None:
             )
             browser.close()
     finally:
-        os.unlink(tmp_path)
+        try:
+            os.unlink(tmp_path)
+        except FileNotFoundError:
+            pass
 
     print(f"PDF exported: {output_path}")
 
