@@ -7,8 +7,6 @@ from __future__ import annotations
 
 import json
 import logging
-import os
-import warnings
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -61,6 +59,14 @@ _PILLAR_HEADERS = [
 ]
 
 
+def _header_matches(line: str, prefix: str) -> bool:
+    """True if line starts with prefix followed by space, em-dash, or EOL."""
+    if not line.startswith(prefix):
+        return False
+    rest = line[len(prefix):]
+    return rest == "" or rest.startswith((" ", "—", "\r", "\n"))
+
+
 def _parse_pillars(text: str) -> tuple[str | None, str | None, str | None]:
     """Split report.md text into (why, how, so_what) by section header prefix.
 
@@ -73,15 +79,18 @@ def _parse_pillars(text: str) -> tuple[str | None, str | None, str | None]:
         indices = {}
         for i, line in enumerate(lines):
             stripped = line.lstrip()
-            if stripped.startswith(h1) and 1 not in indices:
+            if _header_matches(stripped, h1) and 1 not in indices:
                 indices[1] = i
-            elif stripped.startswith(h2) and 2 not in indices:
+            elif _header_matches(stripped, h2) and 2 not in indices:
                 indices[2] = i
-            elif stripped.startswith(h3) and 3 not in indices:
+            elif _header_matches(stripped, h3) and 3 not in indices:
                 indices[3] = i
 
         if len(indices) == 3:
             i1, i2, i3 = indices[1], indices[2], indices[3]
+            if not (i1 < i2 < i3):
+                logger.warning("Pillar headers found out of order — skipping this header set")
+                continue  # try next header set
             why     = "".join(lines[i1 + 1 : i2]).strip()
             how     = "".join(lines[i2 + 1 : i3]).strip()
             so_what = "".join(lines[i3 + 1 :]).strip()
@@ -113,7 +122,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
     global_report = json.loads(
         (base / "global_report.json").read_text(encoding="utf-8")
     )
-    total_vacr    = float(global_report.get("total_vacr_exposure", 0))
+    total_vacr    = float(global_report.get("total_vacr_exposure") or 0)
     exec_summary  = global_report.get("executive_summary", "")
     monitor_regions = global_report.get("monitor_regions", [])
 
