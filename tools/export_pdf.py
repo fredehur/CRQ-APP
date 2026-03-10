@@ -1,81 +1,60 @@
+# tools/export_pdf.py
+"""
+Renders the board PDF report using Playwright + Jinja2.
+
+Usage:
+    uv run python tools/export_pdf.py [output.pdf]
+    Defaults to output/board_report.pdf if no argument given.
+"""
 import sys
-from fpdf import FPDF
+import tempfile
+import os
+from pathlib import Path
 
-UNICODE_REPLACEMENTS = {
-    '\u2014': '--',   # em-dash
-    '\u2013': '-',    # en-dash
-    '\u2018': "'",    # left single quote
-    '\u2019': "'",    # right single quote
-    '\u201c': '"',    # left double quote
-    '\u201d': '"',    # right double quote
-    '\u2022': '-',    # bullet
-    '\u2026': '...',  # ellipsis
-}
+import jinja2
+from playwright.sync_api import sync_playwright
 
-def sanitize(text):
-    for char, replacement in UNICODE_REPLACEMENTS.items():
-        text = text.replace(char, replacement)
-    # Strip any remaining non-latin-1 characters
-    return text.encode('latin-1', errors='ignore').decode('latin-1')
+# Allow running from project root or tools/
+sys.path.insert(0, os.path.dirname(__file__))
+from report_builder import build
 
-def export(input_path, output_path):
-    with open(input_path, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
-    pdf = FPDF()
-    pdf.set_margins(20, 20, 20)
-    pdf.add_page()
-    for line in lines:
-        line = line.rstrip()
-        # Skip horizontal rules
-        if line.startswith('---') or line.startswith('***') or line.startswith('___'):
-            pdf.ln(3)
-            continue
-        # Skip markdown table separator rows (e.g. |---|---|)
-        if line.startswith('|'):
-            stripped = line.replace('|', '').replace('-', '').replace(' ', '')
-            if stripped == '':
-                continue
-        # Handle markdown table rows — flatten to a single readable line
-        if line.startswith('|') and line.endswith('|'):
-            cells = [c.strip().replace('**', '') for c in line.strip('|').split('|')]
-            text = ' | '.join(c for c in cells if c)
-            pdf.set_font("Helvetica", size=8)
-            pdf.set_x(pdf.l_margin)
-            try:
-                pdf.multi_cell(0, 5, sanitize(text))
-            except Exception:
-                pass
-            pdf.ln(1)
-            continue
-        # Strip bold/italic markdown markers
-        clean = line.replace('**', '').replace('*', '')
-        # Ensure x is at left margin
-        pdf.set_x(pdf.l_margin)
-        if line.startswith('### '):
-            pdf.set_font("Helvetica", 'B', 12)
-            pdf.multi_cell(0, 9, sanitize(clean[4:]))
-            pdf.ln(1)
-        elif line.startswith('## '):
-            pdf.set_font("Helvetica", 'B', 14)
-            pdf.multi_cell(0, 10, sanitize(clean[3:]))
-            pdf.ln(1)
-        elif line.startswith('# '):
-            pdf.set_font("Helvetica", 'B', 18)
-            pdf.multi_cell(0, 12, sanitize(clean[2:]))
-            pdf.ln(2)
-        elif line.startswith('- ') or line.startswith('* '):
-            pdf.set_font("Helvetica", size=10)
-            pdf.multi_cell(0, 7, sanitize(f"  - {clean[2:]}"))
-        elif clean.strip():
-            pdf.set_font("Helvetica", size=11)
-            pdf.multi_cell(0, 7, sanitize(clean))
-        else:
-            pdf.ln(4)
-    pdf.output(output_path)
+TEMPLATE_DIR  = Path(__file__).parent / "templates"
+TEMPLATE_NAME = "report.html.j2"
+DEFAULT_OUT   = "output/board_report.pdf"
+
+
+def export(output_path: str = DEFAULT_OUT) -> None:
+    data = build()
+
+    # Render HTML
+    loader = jinja2.FileSystemLoader(str(TEMPLATE_DIR))
+    env    = jinja2.Environment(loader=loader, autoescape=True)
+    html   = env.get_template(TEMPLATE_NAME).render(data=data)
+
+    # Write to temp file (NamedTemporaryFile avoids path collisions)
+    with tempfile.NamedTemporaryFile(
+        suffix=".html", delete=False, mode="w", encoding="utf-8"
+    ) as tmp:
+        tmp.write(html)
+        tmp_path = tmp.name
+
+    try:
+        with sync_playwright() as p:
+            browser = p.chromium.launch()
+            page    = browser.new_page()
+            page.goto(Path(tmp_path).as_uri())  # cross-platform URI (file:///C:/... on Windows)
+            page.pdf(
+                path=output_path,
+                format="A4",
+                print_background=True,
+            )
+            browser.close()
+    finally:
+        os.unlink(tmp_path)
+
     print(f"PDF exported: {output_path}")
 
+
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Usage: export_pdf.py <input.md> <output.pdf>")
-        sys.exit(1)
-    export(sys.argv[1], sys.argv[2])
+    out = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUT
+    export(out)
