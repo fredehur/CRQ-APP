@@ -4,5 +4,15 @@
     "active_threats": false,
     "primary_scenario": "None",
     "vacr_exposure_usd": 0,
+    "dominant_pillar": null,
+    "geo_signals": {
+        "summary": "Stable regional political environment. No trade disputes, sanctions, or state-actor campaigns affecting the renewable energy sector. Regional government relations with energy operators remain constructive.",
+        "lead_indicators": []
+    },
+    "cyber_signals": {
+        "summary": "No active threat campaigns detected targeting energy infrastructure in the region. Routine background scanning activity observed but consistent with baseline.",
+        "threat_vector": null,
+        "target_assets": []
+    },
     "geopolitical_context": "Routine operations. No significant geopolitical anomalies or targeted cyber campaigns detected against the renewable energy sector in this region."
 }

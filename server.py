@@ -145,25 +145,42 @@ async def _run_tools_mode(regions: list[str]):
             await _run("threat_scorer.py", r)
 
             # Read the feed to determine gatekeeper decision
+            TOP_4_SCENARIOS = {"Ransomware", "Accidental disclosure", "System intrusion", "Insider misuse"}
             feed = _read_json(BASE / "data" / "mock_threat_feeds" / f"{r.lower()}_feed.json")
+            active = feed.get("active_threats", False) if feed else False
             severity = feed.get("severity", "LOW") if feed else "LOW"
-            decision = "YES" if severity in ("HIGH", "CRITICAL", "MEDIUM") else "NO"
+            scenario = feed.get("primary_scenario", "None") if feed else "None"
+
+            if not active:
+                status = "clear"
+                decision = "CLEAR"
+            elif scenario in TOP_4_SCENARIOS:
+                status = "escalated"
+                decision = "ESCALATE"
+            else:
+                status = "monitor"
+                decision = "MONITOR"
 
             await _emit("gatekeeper", {"region": r, "decision": decision, "severity": severity})
 
             # Write data.json
-            status = "escalated" if decision == "YES" else "clear"
             await _run("write_region_data.py", r, status)
 
             # Log gatekeeper event
-            event_type = "GATEKEEPER_YES" if decision == "YES" else "GATEKEEPER_NO"
-            msg = f"{r} — {'threat confirmed, escalating' if decision == 'YES' else 'no active threat, skipped'}"
+            event_type = "GATEKEEPER_YES" if status == "escalated" else "GATEKEEPER_NO"
+            msg = f"{r} — {decision.lower()}: {scenario}"
             await _run("audit_logger.py", event_type, msg)
 
             pipeline_state["regions_done"].append(r)
             pipeline_state["regions_pending"] = [x for x in pipeline_state["regions_pending"] if x != r]
 
         await _emit("phase", {"phase": "gatekeeper", "status": "complete"})
+
+        # Phase 2: Velocity analysis
+        pipeline_state["phase"] = "trend"
+        await _emit("phase", {"phase": "trend", "status": "running"})
+        await _run("trend_analyzer.py")
+        await _emit("phase", {"phase": "trend", "status": "complete"})
 
         # Phase 3: Cross-regional diff
         pipeline_state["phase"] = "diff"

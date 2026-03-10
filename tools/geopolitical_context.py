@@ -44,7 +44,24 @@ if __name__ == "__main__":
     print(f"\n=== Geopolitical Risk Context: {region} ===")
     print(f"  Severity: {feed.get('severity', 'LOW')}")
     print(f"  Active Threats: {feed.get('active_threats', False)}")
+    print(f"  Dominant Pillar: {feed.get('dominant_pillar', 'N/A')}")
     print(f"  Context: {feed.get('geopolitical_context', 'No context available.')}")
+
+    geo_signals = feed.get("geo_signals", {})
+    if geo_signals:
+        print(f"\n=== Geopolitical Signals (The Why) ===")
+        print(f"  {geo_signals.get('summary', '')}")
+        for indicator in geo_signals.get("lead_indicators", []):
+            print(f"  • {indicator}")
+
+    cyber_signals = feed.get("cyber_signals", {})
+    if cyber_signals:
+        print(f"\n=== Cyber Signals (The How) ===")
+        print(f"  {cyber_signals.get('summary', '')}")
+        if cyber_signals.get("threat_vector"):
+            print(f"  Threat Vector: {cyber_signals['threat_vector']}")
+        for asset in cyber_signals.get("target_assets", []):
+            print(f"  • Target Asset: {asset}")
 
     scenario = feed.get("primary_scenario", "None")
     if scenario != "None":

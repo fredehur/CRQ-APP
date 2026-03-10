@@ -13,8 +13,42 @@ SEVERITY_STYLES = {
 }
 DEFAULT_STYLE = {"border": "border-gray-400", "bg": "bg-gray-400", "text": "text-gray-400"}
 
+VELOCITY_ARROW = {
+    "accelerating": ("↑", "text-red-500", "Accelerating"),
+    "stable":       ("→", "text-amber-500", "Stable"),
+    "improving":    ("↓", "text-green-500", "Improving"),
+    "unknown":      ("–", "text-gray-400", "No history"),
+}
+
+ADMIRALTY_LABEL = {
+    "A": "Completely reliable",
+    "B": "Usually reliable",
+    "C": "Fairly reliable",
+    "D": "Not usually reliable",
+    "E": "Unreliable",
+    "F": "Cannot be judged",
+}
+CREDIBILITY_LABEL = {
+    "1": "Confirmed",
+    "2": "Probably true",
+    "3": "Possibly true",
+    "4": "Doubtful",
+    "5": "Improbable",
+    "6": "Unverifiable",
+}
+
+
+def admiralty_tooltip(rating):
+    """Return plain-English tooltip for an Admiralty rating like 'B2'."""
+    if not rating or len(rating) != 2:
+        return "Assessment pending"
+    r, c = rating[0].upper(), rating[1]
+    rel = ADMIRALTY_LABEL.get(r, r)
+    cred = CREDIBILITY_LABEL.get(c, c)
+    return f"{rel} source — {cred}"
+
+
 def build():
-    # Read global report JSON
     json_path = GLOBAL_REPORT_PATH
     if not os.path.exists(json_path):
         print(f"ERROR: {json_path} not found.")
@@ -22,22 +56,18 @@ def build():
     with open(json_path, 'r', encoding='utf-8') as f:
         report = json.load(f)
 
-    # Read run manifest if available
     manifest = None
     if os.path.exists(MANIFEST_PATH):
         with open(MANIFEST_PATH, 'r', encoding='utf-8') as f:
             manifest = json.load(f)
 
-    # Read system trace log
     trace_lines = []
-    trace_path = TRACE_LOG_PATH
-    if os.path.exists(trace_path):
-        with open(trace_path, 'rb') as f:
+    if os.path.exists(TRACE_LOG_PATH):
+        with open(TRACE_LOG_PATH, 'rb') as f:
             raw = f.read()
         text = raw.decode('utf-8', errors='replace')
         trace_lines = [line.strip() for line in text.splitlines() if line.strip()]
 
-    # Read per-region data.json files
     region_data = {}
     for region in REGIONS:
         data_path = f"output/regional/{region.lower()}/data.json"
@@ -48,13 +78,14 @@ def build():
     total_vacr = report.get("total_vacr_exposure", 0)
     summary = report.get("executive_summary", "")
     threat_regions = report.get("regional_threats", [])
+    monitor_regions = report.get("monitor_regions", [])
     report_date = report.get("reporting_date", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
 
-    # Count escalated vs clear from data.json files
     escalated_count = sum(1 for r in region_data.values() if r.get("status") == "escalated")
+    monitor_count = sum(1 for r in region_data.values() if r.get("status") == "monitor")
     clear_count = sum(1 for r in region_data.values() if r.get("status") == "clear")
 
-    # Build escalated regional cards from global_report.json
+    # Build escalated regional cards
     region_cards = ""
     for r in threat_regions:
         scenario = r.get("primary_scenario", "")
@@ -62,6 +93,21 @@ def build():
 
         sev = r.get("severity", "N/A")
         style = SEVERITY_STYLES.get(sev, DEFAULT_STYLE)
+
+        # Admiralty badge
+        admiralty = r.get("admiralty_rating", "")
+        adm_tooltip = admiralty_tooltip(admiralty)
+        admiralty_badge = f'<span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="{adm_tooltip}">{admiralty}</span>' if admiralty else ""
+
+        # Velocity arrow
+        velocity = r.get("velocity", "unknown")
+        arrow, arrow_color, arrow_label = VELOCITY_ARROW.get(velocity, VELOCITY_ARROW["unknown"])
+        velocity_badge = f'<span class="{arrow_color} text-sm font-bold" title="Trend: {arrow_label}">{arrow} {arrow_label}</span>'
+
+        # Dominant pillar tag
+        pillar = r.get("dominant_pillar", "")
+        pillar_tag = f'<span class="inline-block bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">{pillar}</span>' if pillar else ""
+
         region_cards += f"""
         <div class="bg-white rounded-lg shadow-md p-6 border-l-4 {style['border']}">
             <div class="flex justify-between items-start mb-3">
@@ -69,11 +115,31 @@ def build():
                 <span class="{style['bg']} text-white text-xs font-bold px-3 py-1 rounded-full">{sev}</span>
             </div>
             <p class="text-3xl font-bold {style['text']} mb-3">${r.get("vacr_exposure", 0):,.0f}</p>
-            <div class="mb-3">{scenario_tag}</div>
+            <div class="flex flex-wrap gap-2 items-center mb-3">
+                {scenario_tag}{admiralty_badge}{pillar_tag}
+            </div>
+            <div class="mb-3">{velocity_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{r.get("strategic_assessment", "")}</p>
         </div>"""
 
-    # Build clear region cards from data.json
+    # Build monitor region cards
+    monitor_cards = ""
+    for m in monitor_regions:
+        region_name = m.get("region", "Unknown")
+        admiralty = m.get("admiralty_rating", "")
+        adm_tooltip = admiralty_tooltip(admiralty)
+        admiralty_badge = f'<span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="{adm_tooltip}">{admiralty}</span>' if admiralty else ""
+        monitor_cards += f"""
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-400">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">{region_name}</h3>
+                <span class="bg-amber-400 text-white text-xs font-bold px-3 py-1 rounded-full">Watch</span>
+            </div>
+            <div class="mb-2">{admiralty_badge}</div>
+            <p class="text-sm text-gray-600 leading-relaxed">{m.get("rationale", "Elevated indicators below escalation threshold.")}</p>
+        </div>"""
+
+    # Build clear region cards
     clear_cards = ""
     for region in REGIONS:
         rd = region_data.get(region, {})
@@ -107,6 +173,15 @@ def build():
     if not trace_rows:
         trace_rows = '<div class="text-gray-400 text-xs italic">No trace events recorded.</div>'
 
+    # Monitor section HTML — only render if there are monitor regions
+    monitor_section = ""
+    if monitor_cards:
+        monitor_section = f"""
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Watch Regions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {monitor_cards}
+        </div>"""
+
     html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -131,23 +206,35 @@ def build():
 
     <main class="max-w-7xl mx-auto px-8 py-8">
         <!-- KPI Strip -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-red-600">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Value at Cyber Risk</p>
-                <p class="text-4xl font-black text-red-600">${total_vacr:,.0f}</p>
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-red-600">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total VaCR</p>
+                <p class="text-3xl font-black text-red-600">${total_vacr:,.0f}</p>
             </div>
-            <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-blue-600">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total Regions</p>
-                <p class="text-4xl font-black text-blue-600">{len(REGIONS)}</p>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-blue-600">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Regions</p>
+                <p class="text-3xl font-black text-blue-600">{len(REGIONS)}</p>
             </div>
-            <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-red-500">
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-red-500">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Escalated</p>
-                <p class="text-4xl font-black text-red-500">{escalated_count}</p>
+                <p class="text-3xl font-black text-red-500">{escalated_count}</p>
             </div>
-            <div class="bg-white rounded-lg shadow-md p-6 text-center border-t-4 border-green-600">
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-amber-400">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Watch</p>
+                <p class="text-3xl font-black text-amber-400">{monitor_count}</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-green-600">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Clear</p>
-                <p class="text-4xl font-black text-green-600">{clear_count}</p>
+                <p class="text-3xl font-black text-green-600">{clear_count}</p>
             </div>
+        </div>
+
+        <!-- Admiralty Legend -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 text-xs text-blue-800">
+            <span class="font-bold">Admiralty Scale:</span>
+            Reliability A (confirmed) → F (unknown) &nbsp;|&nbsp;
+            Credibility 1 (confirmed) → 6 (unverifiable) &nbsp;|&nbsp;
+            e.g. <span class="font-mono font-bold">B2</span> = Usually reliable source, probably true
         </div>
 
         <!-- Executive Summary -->
@@ -161,6 +248,8 @@ def build():
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {region_cards}
         </div>
+
+        {monitor_section}
 
         <!-- Clear Region Cards -->
         <h2 class="text-lg font-bold text-gray-900 mb-4">Clear Regions</h2>
@@ -187,12 +276,12 @@ def build():
 
     with open("output/dashboard.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"Dashboard written to output/dashboard.html ({escalated_count} escalated, {clear_count} clear, {len(trace_lines)} trace events)")
+    print(f"Dashboard written to output/dashboard.html ({escalated_count} escalated, {monitor_count} watch, {clear_count} clear, {len(trace_lines)} trace events)")
 
-    # Also render a markdown version for PDF/PPTX export compatibility
+    # Markdown export
     md_lines = [
         f"# Global Executive Board Report — Cyber Risk Posture\n",
-        f"**Date:** {report_date} | **Classification:** Board Confidential | **Total Global Value at Cyber Risk (VaCR):** ${total_vacr:,.0f}\n",
+        f"**Date:** {report_date} | **Classification:** Board Confidential | **Total Global VaCR:** ${total_vacr:,.0f}\n",
         f"---\n",
         f"## Executive Summary\n",
         f"{summary}\n",
@@ -200,10 +289,31 @@ def build():
         f"## Escalated Regions\n",
     ]
     for r in threat_regions:
-        scenarios = r.get("primary_scenario", "")
+        admiralty = r.get("admiralty_rating", "")
+        velocity = r.get("velocity", "unknown")
+        arrow, _, arrow_label = VELOCITY_ARROW.get(velocity, VELOCITY_ARROW["unknown"])
+        pillar = r.get("dominant_pillar", "")
         md_lines.append(f"### {r.get('region', 'Unknown')} — ${r.get('vacr_exposure', 0):,.0f} at Risk | Severity: {r.get('severity', 'N/A')}\n")
-        md_lines.append(f"**Primary Scenario:** {scenarios}\n")
+        meta = []
+        if admiralty:
+            meta.append(f"**Intelligence Assessment:** {admiralty} ({admiralty_tooltip(admiralty)})")
+        if velocity:
+            meta.append(f"**Trend:** {arrow} {arrow_label}")
+        if pillar:
+            meta.append(f"**Dominant Pillar:** {pillar}")
+        if meta:
+            md_lines.append(" | ".join(meta) + "\n")
+        md_lines.append(f"**Primary Scenario:** {r.get('primary_scenario', '')}\n")
         md_lines.append(f"{r.get('strategic_assessment', '')}\n")
+
+    if monitor_regions:
+        md_lines.append("## Watch Regions\n")
+        for m in monitor_regions:
+            admiralty = m.get("admiralty_rating", "")
+            md_lines.append(f"### {m.get('region', 'Unknown')} — Watch\n")
+            if admiralty:
+                md_lines.append(f"**Intelligence Assessment:** {admiralty} ({admiralty_tooltip(admiralty)})\n")
+            md_lines.append(f"{m.get('rationale', '')}\n")
 
     md_lines.append("## Clear Regions\n")
     for region in REGIONS:
@@ -213,7 +323,7 @@ def build():
             md_lines.append("No credible threat identified. Region operating within normal risk parameters.\n")
 
     md_lines.append("---\n")
-    md_lines.append(f"*Regions escalated: {escalated_count} | Regions clear: {clear_count} | Source: Enterprise CRQ Application*\n")
+    md_lines.append(f"*Escalated: {escalated_count} | Watch: {monitor_count} | Clear: {clear_count} | Source: Enterprise CRQ Application*\n")
 
     with open("output/global_report.md", "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))

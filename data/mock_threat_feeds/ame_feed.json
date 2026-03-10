@@ -4,5 +4,15 @@
     "active_threats": true,
     "primary_scenario": "Ransomware",
     "vacr_exposure_usd": 22000000,
+    "dominant_pillar": "Cyber",
+    "geo_signals": {
+        "summary": "No significant state-actor involvement. Financially motivated criminal syndicates operating independently of geopolitical directives. General energy sector targeting driven by perceived ransom payment likelihood.",
+        "lead_indicators": ["Financially motivated criminal syndicate activity", "Energy sector targeting pattern", "No state-actor attribution"]
+    },
+    "cyber_signals": {
+        "summary": "Active ransomware campaign confirmed targeting energy sector service providers. Attack pattern focuses on encrypting live wind farm telemetry systems and remote maintenance scheduling platforms to maximise operational disruption and ransom leverage.",
+        "threat_vector": "Ransomware deployment via phishing and exposed remote access services",
+        "target_assets": ["Live wind farm telemetry", "Remote maintenance scheduling", "Service delivery systems"]
+    },
     "geopolitical_context": "Financially motivated syndicates are targeting energy sector service providers. High risk of Ransomware attacks aimed at paralyzing live wind farm telemetry and remote maintenance scheduling."
 }

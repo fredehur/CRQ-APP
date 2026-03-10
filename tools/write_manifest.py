@@ -5,6 +5,7 @@ import sys
 from datetime import datetime, timezone
 from config import REGIONS
 
+
 def build_manifest():
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     date_slug = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
@@ -23,12 +24,18 @@ def build_manifest():
                 "status": data.get("status", "unknown"),
                 "severity": data.get("severity", "LOW"),
                 "vacr_usd": vacr,
+                "admiralty": data.get("admiralty", None),
+                "velocity": data.get("velocity", "unknown"),
+                "dominant_pillar": data.get("dominant_pillar", None),
             }
         else:
             regions_summary[region] = {
                 "status": "missing",
                 "severity": "UNKNOWN",
                 "vacr_usd": 0,
+                "admiralty": None,
+                "velocity": "unknown",
+                "dominant_pillar": None,
             }
 
     manifest = {
@@ -45,6 +52,7 @@ def build_manifest():
             "board_report_pdf": "board_report.pdf",
             "board_report_pptx": "board_report.pptx",
             "system_trace": "system_trace.log",
+            "trend_brief": "trend_brief.json",
         },
     }
 
@@ -53,6 +61,7 @@ def build_manifest():
         json.dump(manifest, f, indent=2)
 
     print(f"Wrote {out_path} — {len(REGIONS)} regions, total VaCR: ${total_vacr:,.0f}")
+
 
 if __name__ == "__main__":
     build_manifest()

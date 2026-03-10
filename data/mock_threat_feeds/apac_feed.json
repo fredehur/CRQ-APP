@@ -4,5 +4,15 @@
     "active_threats": true,
     "primary_scenario": "System intrusion",
     "vacr_exposure_usd": 18500000,
+    "dominant_pillar": "Geopolitical",
+    "geo_signals": {
+        "summary": "State-sponsored APT groups linked to South China Sea territorial disputes are actively targeting regional manufacturing supply chains. Trade tension escalation between major powers is increasing the frequency of state-directed industrial espionage campaigns.",
+        "lead_indicators": ["South China Sea territorial dispute escalation", "State-sponsored supply chain targeting", "Manufacturing IP theft campaigns"]
+    },
+    "cyber_signals": {
+        "summary": "APT campaign targeting turbine manufacturing IP and OT/SCADA networks. Intrusion attempts focused on exfiltrating proprietary blade design specifications and disrupting predictive maintenance data pipelines.",
+        "threat_vector": "System intrusion via spear-phishing and supply chain compromise",
+        "target_assets": ["Turbine manufacturing IP", "OT/SCADA networks", "Predictive maintenance algorithms"]
+    },
     "geopolitical_context": "State-sponsored APT groups in the South China Sea are targeting regional supply chains. Elevated risk of System Intrusion targeting manufacturing IP and SCADA networks to disrupt regional turbine production."
 }

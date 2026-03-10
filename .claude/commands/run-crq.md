@@ -27,27 +27,34 @@ Log start: `uv run python tools/audit_logger.py PIPELINE_START "AeroGrid CRQ Pip
 Read `data/mock_crq_database.json` to load all regional data.
 
 Spawn all 5 regional pipelines simultaneously using the Task tool with `run_in_background: true`.
-Each task is self-contained and writes its own output file. Do NOT wait for one to finish before starting the next.
+Each task is self-contained and writes its own output files. Do NOT wait for one to finish before starting the next.
 
 **Spawn these 5 tasks in a single batch:**
 
-- Task 1 — APAC: Run the full regional pipeline for APAC:
-  1. Run `uv run python tools/geopolitical_context.py APAC`
-  2. Delegate to `gatekeeper-agent` with region APAC and its critical assets from the CRQ database.
-     - If NO: run `uv run python tools/write_region_data.py APAC clear` then `uv run python tools/audit_logger.py GATEKEEPER_NO "APAC — no active threat, compute saved"` and stop this task.
-     - If YES: run `uv run python tools/write_region_data.py APAC escalated` then `uv run python tools/audit_logger.py GATEKEEPER_YES "APAC — threat confirmed, escalating to analysis"`
-  3. Run `uv run python tools/threat_scorer.py APAC` and extract severity number.
-  4. Delegate to `regional-analyst-agent`. Provide: region APAC, critical assets, VaCR, geopolitical context, threat feed output, severity score. Agent writes directly to `output/regional/apac/report.md`.
+For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
-- Task 2 — AME: Same pipeline for AME. Agent writes to `output/regional/ame/report.md`.
+1. Run `uv run python tools/geopolitical_context.py {REGION}`
+2. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
+   The gatekeeper writes `output/regional/{region_lower}/gatekeeper_decision.json` and returns one word: ESCALATE, MONITOR, or CLEAR.
 
-- Task 3 — LATAM: Same pipeline for LATAM. Agent writes to `output/regional/latam/report.md`.
+3. **If CLEAR:**
+   - Run `uv run python tools/write_region_data.py {REGION} clear`
+   - Run `uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — clear, no active threat"`
+   - Stop this regional task.
 
-- Task 4 — MED: Same pipeline for MED. Agent writes to `output/regional/med/report.md`.
+4. **If MONITOR:**
+   - Run `uv run python tools/write_region_data.py {REGION} monitor`
+   - Run `uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — monitor, elevated indicators below escalation threshold"`
+   - Stop this regional task. No regional analyst needed.
 
-- Task 5 — NCE: Same pipeline for NCE. Agent writes to `output/regional/nce/report.md`.
+5. **If ESCALATE:**
+   - Run `uv run python tools/write_region_data.py {REGION} escalated`
+   - Run `uv run python tools/audit_logger.py GATEKEEPER_YES "{REGION} — escalated, proceeding to analysis"`
+   - Run `uv run python tools/threat_scorer.py {REGION}` and extract severity score.
+   - Read `output/regional/{region_lower}/gatekeeper_decision.json` to get the Admiralty rating.
+   - Delegate to `regional-analyst-agent`. Provide: region, critical assets, VaCR, geopolitical context output, threat feed output, severity score, and Admiralty rating. Agent writes directly to `output/regional/{region_lower}/report.md`.
 
-**Fan-in:** Wait until all 5 tasks complete. Then, for each region that produced a report (check `output/regional/{REGION}/report.md` for existing files), run the jargon auditor as the orchestrator — this is intentional, the orchestrator owns quality gates, not the workers:
+**Fan-in:** Wait until all 5 tasks complete. Then run the jargon auditor for each escalated region:
 
 ```
 for REGION in apac ame med latam nce:
@@ -55,30 +62,37 @@ for REGION in apac ame med latam nce:
     uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}/report.md {REGION}
     exit 0 → uv run python tools/audit_logger.py HOOK_PASS "{REGION} jargon audit passed"
     exit 2 → uv run python tools/audit_logger.py HOOK_FAIL "{REGION} jargon audit failed — rewrite triggered"
-             then rewrite the draft and re-run the auditor
+             then rewrite the brief and re-run the auditor
 ```
 
-## PHASE 2 — CROSS-REGIONAL DIFF
+## PHASE 2 — VELOCITY ANALYSIS
+
+Run: `uv run python tools/trend_analyzer.py`
+This reads archived runs from `output/runs/`, computes velocity per region, writes `output/trend_brief.json`, and patches velocity into each `output/regional/{region}/data.json`.
+Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Velocity analysis complete — trend_brief.json written"`
+
+## PHASE 3 — CROSS-REGIONAL DIFF
 
 Run: `uv run python tools/report_differ.py`
 Capture output as the delta brief.
 Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Cross-regional diff complete"`
 
-## PHASE 3 — GLOBAL REPORT
+## PHASE 4 — GLOBAL REPORT
 
-Delegate to `global-analyst-agent`. Provide all approved regional briefs and the delta brief.
-Agent writes `output/global_report.json`. Stop hooks validate JSON schema then jargon.
+Delegate to `global-builder-agent`. Provide all approved regional briefs, the delta brief, and the path to `output/trend_brief.json`.
+Agent reads regional reports, data.json files, and trend brief, then writes `output/global_report.json`.
+Stop hooks validate JSON schema (including Admiralty and velocity fields), then jargon.
 Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Global JSON report validated"`
 
-## PHASE 4 — DASHBOARD & EXPORT
+## PHASE 5 — DASHBOARD & EXPORT
 
 Run: `uv run python tools/build_dashboard.py`
-Generates `output/dashboard.html` (Tailwind executive dashboard) and `output/global_report.md`.
+Generates `output/dashboard.html` (Tailwind executive dashboard with Admiralty badges and velocity arrows) and `output/global_report.md`.
 
 Run: `uv run python tools/export_pdf.py output/global_report.md output/board_report.pdf`
 Run: `uv run python tools/export_pptx.py output/global_report.md output/board_report.pptx`
 
-## PHASE 5 — FINALIZE
+## PHASE 6 — FINALIZE
 
 Run: `uv run python tools/write_manifest.py` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
 

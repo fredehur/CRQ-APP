@@ -4,5 +4,15 @@
     "active_threats": false,
     "primary_scenario": "None",
     "vacr_exposure_usd": 0,
+    "dominant_pillar": null,
+    "geo_signals": {
+        "summary": "NATO-aligned stable region. No elevated state-actor threats against energy infrastructure. EU regulatory environment provides strong baseline governance.",
+        "lead_indicators": []
+    },
+    "cyber_signals": {
+        "summary": "No active threat campaigns detected. Routine scanning activity consistent with background noise. No targeting of wind energy operators observed.",
+        "threat_vector": null,
+        "target_assets": []
+    },
     "geopolitical_context": "Routine operations. No significant geopolitical anomalies or targeted cyber campaigns detected against the renewable energy sector in this region."
 }

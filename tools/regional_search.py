@@ -27,12 +27,31 @@ def search(region, mock=True):
     vacr = feed.get("vacr_exposure_usd", 0)
     geo_ctx = feed.get("geopolitical_context", "")
 
+    geo_signals = feed.get("geo_signals", {})
+    cyber_signals = feed.get("cyber_signals", {})
+    dominant_pillar = feed.get("dominant_pillar", None)
+
     print(f"=== Threat Intelligence: {region} ===")
     print(f"  Active Threats: {active}")
     print(f"  Severity: {severity}")
     print(f"  Primary Scenario: {scenario}")
     print(f"  VaCR Exposure: ${vacr:,.0f}")
+    print(f"  Dominant Pillar: {dominant_pillar or 'N/A'}")
     print(f"  Geopolitical Context: {geo_ctx}")
+
+    if geo_signals:
+        print(f"\n=== Geopolitical Signals (The Why) ===")
+        print(f"  {geo_signals.get('summary', '')}")
+        for indicator in geo_signals.get("lead_indicators", []):
+            print(f"  • {indicator}")
+
+    if cyber_signals:
+        print(f"\n=== Cyber Signals (The How) ===")
+        print(f"  {cyber_signals.get('summary', '')}")
+        if cyber_signals.get("threat_vector"):
+            print(f"  Threat Vector: {cyber_signals['threat_vector']}")
+        for asset in cyber_signals.get("target_assets", []):
+            print(f"  • Target: {asset}")
 
     if active and scenario != "None":
         master = load_master_scenarios()

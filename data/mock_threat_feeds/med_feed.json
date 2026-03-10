@@ -4,5 +4,15 @@
     "active_threats": true,
     "primary_scenario": "Insider misuse",
     "vacr_exposure_usd": 4200000,
+    "dominant_pillar": "Geopolitical",
+    "geo_signals": {
+        "summary": "Prolonged economic instability across southern Europe is increasing financial stress on field service and maintenance workforce. Austerity measures and high unemployment in key operating markets are elevating insider threat risk as personnel seek alternative income sources.",
+        "lead_indicators": ["Southern European economic instability", "Workforce financial stress indicators", "Elevated corporate espionage risk in region"]
+    },
+    "cyber_signals": {
+        "summary": "Anomalous access patterns detected on predictive maintenance algorithm repositories and offshore servicing contract documentation. Access events inconsistent with operational roles, suggesting data reconnaissance for potential exfiltration.",
+        "threat_vector": "Insider misuse via privileged access abuse",
+        "target_assets": ["Predictive maintenance algorithms", "Offshore servicing contracts", "Proprietary turbine IP"]
+    },
     "geopolitical_context": "Economic instability in southern Europe has increased the risk of corporate espionage and Insider Misuse, specifically targeting predictive maintenance algorithms and offshore servicing contracts."
 }
