@@ -262,6 +262,7 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
               Inches(7), Inches(0.45), font_size=16, bold=True, color=WHITE)
 
     y = Inches(0.85)
+    Y_MAX = Inches(7.1)  # slide height is 7.5in; stop adding rows near the bottom
     monitor = [r for r in data.regions if r.status == RegionStatus.MONITOR]
     clear   = [r for r in data.regions if r.status == RegionStatus.CLEAR]
 
@@ -270,17 +271,21 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
                   Inches(9), Inches(0.3), font_size=9, bold=True, color=AMBER)
         y += Inches(0.35)
         for r in monitor:
+            if y >= Y_MAX:
+                break
             txt = f"{r.name}  ·  {r.scenario_match or 'No scenario'}  ·  Admiralty {r.admiralty or '—'}  ·  {r.severity or '—'}"
             _add_text(slide, txt, Inches(0.6), y, Inches(9), Inches(0.35),
                       font_size=9, color=DARK)
             y += Inches(0.38)
         y += Inches(0.2)
 
-    if clear:
+    if clear and y < Y_MAX:
         _add_text(slide, "CLEAR REGIONS", Inches(0.4), y,
                   Inches(9), Inches(0.3), font_size=9, bold=True, color=GREEN)
         y += Inches(0.35)
         for r in clear:
+            if y >= Y_MAX:
+                break
             _add_text(slide, f"{r.name}  —  No active threat detected this cycle.",
                       Inches(0.6), y, Inches(9), Inches(0.35),
                       font_size=9, color=DARK)
@@ -288,9 +293,10 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
         y += Inches(0.2)
 
     # Run metadata
-    _add_text(slide, "RUN METADATA", Inches(0.4), y,
-              Inches(9), Inches(0.3), font_size=9, bold=True, color=SLATE)
-    y += Inches(0.35)
+    if y < Y_MAX:
+        _add_text(slide, "RUN METADATA", Inches(0.4), y,
+                  Inches(9), Inches(0.3), font_size=9, bold=True, color=SLATE)
+        y += Inches(0.35)
     meta_rows = [
         ("Pipeline ID",    data.run_id),
         ("Timestamp",      data.timestamp),
@@ -299,6 +305,8 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
         ("Clear",          str(data.clear_count)),
     ]
     for label, value in meta_rows:
+        if y >= Y_MAX:
+            break
         _add_text(slide, f"{label}:  {value}",
                   Inches(0.6), y, Inches(9), Inches(0.3),
                   font_size=9, color=DARK)

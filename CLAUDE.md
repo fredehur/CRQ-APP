@@ -26,8 +26,8 @@ uv run python tools/write_region_data.py <REGION> <escalated|clear>  # Write reg
 uv run python tools/write_manifest.py                    # Assemble run_manifest.json from all data.json
 uv run python tools/archive_run.py                       # Archive current run to output/runs/{timestamp}/ + update output/latest/
 uv run python tools/build_dashboard.py                   # Build HTML dashboard + MD export from JSON
-uv run python tools/export_pdf.py <input.md> <out.pdf>   # Export markdown to PDF
-uv run python tools/export_pptx.py <input.md> <out.pptx> # Export markdown to PowerPoint
+uv run python tools/export_pdf.py [out.pdf]              # Export board PDF (Playwright + Jinja2); defaults to output/board_report.pdf
+uv run python tools/export_pptx.py [out.pptx]           # Export board PPTX (python-pptx); defaults to output/board_report.pptx
 
 # Validate the CRQ database schema
 uv run python .claude/hooks/validators/crq-schema-validator.py data/mock_crq_database.json
