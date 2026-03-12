@@ -31,8 +31,8 @@ geo_collector.py   ──► geo_signals.json               (existing, unchanged
 cyber_collector.py ──► cyber_signals.json              (existing, unchanged)
                    ──► intelligence_sources.json        (appends cyber_sources array)
 
-gatekeeper_decision.json  ──► build_dashboard.py        (E-1: now surfaced)
-scenario_map.json         ──► build_dashboard.py        (E-1: now surfaced)
+gatekeeper_decision.json  ──► build_dashboard.py        (E-1: now read + surfaced)
+scenario_map.json         ──► build_dashboard.py        (E-1: now read + surfaced — new read)
 intelligence_sources.json ──► build_dashboard.py        (E-2: new)
                           ──► export_pdf.py             (E-2: new)
                           ──► export_pptx.py            (E-2: new)
@@ -46,22 +46,24 @@ No SQLite. No new servers until E-3. No changes to agent files or signal file sc
 
 ### What changes
 
-- `tools/build_dashboard.py` — reads `gatekeeper_decision.json` per region (already reads `data.json` from same directory); injects fields into Jinja template
-- `tools/export_pdf.py` — adds one "Basis of assessment" field per region section from `gatekeeper_decision.rationale`
+- `tools/build_dashboard.py` — **new reads**: `gatekeeper_decision.json` and `scenario_map.json` per region (currently reads `data.json` only from each region directory); injects fields into Jinja template
+- `tools/export_pdf.py` — adds "Basis of assessment" label + `gatekeeper_decision.rationale` value per region section
 - `tools/export_pptx.py` — same one-line addition per region slide
 
-### Data surfaced (already written by pipeline, not yet shown)
+### Data surfaced
 
-From `output/regional/{region}/gatekeeper_decision.json`:
+**From `output/regional/{region}/gatekeeper_decision.json`** (written by gatekeeper-agent, not yet read by dashboard):
 - `decision` (ESCALATE / MONITOR / CLEAR)
 - `admiralty.rating` (e.g., "B2")
 - `scenario_match` (e.g., "System intrusion")
 - `dominant_pillar` (e.g., "Geopolitical")
 - `rationale` (one-sentence assessment)
 
-From `output/regional/{region}/scenario_map.json`:
-- `financial_rank` (1–9)
-- `confidence` (high / medium / low)
+**From `output/regional/{region}/scenario_map.json`** (written by scenario_mapper.py, not yet read by dashboard):
+- `financial_rank` (integer 1–9)
+- `confidence` ("high" / "medium" / "low")
+
+Note: `scenario_map.json` is currently not read by `build_dashboard.py`. Reading it is a real new code addition, not passive surfacing.
 
 ### Dashboard rendering
 
@@ -76,23 +78,27 @@ Each region card gains a "Decision Intelligence" block:
 └──────────────────────────────────────────────────────────────┘
 ```
 
-CLEAR and MONITOR regions render the same block explaining why they were not escalated. Clear signals are as valuable as alerts.
+CLEAR and MONITOR regions render the same block, explaining why they were not escalated ("No top-4 financial impact scenario identified. Physical threat ranks #6."). Clear signals are as valuable as alerts.
 
 ### Graceful degradation
 
-If `gatekeeper_decision.json` is absent (pre-D2 archived runs), the block is omitted silently. No errors.
+If `gatekeeper_decision.json` or `scenario_map.json` is absent (pre-D2 archived runs), the Decision Intelligence block is omitted silently.
 
-### No new tests required
+### Tests
 
-Existing tests cover `build_dashboard.py` output. A single assertion that the decision block renders when `gatekeeper_decision.json` is present is sufficient.
+- `build_dashboard.py` renders Decision Intelligence block when `gatekeeper_decision.json` is present (use a test fixture file — do not depend on a prior pipeline run)
+- `build_dashboard.py` omits block gracefully when file is absent
+- `export_pdf.py` renders "Basis of assessment" when `gatekeeper_decision.json` is present (test fixture)
+- `export_pdf.py` runs without exception when file is absent
+- `export_pptx.py` — same two tests as PDF
 
 ---
 
 ## E-2 — Intelligence Provenance
 
-### New file
+### New file per region
 
-`output/regional/{region}/intelligence_sources.json` — written by `geo_collector.py` and `cyber_collector.py`. One file per region, two sections.
+`output/regional/{region}/intelligence_sources.json` — written by `geo_collector.py` (geo_sources array) and then extended by `cyber_collector.py` (cyber_sources array). Sequential write within a region; the collectors are always called in order geo → cyber by `run-crq.md` step 1.
 
 ### Schema
 
@@ -103,7 +109,7 @@ Existing tests cover `build_dashboard.py` output. A single assertion that the de
   "geo_sources": [
     {
       "title": "South China Sea tensions drive supply chain restructuring",
-      "snippet": "Multinational manufacturers are accelerating diversification away from single-region dependencies. Wind energy components face significant exposure.",
+      "snippet": "Multinational manufacturers are accelerating diversification away from single-region dependencies.",
       "url": "https://example.com/article-1",
       "published_date": "2026-03-10"
     }
@@ -111,7 +117,7 @@ Existing tests cover `build_dashboard.py` output. A single assertion that the de
   "cyber_sources": [
     {
       "title": "APT campaign targets APAC OT manufacturing networks",
-      "snippet": "Security researchers documented new intrusion campaigns targeting wind turbine control systems and predictive maintenance platforms.",
+      "snippet": "Security researchers documented new intrusion campaigns targeting wind turbine control systems.",
       "url": "https://example.com/article-2",
       "published_date": "2026-03-08"
     }
@@ -119,34 +125,53 @@ Existing tests cover `build_dashboard.py` output. A single assertion that the de
 }
 ```
 
-### Collector changes
+### Collector changes (scope clarification)
 
-Both `geo_collector.py` and `cyber_collector.py` already hold the raw source array from `osint_search.py` before building the aggregate summary. The change: serialize it to `intelligence_sources.json` as an additional write after the signal file. Signal file schemas (`geo_signals.json`, `cyber_signals.json`) are unchanged — agents reading them are unaffected.
+`osint_search.py` returns `[{title, snippet, url, published_date}]` — a raw article list. Currently, each collector's `collect()` function passes this list into a normalizer that produces the aggregate summary and then discards the raw list. The `collect()` return value is the normalized dict only.
 
-`geo_collector.py` writes the file with `geo_sources` only.
-`cyber_collector.py` reads the file if it exists and appends `cyber_sources`, or creates it fresh.
+**Required change:** modify `collect()` in both collectors to return a tuple `(normalized_dict, raw_sources_list)`. The calling code writes `normalized_dict` to the signal file (unchanged) and writes `raw_sources_list` to `intelligence_sources.json` (new).
 
-### Mock fixtures
+This is a real implementation change to both collector functions, not a trivial side-effect write.
 
-Add `{region}_sources.json` to `data/mock_osint_fixtures/` for all 5 regions (APAC, AME, LATAM, MED, NCE). Each file contains 2–3 realistic fake entries per source type. In mock mode, collectors populate `intelligence_sources.json` from these fixtures instead of live search results.
+**Write sequence within a region (always sequential, enforced by run-crq.md):**
+1. `geo_collector.py` writes `intelligence_sources.json` with `geo_sources` array only.
+2. `cyber_collector.py` reads the file, merges in `cyber_sources`, writes the updated file.
+
+**Guard:** `cyber_collector.py` checks that the file it reads contains a `geo_sources` key before merging. If absent (out-of-order invocation outside the pipeline), it logs a warning to `system_trace.log` and writes only `cyber_sources`. This prevents silent data loss.
+
+### Mock mode
+
+In mock mode, `osint_search.py` dumps the fixture file directly to stdout without transformation. The existing fixture format is `{title, summary, source, date}` — where `source` is a publication name (e.g., "Financial Times Asia"), not a URL.
+
+**No fixture migration required.** The collectors map the fixture fields to the `intelligence_sources.json` schema on write:
+
+| Fixture field | `intelligence_sources.json` field |
+|---|---|
+| `title` | `title` |
+| `summary` | `snippet` |
+| `source` | `source` (publication name, kept as-is) |
+| `date` | `published_date` |
+
+There is no `url` field in mock mode. The `intelligence_sources.json` entries in mock mode omit `url` or set it to `null`. The dashboard renders `source` (publication name) as the link label with no href in mock mode. A `"mock": true` flag is added to each source entry so the dashboard can render the "MOCK" badge.
 
 ### Dashboard rendering
 
-Each region card gains a collapsible "Intelligence Sources" section below the Decision Intelligence block. Geo and cyber sources listed in separate sub-sections. Each source shows: title (linked if URL is real), snippet, and date. In mock mode, a small "MOCK" badge appears on each source. Section is absent if `intelligence_sources.json` does not exist.
+Each region card gains a collapsible "Intelligence Sources" section below the Decision Intelligence block. Geo and cyber sources listed in separate sub-sections. Each source: title (linked if URL is real), snippet, date. In mock mode, a "MOCK" badge appears per source. Section absent if `intelligence_sources.json` does not exist.
 
 ### Export rendering
 
-**PDF** — "Sources Consulted" appendix page. Table format: Region | Title | Date. Snippets omitted (space constrained). Escalated regions only.
+**PDF** — "Sources Consulted" appendix page. Table: Region | Title | Date. Snippets omitted (space constrained). Escalated regions only.
 
 **PPTX** — identical appendix slide with the same condensed table.
 
 ### Tests
 
-- `geo_collector.py` in mock mode writes `intelligence_sources.json` with `geo_sources` array
-- `cyber_collector.py` in mock mode appends `cyber_sources` to existing file
+- `geo_collector.py` in mock mode: `intelligence_sources.json` written with `geo_sources` array, correct field names
+- `cyber_collector.py` in mock mode: `intelligence_sources.json` extended with `cyber_sources` array, `geo_sources` preserved
+- `cyber_collector.py` guard: file without `geo_sources` key → warns and writes `cyber_sources` only, no exception
 - Schema validation: required keys present, arrays non-empty in mock mode
-- Graceful handling of empty source arrays (collector writes file with empty arrays, no crash)
-- Signal files (`geo_signals.json`, `cyber_signals.json`) are unchanged after E-2 collector runs
+- Empty source array: collector writes file with empty array, no crash
+- Signal files unchanged after E-2 collector runs (`geo_signals.json` and `cyber_signals.json` content identical to pre-E-2)
 
 ---
 
@@ -154,19 +179,12 @@ Each region card gains a collapsible "Intelligence Sources" section below the De
 
 ### New tool: `tools/send_event.py`
 
-Fire-and-forget HTTP POST to `http://localhost:8000/internal/event`. Silently swallows connection errors — never blocks the pipeline whether or not the server is running.
+Fire-and-forget HTTP POST to `http://localhost:8000/internal/event`. Silently swallows connection errors. Also appends to `output/system_trace.log` via `audit_logger.py` as fallback — this is the only log write for hook-originated events (there are no duplicate `audit_logger.py` calls in `run-crq.md` for the same agent lifecycle events, so no duplication occurs).
 
 CLI usage (called from hook scripts):
 ```bash
 uv run python tools/send_event.py <EVENT_TYPE> <AGENT_ID> '<JSON_PAYLOAD>'
 ```
-
-Example:
-```bash
-uv run python tools/send_event.py AGENT_START "regional-APAC" '{"region":"APAC","phase":"collecting"}'
-```
-
-Also appends the event to `output/system_trace.log` via `audit_logger.py` — hook events are always logged to the flat file regardless of whether the server is running.
 
 ### `server.py` change
 
@@ -178,69 +196,73 @@ Body: { "event_type": str, "agent_id": str, "payload": dict }
 → puts to event_queue → SSE broadcast to all connected dashboard clients
 ```
 
-The existing `event_queue` and SSE endpoint already handle this pattern. No structural changes to `server.py`.
+The existing `event_queue` and SSE infrastructure already handle this pattern.
 
-### Hook scripts
+### Hooks
 
-Three new scripts in `.claude/hooks/`:
+**Claude Code's hook system** supports four event types: `PreToolUse`, `PostToolUse`, `Stop`, `Notification`. There is no `subagent_start` hook. The design uses the hooks that actually exist:
 
-| Script | Trigger | Event fired |
+| Goal | Claude Code hook | Implementation |
 |---|---|---|
-| `subagent-start.sh` | `subagent_start` hook | `AGENT_START` with region from agent name |
-| `subagent-stop.sh` | `subagent_stop` hook | `AGENT_STOP` with region + exit code |
-| `tool-failure.sh` | `post_tool_use_failure` hook | `TOOL_FAILURE` with tool name + error |
+| Agent completion telemetry | `Stop` hook | Hook script fires `AGENT_STOP` with agent name + exit code. Registered in `.claude/settings.json` alongside existing jargon/json auditor Stop hooks. |
+| Tool failure telemetry | `PostToolUse` hook | Hook script checks exit code; if non-zero, fires `TOOL_FAILURE`. |
+| Agent start telemetry | No hook available | `AGENT_START` events are logged via direct `audit_logger.py` calls added to `run-crq.md` before each agent delegation — not via hooks. |
 
-Each script: extracts relevant fields from hook environment variables, calls `send_event.py`, exits 0 (never blocks).
+Hook scripts live in `.claude/hooks/` and are registered in `.claude/settings.json` alongside existing hooks. Each script: extracts fields from hook environment variables, calls `send_event.py`, exits 0.
 
 ### Dashboard live strip
 
-A status strip above the region cards, visible only during an active pipeline run. Each region shows its current state: `PENDING → COLLECTING → ANALYZING → ESCALATED / MONITOR / CLEAR`. Driven purely by SSE events — no polling. Strip collapses after `PIPELINE_COMPLETE` event is received.
+A status strip above the region cards, visible only during an active pipeline run. Each region: `PENDING → COLLECTING → ANALYZING → ESCALATED / MONITOR / CLEAR`. Driven purely by SSE — no polling. Strip collapses after `PIPELINE_COMPLETE` event.
 
 ### Graceful degradation
 
-If `server.py` is not running (CLI-only pipeline mode):
+If `server.py` is not running:
 - `send_event.py` fails silently
-- Hook scripts exit 0
-- `system_trace.log` still receives all events via `audit_logger.py`
-- Dashboard shows the static post-run state as it does today
+- Hook scripts exit 0, pipeline continues
+- `system_trace.log` receives all events via `audit_logger.py`
+- Dashboard shows static post-run state
 
 ### Tests
 
-- `send_event.py` handles connection refused without raising
-- `send_event.py` logs to `system_trace.log` regardless of server availability
-- `/internal/event` endpoint puts event to `event_queue` and returns 200
+- `send_event.py` handles `ConnectionRefusedError` without raising
+- `send_event.py` writes to `system_trace.log` regardless of server availability
+- `POST /internal/event` puts event to `event_queue`, returns 200
 
 ---
 
 ## File Change Summary
 
 ### E-1 (no new files)
-- `tools/build_dashboard.py` — read + render `gatekeeper_decision.json` and `scenario_map.json` per region
-- `tools/export_pdf.py` — add "Basis of assessment" field
-- `tools/export_pptx.py` — add "Basis of assessment" field
+- `tools/build_dashboard.py` — new reads of `gatekeeper_decision.json` and `scenario_map.json` per region; render Decision Intelligence block
+- `tools/export_pdf.py` — add "Basis of assessment" field; graceful absence handling
+- `tools/export_pptx.py` — same
 
 ### E-2
-- `tools/geo_collector.py` — write `intelligence_sources.json` (geo_sources)
-- `tools/cyber_collector.py` — append `intelligence_sources.json` (cyber_sources)
+- `tools/geo_collector.py` — modify `collect()` to return raw source list; write `intelligence_sources.json`
+- `tools/cyber_collector.py` — same modification; read-merge-write `intelligence_sources.json` with guard
 - `tools/build_dashboard.py` — render "Intelligence Sources" collapsible section
-- `tools/export_pdf.py` — add "Sources Consulted" appendix
-- `tools/export_pptx.py` — add "Sources Consulted" appendix slide
-- `data/mock_osint_fixtures/` — add `{region}_sources.json` × 5
-- `tests/` — new test file for intelligence_sources schema and collector behaviour
+- `tools/export_pdf.py` — "Sources Consulted" appendix
+- `tools/export_pptx.py` — "Sources Consulted" appendix slide
+- `data/mock_osint_fixtures/{region}_geo.json` × 5 — add `results` array with mock source entries
+- `data/mock_osint_fixtures/{region}_cyber.json` × 5 — same
+- `tests/test_intelligence_sources.py` — new test file
 
 ### E-3
-- `tools/send_event.py` — new: fire-and-forget POST + log fallback
+- `tools/send_event.py` — new: fire-and-forget POST + trace log fallback
 - `server.py` — add `POST /internal/event` endpoint
-- `.claude/hooks/subagent-start.sh` — new
-- `.claude/hooks/subagent-stop.sh` — new
-- `.claude/hooks/tool-failure.sh` — new
+- `.claude/hooks/agent-stop.sh` — new: `Stop` hook → `AGENT_STOP` event
+- `.claude/hooks/tool-failure.sh` — new: `PostToolUse` hook → `TOOL_FAILURE` event
+- `.claude/settings.json` — register new hooks alongside existing Stop hooks
+- `.claude/commands/run-crq.md` — add `AGENT_START` log calls before each agent delegation
 - `static/index.html` — live status strip (SSE consumer)
-- `tests/` — send_event and endpoint tests
+- `tests/test_send_event.py` — new test file
 
 ---
 
 ## Definition of Done
 
-- E-1: Dashboard shows Decision Intelligence block for all 5 regions; PDF/PPTX include basis of assessment; all existing tests pass
-- E-2: Collectors write `intelligence_sources.json` in mock mode; dashboard renders collapsible sources; exports include appendix; new tests pass
-- E-3: Hook fires → `system_trace.log` updated; dashboard live strip shows region states during pipeline run; send_event fails silently when server is offline
+**E-1:** Dashboard renders Decision Intelligence block for all 5 regions (present/absent file both handled). PDF and PPTX include "Basis of assessment". All existing 42 tests pass. 5 new tests pass.
+
+**E-2:** Collectors write `intelligence_sources.json` in mock mode with correct schema. Dashboard renders collapsible sources section. PDF and PPTX include "Sources Consulted" appendix. Signal file schemas unchanged (verified by test). New tests pass.
+
+**E-3:** `AGENT_START` events appear in `system_trace.log` during pipeline run. `AGENT_STOP` events appear in log and reach `event_queue` when server is running. Dashboard live strip shows region states during run. `send_event.py` fails silently when server is offline (verified by test).
