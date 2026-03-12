@@ -20,7 +20,7 @@ You will be given a REGION and a list of CRITICAL ASSETS.
 
 1. Read: `output/regional/{region_lower}/geo_signals.json` — geopolitical signals
 2. Read: `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals
-3. Read: `output/regional/{region_lower}/scenario_map.json` — scenario mapping with financial rank
+3. Read: `output/regional/{region_lower}/scenario_map.json` — scenario mapping with financial rank. `financial_rank` ≤ 4 means top-4 financial impact — this is the primary ESCALATE threshold.
 
 ## ADMIRALTY SCALE
 
@@ -42,9 +42,11 @@ Combine into a rating string: "A1", "B2", "C3", etc.
 
 ## ROUTING LOGIC
 
-- `active_threats: false` → **CLEAR**
-- `active_threats: true` AND scenario is outside top-4 financial impact → **MONITOR**
-- `active_threats: true` AND scenario maps to top-4 (Ransomware, Accidental disclosure, System intrusion, Insider misuse) AND threat plausibly impacts a critical asset → **ESCALATE**
+- `cyber_signals.summary` indicates **no active cyber campaigns targeting this sector** → **CLEAR**
+- Active cyber indicators present AND `scenario_map.financial_rank > 4` → **MONITOR**
+- Active cyber indicators present AND `scenario_map.financial_rank ≤ 4` (top-4: Ransomware, Accidental disclosure, System intrusion, Insider misuse) AND threat plausibly impacts a critical asset → **ESCALATE**
+
+Use `geo_signals.dominant_pillar` when assigning Admiralty ratings to indicate whether the primary risk driver is Geopolitical or Cyber.
 
 Top-4 financial impact scenarios (from master_scenarios.json):
 1. Ransomware (financial_rank: 1)
