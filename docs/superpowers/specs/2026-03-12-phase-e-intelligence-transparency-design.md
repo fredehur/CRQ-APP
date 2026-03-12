@@ -111,7 +111,9 @@ If `gatekeeper_decision.json` or `scenario_map.json` is absent (pre-D2 archived 
       "title": "South China Sea tensions drive supply chain restructuring",
       "snippet": "Multinational manufacturers are accelerating diversification away from single-region dependencies.",
       "url": "https://example.com/article-1",
-      "published_date": "2026-03-10"
+      "published_date": "2026-03-10",
+      "source": "Financial Times Asia",
+      "mock": false
     }
   ],
   "cyber_sources": [
@@ -119,17 +121,23 @@ If `gatekeeper_decision.json` or `scenario_map.json` is absent (pre-D2 archived 
       "title": "APT campaign targets APAC OT manufacturing networks",
       "snippet": "Security researchers documented new intrusion campaigns targeting wind turbine control systems.",
       "url": "https://example.com/article-2",
-      "published_date": "2026-03-08"
+      "published_date": "2026-03-08",
+      "source": "Reuters",
+      "mock": false
     }
   ]
 }
 ```
+
+All source entries include: `title`, `snippet`, `published_date`, `source` (publication name), `url` (null in mock mode), `mock` (bool). In live mode `url` is populated and `mock` is false. In mock mode `url` is null, `mock` is true.
 
 ### Collector changes (scope clarification)
 
 `osint_search.py` returns `[{title, snippet, url, published_date}]` — a raw article list. Currently, each collector's `collect()` function passes this list into a normalizer that produces the aggregate summary and then discards the raw list. The `collect()` return value is the normalized dict only.
 
 **Required change:** modify `collect()` in both collectors to return a tuple `(normalized_dict, raw_sources_list)`. The calling code writes `normalized_dict` to the signal file (unchanged) and writes `raw_sources_list` to `intelligence_sources.json` (new).
+
+`raw_sources_list` is the **post-deduplication** article list — the same list that is passed to `normalize()`. Both collectors currently call `run_search()` twice (two queries) and deduplicate before normalizing. The sources list written to `intelligence_sources.json` reflects the deduplicated union, consistent with what the normalized summary was built from.
 
 This is a real implementation change to both collector functions, not a trivial side-effect write.
 
@@ -208,7 +216,7 @@ The existing `event_queue` and SSE infrastructure already handle this pattern.
 | Tool failure telemetry | `PostToolUse` hook | Hook script checks exit code; if non-zero, fires `TOOL_FAILURE`. |
 | Agent start telemetry | No hook available | `AGENT_START` events are logged via direct `audit_logger.py` calls added to `run-crq.md` before each agent delegation — not via hooks. |
 
-Hook scripts live in `.claude/hooks/` and are registered in `.claude/settings.json` alongside existing hooks. Each script: extracts fields from hook environment variables, calls `send_event.py`, exits 0.
+Hook scripts live in `.claude/hooks/` and are registered by adding new `Stop` and `PostToolUse` entries to `.claude/settings.json`. There are no pre-existing Stop hooks in `settings.json` — these are new entries. Each script: extracts fields from hook environment variables, calls `send_event.py`, exits 0.
 
 ### Dashboard live strip
 
