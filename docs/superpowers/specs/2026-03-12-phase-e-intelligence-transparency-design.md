@@ -251,8 +251,8 @@ If `server.py` is not running:
 - `tools/build_dashboard.py` — render "Intelligence Sources" collapsible section
 - `tools/export_pdf.py` — "Sources Consulted" appendix
 - `tools/export_pptx.py` — "Sources Consulted" appendix slide
-- `data/mock_osint_fixtures/{region}_geo.json` × 5 — add `results` array with mock source entries
-- `data/mock_osint_fixtures/{region}_cyber.json` × 5 — same
+- `data/mock_osint_fixtures/{region}_geo.json` × 5 — no changes needed (existing flat arrays already compatible)
+- `data/mock_osint_fixtures/{region}_cyber.json` × 5 — no changes needed
 - `tests/test_intelligence_sources.py` — new test file
 
 ### E-3
