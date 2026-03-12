@@ -37,21 +37,31 @@ Each task is self-contained and writes its own output files. Do NOT wait for one
 
 For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
-1. Run `uv run python tools/geopolitical_context.py {REGION}`
-2. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
+1. **Run OSINT tool chain** (mock mode):
+   - `uv run python tools/geo_collector.py {REGION} --mock`
+   - `uv run python tools/cyber_collector.py {REGION} --mock`
+   - `uv run python tools/scenario_mapper.py {REGION} --mock`
+   These write signal files to `output/regional/{region_lower}/`:
+   - `geo_signals.json`
+   - `cyber_signals.json`
+   - `scenario_map.json`
+
+2. Run `uv run python tools/geopolitical_context.py {REGION}`
+
+3. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
    The gatekeeper writes `output/regional/{region_lower}/gatekeeper_decision.json` and returns one word: ESCALATE, MONITOR, or CLEAR.
 
-3. **If CLEAR:**
+4. **If CLEAR:**
    - Run `uv run python tools/write_region_data.py {REGION} clear`
    - Run `uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — clear, no active threat"`
    - Stop this regional task.
 
-4. **If MONITOR:**
+5. **If MONITOR:**
    - Run `uv run python tools/write_region_data.py {REGION} monitor`
    - Run `uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — monitor, elevated indicators below escalation threshold"`
    - Stop this regional task. No regional analyst needed.
 
-5. **If ESCALATE:**
+6. **If ESCALATE:**
    - Run `uv run python tools/write_region_data.py {REGION} escalated`
    - Run `uv run python tools/audit_logger.py GATEKEEPER_YES "{REGION} — escalated, proceeding to analysis"`
    - Run `uv run python tools/threat_scorer.py {REGION}` and extract severity score.
