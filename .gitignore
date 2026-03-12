@@ -12,3 +12,9 @@ wheels/
 # Pipeline output (generated state, not source)
 output/runs/
 output/latest/
+
+# Hook runtime state (circuit breaker attempt counts)
+.claude/hooks/.attempts/
+
+# Git worktrees
+.worktrees/
