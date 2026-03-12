@@ -86,6 +86,20 @@ Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Cross-regional diff co
 Delegate to `global-builder-agent`. Provide all approved regional briefs, the delta brief, and the path to `output/trend_brief.json`.
 Agent reads regional reports, data.json files, and trend brief, then writes `output/global_report.json`.
 Stop hooks validate JSON schema (including Admiralty and velocity fields), then jargon.
+
+### Phase 4b — Global Validation (Devil's Advocate)
+
+Delegate to `global-validator-agent`. It reads `output/global_report.json` and cross-references all regional data files for consistency.
+
+- If agent returns `APPROVED`:
+  - Run: `uv run python tools/audit_logger.py HOOK_PASS "Global report validated by devil's advocate"`
+- If agent returns `REWRITE`:
+  - Run: `uv run python tools/audit_logger.py HOOK_FAIL "Global validation failed — rewrite cycle 1"`
+  - Re-delegate to `global-builder-agent` with the validator's failure list as additional context for correction.
+  - Re-delegate to `global-validator-agent` again.
+  - If `APPROVED`: log HOOK_PASS as above.
+  - If still `REWRITE` after 2 cycles: force-approve and run: `uv run python tools/audit_logger.py HOOK_FAIL "Global validation failed 2x — force-approved via circuit breaker"`
+
 Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Global JSON report validated"`
 
 ## PHASE 5 — DASHBOARD & EXPORT
