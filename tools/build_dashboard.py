@@ -1,3 +1,4 @@
+import html
 import json
 import sys
 import os
@@ -75,11 +76,17 @@ def decision_intelligence_block(region_name, gatekeeper_data, scenario_map_data)
         admiralty_rating = admiralty.get("rating", "")
     else:
         admiralty_rating = str(admiralty) if admiralty else ""
-    scenario_match = gk.get("scenario_match", "")
+    scenario_match = gk.get("scenario_match") or (sm.get("top_scenario", "") if sm else "")
     dominant_pillar = gk.get("dominant_pillar", "")
     rationale = gk.get("rationale", "")
     financial_rank = sm.get("financial_rank", "") if sm else ""
     confidence = (sm.get("confidence", "") or "").upper() if sm else ""
+
+    admiralty_rating = html.escape(admiralty_rating)
+    dominant_pillar  = html.escape(dominant_pillar)
+    scenario_match   = html.escape(scenario_match)
+    confidence       = html.escape(confidence)
+    rationale        = html.escape(rationale)
 
     decision_color = {
         "ESCALATE": "text-red-300 bg-red-900/30 border-red-700",
