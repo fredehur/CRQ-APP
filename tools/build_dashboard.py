@@ -99,7 +99,8 @@ def intelligence_sources_block(region_name, intel_sources_data):
             url = s.get("url")
             is_mock = s.get("mock", True)
             mock_badge = ' <span class="text-yellow-500 text-xs">[MOCK]</span>' if is_mock else ""
-            title_html = f'<a href="{url}" class="underline text-blue-400">{title}</a>' if url else title
+            url_safe = html.escape(url) if url else ""
+            title_html = f'<a href="{url_safe}" class="underline text-blue-400">{title}</a>' if url_safe else title
             rows += f"""<div class="py-1 border-b border-gray-700 last:border-0">
                 <div class="text-gray-200">{title_html}{mock_badge}</div>
                 <div class="text-gray-500 text-xs">{source_name} · {pub_date}</div>
@@ -334,7 +335,7 @@ def build():
             {monitor_cards}
         </div>"""
 
-    html = f"""<!DOCTYPE html>
+    dashboard_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -427,7 +428,7 @@ def build():
 </html>"""
 
     with open("output/dashboard.html", "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(dashboard_html)
     print(f"Dashboard written to output/dashboard.html ({escalated_count} escalated, {monitor_count} watch, {clear_count} clear, {len(trace_lines)} trace events)")
 
     # Markdown export
