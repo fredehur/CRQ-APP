@@ -253,6 +253,20 @@ def build_region(prs: Presentation, region: RegionEntry) -> None:
                   body_x, Inches(1.0), body_w, Inches(0.5),
                   font_size=10, color=AMBER)
 
+    # E-1: Basis of Assessment
+    if region.rationale and y + Inches(0.9) < H:
+        rank_txt = f"  ·  Rank #{region.financial_rank}" if region.financial_rank else ""
+        conf_txt = f"  ·  Confidence: {region.confidence.upper()}" if region.confidence else ""
+        basis_text = f"{region.rationale}{rank_txt}{conf_txt}"
+        # Add label
+        _add_text(slide, "BASIS OF ASSESSMENT", body_x, y, body_w, Inches(0.28),
+                  font_size=7, bold=True, color=SLATE)
+        y += Inches(0.3)
+        # Add value (allow text wrap for long rationale)
+        _add_text(slide, basis_text, body_x, y, body_w, Inches(0.55),
+                  font_size=8, color=DARK)
+        y += Inches(0.6)
+
 
 def build_appendix(prs: Presentation, data: ReportData) -> None:
     slide = _add_blank_slide(prs)
