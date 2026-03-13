@@ -34,15 +34,17 @@ let state = {
 
 // ── Helpers ───────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const fmtUSD = n => n ? '$' + (n / 1e6).toFixed(1) + 'M' : '$0';
+const fmtUSD = n => (n == null || isNaN(n)) ? '—' : '$' + (n / 1e6).toFixed(1) + 'M';
 const fmtTime = iso => iso
   ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   : '—';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 function admiraltyTooltip(rating) {
   if (!rating || rating.length < 2) return rating || '—';
-  const rel = ADMIRALTY_TOOLTIPS[rating[0]] || rating[0];
-  const cred = ADMIRALTY_TOOLTIPS[rating[1]] || rating[1];
+  const rel = ADMIRALTY_TOOLTIPS[rating[0]];
+  const cred = ADMIRALTY_TOOLTIPS[rating[1]];
+  if (!rel || !cred) return rating;
   return `${rating}: ${rel} source, ${cred}`;
 }
 
@@ -158,7 +160,7 @@ function renderCards() {
     </div>
   </div>
 
-  ${data.rationale ? `<p class="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">"${data.rationale}"</p>` : ''}
+  ${data.rationale ? `<p class="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">"${esc(data.rationale)}"</p>` : ''}
 
   <div class="flex gap-2 pt-1">
     <button onclick="loadPanel('regional', '${region}', 'brief')"
@@ -191,7 +193,7 @@ function renderChips() {
       : 'border-green-800 bg-green-950/20 text-green-400';
     const icon = isMonitor ? '⚠' : '✓';
     const admLabel = data.admiralty ? ` <span class="text-gray-500 text-xs">${data.admiralty}</span>` : '';
-    const rationale = data.rationale || 'No credible top-4 financial impact scenario active.';
+    const rationale = esc(data.rationale || 'No credible top-4 financial impact scenario active.');
 
     return `
 <div class="relative inline-block group">
@@ -234,7 +236,7 @@ function renderAll() {
 function showArchiveBanner(run) {
   const banner = $('archive-banner');
   if (banner) {
-    $('archive-timestamp').textContent = fmtTime(run.manifest.run_timestamp);
+    $('archive-timestamp').textContent = fmtTime(run.manifest?.run_timestamp);
     banner.classList.remove('hidden');
   }
 }
