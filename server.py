@@ -121,6 +121,45 @@ async def get_trace():
     return {"log": ""}
 
 
+@app.get("/api/region/{region}/signals")
+async def get_region_signals(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
+    base = OUTPUT / "regional" / r.lower()
+    return {
+        "geo": _read_json(base / "geo_signals.json"),
+        "cyber": _read_json(base / "cyber_signals.json"),
+    }
+
+
+@app.get("/api/outputs/global-md")
+async def get_global_md():
+    path = OUTPUT / "global_report.md"
+    return {"markdown": path.read_text(encoding="utf-8") if path.exists() else ""}
+
+
+@app.get("/api/outputs/pdf")
+async def get_pdf():
+    path = OUTPUT / "board_report.pdf"
+    if not path.exists():
+        return JSONResponse({"error": "PDF not found"}, status_code=404)
+    return FileResponse(str(path), media_type="application/pdf",
+                        filename="board_report.pdf")
+
+
+@app.get("/api/outputs/pptx")
+async def get_pptx():
+    path = OUTPUT / "board_report.pptx"
+    if not path.exists():
+        return JSONResponse({"error": "PPTX not found"}, status_code=404)
+    return FileResponse(
+        str(path),
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        filename="board_report.pptx",
+    )
+
+
 # ── API: Run Pipeline ────────────────────────────────────────────────────
 async def _emit(event: str, data: dict):
     """Push a structured SSE event. Drops oldest if queue is full."""
