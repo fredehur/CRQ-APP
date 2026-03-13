@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
@@ -156,16 +157,14 @@ def main():
             with open(intel_path, encoding="utf-8") as f:
                 intel_doc = json.load(f)
             if "geo_sources" not in intel_doc:
-                import sys as _sys
                 print(
                     f"[cyber_collector] WARNING: {intel_path} missing geo_sources key — "
                     "writing cyber_sources only. Run geo_collector first.",
-                    file=_sys.stderr,
+                    file=sys.stderr,
                 )
         except (json.JSONDecodeError, OSError):
             intel_doc = {}
 
-    from datetime import datetime, timezone
     intel_doc["region"] = region
     intel_doc["collected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     intel_doc["cyber_sources"] = cyber_sources

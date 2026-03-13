@@ -10,6 +10,7 @@ import json
 import os
 import subprocess
 import sys
+from datetime import datetime, timezone
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
@@ -111,8 +112,6 @@ def main():
         json.dump(normalized, f, indent=2, ensure_ascii=False)
 
     print(f"[geo_collector] wrote {out_path}", file=sys.stderr)
-
-    from datetime import datetime, timezone
 
     geo_sources = [
         {
