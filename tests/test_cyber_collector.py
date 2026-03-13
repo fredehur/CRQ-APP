@@ -10,13 +10,13 @@ def run(args):
     result = subprocess.run(
         [PYTHON, "tools/cyber_collector.py"] + args,
         capture_output=True, text=True, encoding="utf-8",
-        cwd="c:/Users/frede/crq-agent-workspace/.worktrees/osint-toolchain"
+        cwd="c:/Users/frede/crq-agent-workspace/.worktrees/phase-e"
     )
     return result.returncode, result.stdout, result.stderr
 
 
 def read_output(region):
-    path = f"c:/Users/frede/crq-agent-workspace/.worktrees/osint-toolchain/output/regional/{region.lower()}/cyber_signals.json"
+    path = f"c:/Users/frede/crq-agent-workspace/.worktrees/phase-e/output/regional/{region.lower()}/cyber_signals.json"
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
