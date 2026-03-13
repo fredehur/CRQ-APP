@@ -170,16 +170,17 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             try:
                 gk = json.loads(gk_path.read_text(encoding="utf-8"))
                 rationale = gk.get("rationale")
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, OSError):
                 pass
 
         sm_path = base / "regional" / region_name.lower() / "scenario_map.json"
         if sm_path.exists():
             try:
                 sm = json.loads(sm_path.read_text(encoding="utf-8"))
-                financial_rank = sm.get("financial_rank")
+                raw_rank = sm.get("financial_rank")
+                financial_rank = int(raw_rank) if raw_rank is not None else None
                 confidence = sm.get("confidence")
-            except (json.JSONDecodeError, KeyError):
+            except (json.JSONDecodeError, ValueError, TypeError):
                 pass
 
         regions.append(RegionEntry(
