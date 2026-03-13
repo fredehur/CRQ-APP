@@ -344,5 +344,36 @@
   </table>
 </div>
 
+
+{# ══════════════════════════════════════════════════════════════════ SOURCES CONSULTED #}
+{% if data.sources %}
+<div class="page">
+  <div class="section-header">
+    <h2>Sources Consulted</h2>
+    <span class="sub">OSINT intelligence sources — escalated regions only</span>
+  </div>
+  <table class="admiralty-table" style="margin-top:4mm;">
+    <thead>
+      <tr>
+        <th style="width:14mm;">Region</th>
+        <th>Title</th>
+        <th style="width:22mm;">Publication</th>
+        <th style="width:20mm;">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in data.sources %}
+      <tr>
+        <td>{{ s.region }}</td>
+        <td>{{ s.title }}</td>
+        <td>{{ s.source }}</td>
+        <td>{{ s.published_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 </body>
 </html>

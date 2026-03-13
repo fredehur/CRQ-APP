@@ -327,6 +327,44 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
         y += Inches(0.3)
 
 
+def build_sources_appendix(prs: Presentation, data: ReportData) -> None:
+    """Render a Sources Consulted slide listing all OSINT sources for escalated regions."""
+    if not data.sources:
+        return
+    slide = _add_blank_slide(prs)
+    _add_rect(slide, 0, 0, W, Inches(0.65), BRAND)
+    _add_text(slide, "Sources Consulted", Inches(0.3), Inches(0.1),
+              Inches(7), Inches(0.45), font_size=16, bold=True, color=WHITE)
+    _add_text(slide, "OSINT — escalated regions only",
+              Inches(7.5), Inches(0.2), Inches(2.3), Inches(0.3),
+              font_size=8, color=RGBColor(0xBF, 0xDB, 0xFF), align=PP_ALIGN.RIGHT)
+
+    # Column headers
+    col_labels = ["Region", "Title", "Publication", "Date"]
+    col_widths = [Inches(0.8), Inches(5.5), Inches(2.0), Inches(1.5)]
+    y = Inches(0.85)
+    x = Inches(0.3)
+    for label, w in zip(col_labels, col_widths):
+        _add_text(slide, label, x, y, w, Inches(0.3), font_size=8, bold=True, color=SLATE)
+        x += w
+
+    Y_MAX = Inches(7.1)
+    for src in data.sources:
+        y += Inches(0.35)
+        if y >= Y_MAX:
+            break
+        row = [
+            src.get("region", ""),
+            src.get("title", "")[:80],
+            src.get("source", ""),
+            src.get("published_date", ""),
+        ]
+        x = Inches(0.3)
+        for val, w in zip(row, col_widths):
+            _add_text(slide, val, x, y, w, Inches(0.3), font_size=8, color=DARK)
+            x += w
+
+
 # ── Public API ─────────────────────────────────────────────────────────────────
 
 def build_presentation(data: ReportData) -> Presentation:
@@ -340,6 +378,7 @@ def build_presentation(data: ReportData) -> Presentation:
     for region in (r for r in data.regions if r.status == RegionStatus.ESCALATED):
         build_region(prs, region)
     build_appendix(prs, data)
+    build_sources_appendix(prs, data)
 
     return prs
 
