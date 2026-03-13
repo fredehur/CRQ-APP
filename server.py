@@ -277,8 +277,8 @@ async def run_region(region: str, mode: str = Query(default="tools")):
 async def internal_event(event: InternalEvent):
     """Receive telemetry events from hook scripts and broadcast via SSE."""
     await _emit(event.event_type, {
-        "agent_id": event.agent_id,
         **event.payload,
+        "agent_id": event.agent_id,
     })
     return {"ok": True}
 

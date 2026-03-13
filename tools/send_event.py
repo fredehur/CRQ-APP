@@ -18,17 +18,15 @@ SERVER_URL = "http://localhost:8000/internal/event"
 
 
 def send_event(event_type: str, agent_id: str, payload: dict) -> None:
-    """Send telemetry event. Never raises — all errors are swallowed."""
-    # Always log to trace file first (audit trail is authoritative)
-    try:
-        tools_dir = os.path.dirname(os.path.abspath(__file__))
+    """Send telemetry event. Never raises from HTTP failures."""
+    # Always log to trace file (audit trail is authoritative)
+    tools_dir = os.path.dirname(os.path.abspath(__file__))
+    if tools_dir not in sys.path:
         sys.path.insert(0, tools_dir)
-        from audit_logger import log_event
-        log_event(event_type, f"agent={agent_id} payload={json.dumps(payload)}")
-    except Exception:
-        pass  # trace log failure must not crash pipeline
+    from audit_logger import log_event
+    log_event(event_type, f"agent={agent_id} payload={json.dumps(payload)}")
 
-    # Fire-and-forget POST (best effort)
+    # Fire-and-forget POST (best effort — connection errors are swallowed)
     try:
         body = json.dumps({
             "event_type": event_type,
