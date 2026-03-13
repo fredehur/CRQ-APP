@@ -290,15 +290,15 @@
           Regional intelligence report unavailable for this run. Check pipeline logs.
         </div>
       {% endif %}
-    </div>
 
-    {% if r.rationale %}
-    <div class="basis-block" style="margin-top:4mm;">
-      <div class="basis-label">Basis of Assessment</div>
-      <div>{{ r.rationale }}</div>
-      {% if r.financial_rank %}<div style="margin-top:1mm;font-size:8pt;">Financial impact rank: #{{ r.financial_rank }}{% if r.confidence %} · Confidence: {{ r.confidence | upper }}{% endif %}</div>{% endif %}
+      {% if r.rationale %}
+      <div class="basis-block" style="margin-top:4mm;">
+        <div class="basis-label">Basis of Assessment</div>
+        <div>{{ r.rationale }}</div>
+        {% if r.financial_rank %}<div style="margin-top:1mm;font-size:8pt;">Financial impact rank: #{{ r.financial_rank }}{% if r.confidence %} · Confidence: {{ r.confidence | upper }}{% endif %}</div>{% endif %}
+      </div>
+      {% endif %}
     </div>
-    {% endif %}
   </div>
 </div>
 {% endfor %}
