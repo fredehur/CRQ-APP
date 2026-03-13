@@ -142,6 +142,7 @@
     <div>
       <div class="cover-vacr-label">Total Value at Cyber Risk</div>
       <div class="cover-vacr">${{ "%.1f"|format(data.total_vacr / 1_000_000) }}M</div>
+      <div class="cover-meta"><span style="font-size:11pt;font-weight:700;">Trend vs Prior Run: {{ data.trend_delta }}</span></div>
       <div class="cover-meta">
         <span>Pipeline ID: {{ data.run_id }}</span>
         <span>Run Date: {{ data.timestamp }}</span>
@@ -175,6 +176,10 @@
     <div class="status-badge badge-blue" style="margin-left:auto;">
       <span class="count">${{ "%.1f"|format(data.total_vacr / 1_000_000) }}M</span>
       <span>TOTAL VaCR</span>
+    </div>
+    <div class="status-badge" style="border:1px solid #e2e8f0;">
+      <span class="count" style="font-size:14pt;">{{ data.trend_delta }}</span>
+      <span>TREND</span>
     </div>
   </div>
 

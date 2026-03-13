@@ -48,6 +48,7 @@ class ReportData:
     clear_count: int
     regions: list[RegionEntry]
     monitor_regions: list[str]
+    trend_delta: str = "\u2014"
 
 
 # ── Header sets for pillar parsing (prefix match) ─────────────────────────────
@@ -98,6 +99,39 @@ def _parse_pillars(text: str) -> tuple[str | None, str | None, str | None]:
 
     # No recognised headers — return full text as why, rest None
     return text.strip(), None, None
+
+
+def _get_previous_total_vacr(output_dir: str) -> float | None:
+    """Return total VaCR from the most recent archived run, or None."""
+    runs_dir = Path(output_dir) / "runs"
+    if not runs_dir.is_dir():
+        return None
+    try:
+        subdirs = sorted(d.name for d in runs_dir.iterdir() if d.is_dir())
+        if not subdirs:
+            return None
+        prev_manifest = runs_dir / subdirs[-1] / "run_manifest.json"
+        if not prev_manifest.exists():
+            return None
+        manifest = json.loads(prev_manifest.read_text(encoding="utf-8"))
+        return float(manifest.get("total_vacr_exposure_usd") or 0)
+    except Exception:
+        return None
+
+
+def _format_delta(current: float, previous: float | None) -> str:
+    """Format a VaCR delta as a direction arrow + dollar amount, or em-dash."""
+    if previous is None:
+        return "\u2014"
+    diff = current - previous
+    if diff == 0:
+        return "\u2014"
+    abs_m = abs(diff) / 1_000_000
+    if abs_m >= 1:
+        label = f"${abs_m:.1f}M"
+    else:
+        label = f"${abs(diff) / 1_000:,.0f}K"
+    return f"\u25b2{label}" if diff > 0 else f"\u25bc{label}"
 
 
 # ── Public API ─────────────────────────────────────────────────────────────────
@@ -172,6 +206,9 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
     monitor   = [r for r in regions if r.status == RegionStatus.MONITOR]
     clear     = [r for r in regions if r.status == RegionStatus.CLEAR]
 
+    prev_total = _get_previous_total_vacr(output_dir)
+    trend_delta = _format_delta(total_vacr, prev_total)
+
     return ReportData(
         run_id=run_id,
         timestamp=timestamp,
@@ -182,4 +219,5 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
         clear_count=len(clear),
         regions=regions,
         monitor_regions=monitor_regions,
+        trend_delta=trend_delta,
     )

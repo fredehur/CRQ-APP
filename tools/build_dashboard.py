@@ -1,6 +1,7 @@
 import json
 import sys
 import os
+from pathlib import Path
 from datetime import datetime, timezone
 from config import REGIONS, GLOBAL_REPORT_PATH, MANIFEST_PATH, TRACE_LOG_PATH
 
@@ -48,6 +49,43 @@ def admiralty_tooltip(rating):
     return f"{rel} source — {cred}"
 
 
+def get_previous_vacr(output_dir="output"):
+    """Load VaCR figures from the most recent archived run, if any."""
+    runs_dir = Path(output_dir) / "runs"
+    result = {"total": None, "regions": {}}
+    if not runs_dir.is_dir():
+        return result
+    try:
+        subdirs = sorted(d.name for d in runs_dir.iterdir() if d.is_dir())
+        if not subdirs:
+            return result
+        prev_manifest = runs_dir / subdirs[-1] / "run_manifest.json"
+        if not prev_manifest.exists():
+            return result
+        manifest = json.loads(prev_manifest.read_text(encoding="utf-8"))
+        result["total"] = float(manifest.get("total_vacr_exposure_usd") or 0)
+        for rname, rdata in manifest.get("regions", {}).items():
+            result["regions"][rname] = float(rdata.get("vacr_usd") or 0)
+    except Exception:
+        pass
+    return result
+
+
+def format_delta(current, previous):
+    """Format a VaCR delta as a direction arrow + dollar amount, or '—'."""
+    if previous is None:
+        return "\u2014"
+    diff = current - previous
+    if diff == 0:
+        return "\u2014"
+    abs_m = abs(diff) / 1_000_000
+    if abs_m >= 1:
+        label = f"${abs_m:.1f}M"
+    else:
+        label = f"${abs(diff) / 1_000:,.0f}K"
+    return f"\u25b2{label}" if diff > 0 else f"\u25bc{label}"
+
+
 def build():
     json_path = GLOBAL_REPORT_PATH
     if not os.path.exists(json_path):
@@ -84,6 +122,19 @@ def build():
     escalated_count = sum(1 for r in region_data.values() if r.get("status") == "escalated")
     monitor_count = sum(1 for r in region_data.values() if r.get("status") == "monitor")
     clear_count = sum(1 for r in region_data.values() if r.get("status") == "clear")
+
+    prev = get_previous_vacr()
+    trend_delta = format_delta(total_vacr, prev["total"])
+    # Color the trend: red for increase, green for decrease, gray for no data
+    if trend_delta.startswith("\u25b2"):
+        trend_color = "text-red-600"
+        trend_border = "border-red-600"
+    elif trend_delta.startswith("\u25bc"):
+        trend_color = "text-green-600"
+        trend_border = "border-green-600"
+    else:
+        trend_color = "text-gray-400"
+        trend_border = "border-gray-400"
 
     # Build escalated regional cards
     region_cards = ""
@@ -211,9 +262,9 @@ def build():
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total VaCR</p>
                 <p class="text-3xl font-black text-red-600">${total_vacr:,.0f}</p>
             </div>
-            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-blue-600">
-                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Regions</p>
-                <p class="text-3xl font-black text-blue-600">{len(REGIONS)}</p>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 {trend_border}">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Trend vs Prior</p>
+                <p class="text-3xl font-black {trend_color}">{trend_delta}</p>
             </div>
             <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-red-500">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Escalated</p>
@@ -281,7 +332,7 @@ def build():
     # Markdown export
     md_lines = [
         f"# Global Executive Board Report — Cyber Risk Posture\n",
-        f"**Date:** {report_date} | **Classification:** Board Confidential | **Total Global VaCR:** ${total_vacr:,.0f}\n",
+        f"**Date:** {report_date} | **Classification:** Board Confidential | **Total Global VaCR:** ${total_vacr:,.0f} | **Trend vs Prior:** {trend_delta}\n",
         f"---\n",
         f"## Executive Summary\n",
         f"{summary}\n",

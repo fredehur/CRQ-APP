@@ -26,10 +26,25 @@ def main():
         print(f"ERROR: Invalid JSON on stdin — {e}", file=sys.stderr)
         sys.exit(1)
 
-    required = {"decision", "admiralty"}
+    required = {"decision", "admiralty", "dominant_pillar"}
     missing = required - payload.keys()
     if missing:
         print(f"ERROR: Missing required fields: {missing}", file=sys.stderr)
+        sys.exit(1)
+
+    if payload.get("admiralty") is None:
+        print("ERROR: admiralty must not be null", file=sys.stderr)
+        sys.exit(1)
+    if not isinstance(payload["admiralty"], dict):
+        print("ERROR: admiralty must be a dict", file=sys.stderr)
+        sys.exit(1)
+    adm_rating = payload["admiralty"].get("rating")
+    if not adm_rating or not isinstance(adm_rating, str):
+        print("ERROR: admiralty.rating must be a non-empty string", file=sys.stderr)
+        sys.exit(1)
+
+    if not payload.get("dominant_pillar") or not isinstance(payload["dominant_pillar"], str):
+        print("ERROR: dominant_pillar must be a non-empty string", file=sys.stderr)
         sys.exit(1)
 
     valid_decisions = {"ESCALATE", "MONITOR", "CLEAR"}

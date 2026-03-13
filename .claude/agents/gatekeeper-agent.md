@@ -56,7 +56,17 @@ Top-4 financial impact scenarios (from master_scenarios.json):
 
 ## OUTPUT
 
-Write the decision file using the dedicated tool. Construct the JSON and pipe it:
+Write the decision file using the dedicated tool. Construct the JSON and pipe it.
+
+**REQUIRED fields on EVERY decision (ESCALATE, MONITOR, and CLEAR):**
+- `region` — uppercase region code
+- `decision` — one of ESCALATE, MONITOR, CLEAR
+- `admiralty` — object with `reliability` (A–D), `credibility` (1–4), `rating` (combined string). NEVER null.
+- `dominant_pillar` — "Geopolitical" or "Cyber". NEVER null. Derived from `geo_signals.dominant_pillar`.
+- `rationale` — single sentence, no line breaks. For CLEAR decisions: cite the specific dominant signal (e.g. geo stability, absence of state-aligned cyber activity). Do NOT use generic placeholder text.
+- `scenario_match` — matched scenario name, or `null` for CLEAR decisions
+
+### ESCALATE example
 
 ```bash
 echo '{
@@ -70,6 +80,23 @@ echo '{
   "scenario_match": "System intrusion",
   "dominant_pillar": "Geopolitical",
   "rationale": "State-sponsored APT activity confirmed via geo and cyber signal corroboration. Scenario maps to financial rank 3."
+}' | uv run python tools/write_gatekeeper_decision.py {region_lower}
+```
+
+### CLEAR example
+
+```bash
+echo '{
+  "region": "LATAM",
+  "decision": "CLEAR",
+  "admiralty": {
+    "reliability": "C",
+    "credibility": "3",
+    "rating": "C3"
+  },
+  "scenario_match": null,
+  "dominant_pillar": "Geopolitical",
+  "rationale": "No active state-aligned cyber campaigns detected; geo signals indicate stable trade environment with no top-4 financial impact scenario present."
 }' | uv run python tools/write_gatekeeper_decision.py {region_lower}
 ```
 
