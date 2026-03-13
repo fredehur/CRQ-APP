@@ -123,6 +123,7 @@ function renderCards() {
 
   if (escalated.length === 0) {
     container.innerHTML = '<p class="text-green-400 text-sm">No active threats across all regions.</p>';
+    $('escalated-section').classList.add('hidden');
     return;
   }
   $('escalated-section').classList.remove('hidden');
