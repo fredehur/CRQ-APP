@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRQ Command Center</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -13,7 +14,6 @@
             critical: '#dc2626',
             high: '#ea580c',
             medium: '#d97706',
-            low: '#16a34a',
             clear: '#22c55e',
           }
         }
@@ -21,81 +21,285 @@
     }
   </script>
   <style>
-    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.4} }
-    .pulse-dot { animation: pulse-dot 1.5s ease-in-out infinite; }
-    .log-panel { font-family: 'Courier New', monospace; font-size: 0.75rem; }
-    .severity-badge { @apply px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide; }
+    /* Progress bar fill animation */
+    #progress-fill {
+      height: 100%;
+      background-color: #3b82f6;
+      transition: width 300ms ease-in-out;
+    }
+
+    /* Slide-over panel: hidden state */
+    #output-panel {
+      transform: translateX(100%);
+      transition: transform 300ms ease-in-out;
+    }
+    /* Slide-over panel: visible state — app.js removes hidden and adds panel-open */
+    #output-panel.panel-open {
+      transform: translateX(0);
+    }
+
+    /* Panel overlay backdrop */
+    #panel-overlay {
+      background-color: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+    }
+
+    /* Settings modal overlay */
+    #settings-modal {
+      background-color: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(2px);
+    }
+
+    /* Admiralty tooltip — shown via title attribute; enhanced via CSS for custom styling */
+    .admiralty-badge {
+      position: relative;
+      cursor: help;
+    }
+    .admiralty-badge:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #d1d5db;
+      font-size: 0.7rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+      white-space: nowrap;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* Nav tab active state */
+    .nav-tab-active {
+      border-bottom: 2px solid #3b82f6;
+      color: #f9fafb;
+    }
+    .nav-tab-inactive {
+      border-bottom: 2px solid transparent;
+      color: #9ca3af;
+    }
+    .nav-tab-inactive:hover {
+      color: #e5e7eb;
+    }
+
+    /* Panel tab active state — JS adds/removes .active on .panel-tab elements */
+    .panel-tab {
+      border-bottom: 2px solid transparent;
+      color: #9ca3af;
+    }
+    .panel-tab.active {
+      border-bottom: 2px solid #3b82f6;
+      color: #f9fafb;
+    }
+    .panel-tab:hover {
+      color: #e5e7eb;
+    }
+
+    /* Ensure fixed header doesn't overlap content */
+    body {
+      padding-top: 4rem;
+    }
   </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen bg-gray-950 text-gray-100">
 
-  <!-- Header -->
-  <header class="border-b border-gray-800 px-6 py-4 flex items-center justify-between">
-    <div>
-      <h1 class="text-xl font-bold tracking-tight">CRQ Command Center</h1>
-      <p class="text-sm text-gray-500">AeroGrid Wind Solutions — Geopolitical Risk Intelligence</p>
+  <!-- Fixed header -->
+  <header class="fixed top-0 left-0 right-0 z-40 bg-gray-950 border-b border-gray-800 px-6 py-0 flex items-center justify-between h-16">
+    <div class="flex items-center gap-6">
+      <div>
+        <span class="text-lg font-bold tracking-tight">CRQ Command Center</span>
+        <span class="text-sm text-gray-500 ml-2 hidden sm:inline">AeroGrid Wind Solutions — Geopolitical Risk Intelligence</span>
+      </div>
+      <!-- Nav tabs -->
+      <nav class="flex items-end gap-1 h-16">
+        <button
+          id="nav-tab-overview"
+          class="nav-tab-active px-4 h-full text-sm font-medium transition-colors"
+          onclick="switchTab('overview')">
+          Overview
+        </button>
+        <button
+          id="nav-tab-history"
+          class="nav-tab-inactive px-4 h-full text-sm font-medium transition-colors"
+          onclick="switchTab('history')">
+          History
+        </button>
+      </nav>
     </div>
     <div class="flex items-center gap-3">
       <span id="pipeline-status" class="text-sm text-gray-500">Idle</span>
-      <select id="mode-select" class="bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm">
-        <option value="tools">Tools Mode</option>
-        <option value="full">Full (LLM)</option>
-      </select>
-      <button onclick="runAll()" id="btn-run-all"
-        class="bg-blue-600 hover:bg-blue-500 px-4 py-1.5 rounded text-sm font-medium transition-colors">
+      <button
+        onclick="openSettings()"
+        class="text-gray-400 hover:text-gray-200 p-1.5 rounded transition-colors"
+        title="Settings"
+        aria-label="Settings">
+        ⚙
+      </button>
+      <button
+        onclick="runAll()"
+        id="btn-run-all"
+        class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition-colors">
         Run All Regions
       </button>
     </div>
   </header>
 
-  <!-- KPI Strip -->
-  <section id="kpi-strip" class="grid grid-cols-4 gap-4 px-6 py-5 border-b border-gray-800">
-    <div class="bg-gray-900 rounded-lg p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Total VaCR Exposure</p>
-      <p id="kpi-vacr" class="text-2xl font-bold mt-1">—</p>
-    </div>
-    <div class="bg-gray-900 rounded-lg p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Regions Analyzed</p>
-      <p id="kpi-analyzed" class="text-2xl font-bold mt-1">—</p>
-    </div>
-    <div class="bg-gray-900 rounded-lg p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Escalated</p>
-      <p id="kpi-escalated" class="text-2xl font-bold mt-1 text-orange-400">—</p>
-    </div>
-    <div class="bg-gray-900 rounded-lg p-4">
-      <p class="text-xs text-gray-500 uppercase tracking-wide">Last Run</p>
-      <p id="kpi-timestamp" class="text-2xl font-bold mt-1">—</p>
-    </div>
-  </section>
-
-  <!-- Main Content -->
-  <main class="grid grid-cols-3 gap-0 h-[calc(100vh-200px)]">
-
-    <!-- Region Cards (2/3 width) -->
-    <section class="col-span-2 p-6 overflow-y-auto">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400">Regional Threat Status</h2>
+  <!-- Progress bar — hidden by default, fixed below header -->
+  <div id="progress-bar-container" class="hidden fixed top-16 left-0 right-0 z-30 bg-gray-900 px-0">
+    <div class="flex items-center gap-3 px-6 py-1.5">
+      <span id="progress-label" class="text-xs text-gray-400 shrink-0">Initializing...</span>
+      <div class="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
+        <div id="progress-fill" style="width: 0%"></div>
       </div>
-      <div id="region-cards" class="grid grid-cols-2 gap-4 xl:grid-cols-3">
-        <!-- JS-rendered -->
-      </div>
+    </div>
+  </div>
 
-      <!-- Executive Summary -->
-      <div id="exec-summary-section" class="mt-6 hidden">
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Executive Summary</h2>
-        <div id="exec-summary" class="bg-gray-900 rounded-lg p-5 text-sm text-gray-300 leading-relaxed"></div>
+  <!-- Overview tab -->
+  <div id="tab-overview" data-audience="all">
+
+    <!-- KPI strip — 6 tiles -->
+    <section id="kpi-strip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 px-6 py-5 border-b border-gray-800">
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Total VaCR</p>
+        <p id="kpi-vacr" class="text-2xl font-bold mt-1">—</p>
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Escalated</p>
+        <p id="kpi-escalated" class="text-2xl font-bold mt-1 text-orange-400">—</p>
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Monitor</p>
+        <p id="kpi-monitor" class="text-2xl font-bold mt-1 text-yellow-400">—</p>
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Clear</p>
+        <p id="kpi-clear" class="text-2xl font-bold mt-1 text-green-400">—</p>
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Last Run</p>
+        <p id="kpi-timestamp" class="text-lg font-bold mt-1">—</p>
+      </div>
+      <div class="bg-gray-900 rounded-lg p-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Trend</p>
+        <p id="kpi-trend" class="text-2xl font-bold mt-1">—</p>
       </div>
     </section>
 
-    <!-- Log Panel (1/3 width) -->
-    <aside class="border-l border-gray-800 flex flex-col">
-      <div class="px-4 py-3 border-b border-gray-800 flex items-center justify-between">
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400">Live Event Log</h2>
-        <button onclick="clearLog()" class="text-xs text-gray-600 hover:text-gray-400">Clear</button>
+    <!-- Executive summary (full width, prominent) -->
+    <section id="executive-summary-section" class="px-6 py-5" data-audience="board">
+      <div class="border-l-4 border-blue-600 bg-gray-900 rounded-r-lg p-5">
+        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Executive Summary</h2>
+        <p id="executive-summary-text" class="text-sm text-gray-300 leading-relaxed">
+          No intelligence run yet. Click Run All Regions to generate the first report.
+        </p>
       </div>
-      <div id="log-panel" class="log-panel flex-1 overflow-y-auto p-4 space-y-1"></div>
-    </aside>
-  </main>
+    </section>
+
+    <!-- Archive banner — hidden by default -->
+    <div id="archive-banner" class="hidden mx-6 mb-4 bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-2 flex items-center justify-between text-sm text-amber-300">
+      <span>Viewing archived run — <span id="archive-timestamp" class="font-medium"></span></span>
+      <button onclick="returnToLatest()" class="underline hover:no-underline text-amber-200">Return to latest</button>
+    </div>
+
+    <!-- Escalated regions section -->
+    <section id="escalated-section" class="px-6 pb-4" data-audience="ops">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Active Threats</h3>
+      <div id="escalated-cards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+        <!-- cards injected by app.js -->
+      </div>
+    </section>
+
+    <!-- Clear + Monitor regions -->
+    <section id="clear-section" class="px-6 pb-4" data-audience="ops">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Regional Status</h3>
+      <div id="clear-chips" class="flex flex-wrap gap-2">
+        <!-- chips injected by app.js -->
+      </div>
+    </section>
+
+    <!-- Global outputs button row -->
+    <div id="global-outputs-row" class="px-6 pb-6">
+      <button
+        onclick="loadPanel('global', null)"
+        id="btn-global-outputs"
+        class="bg-blue-700 hover:bg-blue-600 px-5 py-2 rounded-full text-sm font-medium transition-colors">
+        Board Deliverables
+      </button>
+    </div>
+
+  </div><!-- end tab-overview -->
+
+  <!-- History tab — hidden by default -->
+  <div id="tab-history" class="hidden px-6 py-5">
+    <h2 class="text-lg font-semibold mb-4">Run History</h2>
+    <div id="run-history-list" class="space-y-3 mb-8">
+      <!-- injected by app.js -->
+    </div>
+    <div class="border-t border-gray-800 pt-5">
+      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-2">
+        Audit Trace
+        <button onclick="toggleTrace()" class="text-gray-500 hover:text-gray-300 text-xs transition-colors" aria-label="Toggle audit trace" aria-expanded="false" aria-controls="audit-trace">▼</button>
+      </h3>
+      <pre id="audit-trace" class="hidden bg-gray-900 rounded-lg p-4 text-xs font-mono text-gray-400 overflow-x-auto whitespace-pre-wrap"></pre>
+    </div>
+  </div>
+
+  <!-- Panel overlay (full-screen backdrop) -->
+  <div
+    id="panel-overlay"
+    class="hidden fixed inset-0 z-50"
+    onclick="closePanel()">
+  </div>
+
+  <!-- Slide-over output panel -->
+  <aside
+    id="output-panel"
+    aria-hidden="true"
+    class="fixed top-0 right-0 bottom-0 z-[60] w-full max-w-2xl bg-gray-900 border-l border-gray-700 flex flex-col">
+    <div id="panel-header" class="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
+      <span id="panel-title" class="font-semibold text-gray-100"></span>
+      <button
+        onclick="closePanel()"
+        class="text-gray-400 hover:text-gray-200 text-xl leading-none transition-colors"
+        aria-label="Close panel">
+        ✕
+      </button>
+    </div>
+    <div id="panel-tabs" class="flex border-b border-gray-700 shrink-0">
+      <!-- tab buttons injected by loadPanel() -->
+    </div>
+    <div id="panel-body" class="flex-1 overflow-y-auto p-5 text-sm text-gray-300">
+      <!-- content injected by loadPanel() -->
+    </div>
+  </aside>
+
+  <!-- Settings modal — hidden by default -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center">
+    <div id="settings-content" class="bg-gray-900 rounded-lg border border-gray-700 p-6 w-full max-w-sm mx-4 shadow-2xl">
+      <h3 class="text-base font-semibold mb-4">Settings</h3>
+      <div class="space-y-4">
+        <label class="block">
+          <span class="text-sm text-gray-400 block mb-1">Pipeline Mode</span>
+          <select
+            id="mode-select"
+            class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-blue-500">
+            <option value="tools">Tools Mode</option>
+            <option value="full">Full (LLM)</option>
+          </select>
+        </label>
+      </div>
+      <div class="flex justify-end mt-6">
+        <button
+          onclick="closeSettings()"
+          class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
 
   <script src="/static/app.js"></script>
 </body>
