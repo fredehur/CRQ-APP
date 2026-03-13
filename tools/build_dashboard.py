@@ -38,6 +38,72 @@ CREDIBILITY_LABEL = {
 }
 
 
+def load_gatekeeper_data(region):
+    """Return parsed gatekeeper_decision.json or None if absent."""
+    path = f"output/regional/{region.lower()}/gatekeeper_decision.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def load_scenario_map(region):
+    """Return parsed scenario_map.json or None if absent."""
+    path = f"output/regional/{region.lower()}/scenario_map.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def decision_intelligence_block(region_name, gatekeeper_data, scenario_map_data):
+    """Return HTML for the Decision Intelligence block, or '' if data absent."""
+    gk = gatekeeper_data.get(region_name) if gatekeeper_data else None
+    sm = scenario_map_data.get(region_name) if scenario_map_data else None
+    if not gk:
+        return ""
+
+    decision = gk.get("decision", "")
+    admiralty = gk.get("admiralty", {})
+    if isinstance(admiralty, dict):
+        admiralty_rating = admiralty.get("rating", "")
+    else:
+        admiralty_rating = str(admiralty) if admiralty else ""
+    scenario_match = gk.get("scenario_match", "")
+    dominant_pillar = gk.get("dominant_pillar", "")
+    rationale = gk.get("rationale", "")
+    financial_rank = sm.get("financial_rank", "") if sm else ""
+    confidence = (sm.get("confidence", "") or "").upper() if sm else ""
+
+    decision_color = {
+        "ESCALATE": "text-red-300 bg-red-900/30 border-red-700",
+        "MONITOR":  "text-amber-300 bg-amber-900/30 border-amber-700",
+        "CLEAR":    "text-green-300 bg-green-900/20 border-green-800",
+    }.get(decision, "text-gray-300 bg-gray-800 border-gray-700")
+
+    rank_txt = f"Rank #{financial_rank}" if financial_rank else ""
+    conf_txt = f"Confidence: {confidence}" if confidence else ""
+    meta_parts = [p for p in [scenario_match, rank_txt, conf_txt] if p]
+    meta_line = " · ".join(meta_parts)
+
+    admiralty_span = f'<span class="font-mono font-bold ml-1">{admiralty_rating}</span>' if admiralty_rating else ""
+    pillar_span = f'<span class="text-gray-400 ml-1 text-xs">{dominant_pillar}</span>' if dominant_pillar else ""
+    meta_div = f'<div class="text-xs text-gray-400 mb-1">{meta_line}</div>' if meta_line else ""
+    rationale_div = f'<div class="text-xs italic">&ldquo;{rationale}&rdquo;</div>' if rationale else ""
+
+    return f"""
+        <div class="mt-3 p-2 border rounded text-xs {decision_color}">
+            <div class="flex items-center gap-1 mb-1 font-bold uppercase text-xs">{decision}{admiralty_span}{pillar_span}</div>
+            {meta_div}{rationale_div}
+        </div>"""
+
+
 def admiralty_tooltip(rating):
     """Return plain-English tooltip for an Admiralty rating like 'B2'."""
     if not rating or len(rating) != 2:
@@ -74,6 +140,16 @@ def build():
         if os.path.exists(data_path):
             with open(data_path, encoding='utf-8') as f:
                 region_data[region] = json.load(f)
+
+    gatekeeper_data = {}
+    scenario_map_data = {}
+    for region in REGIONS:
+        gk = load_gatekeeper_data(region)
+        if gk:
+            gatekeeper_data[region] = gk
+        sm = load_scenario_map(region)
+        if sm:
+            scenario_map_data[region] = sm
 
     total_vacr = report.get("total_vacr_exposure", 0)
     summary = report.get("executive_summary", "")
@@ -120,6 +196,7 @@ def build():
             </div>
             <div class="mb-3">{velocity_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{r.get("strategic_assessment", "")}</p>
+            {decision_intelligence_block(r.get("region", ""), gatekeeper_data, scenario_map_data)}
         </div>"""
 
     # Build monitor region cards
@@ -137,6 +214,7 @@ def build():
             </div>
             <div class="mb-2">{admiralty_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{m.get("rationale", "Elevated indicators below escalation threshold.")}</p>
+            {decision_intelligence_block(m.get("region", ""), gatekeeper_data, scenario_map_data)}
         </div>"""
 
     # Build clear region cards
@@ -152,6 +230,7 @@ def build():
             </div>
             <p class="text-3xl font-bold text-green-600 mb-3">$0</p>
             <p class="text-sm text-gray-600 leading-relaxed">No credible threat identified. Gatekeeper assessment: region operating within normal risk parameters.</p>
+            {decision_intelligence_block(region, gatekeeper_data, scenario_map_data)}
         </div>"""
 
     # Build trace log rows
