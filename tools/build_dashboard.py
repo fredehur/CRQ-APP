@@ -1,3 +1,4 @@
+import html
 import json
 import sys
 import os
@@ -38,6 +39,136 @@ CREDIBILITY_LABEL = {
 }
 
 
+def load_gatekeeper_data(region):
+    """Return parsed gatekeeper_decision.json or None if absent."""
+    path = f"output/regional/{region.lower()}/gatekeeper_decision.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def load_scenario_map(region):
+    """Return parsed scenario_map.json or None if absent."""
+    path = f"output/regional/{region.lower()}/scenario_map.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def load_intelligence_sources(region):
+    """Return parsed intelligence_sources.json or None if absent."""
+    path = f"output/regional/{region.lower()}/intelligence_sources.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def intelligence_sources_block(region_name, intel_sources_data):
+    """Return collapsible HTML block for intelligence sources, or '' if data absent."""
+    intel = intel_sources_data.get(region_name) if intel_sources_data else None
+    if not intel:
+        return ""
+
+    geo_sources = intel.get("geo_sources", [])
+    cyber_sources = intel.get("cyber_sources", [])
+    total = len(geo_sources) + len(cyber_sources)
+    if total == 0:
+        return ""
+
+    def source_rows(sources, section_label):
+        if not sources:
+            return ""
+        rows = ""
+        for s in sources:
+            title = html.escape(s.get("title", ""))
+            snippet = html.escape(s.get("snippet", ""))
+            pub_date = html.escape(s.get("published_date", ""))
+            source_name = html.escape(s.get("source", ""))
+            url = s.get("url")
+            is_mock = s.get("mock", True)
+            mock_badge = ' <span class="text-yellow-500 text-xs">[MOCK]</span>' if is_mock else ""
+            url_safe = html.escape(url) if url else ""
+            title_html = f'<a href="{url_safe}" class="underline text-blue-400">{title}</a>' if url_safe else title
+            rows += f"""<div class="py-1 border-b border-gray-700 last:border-0">
+                <div class="text-gray-200">{title_html}{mock_badge}</div>
+                <div class="text-gray-500 text-xs">{source_name} · {pub_date}</div>
+                {f'<div class="text-gray-400 mt-0.5">{snippet}</div>' if snippet else ""}
+            </div>"""
+        return f'<div class="mb-2"><div class="text-xs font-bold uppercase text-gray-500 mb-1 mt-2">{section_label}</div>{rows}</div>'
+
+    geo_html = source_rows(geo_sources, "Geo Intelligence")
+    cyber_html = source_rows(cyber_sources, "Cyber Intelligence")
+
+    return f"""<details class="mt-3">
+            <summary class="cursor-pointer text-xs font-semibold text-gray-500 hover:text-gray-300">
+                Intelligence Sources ({len(geo_sources)} geo · {len(cyber_sources)} cyber)
+            </summary>
+            <div class="mt-2 text-xs space-y-0">
+                {geo_html}{cyber_html}
+            </div>
+        </details>"""
+
+
+def decision_intelligence_block(region_name, gatekeeper_data, scenario_map_data):
+    """Return HTML for the Decision Intelligence block, or '' if data absent."""
+    gk = gatekeeper_data.get(region_name) if gatekeeper_data else None
+    sm = scenario_map_data.get(region_name) if scenario_map_data else None
+    if not gk:
+        return ""
+
+    decision = gk.get("decision", "")
+    admiralty = gk.get("admiralty", {})
+    if isinstance(admiralty, dict):
+        admiralty_rating = admiralty.get("rating", "")
+    else:
+        admiralty_rating = str(admiralty) if admiralty else ""
+    scenario_match = gk.get("scenario_match") or (sm.get("top_scenario", "") if sm else "")
+    dominant_pillar = gk.get("dominant_pillar", "")
+    rationale = gk.get("rationale", "")
+    financial_rank = sm.get("financial_rank", "") if sm else ""
+    confidence = (sm.get("confidence", "") or "").upper() if sm else ""
+
+    admiralty_rating = html.escape(admiralty_rating)
+    dominant_pillar  = html.escape(dominant_pillar)
+    scenario_match   = html.escape(scenario_match)
+    confidence       = html.escape(confidence)
+    rationale        = html.escape(rationale)
+
+    decision_color = {
+        "ESCALATE": "text-red-300 bg-red-900/30 border-red-700",
+        "MONITOR":  "text-amber-300 bg-amber-900/30 border-amber-700",
+        "CLEAR":    "text-green-300 bg-green-900/20 border-green-800",
+    }.get(decision, "text-gray-300 bg-gray-800 border-gray-700")
+
+    rank_txt = f"Rank #{financial_rank}" if financial_rank else ""
+    conf_txt = f"Confidence: {confidence}" if confidence else ""
+    meta_parts = [p for p in [scenario_match, rank_txt, conf_txt] if p]
+    meta_line = " · ".join(meta_parts)
+
+    admiralty_span = f'<span class="font-mono font-bold ml-1">{admiralty_rating}</span>' if admiralty_rating else ""
+    pillar_span = f'<span class="text-gray-400 ml-1 text-xs">{dominant_pillar}</span>' if dominant_pillar else ""
+    meta_div = f'<div class="text-xs text-gray-400 mb-1">{meta_line}</div>' if meta_line else ""
+    rationale_div = f'<div class="text-xs italic">&ldquo;{rationale}&rdquo;</div>' if rationale else ""
+
+    return f"""
+        <div class="mt-3 p-2 border rounded text-xs {decision_color}">
+            <div class="flex items-center gap-1 mb-1 font-bold uppercase text-xs">{decision}{admiralty_span}{pillar_span}</div>
+            {meta_div}{rationale_div}
+        </div>"""
+
+
 def admiralty_tooltip(rating):
     """Return plain-English tooltip for an Admiralty rating like 'B2'."""
     if not rating or len(rating) != 2:
@@ -74,6 +205,22 @@ def build():
         if os.path.exists(data_path):
             with open(data_path, encoding='utf-8') as f:
                 region_data[region] = json.load(f)
+
+    gatekeeper_data = {}
+    scenario_map_data = {}
+    for region in REGIONS:
+        gk = load_gatekeeper_data(region)
+        if gk:
+            gatekeeper_data[region] = gk
+        sm = load_scenario_map(region)
+        if sm:
+            scenario_map_data[region] = sm
+
+    intel_sources_data = {}
+    for region in REGIONS:
+        intel = load_intelligence_sources(region)
+        if intel:
+            intel_sources_data[region] = intel
 
     total_vacr = report.get("total_vacr_exposure", 0)
     summary = report.get("executive_summary", "")
@@ -120,6 +267,8 @@ def build():
             </div>
             <div class="mb-3">{velocity_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{r.get("strategic_assessment", "")}</p>
+            {decision_intelligence_block(r.get("region", ""), gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(r.get("region", ""), intel_sources_data)}
         </div>"""
 
     # Build monitor region cards
@@ -137,6 +286,8 @@ def build():
             </div>
             <div class="mb-2">{admiralty_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{m.get("rationale", "Elevated indicators below escalation threshold.")}</p>
+            {decision_intelligence_block(m.get("region", ""), gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(m.get("region", ""), intel_sources_data)}
         </div>"""
 
     # Build clear region cards
@@ -152,6 +303,8 @@ def build():
             </div>
             <p class="text-3xl font-bold text-green-600 mb-3">$0</p>
             <p class="text-sm text-gray-600 leading-relaxed">No credible threat identified. Gatekeeper assessment: region operating within normal risk parameters.</p>
+            {decision_intelligence_block(region, gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(region, intel_sources_data)}
         </div>"""
 
     # Build trace log rows
@@ -182,7 +335,7 @@ def build():
             {monitor_cards}
         </div>"""
 
-    html = f"""<!DOCTYPE html>
+    dashboard_html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -275,7 +428,7 @@ def build():
 </html>"""
 
     with open("output/dashboard.html", "w", encoding="utf-8") as f:
-        f.write(html)
+        f.write(dashboard_html)
     print(f"Dashboard written to output/dashboard.html ({escalated_count} escalated, {monitor_count} watch, {clear_count} clear, {len(trace_lines)} trace events)")
 
     # Markdown export

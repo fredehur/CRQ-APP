@@ -48,7 +48,8 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
 2. Run `uv run python tools/geopolitical_context.py {REGION}`
 
-3. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
+3. Run `uv run python tools/audit_logger.py AGENT_START "gatekeeper-agent {REGION} dispatched"`
+   Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
    The gatekeeper writes `output/regional/{region_lower}/gatekeeper_decision.json` and returns one word: ESCALATE, MONITOR, or CLEAR.
 
 4. **If CLEAR:**
@@ -66,6 +67,7 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
    - Run `uv run python tools/audit_logger.py GATEKEEPER_YES "{REGION} — escalated, proceeding to analysis"`
    - Run `uv run python tools/threat_scorer.py {REGION}` and extract severity score.
    - Read `output/regional/{region_lower}/gatekeeper_decision.json` to get the Admiralty rating.
+   - Run `uv run python tools/audit_logger.py AGENT_START "regional-analyst-agent {REGION} dispatched"`
    - Delegate to `regional-analyst-agent`. Provide: region, critical assets, VaCR, geopolitical context output, threat feed output, severity score, and Admiralty rating. Agent writes directly to `output/regional/{region_lower}/report.md`.
 
 **Fan-in:** Wait until all 5 tasks complete. Then run the jargon auditor for each escalated region:
@@ -93,12 +95,14 @@ Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Cross-regional diff co
 
 ## PHASE 4 — GLOBAL REPORT
 
+Run `uv run python tools/audit_logger.py AGENT_START "global-builder-agent dispatched"`
 Delegate to `global-builder-agent`. Provide all approved regional briefs, the delta brief, and the path to `output/trend_brief.json`.
 Agent reads regional reports, data.json files, and trend brief, then writes `output/global_report.json`.
 Stop hooks validate JSON schema (including Admiralty and velocity fields), then jargon.
 
 ### Phase 4b — Global Validation (Devil's Advocate)
 
+Run `uv run python tools/audit_logger.py AGENT_START "global-validator-agent dispatched"`
 Delegate to `global-validator-agent`. It reads `output/global_report.json` and cross-references all regional data files for consistency.
 
 - If agent returns `APPROVED`:

@@ -10,6 +10,7 @@ from typing import Optional
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
 from sse_starlette.sse import EventSourceResponse
 
 BASE = Path(__file__).resolve().parent
@@ -30,6 +31,12 @@ pipeline_state = {
     "started_at": None,
 }
 event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
+
+
+class InternalEvent(BaseModel):
+    event_type: str
+    agent_id: str
+    payload: dict = {}
 
 
 def _read_json(path: Path) -> Optional[dict]:
@@ -264,6 +271,16 @@ async def run_region(region: str, mode: str = Query(default="tools")):
     driver = _run_full_mode if mode == "full" else _run_tools_mode
     asyncio.create_task(driver([r]))
     return {"started": True, "mode": mode, "regions": [r]}
+
+
+@app.post("/internal/event")
+async def internal_event(event: InternalEvent):
+    """Receive telemetry events from hook scripts and broadcast via SSE."""
+    await _emit(event.event_type, {
+        **event.payload,
+        "agent_id": event.agent_id,
+    })
+    return {"ok": True}
 
 
 # ── SSE Stream ───────────────────────────────────────────────────────────

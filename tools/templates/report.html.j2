@@ -128,6 +128,25 @@
   .meta-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 3mm; }
   .meta-table td { padding: 2mm 3mm; border-bottom: 1px solid #f1f5f9; }
   .meta-table td:first-child { color: var(--slate); width: 40%; }
+
+  /* ── Basis of Assessment ─────────────────────────────────────────── */
+  .basis-block {
+    margin-top: 5mm;
+    padding: 3mm 4mm;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    font-size: 9pt;
+    color: #475569;
+  }
+  .basis-block .basis-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 8pt;
+    color: var(--slate);
+    margin-bottom: 1mm;
+  }
 </style>
 </head>
 <body>
@@ -271,6 +290,14 @@
           Regional intelligence report unavailable for this run. Check pipeline logs.
         </div>
       {% endif %}
+
+      {% if r.rationale %}
+      <div class="basis-block" style="margin-top:4mm;">
+        <div class="basis-label">Basis of Assessment</div>
+        <div>{{ r.rationale }}</div>
+        {% if r.financial_rank %}<div style="margin-top:1mm;font-size:8pt;">Financial impact rank: #{{ r.financial_rank }}{% if r.confidence %} · Confidence: {{ r.confidence | upper }}{% endif %}</div>{% endif %}
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>
@@ -316,6 +343,37 @@
     <tr><td>Clear</td><td>{{ data.clear_count }}</td></tr>
   </table>
 </div>
+
+
+{# ══════════════════════════════════════════════════════════════════ SOURCES CONSULTED #}
+{% if data.sources %}
+<div class="page">
+  <div class="section-header">
+    <h2>Sources Consulted</h2>
+    <span class="sub">OSINT intelligence sources — escalated regions only</span>
+  </div>
+  <table class="admiralty-table" style="margin-top:4mm;">
+    <thead>
+      <tr>
+        <th style="width:14mm;">Region</th>
+        <th>Title</th>
+        <th style="width:22mm;">Publication</th>
+        <th style="width:20mm;">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in data.sources %}
+      <tr>
+        <td>{{ s.region }}</td>
+        <td>{{ s.title }}</td>
+        <td>{{ s.source }}</td>
+        <td>{{ s.published_date }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
 </body>
 </html>

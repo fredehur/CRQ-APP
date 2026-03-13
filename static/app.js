@@ -176,6 +176,51 @@ function clearLog() {
   $('log-panel').innerHTML = '';
 }
 
+// ── Live Pipeline Strip ─────────────────────────────────────────────────
+const _regionStates = {};
+REGIONS.forEach(r => { _regionStates[r] = 'PENDING'; });
+
+const _stateColors = {
+  PENDING:    'bg-gray-700 text-gray-400',
+  COLLECTING: 'bg-blue-900 text-blue-300',
+  ANALYZING:  'bg-amber-900 text-amber-300',
+  ESCALATED:  'bg-red-900 text-red-300',
+  MONITOR:    'bg-amber-800 text-amber-200',
+  CLEAR:      'bg-green-900 text-green-300',
+};
+
+function updateLiveStrip() {
+  const container = $('live-region-states');
+  if (!container) return;
+  container.innerHTML = REGIONS.map(r => {
+    const state = _regionStates[r] || 'PENDING';
+    const color = _stateColors[state] || _stateColors['PENDING'];
+    return `<span class="text-xs font-mono px-2 py-0.5 rounded ${color}">${r}: ${state}</span>`;
+  }).join('');
+}
+
+function handleLiveStripEvent(eventType, d) {
+  const strip = $('live-strip');
+  if (!strip) return;
+
+  if (eventType === 'pipeline' && d.status === 'running') {
+    REGIONS.forEach(r => { _regionStates[r] = 'PENDING'; });
+    strip.classList.remove('hidden');
+    updateLiveStrip();
+  } else if (eventType === 'phase' && d.region) {
+    _regionStates[d.region] = 'COLLECTING';
+    updateLiveStrip();
+  } else if (eventType === 'gatekeeper' && d.region) {
+    const decision = (d.decision || '').toUpperCase();
+    _regionStates[d.region] = decision === 'ESCALATE' ? 'ESCALATED'
+                             : decision === 'MONITOR'  ? 'MONITOR'
+                             : 'CLEAR';
+    updateLiveStrip();
+  } else if (eventType === 'pipeline' && (d.status === 'complete' || d.status === 'error')) {
+    setTimeout(() => strip.classList.add('hidden'), 3000);
+  }
+}
+
 // ── SSE ────────────────────────────────────────────────────────────────
 function connectSSE() {
   if (eventSource) eventSource.close();
@@ -183,17 +228,20 @@ function connectSSE() {
 
   eventSource.addEventListener('gatekeeper', (e) => {
     const d = JSON.parse(e.data);
+    handleLiveStripEvent('gatekeeper', d);
     appendLog('gatekeeper', `${d.region}: ${d.decision} (${d.severity})`);
   });
 
   eventSource.addEventListener('phase', (e) => {
     const d = JSON.parse(e.data);
+    handleLiveStripEvent('phase', d);
     const msg = d.region ? `${d.phase} — ${d.region}` : `${d.phase} — ${d.status}`;
     appendLog('phase', msg);
   });
 
   eventSource.addEventListener('pipeline', (e) => {
     const d = JSON.parse(e.data);
+    handleLiveStripEvent('pipeline', d);
     appendLog('pipeline', `Pipeline ${d.status}`);
     if (d.status === 'complete' || d.status === 'error') {
       $('pipeline-status').textContent = d.status === 'error' ? 'Error' : 'Idle';

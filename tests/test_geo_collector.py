@@ -11,14 +11,14 @@ def run(args):
     result = subprocess.run(
         [PYTHON, "tools/geo_collector.py"] + args,
         capture_output=True, text=True, encoding="utf-8",
-        cwd="c:/Users/frede/crq-agent-workspace/.worktrees/osint-toolchain"
+        cwd="c:/Users/frede/crq-agent-workspace/.worktrees/phase-e"
     )
     return result.returncode, result.stdout, result.stderr
 
 
 def read_output(region):
     path = f"output/regional/{region.lower()}/geo_signals.json"
-    with open(f"c:/Users/frede/crq-agent-workspace/.worktrees/osint-toolchain/{path}", encoding="utf-8") as f:
+    with open(f"c:/Users/frede/crq-agent-workspace/.worktrees/phase-e/{path}", encoding="utf-8") as f:
         return json.load(f)
 
 

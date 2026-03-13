@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
 
@@ -35,6 +35,10 @@ class RegionEntry:
     why_text: str | None
     how_text: str | None
     so_what_text: str | None
+    # E-1 additions
+    rationale: str | None = None
+    financial_rank: int | None = None
+    confidence: str | None = None
 
 
 @dataclass
@@ -48,6 +52,7 @@ class ReportData:
     clear_count: int
     regions: list[RegionEntry]
     monitor_regions: list[str]
+    sources: list[dict] = field(default_factory=list)  # E-2: {region, title, published_date, source}
 
 
 # ── Header sets for pillar parsing (prefix match) ─────────────────────────────
@@ -155,6 +160,29 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
                     region_name,
                 )
 
+        # E-1: read gatekeeper decision + scenario map (graceful if absent)
+        rationale = None
+        financial_rank = None
+        confidence = None
+
+        gk_path = base / "regional" / region_name.lower() / "gatekeeper_decision.json"
+        if gk_path.exists():
+            try:
+                gk = json.loads(gk_path.read_text(encoding="utf-8"))
+                rationale = gk.get("rationale")
+            except (json.JSONDecodeError, OSError):
+                pass
+
+        sm_path = base / "regional" / region_name.lower() / "scenario_map.json"
+        if sm_path.exists():
+            try:
+                sm = json.loads(sm_path.read_text(encoding="utf-8"))
+                raw_rank = sm.get("financial_rank")
+                financial_rank = int(raw_rank) if raw_rank is not None else None
+                confidence = sm.get("confidence")
+            except (json.JSONDecodeError, ValueError, TypeError):
+                pass
+
         regions.append(RegionEntry(
             name=region_name,
             status=status,
@@ -166,11 +194,32 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             why_text=why_text,
             how_text=how_text,
             so_what_text=so_what_text,
+            rationale=rationale,
+            financial_rank=financial_rank,
+            confidence=confidence,
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]
     monitor   = [r for r in regions if r.status == RegionStatus.MONITOR]
     clear     = [r for r in regions if r.status == RegionStatus.CLEAR]
+
+    # E-2: collect intelligence sources for escalated regions
+    sources = []
+    for r in regions:
+        if r.status == RegionStatus.ESCALATED:
+            intel_path = base / "regional" / r.name.lower() / "intelligence_sources.json"
+            if intel_path.exists():
+                try:
+                    intel = json.loads(intel_path.read_text(encoding="utf-8"))
+                    for s in intel.get("geo_sources", []) + intel.get("cyber_sources", []):
+                        sources.append({
+                            "region": r.name,
+                            "title": s.get("title", ""),
+                            "published_date": s.get("published_date", ""),
+                            "source": s.get("source", ""),
+                        })
+                except (json.JSONDecodeError, OSError):
+                    pass
 
     return ReportData(
         run_id=run_id,
@@ -182,4 +231,5 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
         clear_count=len(clear),
         regions=regions,
         monitor_regions=monitor_regions,
+        sources=sources,
     )
