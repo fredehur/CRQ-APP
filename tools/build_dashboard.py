@@ -63,6 +63,63 @@ def load_scenario_map(region):
         return None
 
 
+def load_intelligence_sources(region):
+    """Return parsed intelligence_sources.json or None if absent."""
+    path = f"output/regional/{region.lower()}/intelligence_sources.json"
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def intelligence_sources_block(region_name, intel_sources_data):
+    """Return collapsible HTML block for intelligence sources, or '' if data absent."""
+    intel = intel_sources_data.get(region_name) if intel_sources_data else None
+    if not intel:
+        return ""
+
+    geo_sources = intel.get("geo_sources", [])
+    cyber_sources = intel.get("cyber_sources", [])
+    total = len(geo_sources) + len(cyber_sources)
+    if total == 0:
+        return ""
+
+    def source_rows(sources, section_label):
+        if not sources:
+            return ""
+        rows = ""
+        for s in sources:
+            title = html.escape(s.get("title", ""))
+            snippet = html.escape(s.get("snippet", ""))
+            pub_date = html.escape(s.get("published_date", ""))
+            source_name = html.escape(s.get("source", ""))
+            url = s.get("url")
+            is_mock = s.get("mock", True)
+            mock_badge = ' <span class="text-yellow-500 text-xs">[MOCK]</span>' if is_mock else ""
+            title_html = f'<a href="{url}" class="underline text-blue-400">{title}</a>' if url else title
+            rows += f"""<div class="py-1 border-b border-gray-700 last:border-0">
+                <div class="text-gray-200">{title_html}{mock_badge}</div>
+                <div class="text-gray-500 text-xs">{source_name} · {pub_date}</div>
+                {f'<div class="text-gray-400 mt-0.5">{snippet}</div>' if snippet else ""}
+            </div>"""
+        return f'<div class="mb-2"><div class="text-xs font-bold uppercase text-gray-500 mb-1 mt-2">{section_label}</div>{rows}</div>'
+
+    geo_html = source_rows(geo_sources, "Geo Intelligence")
+    cyber_html = source_rows(cyber_sources, "Cyber Intelligence")
+
+    return f"""<details class="mt-3">
+            <summary class="cursor-pointer text-xs font-semibold text-gray-500 hover:text-gray-300">
+                Intelligence Sources ({len(geo_sources)} geo · {len(cyber_sources)} cyber)
+            </summary>
+            <div class="mt-2 text-xs space-y-0">
+                {geo_html}{cyber_html}
+            </div>
+        </details>"""
+
+
 def decision_intelligence_block(region_name, gatekeeper_data, scenario_map_data):
     """Return HTML for the Decision Intelligence block, or '' if data absent."""
     gk = gatekeeper_data.get(region_name) if gatekeeper_data else None
@@ -158,6 +215,12 @@ def build():
         if sm:
             scenario_map_data[region] = sm
 
+    intel_sources_data = {}
+    for region in REGIONS:
+        intel = load_intelligence_sources(region)
+        if intel:
+            intel_sources_data[region] = intel
+
     total_vacr = report.get("total_vacr_exposure", 0)
     summary = report.get("executive_summary", "")
     threat_regions = report.get("regional_threats", [])
@@ -204,6 +267,7 @@ def build():
             <div class="mb-3">{velocity_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{r.get("strategic_assessment", "")}</p>
             {decision_intelligence_block(r.get("region", ""), gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(r.get("region", ""), intel_sources_data)}
         </div>"""
 
     # Build monitor region cards
@@ -222,6 +286,7 @@ def build():
             <div class="mb-2">{admiralty_badge}</div>
             <p class="text-sm text-gray-600 leading-relaxed">{m.get("rationale", "Elevated indicators below escalation threshold.")}</p>
             {decision_intelligence_block(m.get("region", ""), gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(m.get("region", ""), intel_sources_data)}
         </div>"""
 
     # Build clear region cards
@@ -238,6 +303,7 @@ def build():
             <p class="text-3xl font-bold text-green-600 mb-3">$0</p>
             <p class="text-sm text-gray-600 leading-relaxed">No credible threat identified. Gatekeeper assessment: region operating within normal risk parameters.</p>
             {decision_intelligence_block(region, gatekeeper_data, scenario_map_data)}
+            {intelligence_sources_block(region, intel_sources_data)}
         </div>"""
 
     # Build trace log rows
