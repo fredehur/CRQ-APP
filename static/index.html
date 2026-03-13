@@ -85,16 +85,16 @@
       color: #e5e7eb;
     }
 
-    /* Panel tab active state */
-    .panel-tab-active {
-      border-bottom: 2px solid #3b82f6;
-      color: #f9fafb;
-    }
-    .panel-tab-inactive {
+    /* Panel tab active state — JS adds/removes .active on .panel-tab elements */
+    .panel-tab {
       border-bottom: 2px solid transparent;
       color: #9ca3af;
     }
-    .panel-tab-inactive:hover {
+    .panel-tab.active {
+      border-bottom: 2px solid #3b82f6;
+      color: #f9fafb;
+    }
+    .panel-tab:hover {
       color: #e5e7eb;
     }
 

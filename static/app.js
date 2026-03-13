@@ -505,6 +505,10 @@ function switchTab(tab) {
   state.activeTab = tab;
   $('tab-overview').classList.toggle('hidden', tab !== 'overview');
   $('tab-history').classList.toggle('hidden', tab !== 'history');
+  $('nav-tab-overview').className = $('nav-tab-overview').className
+    .replace(/nav-tab-\w+/, tab === 'overview' ? 'nav-tab-active' : 'nav-tab-inactive');
+  $('nav-tab-history').className = $('nav-tab-history').className
+    .replace(/nav-tab-\w+/, tab === 'history' ? 'nav-tab-active' : 'nav-tab-inactive');
   if (tab === 'history') renderHistory();
 }
 
