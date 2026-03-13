@@ -447,7 +447,12 @@ function initSSE() {
 
 async function runAll() {
   const mode = $('mode-select').value;
-  await fetch(`/api/run/all?mode=${mode}`, { method: 'POST' });
+  try {
+    const r = await fetch(`/api/run/all?mode=${mode}`, { method: 'POST' });
+    if (!r.ok) errorProgressBar('unknown');
+  } catch {
+    errorProgressBar('unknown');
+  }
 }
 
 // ── History Tab ────────────────────────────────────────────────────────
