@@ -37,6 +37,8 @@ def test_signals_returns_geo_and_cyber_keys(client, mock_output):
 
 
 def test_signals_returns_nulls_when_files_missing(client):
+    # Relies on mock_output not writing signal files for any region.
+    # If conftest adds LATAM signal files, update this test.
     resp = client.get("/api/region/LATAM/signals")
     assert resp.status_code == 200
     body = resp.json()

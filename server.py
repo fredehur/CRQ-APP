@@ -136,7 +136,7 @@ async def get_region_signals(region: str):
 @app.get("/api/outputs/global-md")
 async def get_global_md():
     path = OUTPUT / "global_report.md"
-    return {"markdown": path.read_text(encoding="utf-8") if path.exists() else ""}
+    return {"markdown": path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""}
 
 
 @app.get("/api/outputs/pdf")
