@@ -203,7 +203,7 @@ function handleLiveStripEvent(eventType, d) {
   const strip = $('live-strip');
   if (!strip) return;
 
-  if (eventType === 'pipeline' && d.status === 'started') {
+  if (eventType === 'pipeline' && d.status === 'running') {
     REGIONS.forEach(r => { _regionStates[r] = 'PENDING'; });
     strip.classList.remove('hidden');
     updateLiveStrip();
