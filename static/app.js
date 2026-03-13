@@ -233,8 +233,11 @@ function renderAll() {
 }
 
 // ── Panel System ──────────────────────────────────────────────────────
+let _closePanelTimer = null;
+
 function openPanel(title, tabs) {
   // tabs: [{ id, label, render: async fn → html string }]
+  clearTimeout(_closePanelTimer); // cancel any in-flight close animation
   $('panel-title').textContent = title;
 
   const tabBar = $('panel-tabs');
@@ -276,7 +279,7 @@ function closePanel() {
   const panel = $('output-panel');
   panel.classList.remove('panel-open');
   panel.setAttribute('aria-hidden', 'true');
-  setTimeout(() => {
+  _closePanelTimer = setTimeout(() => {
     panel.classList.add('hidden');
     $('panel-overlay').classList.add('hidden');
     window._panelTabs = null;
@@ -328,7 +331,7 @@ async function loadPanel(type, region, defaultTab) {
         }
       },
     ]);
-    if (defaultTab) activatePanelTab(defaultTab);
+    if (defaultTab && defaultTab !== 'brief') activatePanelTab(defaultTab);
 
   } else if (type === 'global') {
     openPanel('Board Deliverables', [
@@ -391,7 +394,8 @@ function showProgressBar(label, percent) {
 
 function completeProgressBar(timestamp) {
   $('progress-fill').style.width = '100%';
-  $('progress-fill').classList.replace('bg-blue-500', 'bg-green-500');
+  $('progress-fill').classList.remove('bg-blue-500', 'bg-red-600');
+  $('progress-fill').classList.add('bg-green-500');
   $('progress-label').textContent = 'Pipeline complete — ' + fmtTime(timestamp);
   setTimeout(() => {
     $('progress-bar-container').classList.add('hidden');
@@ -447,13 +451,16 @@ async function runAll() {
 }
 
 // ── History Tab ────────────────────────────────────────────────────────
+let _historyRuns = [];
+
 async function renderHistory() {
   const runs = await fetchJSON('/api/runs');
   const container = $('run-history-list');
   if (!runs || runs.length === 0) {
     container.innerHTML = '<p class="text-gray-500 text-sm">No archived runs yet.</p>';
   } else {
-    container.innerHTML = runs.map(run => {
+    _historyRuns = runs;
+    container.innerHTML = runs.map((run, i) => {
       const m = run.manifest || {};
       const regions = Object.values(m.regions || {});
       const escalated = regions.filter(r => r.status === 'escalated').length;
@@ -462,7 +469,7 @@ async function renderHistory() {
   <div class="text-gray-300">${fmtTime(m.run_timestamp)}</div>
   <div class="font-medium">${fmtUSD(m.total_vacr_exposure_usd)}</div>
   <div class="text-gray-400">${escalated} escalated</div>
-  <button onclick='loadArchiveRun(${JSON.stringify(run)})'
+  <button onclick="loadArchiveRun(_historyRuns[${i}])"
     class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-white">View</button>
 </div>`;
     }).join('');
