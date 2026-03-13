@@ -111,7 +111,7 @@ def collect(region, mock):
         if key not in seen:
             seen.add(key)
             articles.append(a)
-    return normalize(articles)
+    return normalize(articles), articles
 
 
 def main():
@@ -127,15 +127,53 @@ def main():
         print(f"[cyber_collector] invalid region '{region}'", file=sys.stderr)
         sys.exit(1)
 
-    result = collect(region, mock)
+    normalized, raw_articles = collect(region, mock)
 
     out_dir = f"output/regional/{region.lower()}"
     os.makedirs(out_dir, exist_ok=True)
     out_path = f"{out_dir}/cyber_signals.json"
     with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
+        json.dump(normalized, f, indent=2, ensure_ascii=False)
 
     print(f"[cyber_collector] wrote {out_path}", file=sys.stderr)
+
+    cyber_sources = [
+        {
+            "title": a.get("title", ""),
+            "snippet": a.get("summary", a.get("snippet", "")),
+            "source": a.get("source", ""),
+            "published_date": a.get("date", a.get("published_date", "")),
+            "url": a.get("url", None),
+            "mock": mock,
+        }
+        for a in raw_articles
+    ]
+
+    intel_path = f"{out_dir}/intelligence_sources.json"
+    intel_doc = {}
+    if os.path.exists(intel_path):
+        try:
+            with open(intel_path, encoding="utf-8") as f:
+                intel_doc = json.load(f)
+            if "geo_sources" not in intel_doc:
+                import sys as _sys
+                print(
+                    f"[cyber_collector] WARNING: {intel_path} missing geo_sources key — "
+                    "writing cyber_sources only. Run geo_collector first.",
+                    file=_sys.stderr,
+                )
+        except (json.JSONDecodeError, OSError):
+            intel_doc = {}
+
+    from datetime import datetime, timezone
+    intel_doc["region"] = region
+    intel_doc["collected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    intel_doc["cyber_sources"] = cyber_sources
+
+    with open(intel_path, "w", encoding="utf-8") as f:
+        json.dump(intel_doc, f, indent=2, ensure_ascii=False)
+
+    print(f"[cyber_collector] wrote {intel_path}", file=sys.stderr)
 
 
 if __name__ == "__main__":
