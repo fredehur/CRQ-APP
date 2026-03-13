@@ -128,6 +128,25 @@
   .meta-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 3mm; }
   .meta-table td { padding: 2mm 3mm; border-bottom: 1px solid #f1f5f9; }
   .meta-table td:first-child { color: var(--slate); width: 40%; }
+
+  /* ── Basis of Assessment ─────────────────────────────────────────── */
+  .basis-block {
+    margin-top: 5mm;
+    padding: 3mm 4mm;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 3px;
+    font-size: 9pt;
+    color: #475569;
+  }
+  .basis-block .basis-label {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 8pt;
+    color: var(--slate);
+    margin-bottom: 1mm;
+  }
 </style>
 </head>
 <body>
@@ -272,6 +291,14 @@
         </div>
       {% endif %}
     </div>
+
+    {% if r.rationale %}
+    <div class="basis-block" style="margin-top:4mm;">
+      <div class="basis-label">Basis of Assessment</div>
+      <div>{{ r.rationale }}</div>
+      {% if r.financial_rank %}<div style="margin-top:1mm;font-size:8pt;">Financial impact rank: #{{ r.financial_rank }}{% if r.confidence %} · Confidence: {{ r.confidence | upper }}{% endif %}</div>{% endif %}
+    </div>
+    {% endif %}
   </div>
 </div>
 {% endfor %}
