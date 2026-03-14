@@ -1,11 +1,17 @@
 {
   "region": "APAC",
   "status": "escalated",
-  "gatekeeper_decision": "YES",
+  "gatekeeper_decision": "ESCALATED",
   "severity": "HIGH",
   "severity_score": 3,
   "primary_scenario": "System intrusion",
   "vacr_exposure_usd": 18500000,
+  "admiralty": "B2",
+  "rationale": "Corroborated state-sponsored APT indicators across geo and cyber signals targeting manufacturing IP and SCADA networks; scenario_map financial_rank 3 breaches ESCALATE threshold.",
+  "velocity": "stable",
+  "dominant_pillar": "Geopolitical",
   "report_path": "regional/apac/report.md",
-  "timestamp": "2026-03-09T20:20:09Z"
+  "timestamp": "2026-03-13T10:33:57Z",
+  "financial_rank": 3,
+  "signal_type": "Trend"
 }

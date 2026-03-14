@@ -1,11 +1,17 @@
 {
   "region": "AME",
   "status": "escalated",
-  "gatekeeper_decision": "YES",
+  "gatekeeper_decision": "ESCALATED",
   "severity": "CRITICAL",
   "severity_score": 3,
   "primary_scenario": "Ransomware",
   "vacr_exposure_usd": 22000000,
+  "admiralty": "B2",
+  "rationale": "Corroborated ransomware campaign targeting North American wind energy OT systems with $22M demand; cyber signals confirm active double-extortion against turbine platforms; scenario_map financial_rank 3 breaches ESCALATE threshold.",
+  "velocity": "stable",
+  "dominant_pillar": "Geopolitical",
   "report_path": "regional/ame/report.md",
-  "timestamp": "2026-03-09T20:20:09Z"
+  "timestamp": "2026-03-13T10:34:10Z",
+  "financial_rank": 1,
+  "signal_type": "Mixed"
 }

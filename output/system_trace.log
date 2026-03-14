@@ -1,17 +1,14 @@
-[2026-03-09T15:07:37Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — processing 5 regions
-[2026-03-09T15:08:09Z] [GATEKEEPER_YES] AME — threat confirmed, escalating to analysis
-[2026-03-09T15:08:11Z] [GATEKEEPER_YES] APAC — threat confirmed, escalating to analysis
-[2026-03-09T15:08:12Z] [GATEKEEPER_NO] LATAM — no active threat, compute saved
-[2026-03-09T15:08:17Z] [GATEKEEPER_NO] NCE — no active threat, compute saved
-[2026-03-09T15:08:18Z] [GATEKEEPER_YES] MED — threat confirmed, escalating to analysis
-[2026-03-09T15:09:00Z] [HOOK_PASS] apac jargon audit passed
-[2026-03-09T15:09:00Z] [HOOK_PASS] ame jargon audit passed
-[2026-03-09T15:09:01Z] [HOOK_PASS] med jargon audit passed
-[2026-03-09T15:09:11Z] [PHASE_COMPLETE] Cross-regional diff complete
-[2026-03-09T15:10:05Z] [PHASE_COMPLETE] Global JSON report validated
-[2026-03-09T15:10:24Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated
-[2026-03-09T20:20:09Z] [GATEKEEPER_YES] APAC — threat confirmed, escalating
-[2026-03-09T20:20:09Z] [GATEKEEPER_YES] AME — threat confirmed, escalating
-[2026-03-09T20:20:09Z] [GATEKEEPER_NO] LATAM — no active threat, skipped
-[2026-03-09T20:20:10Z] [GATEKEEPER_YES] MED — threat confirmed, escalating
-[2026-03-09T20:20:10Z] [GATEKEEPER_NO] NCE — no active threat, skipped
+[2026-03-13T10:33:07Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — processing 5 regions
+[2026-03-13T10:33:58Z] [GATEKEEPER_YES] APAC — escalated, proceeding to analysis
+[2026-03-13T10:34:08Z] [GATEKEEPER_NO] LATAM — clear, no active threat
+[2026-03-13T10:34:11Z] [GATEKEEPER_YES] AME — escalated, proceeding to analysis
+[2026-03-13T10:34:19Z] [GATEKEEPER_NO] NCE — clear, no active threat
+[2026-03-13T10:34:25Z] [GATEKEEPER_YES] MED — escalated, proceeding to analysis
+[2026-03-13T10:37:09Z] [HOOK_PASS] apac jargon audit passed
+[2026-03-13T10:37:09Z] [HOOK_PASS] ame jargon audit passed
+[2026-03-13T10:37:09Z] [HOOK_PASS] med jargon audit passed
+[2026-03-13T10:37:14Z] [PHASE_COMPLETE] Velocity analysis complete — trend_brief.json written
+[2026-03-13T10:37:18Z] [PHASE_COMPLETE] Cross-regional diff complete
+[2026-03-13T12:04:31Z] [HOOK_PASS] Global report validated by devil's advocate
+[2026-03-13T12:04:31Z] [PHASE_COMPLETE] Global JSON report validated
+[2026-03-13T12:04:53Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated

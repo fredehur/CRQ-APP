@@ -73,10 +73,13 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 ```
 for REGION in apac ame med latam nce:
   if output/regional/{REGION}/report.md exists:
-    uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}/report.md {REGION}
-    exit 0 → uv run python tools/audit_logger.py HOOK_PASS "{REGION} jargon audit passed"
-    exit 2 → uv run python tools/audit_logger.py HOOK_FAIL "{REGION} jargon audit failed — rewrite triggered"
-             then rewrite the brief and re-run the auditor
+    AUDIT_OUTPUT=$(uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{REGION}/report.md {REGION} 2>&1); AUDIT_EXIT=$?
+    AUDIT_EXIT=0 → uv run python tools/audit_logger.py HOOK_PASS "{REGION} jargon audit passed"
+    AUDIT_EXIT=2 → uv run python tools/audit_logger.py HOOK_FAIL "{REGION} jargon audit failed — rewrite triggered"
+                   Re-delegate to regional-analyst-agent with all original context PLUS the full
+                   $AUDIT_OUTPUT text as an explicit "JARGON AUDIT FAILURE — fix these violations:" block.
+                   The agent MUST see the specific violations — do not re-delegate blind.
+                   Re-run the auditor on the rewritten brief.
 ```
 
 ## PHASE 2 — VELOCITY ANALYSIS

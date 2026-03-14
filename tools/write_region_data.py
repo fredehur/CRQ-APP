@@ -31,6 +31,7 @@ def write_data(region, status):
     # Read gatekeeper decision file for Admiralty and enriched fields
     admiralty = None
     scenario_match = primary_scenario
+    rationale = None
     gk_path = f"output/regional/{region_lower}/gatekeeper_decision.json"
     if os.path.exists(gk_path):
         try:
@@ -39,6 +40,7 @@ def write_data(region, status):
             admiralty = gk.get("admiralty", {}).get("rating", None)
             scenario_match = gk.get("scenario_match", primary_scenario)
             dominant_pillar = gk.get("dominant_pillar", dominant_pillar)
+            rationale = gk.get("rationale", None)
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -53,6 +55,7 @@ def write_data(region, status):
         "primary_scenario": scenario_match,
         "vacr_exposure_usd": vacr,
         "admiralty": admiralty,
+        "rationale": rationale,
         "velocity": "unknown",
         "dominant_pillar": dominant_pillar,
         "report_path": report_path,

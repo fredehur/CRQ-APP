@@ -1,11 +1,17 @@
 {
   "region": "MED",
   "status": "escalated",
-  "gatekeeper_decision": "YES",
+  "gatekeeper_decision": "ESCALATED",
   "severity": "MEDIUM",
   "severity_score": 2,
   "primary_scenario": "Insider misuse",
   "vacr_exposure_usd": 4200000,
+  "admiralty": "B2",
+  "rationale": "Corroborated insider misuse indicators across geo and cyber signals targeting predictive maintenance platforms; scenario_map financial_rank 4 breaches ESCALATE threshold with direct impact on critical assets.",
+  "velocity": "stable",
+  "dominant_pillar": "Geopolitical",
   "report_path": "regional/med/report.md",
-  "timestamp": "2026-03-09T20:20:10Z"
+  "timestamp": "2026-03-13T10:34:23Z",
+  "financial_rank": 4,
+  "signal_type": "Mixed"
 }

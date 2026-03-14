@@ -1,34 +1,49 @@
 {
-  "pipeline_id": "crq-2026-03-09T202011Z",
+  "pipeline_id": "crq-2026-03-13T120453Z",
   "client": "AeroGrid Wind Solutions",
-  "run_timestamp": "2026-03-09T20:20:11Z",
+  "run_timestamp": "2026-03-13T12:04:53Z",
   "status": "complete",
   "total_vacr_exposure_usd": 44700000,
   "regions": {
     "APAC": {
       "status": "escalated",
       "severity": "HIGH",
-      "vacr_usd": 18500000
+      "vacr_usd": 18500000,
+      "admiralty": "B2",
+      "velocity": "stable",
+      "dominant_pillar": "Geopolitical"
     },
     "AME": {
       "status": "escalated",
       "severity": "CRITICAL",
-      "vacr_usd": 22000000
+      "vacr_usd": 22000000,
+      "admiralty": "B2",
+      "velocity": "stable",
+      "dominant_pillar": "Geopolitical"
     },
     "LATAM": {
       "status": "clear",
       "severity": "LOW",
-      "vacr_usd": 0
+      "vacr_usd": 0,
+      "admiralty": "C3",
+      "velocity": "stable",
+      "dominant_pillar": "Geopolitical"
     },
     "MED": {
       "status": "escalated",
       "severity": "MEDIUM",
-      "vacr_usd": 4200000
+      "vacr_usd": 4200000,
+      "admiralty": "B2",
+      "velocity": "stable",
+      "dominant_pillar": "Geopolitical"
     },
     "NCE": {
       "status": "clear",
       "severity": "LOW",
-      "vacr_usd": 0
+      "vacr_usd": 0,
+      "admiralty": "B3",
+      "velocity": "stable",
+      "dominant_pillar": "Geopolitical"
     }
   },
   "outputs": {
@@ -37,6 +52,7 @@
     "dashboard_html": "dashboard.html",
     "board_report_pdf": "board_report.pdf",
     "board_report_pptx": "board_report.pptx",
-    "system_trace": "system_trace.log"
+    "system_trace": "system_trace.log",
+    "trend_brief": "trend_brief.json"
   }
 }
