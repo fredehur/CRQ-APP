@@ -32,6 +32,11 @@ let state = {
   activeTab: 'overview',
 };
 
+// ── Agent Console State ────────────────────────────────────────────────
+let _runCount = 0;
+let _consolePinned = true;
+let _consoleEverStarted = false;
+
 // ── Helpers ───────────────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
 const fmtUSD = n => (n == null || isNaN(n)) ? '—' : '$' + (n / 1e6).toFixed(1) + 'M';
@@ -39,6 +44,44 @@ const fmtTime = iso => iso
   ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
   : '—';
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+// ── Agent Console ─────────────────────────────────────────────────────
+function appendConsoleEntry(html) {
+  const log = $('console-log');
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  log.appendChild(div);
+  if (_consolePinned) {
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+function showConsole() {
+  $('agent-console').classList.remove('hidden');
+  $('agent-console-toggle').classList.add('hidden');
+}
+
+function hideConsole() {
+  $('agent-console').classList.add('hidden');
+  if (_consoleEverStarted) {
+    $('agent-console-toggle').classList.remove('hidden');
+  }
+}
+
+// Wire auto-scroll pin/unpin after DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+  const log = $('console-log');
+  if (log) {
+    log.addEventListener('scroll', () => {
+      if (log.scrollTop < log.scrollHeight - log.clientHeight - 10) {
+        _consolePinned = false;
+      }
+      if (log.scrollTop >= log.scrollHeight - log.clientHeight - 5) {
+        _consolePinned = true;
+      }
+    });
+  }
+});
 
 function admiraltyTooltip(rating) {
   if (!rating || rating.length < 2) return rating || '—';
@@ -426,6 +469,14 @@ function initSSE() {
     } else if (data.status === 'complete') {
       showProgressBar((PHASE_LABELS[data.phase] || data.phase) + ' ✓', Math.min(percent + 10, 90));
     }
+
+    // Console: append [PHASE] entry
+    const phaseLabel = PHASE_LABELS[data.phase] || data.phase;
+    const suffix = data.status === 'complete' ? ' ✓' : '';
+    appendConsoleEntry(
+      `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-blue-900 text-blue-300">[PHASE]</span>` +
+      `<span class="text-gray-300 text-xs">${esc(phaseLabel)}${suffix}</span>`
+    );
   });
 
   source.addEventListener('error', e => {
@@ -441,7 +492,62 @@ function initSSE() {
       showProgressBar('Initializing...', 5);
       $('btn-run-all').disabled = true;
       $('btn-run-all').textContent = 'Running...';
+
+      // Console: show panel, insert separator if not first run, increment counter, append Started
+      showConsole();
+      _consoleEverStarted = true;
+      if (_runCount > 0) {
+        const ts = new Date().toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+        appendConsoleEntry(`<div class="text-gray-600 text-xs text-center py-1">--- ${ts} ---</div>`);
+      }
+      _runCount++;
+      appendConsoleEntry(
+        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-gray-700 text-gray-300">[PIPELINE]</span>` +
+        `<span class="text-gray-300 text-xs">Started</span>`
+      );
+    } else if (data.status === 'complete') {
+      appendConsoleEntry(
+        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-green-900 text-green-300">[PIPELINE]</span>` +
+        `<span class="text-gray-300 text-xs">Complete</span>`
+      );
+    } else if (data.status === 'error') {
+      appendConsoleEntry(
+        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-red-900 text-red-300">[PIPELINE]</span>` +
+        `<span class="text-gray-300 text-xs">Error: ${esc(data.message || '')}</span>`
+      );
     }
+  });
+
+  source.addEventListener('gatekeeper', e => {
+    const data = JSON.parse(e.data);
+    const region = (data.region || '').toUpperCase();
+    const decision = (data.decision || '').toUpperCase();
+    let pillCls, label, msgText;
+    if (decision === 'ESCALATE') {
+      pillCls = 'bg-red-900 text-red-300';
+      label = `[${region} → ESCALATE]`;
+      msgText = esc(data.severity || 'escalated');
+    } else if (decision === 'MONITOR') {
+      pillCls = 'bg-yellow-900 text-yellow-300';
+      label = `[${region} → MONITOR]`;
+      msgText = 'elevated';
+    } else {
+      pillCls = 'bg-green-900 text-green-300';
+      label = `[${region} → CLEAR]`;
+      msgText = 'clear';
+    }
+    appendConsoleEntry(
+      `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 ${pillCls}">${label}</span>` +
+      `<span class="text-gray-300 text-xs">${msgText}</span>`
+    );
+  });
+
+  source.addEventListener('log', e => {
+    const data = JSON.parse(e.data);
+    const msg = (data.message || '').slice(0, 120);
+    appendConsoleEntry(
+      `<span class="text-gray-500 text-xs font-mono leading-tight">${esc(msg)}</span>`
+    );
   });
 }
 
