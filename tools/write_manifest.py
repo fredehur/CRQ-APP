@@ -1,4 +1,5 @@
 """Assembles output/run_manifest.json from all regional data.json files."""
+import argparse
 import json
 import os
 import sys
@@ -6,7 +7,7 @@ from datetime import datetime, timezone
 from config import REGIONS
 
 
-def build_manifest():
+def build_manifest(window_used=None):
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     date_slug = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
 
@@ -43,6 +44,7 @@ def build_manifest():
         "client": "AeroGrid Wind Solutions",
         "run_timestamp": timestamp,
         "status": "complete",
+        "window_used": window_used or "unspecified",
         "total_vacr_exposure_usd": total_vacr,
         "regions": regions_summary,
         "outputs": {
@@ -64,4 +66,8 @@ def build_manifest():
 
 
 if __name__ == "__main__":
-    build_manifest()
+    parser = argparse.ArgumentParser(description="Assemble run_manifest.json")
+    parser.add_argument("--window", choices=["1d", "7d", "30d", "90d"], default=None,
+                        help="Date window used for OSINT collection")
+    args = parser.parse_args()
+    build_manifest(window_used=args.window)

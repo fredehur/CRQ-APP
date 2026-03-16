@@ -23,8 +23,20 @@ If the user invokes this as `/run-crq rebuild` or explicitly says "rebuild from 
 Run: `uv run python .claude/hooks/validators/crq-schema-validator.py data/mock_crq_database.json`
 If validation fails, stop and report the error.
 
+**Determine OSINT mode:**
+Run: `python -c "from dotenv import load_dotenv; import os; load_dotenv(); print('live' if os.environ.get('OSINT_LIVE','').lower()=='true' else 'mock')"`
+- If output is `live`: collector calls will omit `--mock` (Tavily/DDG active). Log: `uv run python tools/audit_logger.py PIPELINE_START "AeroGrid CRQ Pipeline initiated — LIVE OSINT mode — processing 5 regions"`
+- If output is `mock`: collector calls will include `--mock`. Log: `uv run python tools/audit_logger.py PIPELINE_START "AeroGrid CRQ Pipeline initiated — mock mode — processing 5 regions"`
+
+Store the mode as `OSINT_MODE` (either `--mock` or empty string) for use in Phase 1.
+
+**Determine WINDOW:**
+Parse `--window` from the invocation arguments (e.g., `/run-crq --window 30d`).
+- If `--window` is provided with a valid value (`1d`, `7d`, `30d`, `90d`): store as `WINDOW` (e.g., `30d`).
+- If `--window` is omitted or not provided: default to `WINDOW=7d`.
+Store `WINDOW` for use in Phase 1 and Phase 6.
+
 Clear stale log: `rm -f output/system_trace.log`
-Log start: `uv run python tools/audit_logger.py PIPELINE_START "AeroGrid CRQ Pipeline initiated — processing 5 regions"`
 
 ## PHASE 1 — REGIONAL ANALYSIS (PARALLEL FAN-OUT)
 
@@ -37,10 +49,10 @@ Each task is self-contained and writes its own output files. Do NOT wait for one
 
 For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
-1. **Run OSINT tool chain** (mock mode):
-   - `uv run python tools/geo_collector.py {REGION} --mock`
-   - `uv run python tools/cyber_collector.py {REGION} --mock`
-   - `uv run python tools/scenario_mapper.py {REGION} --mock`
+1. **Run OSINT tool chain** (mode determined in Phase 0 — `OSINT_MODE` is `--mock` or empty, `WINDOW` defaults to `7d`):
+   - `uv run python tools/geo_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
+   - `uv run python tools/cyber_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
+   - `uv run python tools/scenario_mapper.py {REGION} {OSINT_MODE}`
    These write signal files to `output/regional/{region_lower}/`:
    - `geo_signals.json`
    - `cyber_signals.json`
@@ -125,7 +137,7 @@ Run: `uv run python tools/export_pptx.py output/board_report.pptx`
 
 ## PHASE 6 — FINALIZE
 
-Run: `uv run python tools/write_manifest.py` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
+Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
 
 Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
 
