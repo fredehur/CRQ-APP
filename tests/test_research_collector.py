@@ -85,3 +85,37 @@ def test_mock_mode_calls_geo_and_cyber_collectors():
         calls = [str(c) for c in mock_run.call_args_list]
         assert any("geo_collector" in c for c in calls)
         assert any("cyber_collector" in c for c in calls)
+
+
+def test_form_working_theory_structure():
+    """form_working_theory returns dict with required keys including geo_queries and cyber_queries."""
+    crq_data = {
+        "AME": [{"scenario_name": "Wind Farm Telemetry & Maintenance Disruption", "value_at_cyber_risk_usd": 22000000}]
+    }
+    topics = [
+        {"id": "ot-ics-cyber-attacks", "label": "OT/ICS Cyber Attacks", "regions": ["AME"], "active": True},
+        {"id": "other-topic", "label": "Other", "regions": ["APAC"], "active": True},
+    ]
+    company_profile = {"industry": "Wind Energy", "crown_jewels": ["turbine designs"]}
+
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "hypothesis": "AME carries $22M exposure in wind telemetry...",
+        "geo_queries": ["AME energy policy instability 2026", "Americas wind regulation 2026"],
+        "cyber_queries": ["AME wind farm cyber attack 2026", "Americas OT ICS ransomware 2026"],
+    }))]
+
+    with patch("anthropic.Anthropic") as MockClient:
+        MockClient.return_value.messages.create.return_value = mock_response
+        from tools.research_collector import form_working_theory
+        result = form_working_theory("AME", crq_data, topics, company_profile)
+
+    assert result["scenario_name"] == "Wind Farm Telemetry & Maintenance Disruption"
+    assert result["vacr_usd"] == 22000000
+    assert "hypothesis" in result
+    assert "geo_queries" in result and isinstance(result["geo_queries"], list)
+    assert "cyber_queries" in result and isinstance(result["cyber_queries"], list)
+    assert len(result["geo_queries"]) >= 2
+    assert len(result["cyber_queries"]) >= 2
+    # Only AME-scoped active topics
+    assert all(t["id"] == "ot-ics-cyber-attacks" for t in result["active_topics"])
