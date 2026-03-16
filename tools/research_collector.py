@@ -93,6 +93,76 @@ All queries must be specific to {region}, the scenario, and wind energy context.
     }
 
 
+def run_search_pass(region: str, queries: list[str], query_type: str) -> list[dict]:
+    """Run queries via osint_search.py with the given type. Returns deduplicated results.
+
+    Args:
+        query_type: "geo" or "cyber" — passed as --type flag to osint_search.py
+    """
+    seen_urls: set[str] = set()
+    results: list[dict] = []
+
+    for query in queries:
+        proc = subprocess.run(
+            [sys.executable, "tools/osint_search.py", region, query, "--type", query_type],
+            capture_output=True, text=True, cwd=REPO_ROOT,
+        )
+        if proc.returncode != 0 or not proc.stdout.strip():
+            continue
+        try:
+            items = json.loads(proc.stdout)
+        except json.JSONDecodeError:
+            continue
+        for item in items:
+            url = item.get("url", "")
+            if url and url not in seen_urls:
+                seen_urls.add(url)
+                results.append(item)
+
+    return results
+
+
+def assess_gaps(region: str, working_theory: dict, results: list[dict]) -> dict:
+    """LLM Call 2: Assess evidence against the working theory. Identify gaps.
+
+    Returns dict with: gap_assessment, gaps_identified, follow_up_queries,
+                       follow_up_query_type, run_pass_2
+    """
+    snippets_text = "\n".join(
+        f"- [{r.get('title', '')}] {r.get('summary', '')}"
+        for r in results[:15]
+    )
+
+    prompt = f"""You are assessing intelligence collection coverage.
+
+REGION: {region}
+WORKING THEORY: {working_theory['hypothesis']}
+SCENARIO: {working_theory['scenario_name']} (${working_theory['vacr_usd']:,} exposure)
+
+EVIDENCE COLLECTED ({len(results)} results):
+{snippets_text}
+
+Assess: does the collected evidence adequately address the working theory?
+- Is there a wind energy or sector-specific signal?
+- Are there gaps (e.g., no sector signal, no recent events, no cyber-specific indicator)?
+- If gaps exist, what 1-3 targeted follow-up queries would fill them?
+- Should they be geo type (geopolitical) or cyber type?
+
+Return ONLY valid JSON (no markdown fences):
+{{
+  "gap_assessment": "2-3 sentence assessment of evidence quality against the theory",
+  "gaps_identified": ["gap1", "gap2"],
+  "follow_up_queries": ["targeted query 1"],
+  "follow_up_query_type": "geo",
+  "run_pass_2": true
+}}
+
+Set run_pass_2 to false if 3+ corroborating sources address the scenario (sufficient).
+Set run_pass_2 to true if significant gaps remain. Maximum 3 follow_up_queries."""
+
+    return _call_llm(prompt)
+
+
 def run_mock_mode(region: str) -> None:
     """Delegate to existing collectors unchanged."""
     for collector in ("geo_collector", "cyber_collector"):

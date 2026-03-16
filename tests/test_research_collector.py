@@ -119,3 +119,107 @@ def test_form_working_theory_structure():
     assert len(result["cyber_queries"]) >= 2
     # Only AME-scoped active topics
     assert all(t["id"] == "ot-ics-cyber-attacks" for t in result["active_topics"])
+
+
+def test_run_search_pass_deduplicates_by_url():
+    """run_search_pass deduplicates results sharing the same URL."""
+    result_a = json.dumps([
+        {"title": "A", "summary": "summary a", "url": "https://example.com/a", "published_date": "2026-01-01"},
+        {"title": "B", "summary": "summary b", "url": "https://example.com/b", "published_date": "2026-01-02"},
+    ])
+    result_b = json.dumps([
+        {"title": "B duplicate", "summary": "summary b again", "url": "https://example.com/b", "published_date": "2026-01-02"},
+        {"title": "C", "summary": "summary c", "url": "https://example.com/c", "published_date": "2026-01-03"},
+    ])
+
+    call_count = 0
+    def fake_run(cmd, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        mock = MagicMock()
+        mock.stdout = result_a if call_count == 1 else result_b
+        mock.returncode = 0
+        return mock
+
+    with patch("subprocess.run", side_effect=fake_run):
+        from tools.research_collector import run_search_pass
+        results = run_search_pass("AME", ["query one", "query two"], "geo")
+
+    urls = [r["url"] for r in results]
+    assert len(urls) == len(set(urls)), "Duplicate URLs found"
+    assert len(results) == 3  # A, B, C — B deduplicated
+
+
+def test_run_search_pass_includes_type_flag():
+    """run_search_pass passes --type flag to osint_search.py."""
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="[]")
+        from tools.research_collector import run_search_pass
+        run_search_pass("AME", ["test query"], "cyber")
+        cmd = mock_run.call_args[0][0]
+        assert "--type" in cmd
+        assert "cyber" in cmd
+
+
+def test_run_search_pass_skips_failed_queries():
+    """run_search_pass skips queries where osint_search returns non-zero."""
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=1, stdout="")
+        from tools.research_collector import run_search_pass
+        results = run_search_pass("AME", ["bad query"], "geo")
+    assert results == []
+
+
+def test_assess_gaps_returns_no_gaps_when_sufficient():
+    """assess_gaps returns run_pass_2=False when evidence is sufficient."""
+    working_theory = {
+        "scenario_name": "Wind Farm Telemetry Disruption",
+        "vacr_usd": 22000000,
+        "hypothesis": "Test hypothesis",
+        "active_topics": [],
+    }
+    results = [
+        {"title": f"Result {i}", "summary": f"summary {i}", "url": f"https://ex.com/{i}"}
+        for i in range(5)
+    ]
+
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "gap_assessment": "5 sources corroborate the hypothesis. Sufficient coverage.",
+        "gaps_identified": [],
+        "follow_up_queries": [],
+        "follow_up_query_type": "cyber",
+        "run_pass_2": False,
+    }))]
+
+    with patch("anthropic.Anthropic") as MockClient:
+        MockClient.return_value.messages.create.return_value = mock_response
+        from tools.research_collector import assess_gaps
+        result = assess_gaps("AME", working_theory, results)
+
+    assert result["run_pass_2"] is False
+    assert result["gaps_identified"] == []
+
+
+def test_assess_gaps_returns_queries_when_gaps_found():
+    """assess_gaps returns run_pass_2=True and follow_up_queries when gaps found."""
+    working_theory = {"scenario_name": "Test", "vacr_usd": 0, "hypothesis": "Test", "active_topics": []}
+    results = [{"title": "Generic news", "summary": "general politics", "url": "https://ex.com/1"}]
+
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "gap_assessment": "No wind-sector signal found.",
+        "gaps_identified": ["No energy sector specificity"],
+        "follow_up_queries": ["wind turbine cyber attack AME 2026"],
+        "follow_up_query_type": "cyber",
+        "run_pass_2": True,
+    }))]
+
+    with patch("anthropic.Anthropic") as MockClient:
+        MockClient.return_value.messages.create.return_value = mock_response
+        from tools.research_collector import assess_gaps
+        result = assess_gaps("AME", working_theory, results)
+
+    assert result["run_pass_2"] is True
+    assert len(result["follow_up_queries"]) >= 1
+    assert result["follow_up_query_type"] in ("geo", "cyber")
