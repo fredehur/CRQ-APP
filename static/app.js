@@ -1,97 +1,65 @@
-// ── Constants ──────────────────────────────────────────────────────────
+// ── Section 1: Constants ───────────────────────────────────────────────
 const REGIONS = ['APAC', 'AME', 'LATAM', 'MED', 'NCE'];
 const REGION_LABELS = {
   APAC: 'Asia-Pacific', AME: 'Americas', LATAM: 'Latin America',
   MED: 'Mediterranean', NCE: 'Northern & Central Europe',
 };
-const SEVERITY_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
-const SEVERITY_STYLES = {
-  CRITICAL: { card: 'border-red-700 bg-red-950/30',   badge: 'bg-red-600',    text: 'text-red-400' },
-  HIGH:     { card: 'border-orange-700 bg-orange-950/30', badge: 'bg-orange-600', text: 'text-orange-400' },
-  MEDIUM:   { card: 'border-amber-700 bg-amber-950/30',  badge: 'bg-amber-600',  text: 'text-amber-400' },
-  LOW:      { card: 'border-green-800 bg-green-950/20',  badge: 'bg-green-700',  text: 'text-green-400' },
+const SEV_CLASS = {
+  CRITICAL: 'sev sev-c', HIGH: 'sev sev-h', MEDIUM: 'sev sev-m',
+  LOW: 'sev sev-ok', CLEAR: 'sev sev-ok', MONITOR: 'sev sev-mon',
 };
-const VELOCITY_ARROWS = {
-  accelerating: { arrow: '↑', cls: 'text-red-400',   label: 'accelerating' },
-  stable:       { arrow: '→', cls: 'text-gray-400',  label: 'stable' },
-  improving:    { arrow: '↓', cls: 'text-green-400', label: 'improving' },
-  unknown:      { arrow: '—', cls: 'text-gray-600',  label: 'unknown' },
+const SEV_COLOR = {
+  CRITICAL: '#ff7b72', HIGH: '#ffa657', MEDIUM: '#e3b341',
+  LOW: '#3fb950', CLEAR: '#3fb950', MONITOR: '#79c0ff',
 };
-const ADMIRALTY_TOOLTIPS = {
-  A: 'Always reliable', B: 'Usually reliable', C: 'Fairly reliable', D: 'Not usually reliable',
-  '1': 'Confirmed by other sources', '2': 'Probably true',
-  '3': 'Possibly true', '4': 'Cannot be judged',
+const SEV_ORDER = ['CRITICAL', 'HIGH', 'MEDIUM', 'MONITOR', 'LOW', 'CLEAR'];
+const ADMIRALTY_MAP = {
+  A: 'Always reliable', B: 'Usually reliable', C: 'Fairly reliable',
+  D: 'Not usually reliable', E: 'Unreliable', F: 'Cannot be judged',
+  '1': 'Confirmed', '2': 'Probably true', '3': 'Possibly true',
+  '4': 'Cannot be judged', '5': 'Improbable', '6': 'Truth cannot be judged',
 };
 
-// ── State ─────────────────────────────────────────────────────────────
+// ── Section 2: State ───────────────────────────────────────────────────
 let state = {
   manifest: null,
   globalReport: null,
-  regionData: {},
-  viewingArchive: null,
+  regionData: {},         // data.json per region
+  regionClusters: {},     // signal_clusters.json per region
+  selectedRegion: null,
   activeTab: 'overview',
+  expandedClusters: new Set(),
 };
 
-// ── Agent Console State ────────────────────────────────────────────────
-let _runCount = 0;
-let _consolePinned = true;
-let _consoleEverStarted = false;
+// Agent console state
+let _consolePinned = true, _consoleEverStarted = false;
 
-// ── Helpers ───────────────────────────────────────────────────────────
+// ── Section 3: Helpers ─────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-const fmtUSD = n => (n == null || isNaN(n)) ? '—' : '$' + (n / 1e6).toFixed(1) + 'M';
-const fmtTime = iso => iso
-  ? new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-  : '—';
 const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-// ── Agent Console ─────────────────────────────────────────────────────
-function appendConsoleEntry(html) {
-  const log = $('console-log');
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  log.appendChild(div);
-  if (_consolePinned) {
-    log.scrollTop = log.scrollHeight;
-  }
-}
-
-function showConsole() {
-  $('agent-console').classList.remove('hidden');
-  $('agent-console-toggle').classList.add('hidden');
-}
-
-function hideConsole() {
-  $('agent-console').classList.add('hidden');
-  if (_consoleEverStarted) {
-    $('agent-console-toggle').classList.remove('hidden');
-  }
-}
-
-// Wire auto-scroll pin/unpin after DOM is ready
-document.addEventListener('DOMContentLoaded', () => {
-  const log = $('console-log');
-  if (log) {
-    log.addEventListener('scroll', () => {
-      if (log.scrollTop < log.scrollHeight - log.clientHeight - 10) {
-        _consolePinned = false;
-      }
-      if (log.scrollTop >= log.scrollHeight - log.clientHeight - 5) {
-        _consolePinned = true;
-      }
-    });
-  }
-});
-
-function admiraltyTooltip(rating) {
+const fmtTime = iso => iso
+  ? new Date(iso).toLocaleString('en-US', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'})
+  : '—';
+const relTime = iso => {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso);
+  const h = Math.floor(diff / 3600000);
+  if (h < 1) return 'just now';
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h/24)}d ago`;
+};
+const admiraltyTooltip = rating => {
   if (!rating || rating.length < 2) return rating || '—';
-  const rel = ADMIRALTY_TOOLTIPS[rating[0]];
-  const cred = ADMIRALTY_TOOLTIPS[rating[1]];
-  if (!rel || !cred) return rating;
-  return `${rating}: ${rel} source, ${cred}`;
-}
+  const rel = ADMIRALTY_MAP[rating[0]], cred = ADMIRALTY_MAP[rating[1]];
+  return `${rating} — ${rel || '?'} / ${cred || '?'}`;
+};
+const convDot = n => {
+  const cls = n >= 3 ? 'conv-strong' : n >= 2 ? 'conv-weak' : 'conv-none';
+  return `<span class="conv-dot ${cls}"></span>`;
+};
+const sevClass = sev => SEV_CLASS[(sev||'').toUpperCase()] || 'sev';
 
-// ── API ───────────────────────────────────────────────────────────────
+// ── Section 4: API ─────────────────────────────────────────────────────
 async function fetchJSON(url) {
   try {
     const r = await fetch(url);
@@ -109,530 +77,321 @@ async function loadLatestData() {
   state.globalReport = globalReport;
 
   if (manifest && manifest.status !== 'no_data' && manifest.regions) {
-    const regionFetches = Object.keys(manifest.regions).map(async r => {
-      state.regionData[r] = await fetchJSON(`/api/region/${r}`);
-    });
-    await Promise.all(regionFetches);
+    await Promise.all(REGIONS.map(async r => {
+      const [data, clusters] = await Promise.all([
+        fetchJSON(`/api/region/${r}`),
+        fetchJSON(`/api/region/${r}/clusters`),
+      ]);
+      state.regionData[r] = data;
+      state.regionClusters[r] = clusters;
+    }));
+  }
+
+  // Default selected region: highest total_signals, tie-break by severity
+  if (!state.selectedRegion) {
+    state.selectedRegion = pickDefaultRegion();
   }
   renderAll();
 }
 
-async function loadArchiveRun(run) {
-  state.viewingArchive = run;
-  state.manifest = run.manifest;
-  state.globalReport = null;
-  state.regionData = {};
-  renderAll();
-  showArchiveBanner(run);
+function pickDefaultRegion() {
+  const scored = REGIONS.map(r => {
+    const c = state.regionClusters[r];
+    const d = state.regionData[r];
+    const signals = c?.total_signals ?? 0;
+    const sevScore = SEV_ORDER.indexOf((d?.severity||'').toUpperCase());
+    return { r, signals, sevScore: sevScore === -1 ? 99 : sevScore };
+  });
+  scored.sort((a, b) => b.signals - a.signals || a.sevScore - b.sevScore);
+  return scored[0]?.r || 'APAC';
 }
 
-function returnToLatest() {
-  state.viewingArchive = null;
-  hideArchiveBanner();
-  loadLatestData();
-}
-
-// ── Render: KPIs ──────────────────────────────────────────────────────
-function renderKPIs() {
+// ── Section 5: Render — Left Panel ────────────────────────────────────
+function renderLeftPanel() {
   const m = state.manifest;
-  if (!m || m.status === 'no_data') {
-    ['kpi-vacr','kpi-escalated','kpi-monitor','kpi-clear','kpi-timestamp','kpi-trend']
-      .forEach(id => $(id).textContent = '—');
-    return;
-  }
-  $('kpi-vacr').textContent = fmtUSD(m.total_vacr_exposure_usd);
-  $('kpi-timestamp').textContent = fmtTime(m.run_timestamp);
-
-  const regions = Object.values(m.regions || {});
-  $('kpi-escalated').textContent = regions.filter(r => r.status === 'escalated').length;
-  $('kpi-monitor').textContent   = regions.filter(r => r.status === 'monitor').length;
-  $('kpi-clear').textContent     = regions.filter(r => r.status === 'clear').length;
-
-  $('kpi-trend').textContent = '—';
-}
-
-// ── Render: Escalated Cards ───────────────────────────────────────────
-function renderCards() {
-  const container = $('escalated-cards');
-  const m = state.manifest;
-
-  if (!m || m.status === 'no_data') {
-    container.innerHTML = '<p class="text-gray-500 text-sm">No data — run the pipeline to generate intelligence.</p>';
-    $('escalated-section').classList.add('hidden');
-    return;
-  }
-
-  const escalated = Object.entries(m.regions || {})
-    .filter(([, r]) => r.status === 'escalated')
-    .sort(([, a], [, b]) => SEVERITY_ORDER.indexOf(a.severity) - SEVERITY_ORDER.indexOf(b.severity));
-
-  if (escalated.length === 0) {
-    container.innerHTML = '<p class="text-green-400 text-sm">No active threats across all regions.</p>';
-    $('escalated-section').classList.add('hidden');
-    return;
-  }
-  $('escalated-section').classList.remove('hidden');
-
-  container.innerHTML = escalated.map(([region, summary]) => {
-    const data = state.regionData[region] || {};
-    const sev = (summary.severity || 'LOW').toUpperCase();
-    const styles = SEVERITY_STYLES[sev] || SEVERITY_STYLES.LOW;
-    const vel = VELOCITY_ARROWS[data.velocity] || VELOCITY_ARROWS.unknown;
-    const admiraltyTip = admiraltyTooltip(data.admiralty);
-
-    return `
-<div class="rounded-lg border ${styles.card} p-5 flex flex-col gap-3">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-2">
-      <span class="px-2 py-0.5 rounded text-xs font-bold text-white ${styles.badge}">${sev}</span>
-      <span class="font-semibold text-lg text-white">${REGION_LABELS[region] || region}</span>
-    </div>
-    <span class="text-2xl font-bold ${styles.text}">${fmtUSD(summary.vacr_usd)}</span>
-  </div>
-
-  <div class="grid grid-cols-2 gap-x-6 gap-y-1 text-sm">
-    <div><span class="text-gray-500">Scenario</span> <span class="font-medium text-gray-200">${data.primary_scenario || '—'}</span></div>
-    <div><span class="text-gray-500">Financial Rank</span> <span class="font-medium text-gray-200">${data.financial_rank ? '#' + data.financial_rank : '—'}</span></div>
-    <div data-audience="board"><span class="text-gray-500">Admiralty</span>
-      <span class="font-medium text-gray-200" title="${admiraltyTip}">${data.admiralty || '—'} <span class="text-gray-600 cursor-help text-xs">ⓘ</span></span>
-    </div>
-    <div data-audience="board"><span class="text-gray-500">Signal</span> <span class="font-medium text-gray-200">${data.signal_type || '—'}</span></div>
-    <div data-audience="board"><span class="text-gray-500">Pillar</span> <span class="font-medium text-gray-200">${data.dominant_pillar || '—'}</span></div>
-    <div><span class="text-gray-500">Velocity</span>
-      <span class="font-medium ${vel.cls}">${vel.arrow} ${vel.label}</span>
-    </div>
-  </div>
-
-  ${data.rationale ? `<p class="text-sm text-gray-400 italic border-l-2 border-gray-700 pl-3">"${esc(data.rationale)}"</p>` : ''}
-
-  <div class="flex gap-2 pt-1">
-    <button onclick="loadPanel('regional', '${region}', 'brief')"
-      class="px-3 py-1.5 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium transition-colors text-white">
-      Read Full Brief
-    </button>
-    <button onclick="loadPanel('regional', '${region}', 'signals')"
-      class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm font-medium transition-colors text-white">
-      View Signals
-    </button>
-  </div>
-</div>`;
-  }).join('');
-}
-
-// ── Render: Clear & Monitor Chips ─────────────────────────────────────
-function renderChips() {
-  const container = $('clear-chips');
-  const m = state.manifest;
-  if (!m || m.status === 'no_data') { container.innerHTML = ''; return; }
-
-  const nonEscalated = Object.entries(m.regions || {})
-    .filter(([, r]) => r.status !== 'escalated');
-
-  container.innerHTML = nonEscalated.map(([region, summary]) => {
-    const data = state.regionData[region] || {};
-    const isMonitor = summary.status === 'monitor';
-    const chipCls = isMonitor
-      ? 'border-yellow-700 bg-yellow-950/20 text-yellow-300'
-      : 'border-green-800 bg-green-950/20 text-green-400';
-    const icon = isMonitor ? '⚠' : '✓';
-    const admLabel = data.admiralty ? ` <span class="text-gray-500 text-xs">${data.admiralty}</span>` : '';
-    const rationale = esc(data.rationale || 'No credible top-4 financial impact scenario active.');
-
-    return `
-<div class="relative inline-block group">
-  <div class="flex items-center gap-1.5 border ${chipCls} rounded-full px-3 py-1 text-sm cursor-pointer select-none">
-    <span>${icon}</span>
-    <span>${REGION_LABELS[region] || region}</span>
-    <span class="text-gray-500 text-xs uppercase">${summary.status}</span>
-    ${admLabel}
-  </div>
-  <div class="absolute bottom-full left-0 mb-1 w-64 bg-gray-800 border border-gray-700 rounded p-2 text-xs text-gray-300
-              hidden group-hover:block z-10 shadow-lg">
-    ${rationale}
-  </div>
-</div>`;
-  }).join('');
-}
-
-// ── Render: Executive Summary ─────────────────────────────────────────
-function renderSummary() {
-  const el = $('executive-summary-text');
   const gr = state.globalReport;
-  if (gr && gr.executive_summary) {
-    el.textContent = gr.executive_summary;
-  } else if (!state.manifest || state.manifest.status === 'no_data') {
-    el.textContent = 'No intelligence run yet. Click Run All Regions to generate the first report.';
+
+  // Synthesis brief
+  const brief = gr?.synthesis_brief || (m?.status === 'no_data' ? 'No run data — click Run All to start.' : 'Run in progress...');
+  $('synthesis-brief').textContent = brief;
+
+  // Status counts
+  if (m && m.status !== 'no_data' && m.regions) {
+    const vals = Object.values(m.regions);
+    const nEsc = vals.filter(r => r.status === 'escalated').length;
+    const nMon = vals.filter(r => r.status === 'monitor').length;
+    const nClr = vals.filter(r => r.status === 'clear').length;
+    $('status-counts').innerHTML = [
+      nEsc ? `<span class="sev sev-c">${nEsc} ESCALATED</span>` : '',
+      nMon ? `<span class="sev sev-mon">${nMon} MONITOR</span>` : '',
+      nClr ? `<span class="sev sev-ok">${nClr} CLEAR</span>` : '',
+    ].filter(Boolean).join('');
   } else {
-    el.textContent = 'Executive summary unavailable.';
+    $('status-counts').innerHTML = '';
   }
+
+  // Run meta
+  if (m?.run_timestamp) {
+    const windowVal = m.window_used ? ` — ${m.window_used} window` : '';
+    $('run-meta').textContent = `${fmtTime(m.run_timestamp)} (${relTime(m.run_timestamp)})${windowVal}`;
+  } else {
+    $('run-meta').textContent = '';
+  }
+
+  // Region rows
+  $('region-list').innerHTML = REGIONS.map(r => {
+    const d = state.regionData[r];
+    const c = state.regionClusters[r];
+    const sev = (d?.severity || d?.status || 'UNKNOWN').toUpperCase();
+    const signals = c?.total_signals ?? 0;
+    const maxConv = Math.max(0, ...(c?.clusters?.map(cl => cl.convergence) ?? [0]));
+    const isActive = r === state.selectedRegion;
+    const color = SEV_COLOR[sev] || '#6e7681';
+    return `
+<div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')">
+  <span style="font-size:12px;font-weight:500;color:${color}">${r}</span>
+  <div style="display:flex;align-items:center;gap:6px">
+    ${convDot(maxConv)}
+    <span style="font-size:10px;color:${signals > 0 ? color : '#6e7681'}">${signals > 0 ? signals + ' signals' : sev === 'CLEAR' ? 'clear' : '—'}</span>
+  </div>
+</div>`;
+  }).join('');
 }
 
-// ── Master Render ──────────────────────────────────────────────────────
-function renderAll() {
-  renderKPIs();
-  renderSummary();
-  renderCards();
-  renderChips();
-}
+// ── Section 6: Render — Right Panel ───────────────────────────────────
+function renderRightPanel() {
+  const r = state.selectedRegion;
+  if (!r) return;
 
-// ── Panel System ──────────────────────────────────────────────────────
-let _closePanelTimer = null;
+  const d = state.regionData[r] || {};
+  const c = state.regionClusters[r];
+  const sev = (d.severity || 'UNKNOWN').toUpperCase();
+  const status = d.status || 'unknown';
 
-function openPanel(title, tabs) {
-  // tabs: [{ id, label, render: async fn → html string }]
-  clearTimeout(_closePanelTimer); // cancel any in-flight close animation
-  $('panel-title').textContent = title;
+  // Header
+  $('right-region-badge').className = sevClass(sev);
+  $('right-region-badge').textContent = sev;
+  $('right-region-name').textContent = REGION_LABELS[r] || r;
+  $('right-admiralty-badge').textContent = d.admiralty || '';
+  $('right-admiralty-badge').title = admiraltyTooltip(d.admiralty);
+  $('right-run-ts').textContent = d.timestamp ? fmtTime(d.timestamp) : '';
 
-  const tabBar = $('panel-tabs');
-  tabBar.innerHTML = tabs.map((t, i) =>
-    `<button id="tab-btn-${t.id}" onclick="activatePanelTab('${t.id}')"
-      class="panel-tab px-4 py-2 text-sm ${i === 0 ? 'active' : ''}">${t.label}</button>`
-  ).join('');
+  // Body
+  $('right-empty-state').style.display = 'none';
+  const body = $('right-panel-body');
 
-  window._panelTabs = tabs;
-  window._panelTabCache = {};
-  activatePanelTab(tabs[0].id);
-
-  $('panel-overlay').classList.remove('hidden');
-  const panel = $('output-panel');
-  panel.removeAttribute('aria-hidden');
-  panel.classList.remove('hidden');
-  requestAnimationFrame(() => panel.classList.add('panel-open'));
-}
-
-async function activatePanelTab(tabId) {
-  document.querySelectorAll('.panel-tab').forEach(b => b.classList.remove('active'));
-  $(`tab-btn-${tabId}`)?.classList.add('active');
-
-  const body = $('panel-body');
-  if (window._panelTabCache[tabId]) {
-    body.innerHTML = window._panelTabCache[tabId];
+  if (!d.region && !c) {
+    // No data at all
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No run data for ${r}. Run the pipeline to populate signals.</p>`;
     return;
   }
-  body.innerHTML = '<p class="text-gray-500 text-sm p-4">Loading...</p>';
-  const tab = window._panelTabs.find(t => t.id === tabId);
-  if (tab) {
-    const html = await tab.render();
-    window._panelTabCache[tabId] = html;
-    body.innerHTML = html;
+
+  if (status === 'clear') {
+    body.innerHTML = renderClearPanel(r, d, c);
+    return;
+  }
+
+  if (!c || !c.clusters || c.clusters.length === 0) {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
+    return;
+  }
+
+  body.innerHTML = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
+}
+
+function renderClusterCard(region, cl, i) {
+  const id = `cluster-${region}-${i}`;
+  const isExpanded = state.expandedClusters.has(id);
+  const pillCls = cl.pillar === 'Cyber' ? 'pill-cyber' : 'pill-geo';
+  const convColor = cl.convergence >= 3 ? '#ff7b72' : cl.convergence >= 2 ? '#e3b341' : '#6e7681';
+
+  const sourcesHtml = isExpanded ? `
+<div class="cluster-sources">
+  ${(cl.sources || []).map(s => `
+  <div class="source-row">
+    <span style="color:#388bfd;min-width:90px;flex-shrink:0">${esc(s.name || '')}</span>
+    <span style="color:#8b949e">${esc(s.headline || '')}</span>
+  </div>`).join('')}
+</div>` : '';
+
+  return `
+<div class="cluster-card">
+  <div class="cluster-card-header" onclick="toggleCluster('${id}')">
+    <span class="${pillCls}">${cl.pillar || '?'}</span>
+    <span style="flex:1;font-size:12px;color:#e6edf3">${esc(cl.name || '')}</span>
+    <span style="font-size:10px;color:${convColor}">&times;${cl.convergence} ${isExpanded ? '&#9662;' : '&#9658;'}</span>
+  </div>
+  ${sourcesHtml}
+</div>`;
+}
+
+function renderClearPanel(region, d, c) {
+  const queried = c?.sources_queried ?? '—';
+  const windowVal = c?.window_used || d.window_used || '—';
+  return `
+<div style="padding:8px 0">
+  <div style="color:#3fb950;font-size:12px;margin-bottom:12px">&#10003; Signal check confirmed — no active threats detected</div>
+  <div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:11px;color:#8b949e">
+    <div style="margin-bottom:6px"><span style="color:#6e7681">Gatekeeper rationale: </span>${esc(d.rationale || '—')}</div>
+    <div style="margin-bottom:6px"><span style="color:#6e7681">Admiralty: </span>${esc(d.admiralty || '—')} — ${admiraltyTooltip(d.admiralty)}</div>
+    <div style="margin-bottom:6px"><span style="color:#6e7681">Window: </span>${esc(windowVal)}</div>
+    <div><span style="color:#6e7681">Sources queried: </span>${queried}</div>
+  </div>
+</div>`;
+}
+
+function toggleCluster(id) {
+  if (state.expandedClusters.has(id)) {
+    state.expandedClusters.delete(id);
+  } else {
+    state.expandedClusters.add(id);
+  }
+  renderRightPanel();
+}
+
+function selectRegion(r) {
+  state.selectedRegion = r;
+  state.expandedClusters.clear();
+  renderLeftPanel();
+  renderRightPanel();
+}
+
+// ── Section 7: Render — Reports + History ─────────────────────────────
+async function renderReports() {
+  const md = await fetchJSON('/api/outputs/global-md');
+  if (md?.markdown) {
+    $('report-preview').innerHTML = marked.parse(md.markdown);
+  } else {
+    $('report-preview').textContent = 'No report available — run the pipeline first.';
+  }
+  if (state.manifest?.run_timestamp) {
+    $('report-generated-ts').textContent = `Generated ${fmtTime(state.manifest.run_timestamp)}`;
   }
 }
-
-function closePanel() {
-  const panel = $('output-panel');
-  panel.classList.remove('panel-open');
-  panel.setAttribute('aria-hidden', 'true');
-  _closePanelTimer = setTimeout(() => {
-    panel.classList.add('hidden');
-    $('panel-overlay').classList.add('hidden');
-    window._panelTabs = null;
-    window._panelTabCache = {};
-  }, 300); // match CSS transition duration
-}
-
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
-
-async function loadPanel(type, region, defaultTab) {
-  if (type === 'regional') {
-    const label = REGION_LABELS[region] || region;
-    openPanel(`${label} — Intelligence`, [
-      {
-        id: 'brief',
-        label: 'Brief',
-        render: async () => {
-          const data = await fetchJSON(`/api/region/${region}/report`);
-          if (!data || !data.report) return '<p class="text-gray-500 p-4">No brief available for this region.</p>';
-          return `<div class="prose prose-invert max-w-none p-4">${marked.parse(data.report)}</div>`;
-        }
-      },
-      {
-        id: 'signals',
-        label: 'Signal Detail',
-        render: async () => {
-          const data = await fetchJSON(`/api/region/${region}/signals`);
-          if (!data) return '<p class="text-gray-500 p-4">No signal data available.</p>';
-          const geo = data.geo;
-          const cyber = data.cyber;
-          let html = '<div class="p-4 space-y-5">';
-          if (geo) {
-            html += `<div>
-              <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Geopolitical Signals</h4>
-              <p class="text-sm text-gray-200 mb-2">${esc(geo.summary || '')}</p>
-              ${geo.lead_indicators?.length ? '<ul class="list-disc list-inside space-y-1">' + geo.lead_indicators.map(i => `<li class="text-sm text-gray-300">${esc(i)}</li>`).join('') + '</ul>' : ''}
-            </div>`;
-          }
-          if (cyber) {
-            html += `<div>
-              <h4 class="text-sm font-semibold text-gray-400 uppercase tracking-wide mb-2">Cyber Signals</h4>
-              <p class="text-sm text-gray-200 mb-2">${esc(cyber.summary || '')}</p>
-              ${cyber.threat_vector ? `<p class="text-sm"><span class="text-gray-500">Threat vector:</span> ${esc(cyber.threat_vector)}</p>` : ''}
-              ${cyber.target_assets?.length ? '<p class="text-sm text-gray-500 mt-1">Target assets:</p><ul class="list-disc list-inside">' + cyber.target_assets.map(a => `<li class="text-sm text-gray-300">${esc(a)}</li>`).join('') + '</ul>' : ''}
-            </div>`;
-          }
-          html += '</div>';
-          return html;
-        }
-      },
-    ]);
-    if (defaultTab && defaultTab !== 'brief') activatePanelTab(defaultTab);
-
-  } else if (type === 'global') {
-    openPanel('Board Deliverables', [
-      {
-        id: 'report',
-        label: 'Report',
-        render: async () => {
-          const data = await fetchJSON('/api/outputs/global-md');
-          if (!data || !data.markdown) return '<p class="text-gray-500 p-4">Global report not available.</p>';
-          return `<div class="prose prose-invert max-w-none p-4">${marked.parse(data.markdown)}</div>`;
-        }
-      },
-      {
-        id: 'pdf',
-        label: 'PDF',
-        render: async () => `
-          <div class="p-4 space-y-3">
-            <div class="flex justify-end">
-              <a href="/api/outputs/pdf" download class="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 rounded text-sm text-white">
-                Download PDF
-              </a>
-            </div>
-            <iframe src="/api/outputs/pdf" class="w-full rounded border border-gray-700"
-              style="height: calc(100vh - 200px)"></iframe>
-          </div>`
-      },
-      {
-        id: 'pptx',
-        label: 'PowerPoint',
-        render: async () => `
-          <div class="p-4 flex flex-col items-center gap-4 pt-12">
-            <p class="text-gray-400 text-sm">PowerPoint files cannot be previewed in the browser.</p>
-            <a href="/api/outputs/pptx" download
-              class="px-4 py-2 bg-blue-700 hover:bg-blue-600 rounded text-sm font-medium text-white">
-              Download board_report.pptx
-            </a>
-          </div>`
-      },
-    ]);
-  }
-}
-
-// ── Progress Bar + SSE ────────────────────────────────────────────────
-const PHASE_LABELS = {
-  gatekeeper: 'Phase 1 — Regional Analysis',
-  trend:      'Phase 2 — Velocity Analysis',
-  diff:       'Phase 3 — Cross-Regional Diff',
-  dashboard:  'Phase 4–5 — Global Report & Exports',
-  complete:   'Pipeline complete',
-};
-const PHASE_ORDER = ['gatekeeper', 'trend', 'diff', 'dashboard', 'complete'];
-
-function showProgressBar(label, percent) {
-  $('progress-bar-container').classList.remove('hidden');
-  $('progress-label').textContent = label;
-  $('progress-fill').style.width = percent + '%';
-  $('progress-fill').classList.remove('bg-red-600', 'bg-green-500');
-  $('progress-fill').classList.add('bg-blue-500');
-}
-
-function completeProgressBar(timestamp) {
-  $('progress-fill').style.width = '100%';
-  $('progress-fill').classList.remove('bg-blue-500', 'bg-red-600');
-  $('progress-fill').classList.add('bg-green-500');
-  $('progress-label').textContent = 'Pipeline complete — ' + fmtTime(timestamp);
-  setTimeout(() => {
-    $('progress-bar-container').classList.add('hidden');
-    loadLatestData();
-  }, 3000);
-}
-
-function errorProgressBar(phase) {
-  $('progress-fill').classList.remove('bg-blue-500', 'bg-green-500');
-  $('progress-fill').classList.add('bg-red-600');
-  $('progress-label').textContent = `Pipeline failed at ${PHASE_LABELS[phase] || phase}`;
-  $('btn-run-all').disabled = false;
-  $('btn-run-all').textContent = 'Run All Regions';
-}
-
-function initSSE() {
-  const source = new EventSource('/api/logs/stream');
-
-  source.addEventListener('phase', e => {
-    const data = JSON.parse(e.data);
-    const phaseIndex = PHASE_ORDER.indexOf(data.phase);
-    const percent = phaseIndex >= 0 ? Math.round((phaseIndex / (PHASE_ORDER.length - 1)) * 90) : 0;
-
-    if (data.phase === 'complete') {
-      completeProgressBar(new Date().toISOString());
-    } else if (data.status === 'running') {
-      showProgressBar(PHASE_LABELS[data.phase] || data.phase, percent);
-    } else if (data.status === 'complete') {
-      showProgressBar((PHASE_LABELS[data.phase] || data.phase) + ' ✓', Math.min(percent + 10, 90));
-    }
-
-    // Console: append [PHASE] entry
-    const phaseLabel = PHASE_LABELS[data.phase] || data.phase;
-    const suffix = data.status === 'complete' ? ' ✓' : '';
-    appendConsoleEntry(
-      `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-blue-900 text-blue-300">[PHASE]</span>` +
-      `<span class="text-gray-300 text-xs">${esc(phaseLabel)}${suffix}</span>`
-    );
-  });
-
-  source.addEventListener('error', e => {
-    try {
-      const data = JSON.parse(e.data);
-      errorProgressBar(data.phase || 'unknown');
-    } catch { /* ping or malformed */ }
-  });
-
-  source.addEventListener('pipeline', e => {
-    const data = JSON.parse(e.data);
-    if (data.status === 'started') {
-      showProgressBar('Initializing...', 5);
-      $('btn-run-all').disabled = true;
-      $('btn-run-all').textContent = 'Running...';
-
-      // Console: show panel, insert separator if not first run, increment counter, append Started
-      showConsole();
-      _consoleEverStarted = true;
-      if (_runCount > 0) {
-        const ts = new Date().toLocaleString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
-        appendConsoleEntry(`<div class="text-gray-600 text-xs text-center py-1">--- ${ts} ---</div>`);
-      }
-      _runCount++;
-      appendConsoleEntry(
-        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-gray-700 text-gray-300">[PIPELINE]</span>` +
-        `<span class="text-gray-300 text-xs">Started</span>`
-      );
-    } else if (data.status === 'complete') {
-      appendConsoleEntry(
-        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-green-900 text-green-300">[PIPELINE]</span>` +
-        `<span class="text-gray-300 text-xs">Complete</span>`
-      );
-    } else if (data.status === 'error') {
-      appendConsoleEntry(
-        `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 bg-red-900 text-red-300">[PIPELINE]</span>` +
-        `<span class="text-gray-300 text-xs">Error: ${esc(data.message || '')}</span>`
-      );
-    }
-  });
-
-  source.addEventListener('gatekeeper', e => {
-    const data = JSON.parse(e.data);
-    const region = (data.region || '').toUpperCase();
-    const decision = (data.decision || '').toUpperCase();
-    let pillCls, label, msgText;
-    if (decision === 'ESCALATE') {
-      pillCls = 'bg-red-900 text-red-300';
-      label = `[${region} → ESCALATE]`;
-      msgText = esc(data.severity || 'escalated');
-    } else if (decision === 'MONITOR') {
-      pillCls = 'bg-yellow-900 text-yellow-300';
-      label = `[${region} → MONITOR]`;
-      msgText = 'elevated';
-    } else {
-      pillCls = 'bg-green-900 text-green-300';
-      label = `[${region} → CLEAR]`;
-      msgText = 'clear';
-    }
-    appendConsoleEntry(
-      `<span class="text-xs font-mono font-semibold px-1.5 py-0.5 rounded mr-1 ${pillCls}">${label}</span>` +
-      `<span class="text-gray-300 text-xs">${msgText}</span>`
-    );
-  });
-
-  source.addEventListener('log', e => {
-    const data = JSON.parse(e.data);
-    const msg = (data.message || '').slice(0, 120);
-    appendConsoleEntry(
-      `<span class="text-gray-500 text-xs font-mono leading-tight">${esc(msg)}</span>`
-    );
-  });
-}
-
-async function runAll() {
-  const mode = $('mode-select').value;
-  try {
-    const r = await fetch(`/api/run/all?mode=${mode}`, { method: 'POST' });
-    if (!r.ok) errorProgressBar('unknown');
-  } catch {
-    errorProgressBar('unknown');
-  }
-}
-
-// ── History Tab ────────────────────────────────────────────────────────
-let _historyRuns = [];
 
 async function renderHistory() {
-  const runs = await fetchJSON('/api/runs');
-  const container = $('run-history-list');
-  if (!runs || runs.length === 0) {
-    container.innerHTML = '<p class="text-gray-500 text-sm">No archived runs yet.</p>';
-  } else {
-    _historyRuns = runs;
-    container.innerHTML = runs.map((run, i) => {
-      const m = run.manifest || {};
-      const regions = Object.values(m.regions || {});
-      const escalated = regions.filter(r => r.status === 'escalated').length;
-      return `
-<div class="flex items-center justify-between border-b border-gray-800 py-3 text-sm">
-  <div class="text-gray-300">${fmtTime(m.run_timestamp)}</div>
-  <div class="font-medium">${fmtUSD(m.total_vacr_exposure_usd)}</div>
-  <div class="text-gray-400">${escalated} escalated</div>
-  <button onclick="loadArchiveRun(_historyRuns[${i}])"
-    class="px-2 py-1 bg-gray-700 hover:bg-gray-600 rounded text-xs text-white">View</button>
-</div>`;
-    }).join('');
-  }
+  const runs = await fetchJSON('/api/runs') || [];
+  $('run-history-list').innerHTML = runs.length === 0
+    ? '<p style="color:#6e7681;font-size:11px">No archived runs yet.</p>'
+    : runs.map(run => {
+        const m = run.manifest || {};
+        // Note: archive-run loading (click to view a past run) is out of scope for this plan.
+        // The row renders the timestamp and window_used for visual completeness; onclick is intentionally omitted.
+        return `<div style="border:1px solid #21262d;border-radius:4px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:#8b949e">
+          <span style="color:#e6edf3">${esc(m.run_timestamp ? fmtTime(m.run_timestamp) : run.name)}</span>
+          ${m.window_used ? `<span style="color:#6e7681;margin-left:8px">${esc(m.window_used)} window</span>` : ''}
+        </div>`;
+      }).join('');
 
-  // Audit trace
   const trace = await fetchJSON('/api/trace');
-  if (trace && trace.log) {
-    $('audit-trace').textContent = trace.log;
-  }
+  if (trace?.log) $('audit-trace').textContent = trace.log;
 }
 
 function toggleTrace() {
-  const el = $('audit-trace');
-  el.classList.toggle('hidden');
-  const btn = document.querySelector('[aria-controls="audit-trace"]');
-  if (btn) btn.setAttribute('aria-expanded', el.classList.contains('hidden') ? 'false' : 'true');
+  $('audit-trace').classList.toggle('hidden');
 }
 
-// ── Archive Banner ─────────────────────────────────────────────────────
-function showArchiveBanner(run) {
-  const m = run.manifest || {};
-  $('archive-timestamp').textContent = fmtTime(m.run_timestamp);
-  $('archive-banner').classList.remove('hidden');
+// ── Section 8: Tab switching + Run + Agent Console + SSE ──────────────
+function renderAll() {
+  renderLeftPanel();
+  renderRightPanel();
 }
 
-function hideArchiveBanner() {
-  $('archive-banner').classList.add('hidden');
-}
-
-// ── Nav Tabs ───────────────────────────────────────────────────────────
 function switchTab(tab) {
   state.activeTab = tab;
-  $('tab-overview').classList.toggle('hidden', tab !== 'overview');
-  $('tab-history').classList.toggle('hidden', tab !== 'history');
-  $('nav-tab-overview').className = $('nav-tab-overview').className
-    .replace(/nav-tab-\w+/, tab === 'overview' ? 'nav-tab-active' : 'nav-tab-inactive');
-  $('nav-tab-history').className = $('nav-tab-history').className
-    .replace(/nav-tab-\w+/, tab === 'history' ? 'nav-tab-active' : 'nav-tab-inactive');
+  ['overview','reports','history'].forEach(t => {
+    $(`tab-${t}`).classList.toggle('hidden', t !== tab);
+    $(`nav-${t}`).classList.toggle('active', t === tab);
+  });
+  if (tab === 'reports') renderReports();
   if (tab === 'history') renderHistory();
 }
 
-// ── Settings Modal ─────────────────────────────────────────────────────
-function openSettings() {
-  $('settings-modal').classList.remove('hidden');
-}
-function closeSettings() {
-  $('settings-modal').classList.add('hidden');
+// ── Run trigger ───────────────────────────────────────────────────────
+async function runAll() {
+  const windowVal = $('window-select').value;
+  const btn = $('btn-run-all');
+  btn.disabled = true;
+  $('pipeline-status').textContent = 'Running...';
+  showConsole();
+  _consoleEverStarted = true;
+  try {
+    const r = await fetch(`/api/run/all?mode=tools&window=${windowVal}`, { method: 'POST' });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      $('pipeline-status').textContent = err.error || 'Run failed';
+      btn.disabled = false;
+    }
+  } catch {
+    $('pipeline-status').textContent = 'Server offline';
+    btn.disabled = false;
+  }
 }
 
-// ── Init ───────────────────────────────────────────────────────────────
-(async function init() {
-  await loadLatestData();
-  initSSE();
-})();
+// ── Agent Console ─────────────────────────────────────────────────────
+function showConsole() {
+  $('agent-console').classList.remove('hidden');
+  $('agent-console-toggle').classList.add('hidden');
+}
+function hideConsole() {
+  $('agent-console').classList.add('hidden');
+  if (_consoleEverStarted) $('agent-console-toggle').classList.remove('hidden');
+}
+function appendConsoleEntry(html) {
+  const log = $('console-log');
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  log.appendChild(div);
+  if (_consolePinned) log.scrollTop = log.scrollHeight;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const log = $('console-log');
+  if (log) {
+    log.addEventListener('scroll', () => {
+      _consolePinned = log.scrollTop >= log.scrollHeight - log.clientHeight - 5;
+    });
+  }
+});
+
+// ── SSE stream (identical pattern to current) ──────────────────────────
+function startEventStream() {
+  const es = new EventSource('/api/logs/stream');
+  es.addEventListener('phase', e => {
+    const d = JSON.parse(e.data);
+    appendConsoleEntry(`<span style="color:#3fb950;font-size:10px">[${d.phase}] ${esc(d.message||'')}</span>`);
+  });
+  es.addEventListener('gatekeeper', e => {
+    const d = JSON.parse(e.data);
+    const color = d.decision === 'ESCALATE' ? '#ff7b72' : d.decision === 'MONITOR' ? '#79c0ff' : '#3fb950';
+    appendConsoleEntry(`<span style="color:${color};font-size:10px">[GK] ${esc(d.region)} &#8594; ${esc(d.decision)}</span>`);
+  });
+  es.addEventListener('pipeline', e => {
+    const d = JSON.parse(e.data);
+    if (d.status === 'complete') {
+      $('pipeline-status').textContent = 'Idle';
+      $('btn-run-all').disabled = false;
+      loadLatestData();
+    } else if (d.status === 'error') {
+      $('pipeline-status').textContent = 'Run failed — check console';
+      $('btn-run-all').disabled = false;
+      appendConsoleEntry(`<span style="color:#ff7b72;font-size:10px">[ERROR] ${esc(d.message||'')}</span>`);
+    }
+  });
+  es.addEventListener('log', e => {
+    const d = JSON.parse(e.data);
+    appendConsoleEntry(`<span style="color:#6e7681;font-size:9px">${esc(d.line||'')}</span>`);
+  });
+  es.onerror = () => {};
+}
+
+// ── Panel (kept for compat, used by archive viewer) ───────────────────
+function closePanel() {
+  $('output-panel').classList.remove('panel-open');
+  $('panel-overlay').classList.remove('visible');
+  $('output-panel').setAttribute('aria-hidden', 'true');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadLatestData();
+startEventStream();

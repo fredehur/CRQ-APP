@@ -1,320 +1,303 @@
 <!DOCTYPE html>
-<html lang="en" class="bg-gray-950 text-gray-100">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CRQ Command Center</title>
+  <title>CRQ Analyst</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
         extend: {
+          fontFamily: { mono: ['"IBM Plex Mono"', 'monospace'] },
           colors: {
-            critical: '#dc2626',
-            high: '#ea580c',
-            medium: '#d97706',
-            clear: '#22c55e',
+            bg:      '#070a0e',
+            surface: '#0d1117',
+            border:  '#21262d',
+            accent:  '#3fb950',
+            dim:     '#6e7681',
+            'sev-c': '#ff7b72',
+            'sev-h': '#ffa657',
+            'sev-m': '#e3b341',
+            'sev-ok':'#3fb950',
+            'sev-mon':'#79c0ff',
           }
         }
       }
     }
   </script>
   <style>
-    /* Progress bar fill animation */
-    #progress-fill {
-      height: 100%;
-      background-color: #3b82f6;
-      transition: width 300ms ease-in-out;
+    * { font-family: 'IBM Plex Mono', monospace; }
+    body { background: #070a0e; color: #c9d1d9; padding-top: 36px; }
+
+    /* Header */
+    #app-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+      height: 36px;
+      background: #0d1117;
+      border-bottom: 1px solid #21262d;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px;
     }
 
-    /* Slide-over panel: hidden state */
+    /* Progress bar */
+    #progress-bar-container {
+      position: fixed; top: 36px; left: 0; right: 0; z-index: 30;
+      background: #0d1117; border-bottom: 1px solid #21262d;
+    }
+    #progress-fill { height: 100%; background: #3fb950; transition: width 300ms ease-in-out; }
+
+    /* Split pane — only visible on Overview tab */
+    #split-pane {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: calc(100vh - 36px);
+      overflow: hidden;
+    }
+
+    /* Left panel */
+    #left-panel {
+      border-right: 1px solid #21262d;
+      display: flex; flex-direction: column;
+      overflow-y: auto;
+      background: #080c10;
+    }
+
+    /* Right panel */
+    #right-panel {
+      display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    #right-panel-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
+
+    /* Region rows */
+    .region-row {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 8px 12px; border-bottom: 1px solid #161b22;
+      cursor: pointer; transition: background 0.1s;
+    }
+    .region-row:hover { background: #161b22; }
+    .region-row.active { background: #1c2128; border-left: 2px solid #3fb950; padding-left: 10px; }
+
+    /* Cluster cards */
+    .cluster-card {
+      background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+      margin-bottom: 8px; overflow: hidden;
+    }
+    .cluster-card-header {
+      padding: 8px 12px; display: flex; align-items: center; gap: 8px;
+      cursor: pointer;
+    }
+    .cluster-card-header:hover { background: #161b22; }
+    .cluster-sources { border-top: 1px solid #161b22; }
+    .source-row {
+      display: flex; gap: 10px; padding: 5px 12px;
+      border-bottom: 1px solid #161b22; font-size: 11px;
+    }
+    .source-row:last-child { border-bottom: none; }
+
+    /* Nav tabs */
+    .nav-tab {
+      height: 36px; padding: 0 14px;
+      display: flex; align-items: center;
+      font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: #6e7681; border-bottom: 2px solid transparent;
+      cursor: pointer; transition: color 0.1s;
+    }
+    .nav-tab:hover { color: #c9d1d9; }
+    .nav-tab.active { color: #3fb950; border-bottom-color: #3fb950; }
+
+    /* Sev badges */
+    .sev { font-size: 9px; padding: 1px 5px; border-radius: 2px; letter-spacing: 0.06em; }
+    .sev-c { color: #ff7b72; background: #2d0000; border: 1px solid #da3633; }
+    .sev-h { color: #ffa657; background: #2d1800; border: 1px solid #9e6a03; }
+    .sev-m { color: #e3b341; background: #2d2200; border: 1px solid #d29922; }
+    .sev-ok{ color: #3fb950; background: #0a1a0a; border: 1px solid #238636; }
+    .sev-mon{color: #79c0ff; background: #1a1a2d; border: 1px solid #1f6feb; }
+
+    /* Pillar pills */
+    .pill-geo   { color: #79c0ff; background: #0d1f36; border: 1px solid #1f6feb; font-size: 9px; padding: 1px 5px; border-radius: 10px; }
+    .pill-cyber { color: #d2a8ff; background: #1a0d36; border: 1px solid #6e40c9; font-size: 9px; padding: 1px 5px; border-radius: 10px; }
+
+    /* Conv dot */
+    .conv-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+    .conv-strong { background: #da3633; }
+    .conv-weak   { background: #d29922; }
+    .conv-none   { background: #30363d; }
+
+    /* Reports tab */
+    #tab-reports { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
+    #report-preview { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7; color: #c9d1d9; }
+    #report-preview h1, #report-preview h2, #report-preview h3 { color: #e6edf3; margin: 1em 0 0.5em; }
+    #report-preview p { margin-bottom: 0.75em; }
+    #report-preview code { background: #161b22; padding: 1px 4px; border-radius: 2px; }
+
+    /* History tab */
+    #tab-history { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
+
+    /* Run button */
+    #btn-run-all {
+      background: #1a3a1a; border: 1px solid #238636; color: #3fb950;
+      padding: 3px 12px; border-radius: 2px; font-size: 10px;
+      letter-spacing: 0.06em; cursor: pointer; transition: background 0.1s;
+    }
+    #btn-run-all:hover { background: #1f4d1f; }
+    #btn-run-all:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    #window-select {
+      background: #0d1117; border: 1px solid #21262d; color: #8b949e;
+      padding: 2px 6px; border-radius: 2px; font-size: 10px;
+      font-family: 'IBM Plex Mono', monospace; margin-right: 6px;
+    }
+
+    /* Agent console (identical to current) */
+    #agent-console {
+      position: fixed; bottom: 12px; right: 12px; width: 300px; max-height: 260px;
+      z-index: 40; background: #0d1117; border: 1px solid #21262d;
+      border-radius: 6px; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+      display: flex; flex-direction: column;
+    }
+    #agent-console-toggle {
+      position: fixed; bottom: 12px; right: 12px; z-index: 40;
+      background: #0d1117; border: 1px solid #21262d; color: #6e7681;
+      font-size: 10px; padding: 3px 10px; border-radius: 10px; cursor: pointer;
+    }
+
+    /* Slide-over panel */
     #output-panel {
-      transform: translateX(100%);
-      transition: transform 300ms ease-in-out;
+      transform: translateX(100%); transition: transform 300ms ease-in-out;
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 60;
+      width: 100%; max-width: 680px;
+      background: #0d1117; border-left: 1px solid #21262d;
+      display: flex; flex-direction: column;
     }
-    /* Slide-over panel: visible state — app.js removes hidden and adds panel-open */
-    #output-panel.panel-open {
-      transform: translateX(0);
-    }
-
-    /* Panel overlay backdrop */
+    #output-panel.panel-open { transform: translateX(0); }
     #panel-overlay {
-      background-color: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(2px);
+      display: none; position: fixed; inset: 0; z-index: 50;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
     }
-
-    /* Settings modal overlay */
-    #settings-modal {
-      background-color: rgba(0, 0, 0, 0.6);
-      backdrop-filter: blur(2px);
-    }
-
-    /* Admiralty tooltip — shown via title attribute; enhanced via CSS for custom styling */
-    .admiralty-badge {
-      position: relative;
-      cursor: help;
-    }
-    .admiralty-badge:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 125%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #1f2937;
-      border: 1px solid #374151;
-      color: #d1d5db;
-      font-size: 0.7rem;
-      padding: 4px 8px;
-      border-radius: 4px;
-      white-space: nowrap;
-      z-index: 100;
-      pointer-events: none;
-    }
-
-    /* Nav tab active state */
-    .nav-tab-active {
-      border-bottom: 2px solid #3b82f6;
-      color: #f9fafb;
-    }
-    .nav-tab-inactive {
-      border-bottom: 2px solid transparent;
-      color: #9ca3af;
-    }
-    .nav-tab-inactive:hover {
-      color: #e5e7eb;
-    }
-
-    /* Panel tab active state — JS adds/removes .active on .panel-tab elements */
-    .panel-tab {
-      border-bottom: 2px solid transparent;
-      color: #9ca3af;
-    }
-    .panel-tab.active {
-      border-bottom: 2px solid #3b82f6;
-      color: #f9fafb;
-    }
-    .panel-tab:hover {
-      color: #e5e7eb;
-    }
-
-    /* Ensure fixed header doesn't overlap content */
-    body {
-      padding-top: 4rem;
-    }
+    #panel-overlay.visible { display: block; }
   </style>
 </head>
-<body class="min-h-screen bg-gray-950 text-gray-100">
+<body>
 
-  <!-- Fixed header -->
-  <header class="fixed top-0 left-0 right-0 z-40 bg-gray-950 border-b border-gray-800 px-6 py-0 flex items-center justify-between h-16">
-    <div class="flex items-center gap-6">
-      <div>
-        <span class="text-lg font-bold tracking-tight">CRQ Command Center</span>
-        <span class="text-sm text-gray-500 ml-2 hidden sm:inline">AeroGrid Wind Solutions — Geopolitical Risk Intelligence</span>
-      </div>
-      <!-- Nav tabs -->
-      <nav class="flex items-end gap-1 h-16">
-        <button
-          id="nav-tab-overview"
-          class="nav-tab-active px-4 h-full text-sm font-medium transition-colors"
-          onclick="switchTab('overview')">
-          Overview
-        </button>
-        <button
-          id="nav-tab-history"
-          class="nav-tab-inactive px-4 h-full text-sm font-medium transition-colors"
-          onclick="switchTab('history')">
-          History
-        </button>
-      </nav>
-    </div>
-    <div class="flex items-center gap-3">
-      <span id="pipeline-status" class="text-sm text-gray-500">Idle</span>
-      <button
-        onclick="openSettings()"
-        class="text-gray-400 hover:text-gray-200 p-1.5 rounded transition-colors"
-        title="Settings"
-        aria-label="Settings">
-        ⚙
-      </button>
-      <button
-        onclick="runAll()"
-        id="btn-run-all"
-        class="bg-blue-700 hover:bg-blue-600 px-4 py-1.5 rounded text-sm font-medium transition-colors">
-        Run All Regions
-      </button>
-    </div>
-  </header>
+<!-- Fixed header -->
+<header id="app-header">
+  <div style="display:flex;align-items:center;gap:0">
+    <span style="color:#3fb950;font-size:11px;letter-spacing:0.05em;margin-right:20px">// CRQ ANALYST</span>
+    <nav style="display:flex;height:36px">
+      <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
+      <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
+      <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
+    </nav>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <span id="pipeline-status" style="font-size:10px;color:#6e7681">Idle</span>
+    <select id="window-select">
+      <option value="1d">Last 24h</option>
+      <option value="7d" selected>Last 7 days</option>
+      <option value="30d">Last 30 days</option>
+      <option value="90d">Last quarter</option>
+    </select>
+    <button id="btn-run-all" onclick="runAll()">&#9654; RUN ALL</button>
+  </div>
+</header>
 
-  <!-- Progress bar — hidden by default, fixed below header -->
-  <div id="progress-bar-container" class="hidden fixed top-16 left-0 right-0 z-30 bg-gray-900 px-0">
-    <div class="flex items-center gap-3 px-6 py-1.5">
-      <span id="progress-label" class="text-xs text-gray-400 shrink-0">Initializing...</span>
-      <div class="flex-1 bg-gray-800 rounded-full h-1.5 overflow-hidden">
-        <div id="progress-fill" style="width: 0%"></div>
-      </div>
+<!-- Progress bar -->
+<div id="progress-bar-container" class="hidden" style="padding:4px 16px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="progress-label" style="font-size:10px;color:#6e7681;white-space:nowrap">Initializing...</span>
+    <div style="flex:1;background:#21262d;border-radius:2px;height:2px;overflow:hidden">
+      <div id="progress-fill" style="width:0%"></div>
     </div>
   </div>
+</div>
 
-  <!-- Overview tab -->
-  <div id="tab-overview" data-audience="all">
+<!-- ── OVERVIEW TAB — split pane ─────────────────────────────────── -->
+<div id="tab-overview">
+  <div id="split-pane">
 
-    <!-- KPI strip — 6 tiles -->
-    <section id="kpi-strip" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 px-6 py-5 border-b border-gray-800">
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Total VaCR</p>
-        <p id="kpi-vacr" class="text-2xl font-bold mt-1">—</p>
+    <!-- Left panel -->
+    <div id="left-panel">
+      <!-- Global synthesis -->
+      <div id="global-synthesis" style="padding:12px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Global Synthesis</div>
+        <p id="synthesis-brief" style="font-size:11px;color:#8b949e;line-height:1.5">No run data — click Run All to start.</p>
+        <div id="status-counts" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap"></div>
+        <div id="run-meta" style="margin-top:6px;font-size:9px;color:#6e7681"></div>
       </div>
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Escalated</p>
-        <p id="kpi-escalated" class="text-2xl font-bold mt-1 text-orange-400">—</p>
-      </div>
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Monitor</p>
-        <p id="kpi-monitor" class="text-2xl font-bold mt-1 text-yellow-400">—</p>
-      </div>
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Clear</p>
-        <p id="kpi-clear" class="text-2xl font-bold mt-1 text-green-400">—</p>
-      </div>
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Last Run</p>
-        <p id="kpi-timestamp" class="text-lg font-bold mt-1">—</p>
-      </div>
-      <div class="bg-gray-900 rounded-lg p-4">
-        <p class="text-xs text-gray-500 uppercase tracking-wide">Trend</p>
-        <p id="kpi-trend" class="text-2xl font-bold mt-1">—</p>
-      </div>
-    </section>
-
-    <!-- Executive summary (full width, prominent) -->
-    <section id="executive-summary-section" class="px-6 py-5" data-audience="board">
-      <div class="border-l-4 border-blue-600 bg-gray-900 rounded-r-lg p-5">
-        <h2 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Executive Summary</h2>
-        <p id="executive-summary-text" class="text-sm text-gray-300 leading-relaxed">
-          No intelligence run yet. Click Run All Regions to generate the first report.
-        </p>
-      </div>
-    </section>
-
-    <!-- Archive banner — hidden by default -->
-    <div id="archive-banner" class="hidden mx-6 mb-4 bg-amber-900/30 border border-amber-700/50 rounded-lg px-4 py-2 flex items-center justify-between text-sm text-amber-300">
-      <span>Viewing archived run — <span id="archive-timestamp" class="font-medium"></span></span>
-      <button onclick="returnToLatest()" class="underline hover:no-underline text-amber-200">Return to latest</button>
+      <!-- Region rows injected by app.js -->
+      <div id="region-list"></div>
     </div>
 
-    <!-- Escalated regions section -->
-    <section id="escalated-section" class="px-6 pb-4" data-audience="ops">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Active Threats</h3>
-      <div id="escalated-cards" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-        <!-- cards injected by app.js -->
+    <!-- Right panel -->
+    <div id="right-panel">
+      <div id="right-panel-header" style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span id="right-region-badge" class="sev"></span>
+        <span id="right-region-name" style="font-size:13px;color:#e6edf3"></span>
+        <span id="right-admiralty-badge" class="admiralty-badge" style="margin-left:auto;font-size:10px;color:#6e7681;cursor:help"></span>
+        <span id="right-run-ts" style="font-size:9px;color:#6e7681"></span>
       </div>
-    </section>
-
-    <!-- Clear + Monitor regions -->
-    <section id="clear-section" class="px-6 pb-4" data-audience="ops">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-3">Regional Status</h3>
-      <div id="clear-chips" class="flex flex-wrap gap-2">
-        <!-- chips injected by app.js -->
+      <div id="right-panel-body">
+        <p id="right-empty-state" style="color:#6e7681;font-size:11px">Select a region to explore signals.</p>
       </div>
-    </section>
-
-    <!-- Global outputs button row -->
-    <div id="global-outputs-row" class="px-6 pb-6">
-      <button
-        onclick="loadPanel('global', null)"
-        id="btn-global-outputs"
-        class="bg-blue-700 hover:bg-blue-600 px-5 py-2 rounded-full text-sm font-medium transition-colors">
-        Board Deliverables
-      </button>
     </div>
 
-  </div><!-- end tab-overview -->
-
-  <!-- History tab — hidden by default -->
-  <div id="tab-history" class="hidden px-6 py-5">
-    <h2 class="text-lg font-semibold mb-4">Run History</h2>
-    <div id="run-history-list" class="space-y-3 mb-8">
-      <!-- injected by app.js -->
-    </div>
-    <div class="border-t border-gray-800 pt-5">
-      <h3 class="text-sm font-semibold uppercase tracking-wide text-gray-400 mb-2 flex items-center gap-2">
-        Audit Trace
-        <button onclick="toggleTrace()" class="text-gray-500 hover:text-gray-300 text-xs transition-colors" aria-label="Toggle audit trace" aria-expanded="false" aria-controls="audit-trace">▼</button>
-      </h3>
-      <pre id="audit-trace" class="hidden bg-gray-900 rounded-lg p-4 text-xs font-mono text-gray-400 overflow-x-auto whitespace-pre-wrap"></pre>
-    </div>
   </div>
+</div>
 
-  <!-- Panel overlay (full-screen backdrop) -->
-  <div
-    id="panel-overlay"
-    class="hidden fixed inset-0 z-50"
-    onclick="closePanel()">
+<!-- ── REPORTS TAB ──────────────────────────────────────────────── -->
+<div id="tab-reports" class="hidden">
+  <div style="margin-bottom:16px;display:flex;gap:10px">
+    <a id="btn-dl-pdf"  href="/api/outputs/pdf"  target="_blank"
+       style="background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:4px 14px;border-radius:2px;font-size:10px;text-decoration:none">&#8595; PDF</a>
+    <a id="btn-dl-pptx" href="/api/outputs/pptx" target="_blank"
+       style="background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:4px 14px;border-radius:2px;font-size:10px;text-decoration:none">&#8595; PPTX</a>
+    <span id="report-generated-ts" style="font-size:10px;color:#6e7681;align-self:center"></span>
   </div>
+  <div id="report-preview">Loading report...</div>
+</div>
 
-  <!-- Slide-over output panel -->
-  <aside
-    id="output-panel"
-    aria-hidden="true"
-    class="fixed top-0 right-0 bottom-0 z-[60] w-full max-w-2xl bg-gray-900 border-l border-gray-700 flex flex-col">
-    <div id="panel-header" class="flex items-center justify-between px-5 py-4 border-b border-gray-700 shrink-0">
-      <span id="panel-title" class="font-semibold text-gray-100"></span>
-      <button
-        onclick="closePanel()"
-        class="text-gray-400 hover:text-gray-200 text-xl leading-none transition-colors"
-        aria-label="Close panel">
-        ✕
-      </button>
+<!-- ── HISTORY TAB ─────────────────────────────────────────────── -->
+<div id="tab-history" class="hidden">
+  <h2 style="font-size:13px;color:#e6edf3;margin-bottom:12px">Run History</h2>
+  <div id="run-history-list" style="margin-bottom:24px"></div>
+  <div style="border-top:1px solid #21262d;padding-top:14px">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Audit Trace</span>
+      <button onclick="toggleTrace()" style="font-size:10px;color:#6e7681;cursor:pointer;background:none;border:none">&#9660;</button>
     </div>
-    <div id="panel-tabs" class="flex border-b border-gray-700 shrink-0">
-      <!-- tab buttons injected by loadPanel() -->
-    </div>
-    <div id="panel-body" class="flex-1 overflow-y-auto p-5 text-sm text-gray-300">
-      <!-- content injected by loadPanel() -->
-    </div>
-  </aside>
-
-  <!-- Settings modal — hidden by default -->
-  <div id="settings-modal" class="hidden fixed inset-0 z-[60] flex items-center justify-center">
-    <div id="settings-content" class="bg-gray-900 rounded-lg border border-gray-700 p-6 w-full max-w-sm mx-4 shadow-2xl">
-      <h3 class="text-base font-semibold mb-4">Settings</h3>
-      <div class="space-y-4">
-        <label class="block">
-          <span class="text-sm text-gray-400 block mb-1">Pipeline Mode</span>
-          <select
-            id="mode-select"
-            class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm text-gray-100 focus:outline-none focus:border-blue-500">
-            <option value="tools">Tools Mode</option>
-            <option value="full">Full (LLM)</option>
-          </select>
-        </label>
-      </div>
-      <div class="flex justify-end mt-6">
-        <button
-          onclick="closeSettings()"
-          class="bg-gray-700 hover:bg-gray-600 px-4 py-2 rounded text-sm transition-colors">
-          Close
-        </button>
-      </div>
-    </div>
+    <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap"></pre>
   </div>
+</div>
 
-  <!-- Agent Activity Console — fixed bottom-right, hidden by default -->
-  <div id="agent-console" class="hidden fixed bottom-4 right-4 w-80 max-h-72 z-40 bg-gray-900 border border-gray-700 rounded-lg shadow-xl flex flex-col">
-    <div class="flex items-center justify-between px-3 py-2 border-b border-gray-700 shrink-0">
-      <span class="text-xs font-semibold text-gray-300">Agent Activity</span>
-      <button onclick="hideConsole()" class="text-gray-500 hover:text-white text-sm leading-none transition-colors" aria-label="Close agent console">✕</button>
-    </div>
-    <div id="console-log" class="overflow-y-auto flex-1 p-2 space-y-0.5">
-      <!-- log entries appended by app.js -->
-    </div>
+<!-- Panel overlay -->
+<div id="panel-overlay" onclick="closePanel()"></div>
+
+<!-- Slide-over output panel (for report.md viewer, kept for compat) -->
+<aside id="output-panel" aria-hidden="true">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #21262d;flex-shrink:0">
+    <span id="panel-title" style="font-size:13px;color:#e6edf3"></span>
+    <button onclick="closePanel()" style="color:#6e7681;font-size:16px;cursor:pointer;background:none;border:none">&#x2715;</button>
   </div>
+  <div id="panel-tabs" style="display:flex;border-bottom:1px solid #21262d;flex-shrink:0"></div>
+  <div id="panel-body" style="flex:1;overflow-y:auto;padding:16px;font-size:12px;color:#c9d1d9"></div>
+</aside>
 
-  <!-- Agent console toggle — shown only after a run has started and console is closed -->
-  <button id="agent-console-toggle" class="hidden fixed bottom-4 right-4 bg-gray-800 text-gray-300 text-xs px-3 py-1 rounded-full border border-gray-700 hover:bg-gray-700 transition-colors z-40" onclick="showConsole()">⬛ Agent Activity</button>
+<!-- Agent Activity Console (verbatim from current) -->
+<div id="agent-console" class="hidden" style="">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-bottom:1px solid #21262d;flex-shrink:0">
+    <span style="font-size:10px;color:#c9d1d9;letter-spacing:0.04em">Agent Activity</span>
+    <button onclick="hideConsole()" style="color:#6e7681;font-size:12px;cursor:pointer;background:none;border:none">&#x2715;</button>
+  </div>
+  <div id="console-log" style="overflow-y:auto;flex:1;padding:6px;display:flex;flex-direction:column;gap:2px"></div>
+</div>
+<button id="agent-console-toggle" class="hidden" onclick="showConsole()"
+  style="">&#11035; Agent Activity</button>
 
-  <script src="/static/app.js"></script>
+<script src="/static/app.js"></script>
 </body>
 </html>

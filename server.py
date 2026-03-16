@@ -5,7 +5,7 @@ import json
 import logging
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import FastAPI, Query
 from fastapi.responses import FileResponse, JSONResponse
@@ -133,6 +133,17 @@ async def get_region_signals(region: str):
     }
 
 
+@app.get("/api/region/{region}/clusters")
+async def get_region_clusters(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
+    data = _read_json(OUTPUT / "regional" / r.lower() / "signal_clusters.json")
+    if data is None:
+        return {"region": r, "clusters": [], "total_signals": 0, "sources_queried": 0, "status": "no_data"}
+    return data
+
+
 @app.get("/api/outputs/global-md")
 async def get_global_md():
     path = OUTPUT / "global_report.md"
@@ -171,7 +182,7 @@ async def _emit(event: str, data: dict):
     await event_queue.put({"event": event, "data": json.dumps(data)})
 
 
-async def _run_tools_mode(regions: list[str]):
+async def _run_tools_mode(regions: list[str], window: str = "7d"):
     """Drive layer: tools-only mode — runs Python scripts directly."""
     pipeline_state.update(running=True, phase="gatekeeper", regions_pending=list(regions), regions_done=[], started_at=time.time())
     await _emit("pipeline", {"status": "started", "regions": regions})
@@ -229,7 +240,7 @@ async def _run_tools_mode(regions: list[str]):
 
         # Phase 4: Write manifest
         pipeline_state["phase"] = "manifest"
-        await _run("write_manifest.py")
+        await _run("write_manifest.py", "--window", window)
 
         # Phase 5: Build dashboard
         pipeline_state["phase"] = "dashboard"
@@ -247,8 +258,11 @@ async def _run_tools_mode(regions: list[str]):
         pipeline_state.update(running=False)
 
 
-async def _run_full_mode(regions: list[str]):
-    """Drive layer: full mode — shells out to claude CLI for real LLM analysis."""
+async def _run_full_mode(regions: list[str], window: str = "7d"):
+    """Drive layer: full mode — shells out to claude CLI for real LLM analysis.
+    window is accepted for API consistency but not yet passed to claude CLI
+    (full-mode window support is deferred to a future plan).
+    """
     pipeline_state.update(running=True, phase="running", regions_pending=list(regions), regions_done=[], started_at=time.time())
     await _emit("pipeline", {"status": "started", "mode": "full", "regions": regions})
 
@@ -285,24 +299,31 @@ async def _run_full_mode(regions: list[str]):
 
 
 @app.post("/api/run/all")
-async def run_all(mode: str = Query(default="tools")):
+async def run_all(
+    mode: str = Query(default="tools"),
+    window: Literal["1d", "7d", "30d", "90d"] = Query(default="7d"),
+):
     if pipeline_state["running"]:
         return JSONResponse({"error": "Pipeline already running"}, status_code=409)
     driver = _run_full_mode if mode == "full" else _run_tools_mode
-    asyncio.create_task(driver(REGIONS))
-    return {"started": True, "mode": mode, "regions": REGIONS}
+    asyncio.create_task(driver(REGIONS, window=window))
+    return {"started": True, "mode": mode, "regions": REGIONS, "window": window}
 
 
 @app.post("/api/run/region/{region}")
-async def run_region(region: str, mode: str = Query(default="tools")):
+async def run_region(
+    region: str,
+    mode: str = Query(default="tools"),
+    window: Literal["1d", "7d", "30d", "90d"] = Query(default="7d"),
+):
     r = region.upper()
     if r not in REGIONS:
         return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
     if pipeline_state["running"]:
         return JSONResponse({"error": "Pipeline already running"}, status_code=409)
     driver = _run_full_mode if mode == "full" else _run_tools_mode
-    asyncio.create_task(driver([r]))
-    return {"started": True, "mode": mode, "regions": [r]}
+    asyncio.create_task(driver([r], window=window))
+    return {"started": True, "mode": mode, "regions": [r], "window": window}
 
 
 # ── SSE Stream ───────────────────────────────────────────────────────────
