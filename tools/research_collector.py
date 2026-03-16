@@ -24,6 +24,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
+REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
 def run_mock_mode(region: str) -> None:
@@ -32,6 +33,7 @@ def run_mock_mode(region: str) -> None:
         subprocess.run(
             [sys.executable, f"tools/{collector}.py", region, "--mock"],
             check=True,
+            cwd=REPO_ROOT,
         )
 
 
