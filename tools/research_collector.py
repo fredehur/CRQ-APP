@@ -160,7 +160,12 @@ Return ONLY valid JSON (no markdown fences):
 Set run_pass_2 to false if 3+ corroborating sources address the scenario (sufficient).
 Set run_pass_2 to true if significant gaps remain. Maximum 3 follow_up_queries."""
 
-    return _call_llm(prompt)
+    result = _call_llm(prompt)
+    required = {"gap_assessment", "gaps_identified", "follow_up_queries", "follow_up_query_type", "run_pass_2"}
+    missing = required - result.keys()
+    if missing:
+        raise ValueError(f"assess_gaps: LLM response missing required keys: {missing}")
+    return result
 
 
 def run_mock_mode(region: str) -> None:

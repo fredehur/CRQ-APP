@@ -156,7 +156,7 @@ def test_run_search_pass_includes_type_flag():
         mock_run.return_value = MagicMock(returncode=0, stdout="[]")
         from tools.research_collector import run_search_pass
         run_search_pass("AME", ["test query"], "cyber")
-        cmd = mock_run.call_args[0][0]
+        cmd = mock_run.call_args.args[0]
         assert "--type" in cmd
         assert "cyber" in cmd
 
