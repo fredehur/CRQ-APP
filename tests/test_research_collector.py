@@ -274,3 +274,54 @@ def test_synthesize_signals_produces_valid_schema():
     assert "threat_vector" in cyber
     assert "suggested_admiralty" in conclusion
     assert conclusion["signal_type"] in ("event", "trend", "mixed")
+
+
+def test_run_live_mode_writes_all_output_files(tmp_path, monkeypatch):
+    """run_live_mode writes scratchpad, geo_signals, cyber_signals to the output dir."""
+    import tools.research_collector as rc
+
+    region_dir = tmp_path / "regional" / "ame"
+    region_dir.mkdir(parents=True)
+    monkeypatch.setattr(rc, "get_output_dir", lambda region: region_dir)
+
+    data_by_path = {
+        "mock_crq_database": {"AME": [{"scenario_name": "Test Scenario", "value_at_cyber_risk_usd": 22000000}]},
+        "osint_topics": [],
+        "company_profile": {"industry": "Wind Energy", "crown_jewels": []},
+    }
+    def fake_load_json(path):
+        path_str = str(path)
+        for key, val in data_by_path.items():
+            if key in path_str:
+                return val
+        return {}
+
+    monkeypatch.setattr(rc, "_load_json", fake_load_json)
+    monkeypatch.setattr(rc, "form_working_theory", lambda *a, **kw: {
+        "scenario_name": "Test", "vacr_usd": 22000000,
+        "hypothesis": "Test", "active_topics": [],
+        "geo_queries": ["q1"], "cyber_queries": ["q2"],
+    })
+    monkeypatch.setattr(rc, "run_search_pass", lambda *a, **kw: [
+        {"title": "T", "summary": "S", "url": "https://ex.com/1"}
+    ])
+    monkeypatch.setattr(rc, "assess_gaps", lambda *a, **kw: {
+        "gap_assessment": "OK", "gaps_identified": [],
+        "follow_up_queries": [], "follow_up_query_type": "cyber", "run_pass_2": False,
+    })
+    monkeypatch.setattr(rc, "synthesize_signals", lambda *a, **kw: (
+        {"summary": "geo", "lead_indicators": [], "dominant_pillar": "Geopolitical", "matched_topics": []},
+        {"summary": "cyber", "threat_vector": "test", "target_assets": [], "dominant_pillar": "Cyber", "matched_topics": []},
+        {"theory_confirmed": True, "confidence_rationale": "OK", "suggested_admiralty": "B2",
+         "signal_type": "trend", "dominant_pillar": "Cyber"},
+    ))
+
+    rc.run_live_mode("AME")
+
+    assert (region_dir / "research_scratchpad.json").exists()
+    assert (region_dir / "geo_signals.json").exists()
+    assert (region_dir / "cyber_signals.json").exists()
+
+    scratchpad = json.loads((region_dir / "research_scratchpad.json").read_text())
+    errors = validate_scratchpad(scratchpad)
+    assert errors == [], f"Scratchpad schema violations: {errors}"

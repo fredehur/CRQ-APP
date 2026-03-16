@@ -238,6 +238,21 @@ Only include topic IDs from the ACTIVE TOPICS list in matched_topics."""
     return result["geo_signals"], result["cyber_signals"], result["conclusion"]
 
 
+def _load_json(path: str | Path) -> dict | list:
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def get_output_dir(region: str) -> Path:
+    p = Path("output/regional") / region.lower()
+    p.mkdir(parents=True, exist_ok=True)
+    return p
+
+
+def _write_json(path: Path, data: dict | list) -> None:
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def run_mock_mode(region: str) -> None:
     """Delegate to existing collectors unchanged."""
     for collector in ("geo_collector", "cyber_collector"):
@@ -249,8 +264,58 @@ def run_mock_mode(region: str) -> None:
 
 
 def run_live_mode(region: str) -> None:
-    """Target-centric collection loop — 3 LLM calls."""
-    raise NotImplementedError("Live mode not yet implemented")
+    """Target-centric collection loop — 3 bounded LLM calls."""
+    crq_data = _load_json("data/mock_crq_database.json")
+    topics = _load_json("data/osint_topics.json")
+    company_profile = _load_json("data/company_profile.json")
+    out_dir = get_output_dir(region)
+
+    # --- LLM Call 1: Form working theory ---
+    working_theory = form_working_theory(region, crq_data, topics, company_profile)
+
+    # --- Pass 1: Initial geo + cyber collection ---
+    pass_1_geo = run_search_pass(region, working_theory["geo_queries"], "geo")
+    pass_1_cyber = run_search_pass(region, working_theory["cyber_queries"], "cyber")
+    pass_1_results = pass_1_geo + pass_1_cyber
+
+    # --- LLM Call 2: Assess gaps ---
+    gap_data = assess_gaps(region, working_theory, pass_1_results)
+
+    # --- Pass 2: Fill gaps (if needed) ---
+    pass_2_results: list[dict] = []
+    if gap_data.get("run_pass_2") and gap_data.get("follow_up_queries"):
+        query_type = gap_data.get("follow_up_query_type", "cyber")
+        pass_2_results = run_search_pass(region, gap_data["follow_up_queries"], query_type)
+
+    all_results = pass_1_results + pass_2_results
+
+    # --- LLM Call 3: Synthesize (Sonnet) ---
+    geo_signals, cyber_signals, conclusion = synthesize_signals(region, working_theory, all_results)
+
+    # --- Enrich with metadata ---
+    collected_at = datetime.now(timezone.utc).isoformat()
+    geo_signals.update({"region": region, "collected_at": collected_at})
+    cyber_signals.update({"region": region, "collected_at": collected_at})
+
+    # --- Write outputs ---
+    _write_json(out_dir / "geo_signals.json", geo_signals)
+    _write_json(out_dir / "cyber_signals.json", cyber_signals)
+
+    scratchpad = {
+        "region": region,
+        "collected_at": collected_at,
+        "working_theory": working_theory,
+        "collection": {
+            "pass_1_result_count": len(pass_1_results),
+            "gap_assessment": gap_data.get("gap_assessment", ""),
+            "gaps_identified": gap_data.get("gaps_identified", []),
+            "pass_2_queries": gap_data.get("follow_up_queries", []),
+            "pass_2_result_count": len(pass_2_results),
+            "total_result_count": len(all_results),
+        },
+        "conclusion": conclusion,
+    }
+    _write_json(out_dir / "research_scratchpad.json", scratchpad)
 
 
 def main() -> None:
