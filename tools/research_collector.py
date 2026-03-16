@@ -244,7 +244,7 @@ def _load_json(path: str | Path) -> dict | list:
 
 
 def get_output_dir(region: str) -> Path:
-    p = Path("output/regional") / region.lower()
+    p = REPO_ROOT / "output" / "regional" / region.lower()
     p.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -265,9 +265,9 @@ def run_mock_mode(region: str) -> None:
 
 def run_live_mode(region: str) -> None:
     """Target-centric collection loop — 3 bounded LLM calls."""
-    crq_data = _load_json("data/mock_crq_database.json")
-    topics = _load_json("data/osint_topics.json")
-    company_profile = _load_json("data/company_profile.json")
+    crq_data = _load_json(REPO_ROOT / "data/mock_crq_database.json")
+    topics = _load_json(REPO_ROOT / "data/osint_topics.json")
+    company_profile = _load_json(REPO_ROOT / "data/company_profile.json")
     out_dir = get_output_dir(region)
 
     # --- LLM Call 1: Form working theory ---
