@@ -2,7 +2,7 @@ import sys
 import json
 import os
 
-REQUIRED_TOP_KEYS = ["total_vacr_exposure", "executive_summary", "regional_threats"]
+REQUIRED_TOP_KEYS = ["total_vacr_exposure", "executive_summary", "synthesis_brief", "regional_threats"]
 REQUIRED_REGIONAL_KEYS = ["region", "vacr_exposure", "severity", "primary_scenario", "strategic_assessment"]
 VALID_ADMIRALTY_RELIABILITY = {"A", "B", "C", "D", "E", "F"}
 VALID_ADMIRALTY_CREDIBILITY = {"1", "2", "3", "4", "5", "6"}
@@ -49,6 +49,9 @@ def audit_json(file_path, label):
 
     if not isinstance(data["executive_summary"], str) or len(data["executive_summary"]) < 50:
         fail("JSON AUDIT FAILED: 'executive_summary' must be a string with at least 50 characters.", retry_file, retries)
+
+    if not isinstance(data.get("synthesis_brief"), str) or len(data["synthesis_brief"]) < 30:
+        fail("JSON AUDIT FAILED: 'synthesis_brief' must be a string with at least 30 characters (roughly one meaningful sentence).", retry_file, retries)
 
     if not isinstance(data["regional_threats"], list):
         fail("JSON AUDIT FAILED: 'regional_threats' must be an array.", retry_file, retries)

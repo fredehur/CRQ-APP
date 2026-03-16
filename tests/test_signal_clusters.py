@@ -87,6 +87,87 @@ def test_invalid_convergence_type():
     assert r.returncode != 0
 
 
+def test_json_auditor_requires_synthesis_brief():
+    """json-auditor.py fails if synthesis_brief is missing."""
+    import tempfile, os
+    label = "test_synthesis_missing"
+    retry_file = f"output/.retries/{label}_json.retries"
+    os.makedirs("output/.retries", exist_ok=True)
+    missing_brief = {
+        "total_vacr_exposure": 1000000,
+        "executive_summary": "A" * 50,
+        "regional_threats": []
+        # synthesis_brief intentionally absent
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(missing_brief, f)
+        path = f.name
+    try:
+        r = subprocess.run(
+            [sys.executable, ".claude/hooks/validators/json-auditor.py", path, label],
+            capture_output=True, text=True
+        )
+        assert r.returncode == 2, f"Expected exit 2 (audit fail), got {r.returncode}. stderr: {r.stderr}"
+    finally:
+        os.unlink(path)
+        if os.path.exists(retry_file):
+            os.remove(retry_file)
+
+
+def test_json_auditor_passes_with_synthesis_brief():
+    """json-auditor.py passes when synthesis_brief is present and long enough."""
+    import tempfile, os
+    label = "test_synthesis_present"
+    retry_file = f"output/.retries/{label}_json.retries"
+    os.makedirs("output/.retries", exist_ok=True)
+    with_brief = {
+        "total_vacr_exposure": 1000000,
+        "executive_summary": "A" * 50,
+        "synthesis_brief": "Cross-regional pattern identified. Two regions show convergence on grid infrastructure threats.",
+        "regional_threats": []
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(with_brief, f)
+        path = f.name
+    try:
+        r = subprocess.run(
+            [sys.executable, ".claude/hooks/validators/json-auditor.py", path, label],
+            capture_output=True, text=True
+        )
+        assert r.returncode == 0, f"Expected exit 0, got {r.returncode}. stderr: {r.stderr}"
+    finally:
+        os.unlink(path)
+        if os.path.exists(retry_file):
+            os.remove(retry_file)
+
+
+def test_json_auditor_rejects_short_synthesis_brief():
+    """synthesis_brief shorter than 30 chars should fail."""
+    import tempfile, os
+    label = "test_synthesis_short"
+    retry_file = f"output/.retries/{label}_json.retries"
+    os.makedirs("output/.retries", exist_ok=True)
+    short_brief = {
+        "total_vacr_exposure": 1000000,
+        "executive_summary": "A" * 50,
+        "synthesis_brief": "Too short.",   # 10 chars — below 30-char floor
+        "regional_threats": []
+    }
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        json.dump(short_brief, f)
+        path = f.name
+    try:
+        r = subprocess.run(
+            [sys.executable, ".claude/hooks/validators/json-auditor.py", path, label],
+            capture_output=True, text=True
+        )
+        assert r.returncode == 2, f"Expected exit 2, got {r.returncode}. stderr: {r.stderr}"
+    finally:
+        os.unlink(path)
+        if os.path.exists(retry_file):
+            os.remove(retry_file)
+
+
 def test_signal_clusters_written_after_mock_run():
     """After running collectors + scenario_mapper in mock mode, signal_clusters.json
     should exist at the expected path once the agent instruction is live.
