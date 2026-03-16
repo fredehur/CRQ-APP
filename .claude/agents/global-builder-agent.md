@@ -44,6 +44,7 @@ Write a single valid JSON object to `output/global_report.json`. Pure JSON only 
   "regions_monitored": <number>,
   "regions_clear": <number>,
   "executive_summary": "<string — 4-5 sentences that add intelligence beyond aggregation: (1) the single most important thing the board needs to know right now, (2) cross-regional patterns if multiple regions share the same scenario or dominant pillar, (3) compound risk narrative if 2+ regions are simultaneously escalated, (4) velocity narrative — is global risk accelerating or improving?, (5) business impact framed in terms of manufacturing capacity and service delivery continuity. Do not summarize individual regions — synthesize across them.>",
+  "synthesis_brief": "<string — exactly 1-2 sentences. Cross-regional pattern only. What do multiple regions share in common? If no cross-regional pattern, state that each region's threat is independent. This appears in the analyst dashboard left panel — it must be immediately scannable.>",
   "regional_threats": [
     {
       "region": "<APAC|AME|LATAM|MED|NCE>",
@@ -71,6 +72,11 @@ Write a single valid JSON object to `output/global_report.json`. Pure JSON only 
 
 ## RULES — NON-NEGOTIABLE
 
+- `synthesis_brief` max 2 sentences. If 2, they must each carry distinct information.
+- `synthesis_brief` focuses on cross-regional patterns, not individual region summaries.
+- `synthesis_brief` must not repeat `executive_summary` content.
+- `synthesis_brief` must not contain VaCR dollar values (dashboard-only field).
+- Example `synthesis_brief`: "AME and APAC signals converge on state-adjacent pressure targeting renewable grid infrastructure. Two regions clear; no cross-regional indicator of coordinated campaign yet."
 - Zero technical jargon, zero SOC language, zero budget advice
 - VaCR figures are immutable ground truth — report exactly as received
 - `total_vacr_exposure` must be the arithmetic sum of all `vacr_exposure` values in `regional_threats` only (not monitor regions — their VaCR is 0)
