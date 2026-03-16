@@ -83,6 +83,15 @@ cyber_queries: focus on cyber incidents, threat actor activity, OT/ICS targeting
 All queries must be specific to {region}, the scenario, and wind energy context. Minimum 2 per list."""
 
     result = _call_llm(prompt)
+    required = {"hypothesis", "geo_queries", "cyber_queries"}
+    missing = required - result.keys()
+    if missing:
+        raise ValueError(f"form_working_theory: LLM response missing required keys: {missing}")
+    if len(result["geo_queries"]) < 2 or len(result["cyber_queries"]) < 2:
+        raise ValueError(
+            f"form_working_theory: LLM returned too few queries "
+            f"(geo={len(result['geo_queries'])}, cyber={len(result['cyber_queries'])}). Minimum 2 each."
+        )
     return {
         "scenario_name": scenario_name,
         "vacr_usd": vacr,
@@ -93,20 +102,21 @@ All queries must be specific to {region}, the scenario, and wind energy context.
     }
 
 
-def run_search_pass(region: str, queries: list[str], query_type: str) -> list[dict]:
+def run_search_pass(region: str, queries: list[str], query_type: str, window: str | None = None) -> list[dict]:
     """Run queries via osint_search.py with the given type. Returns deduplicated results.
 
     Args:
         query_type: "geo" or "cyber" — passed as --type flag to osint_search.py
+        window: optional time window string (e.g. "7d") forwarded to osint_search.py
     """
     seen_urls: set[str] = set()
     results: list[dict] = []
 
     for query in queries:
-        proc = subprocess.run(
-            [sys.executable, "tools/osint_search.py", region, query, "--type", query_type],
-            capture_output=True, text=True, cwd=REPO_ROOT,
-        )
+        cmd = [sys.executable, "tools/osint_search.py", region, query, "--type", query_type]
+        if window:
+            cmd += ["--window", window]
+        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
         if proc.returncode != 0 or not proc.stdout.strip():
             continue
         try:
@@ -253,17 +263,16 @@ def _write_json(path: Path, data: dict | list) -> None:
     path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
-def run_mock_mode(region: str) -> None:
+def run_mock_mode(region: str, window: str | None = None) -> None:
     """Delegate to existing collectors unchanged."""
     for collector in ("geo_collector", "cyber_collector"):
-        subprocess.run(
-            [sys.executable, f"tools/{collector}.py", region, "--mock"],
-            check=True,
-            cwd=REPO_ROOT,
-        )
+        cmd = [sys.executable, f"tools/{collector}.py", region, "--mock"]
+        if window:
+            cmd += ["--window", window]
+        subprocess.run(cmd, check=True, cwd=REPO_ROOT)
 
 
-def run_live_mode(region: str) -> None:
+def run_live_mode(region: str, window: str | None = None) -> None:
     """Target-centric collection loop — 3 bounded LLM calls."""
     crq_data = _load_json(REPO_ROOT / "data/mock_crq_database.json")
     topics = _load_json(REPO_ROOT / "data/osint_topics.json")
@@ -274,8 +283,8 @@ def run_live_mode(region: str) -> None:
     working_theory = form_working_theory(region, crq_data, topics, company_profile)
 
     # --- Pass 1: Initial geo + cyber collection ---
-    pass_1_geo = run_search_pass(region, working_theory["geo_queries"], "geo")
-    pass_1_cyber = run_search_pass(region, working_theory["cyber_queries"], "cyber")
+    pass_1_geo = run_search_pass(region, working_theory["geo_queries"], "geo", window)
+    pass_1_cyber = run_search_pass(region, working_theory["cyber_queries"], "cyber", window)
     pass_1_results = pass_1_geo + pass_1_cyber
 
     # --- LLM Call 2: Assess gaps ---
@@ -285,7 +294,7 @@ def run_live_mode(region: str) -> None:
     pass_2_results: list[dict] = []
     if gap_data.get("run_pass_2") and gap_data.get("follow_up_queries"):
         query_type = gap_data.get("follow_up_query_type", "cyber")
-        pass_2_results = run_search_pass(region, gap_data["follow_up_queries"], query_type)
+        pass_2_results = run_search_pass(region, gap_data["follow_up_queries"], query_type, window)
 
     all_results = pass_1_results + pass_2_results
 
@@ -330,10 +339,16 @@ def main() -> None:
 
     mock = "--mock" in sys.argv
 
+    window = None
+    for i, arg in enumerate(sys.argv):
+        if arg == "--window" and i + 1 < len(sys.argv):
+            window = sys.argv[i + 1]
+            break
+
     if mock:
-        run_mock_mode(region)
+        run_mock_mode(region, window)
     else:
-        run_live_mode(region)
+        run_live_mode(region, window)
 
 
 if __name__ == "__main__":
