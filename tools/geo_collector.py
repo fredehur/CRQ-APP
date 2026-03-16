@@ -11,6 +11,12 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, ".")
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
 GEO_KEYWORDS = ["trade", "sanction", "tariff", "geopolit", "diplomatic", "border",
@@ -21,10 +27,12 @@ REGULATORY_KEYWORDS = ["regulat", "compliance", "legislat", "law", "directive",
                        "standard", "audit", "certif"]
 
 
-def run_search(region, query, mock):
+def run_search(region, query, mock, window=None):
     cmd = [sys.executable, "tools/osint_search.py", region, query, "--type", "geo"]
     if mock:
         cmd.append("--mock")
+    if window:
+        cmd += ["--window", window]
     result = subprocess.run(
         cmd, capture_output=True, text=True, encoding="utf-8"
     )
@@ -75,9 +83,9 @@ def normalize(articles):
     }
 
 
-def collect(region, mock):
-    articles1 = run_search(region, f"{region} geopolitical risk wind energy", mock)
-    articles2 = run_search(region, f"{region} trade tensions manufacturing", mock)
+def collect(region, mock, window=None):
+    articles1 = run_search(region, f"{region} geopolitical risk wind energy", mock, window)
+    articles2 = run_search(region, f"{region} trade tensions manufacturing", mock, window)
     # Deduplicate by title
     seen = set()
     articles = []
@@ -86,23 +94,57 @@ def collect(region, mock):
         if key not in seen:
             seen.add(key)
             articles.append(a)
-    return normalize(articles)
+    base = normalize(articles)
+
+    # Seerist enrichment (only when SEERIST_API_KEY is set)
+    if not mock and os.environ.get("SEERIST_API_KEY"):
+        try:
+            from tools.seerist_client import get_full_intelligence
+            seerist_data = get_full_intelligence(region)
+            # Only attach non-None Seerist results
+            seerist_payload = {k: v for k, v in seerist_data.items() if v is not None}
+            if seerist_payload:
+                base["seerist"] = seerist_payload
+                # Upgrade lead_indicators with EventsAI event titles if available
+                events = seerist_data.get("events") or []
+                if events:
+                    seerist_indicators = [
+                        f"[{e.get('category', 'Event')}] {e.get('title', '')}"
+                        for e in events[:3] if e.get("title")
+                    ]
+                    base["lead_indicators"] = seerist_indicators + base["lead_indicators"]
+                # Use ScribeAI assessment as primary summary if available
+                if seerist_data.get("scribe"):
+                    base["seerist_assessment"] = seerist_data["scribe"]
+                # Flag hotspot anomaly
+                if seerist_data.get("hotspots"):
+                    base["anomaly_detected"] = True
+        except Exception as e:
+            print(f"[geo_collector] Seerist enrichment failed: {e}", file=sys.stderr)
+
+    return base
 
 
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage: geo_collector.py REGION [--mock]", file=sys.stderr)
+        print("Usage: geo_collector.py REGION [--mock] [--window 1d|7d|30d|90d]", file=sys.stderr)
         sys.exit(1)
 
     region = args[0].upper()
     mock = "--mock" in args
 
+    window = None
+    if "--window" in args:
+        idx = args.index("--window")
+        if idx + 1 < len(args):
+            window = args[idx + 1]
+
     if region not in VALID_REGIONS:
         print(f"[geo_collector] invalid region '{region}'", file=sys.stderr)
         sys.exit(1)
 
-    result = collect(region, mock)
+    result = collect(region, mock, window)
 
     out_dir = f"output/regional/{region.lower()}"
     os.makedirs(out_dir, exist_ok=True)

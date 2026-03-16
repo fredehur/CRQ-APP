@@ -11,6 +11,12 @@ import os
 import subprocess
 import sys
 
+sys.path.insert(0, ".")
+
+from dotenv import load_dotenv
+
+load_dotenv()
+
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
 THREAT_VECTOR_PATTERNS = [
@@ -38,10 +44,12 @@ ASSET_KEYWORDS = {
 }
 
 
-def run_search(region, query, mock):
+def run_search(region, query, mock, window=None):
     cmd = [sys.executable, "tools/osint_search.py", region, query, "--type", "cyber"]
     if mock:
         cmd.append("--mock")
+    if window:
+        cmd += ["--window", window]
     result = subprocess.run(
         cmd, capture_output=True, text=True, encoding="utf-8"
     )
@@ -101,9 +109,9 @@ def normalize(articles):
     }
 
 
-def collect(region, mock):
-    articles1 = run_search(region, f"{region} cyber threat industrial control systems", mock)
-    articles2 = run_search(region, f"{region} OT security wind energy", mock)
+def collect(region, mock, window=None):
+    articles1 = run_search(region, f"{region} cyber threat industrial control systems", mock, window)
+    articles2 = run_search(region, f"{region} OT security wind energy", mock, window)
     seen = set()
     articles = []
     for a in articles1 + articles2:
@@ -111,23 +119,41 @@ def collect(region, mock):
         if key not in seen:
             seen.add(key)
             articles.append(a)
-    return normalize(articles)
+    base = normalize(articles)
+
+    # Seerist +Cyber enrichment (requires SEERIST_API_KEY + SEERIST_CYBER_ADDON=true)
+    if not mock and os.environ.get("SEERIST_API_KEY") and os.environ.get("SEERIST_CYBER_ADDON", "").lower() == "true":
+        try:
+            from tools.seerist_client import get_cyber_risk
+            cyber_data = get_cyber_risk(region)
+            if cyber_data:
+                base["seerist_cyber"] = cyber_data
+        except Exception as e:
+            print(f"[cyber_collector] Seerist +Cyber enrichment failed: {e}", file=sys.stderr)
+
+    return base
 
 
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage: cyber_collector.py REGION [--mock]", file=sys.stderr)
+        print("Usage: cyber_collector.py REGION [--mock] [--window 1d|7d|30d|90d]", file=sys.stderr)
         sys.exit(1)
 
     region = args[0].upper()
     mock = "--mock" in args
 
+    window = None
+    if "--window" in args:
+        idx = args.index("--window")
+        if idx + 1 < len(args):
+            window = args[idx + 1]
+
     if region not in VALID_REGIONS:
         print(f"[cyber_collector] invalid region '{region}'", file=sys.stderr)
         sys.exit(1)
 
-    result = collect(region, mock)
+    result = collect(region, mock, window)
 
     out_dir = f"output/regional/{region.lower()}"
     os.makedirs(out_dir, exist_ok=True)
