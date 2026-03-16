@@ -39,7 +39,10 @@ def _call_llm(prompt: str, model: str = "claude-haiku-4-5-20251001", max_tokens:
     text = response.content[0].text.strip()
     # Strip markdown code fences if present
     text = re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=re.MULTILINE).strip()
-    return json.loads(text)
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"LLM returned non-JSON (model={model}): {text[:200]!r}") from exc
 
 
 def form_working_theory(region: str, crq_data: dict, topics: list, company_profile: dict) -> dict:
