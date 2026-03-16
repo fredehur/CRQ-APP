@@ -85,7 +85,47 @@ Every brief must pass this bar before you write it:
 
 Length: exactly 3 paragraphs (one per pillar) plus the Intelligence Assessment header line.
 
-## STEP 5 — UPDATE data.json
+## STEP 5 — WRITE SIGNAL CLUSTERS JSON
+
+After writing the brief, write `output/regional/{region_lower}/signal_clusters.json` using the Write tool.
+
+This is a **terminal artifact consumed only by the dashboard UI**. It is NOT read by global-builder-agent or any downstream pipeline step. Do not reference it in the brief or data.json.
+
+### Schema
+
+```json
+{
+  "region": "<REGION uppercase>",
+  "timestamp": "<ISO 8601 UTC — same timestamp used in data.json>",
+  "window_used": "<value from orchestrator, default '7d'>",
+  "total_signals": <int — total count of all signals across geo and cyber files>,
+  "sources_queried": <int — total count of source entries across geo and cyber signal files>,
+  "clusters": [
+    {
+      "name": "<4-8 word theme label>",
+      "pillar": "<'Geo' or 'Cyber'>",
+      "convergence": <int — number of sources contributing to this theme>,
+      "sources": [
+        { "name": "<source name>", "headline": "<title, max 120 chars>" }
+      ]
+    }
+  ]
+}
+```
+
+### Clustering rules
+
+1. Group signals by dominant theme (e.g., "Grid infrastructure targeting", "State-sponsored espionage pressure", "Supply chain disruption risk").
+2. Each cluster maps to exactly one pillar: `"Geo"` for geopolitical drivers, `"Cyber"` for cyber threat vectors.
+3. `convergence` = the number of distinct sources supporting that theme cluster.
+4. `sources` = the individual source entries (name + headline) that belong to that cluster.
+5. For **CLEAR regions**: write `"clusters": []`, `"total_signals": 0`, and set `sources_queried` to the actual count of source entries in the signal files (even if signals are empty).
+
+### Write tool example (AME region)
+
+Use the Write tool with path `output/regional/ame/signal_clusters.json` and the fully populated JSON as content. For other regions substitute the lowercase region code: `output/regional/apac/signal_clusters.json`, `output/regional/latam/signal_clusters.json`, etc.
+
+## STEP 6 — UPDATE data.json
 
 After writing the brief, update `output/regional/{region_lower}/data.json` with your analytical determinations. Read the existing file, update only these fields, write it back:
 
