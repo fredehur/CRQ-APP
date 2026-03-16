@@ -67,3 +67,21 @@ def test_validate_scratchpad_catches_missing_keys():
     assert any("working_theory" in e for e in errors)
     assert any("collection" in e for e in errors)
     assert any("conclusion" in e for e in errors)
+
+
+import sys
+import os
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from unittest.mock import patch, MagicMock
+
+
+def test_mock_mode_calls_geo_and_cyber_collectors():
+    """In mock mode, research_collector delegates to geo_collector + cyber_collector."""
+    with patch("subprocess.run") as mock_run:
+        mock_run.return_value = MagicMock(returncode=0, stdout="", stderr="")
+        from tools.research_collector import run_mock_mode
+        run_mock_mode("AME")
+        calls = [str(c) for c in mock_run.call_args_list]
+        assert any("geo_collector" in c for c in calls)
+        assert any("cyber_collector" in c for c in calls)
