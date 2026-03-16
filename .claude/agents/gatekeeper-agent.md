@@ -21,6 +21,12 @@ You will be given a REGION and a list of CRITICAL ASSETS.
 1. Read: `output/regional/{region_lower}/geo_signals.json` — geopolitical signals
 2. Read: `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals
 3. Read: `output/regional/{region_lower}/scenario_map.json` — scenario mapping output with financial rank
+4. If it exists, read: `output/regional/{region_lower}/research_scratchpad.json`
+   - Contains the target-centric working theory and pre-assessed confidence from the research collector.
+   - If present: read `conclusion.suggested_admiralty` and `conclusion.confidence_rationale`.
+     Your Admiralty assignment must either confirm or explicitly challenge it with a one-sentence rationale.
+     Format: "Confirmed B2 — [your rationale]" or "Assessed C3 — [override rationale]"
+   - If absent (mock mode): assign Admiralty as normal from signal files alone.
 
 Your job is **triage only**: assess whether a credible threat exists that warrants deeper analysis.
 - Assign an Admiralty rating based on signal quality and corroboration across the two signal files

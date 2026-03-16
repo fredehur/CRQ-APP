@@ -50,10 +50,21 @@ Each task is self-contained and writes its own output files. Do NOT wait for one
 For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
 1. **Run OSINT tool chain** (mode determined in Phase 0 — `OSINT_MODE` is `--mock` or empty, `WINDOW` defaults to `7d`):
-   - `uv run python tools/geo_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
-   - `uv run python tools/cyber_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
-   - `uv run python tools/scenario_mapper.py {REGION} {OSINT_MODE}`
-   These write signal files to `output/regional/{region_lower}/`:
+
+   **If `OSINT_MODE` is empty (live mode — `OSINT_LIVE=true`):**
+   - `uv run python tools/research_collector.py {REGION} --window {WINDOW}`
+   - This runs the target-centric research loop (3 LLM calls) and writes:
+     - `output/regional/{region_lower}/research_scratchpad.json` (working theory + audit trail)
+     - `output/regional/{region_lower}/geo_signals.json`
+     - `output/regional/{region_lower}/cyber_signals.json`
+   - Then run: `uv run python tools/scenario_mapper.py {REGION}`
+
+   **Otherwise (default mock mode — `OSINT_MODE` is `--mock`):**
+   - `uv run python tools/geo_collector.py {REGION} --mock --window {WINDOW}`
+   - `uv run python tools/cyber_collector.py {REGION} --mock --window {WINDOW}`
+   - `uv run python tools/scenario_mapper.py {REGION} --mock`
+
+   All paths write signal files to `output/regional/{region_lower}/`:
    - `geo_signals.json`
    - `cyber_signals.json`
    - `scenario_map.json`
