@@ -111,7 +111,8 @@ def test_geo_collector_outputs_matched_topics_for_ame():
 
 def test_geo_collector_matched_topics_are_valid_ids():
     """All matched_topics entries must be valid IDs from the registry."""
-    _run("geo_collector.py", ["AME", "--mock"])
+    result = _run("geo_collector.py", ["AME", "--mock"])
+    assert result.returncode == 0, f"geo_collector AME failed: {result.stderr}"
     with open(TOPICS_PATH, encoding="utf-8") as f:
         known_ids = {t["id"] for t in json.load(f)}
     out_path = os.path.join(CWD, "output/regional/ame/geo_signals.json")
@@ -155,7 +156,7 @@ def test_geo_collector_all_regions_produce_matched_topics():
         assert isinstance(data["matched_topics"], list), f"{region} matched_topics must be a list"
 
 
-def test_missing_topics_file_does_not_crash_collector(tmp_path):
+def test_missing_topics_file_does_not_crash_collector():
     """If osint_topics.json is missing, collector must still succeed with empty matched_topics."""
     topics_path = os.path.join(CWD, "data/osint_topics.json")
     backup_path = os.path.join(CWD, "data/osint_topics.json.bak")
