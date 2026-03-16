@@ -223,3 +223,54 @@ def test_assess_gaps_returns_queries_when_gaps_found():
     assert result["run_pass_2"] is True
     assert len(result["follow_up_queries"]) >= 1
     assert result["follow_up_query_type"] in ("geo", "cyber")
+
+
+def test_synthesize_signals_produces_valid_schema():
+    """synthesize_signals returns geo_signals, cyber_signals, conclusion matching expected schemas."""
+    working_theory = {
+        "scenario_name": "Wind Farm Telemetry Disruption",
+        "vacr_usd": 22000000,
+        "hypothesis": "Test",
+        "active_topics": [{"id": "ot-ics-cyber-attacks", "label": "OT/ICS"}],
+    }
+    results = [
+        {"title": "Wind energy OT attack", "summary": "Ransomware hit wind farm", "url": "https://ex.com/1"},
+        {"title": "AME energy sector", "summary": "Cyber threat trend", "url": "https://ex.com/2"},
+    ]
+
+    mock_response = MagicMock()
+    mock_response.content = [MagicMock(text=json.dumps({
+        "geo_signals": {
+            "summary": "Geopolitical instability drives energy sector risk in AME.",
+            "lead_indicators": ["Congressional hearing on grid ransomware", "Executive order on wind infrastructure"],
+            "dominant_pillar": "Geopolitical",
+            "matched_topics": ["ot-ics-cyber-attacks"],
+        },
+        "cyber_signals": {
+            "summary": "Ransomware trend targeting wind farm telemetry systems.",
+            "threat_vector": "Ransomware via supply chain",
+            "target_assets": ["Live telemetry", "Remote maintenance systems"],
+            "dominant_pillar": "Cyber",
+            "matched_topics": ["ot-ics-cyber-attacks"],
+        },
+        "conclusion": {
+            "theory_confirmed": True,
+            "confidence_rationale": "2 corroborating sources, sector-specific.",
+            "suggested_admiralty": "B2",
+            "signal_type": "trend",
+            "dominant_pillar": "Cyber",
+        },
+    }))]
+
+    with patch("anthropic.Anthropic") as MockClient:
+        MockClient.return_value.messages.create.return_value = mock_response
+        from tools.research_collector import synthesize_signals
+        geo, cyber, conclusion = synthesize_signals("AME", working_theory, results)
+
+    assert "summary" in geo
+    assert "lead_indicators" in geo
+    assert isinstance(geo["lead_indicators"], list)
+    assert "summary" in cyber
+    assert "threat_vector" in cyber
+    assert "suggested_admiralty" in conclusion
+    assert conclusion["signal_type"] in ("event", "trend", "mixed")

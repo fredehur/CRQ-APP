@@ -168,6 +168,76 @@ Set run_pass_2 to true if significant gaps remain. Maximum 3 follow_up_queries."
     return result
 
 
+def synthesize_signals(
+    region: str, working_theory: dict, results: list[dict]
+) -> tuple[dict, dict, dict]:
+    """LLM Call 3 (Sonnet): Synthesize all results into geo + cyber signal schemas.
+
+    Returns: (geo_signals, cyber_signals, conclusion)
+    """
+    snippets_text = "\n".join(
+        f"- [{r.get('title', '')}] ({r.get('url', '')}) {r.get('summary', '')}"
+        for r in results[:20]
+    )
+    topic_ids = [t["id"] for t in working_theory.get("active_topics", [])]
+
+    prompt = f"""You are synthesizing OSINT collection into structured intelligence signals.
+
+REGION: {region}
+WORKING THEORY: {working_theory['hypothesis']}
+SCENARIO: {working_theory['scenario_name']} (${working_theory['vacr_usd']:,})
+ACTIVE TOPICS: {json.dumps(topic_ids)}
+
+COLLECTED EVIDENCE ({len(results)} results):
+{snippets_text}
+
+Synthesize this into structured intelligence. Separate the geopolitical context (WHY) from the cyber vector (HOW).
+
+Return ONLY valid JSON (no markdown fences):
+{{
+  "geo_signals": {{
+    "summary": "2-3 sentence geopolitical context",
+    "lead_indicators": ["indicator 1", "indicator 2", "indicator 3"],
+    "dominant_pillar": "Geopolitical",
+    "matched_topics": ["topic-id-if-matched"]
+  }},
+  "cyber_signals": {{
+    "summary": "2-3 sentence cyber threat summary",
+    "threat_vector": "How the threat reaches the organisation",
+    "target_assets": ["asset 1", "asset 2"],
+    "dominant_pillar": "Cyber",
+    "matched_topics": ["topic-id-if-matched"]
+  }},
+  "conclusion": {{
+    "theory_confirmed": true,
+    "confidence_rationale": "Evidence quality assessment — sources, corroboration, contradictions",
+    "suggested_admiralty": "B2",
+    "signal_type": "event|trend|mixed",
+    "dominant_pillar": "Geo|Cyber"
+  }}
+}}
+
+signal_type must be one of: event, trend, mixed.
+Only include topic IDs from the ACTIVE TOPICS list in matched_topics."""
+
+    # Use Sonnet for synthesis — quality-critical step
+    result = _call_llm(prompt, model="claude-sonnet-4-6", max_tokens=2048)
+
+    # Validate required keys in each sub-dict
+    geo_required = {"summary", "lead_indicators", "dominant_pillar", "matched_topics"}
+    cyber_required = {"summary", "threat_vector", "target_assets", "dominant_pillar", "matched_topics"}
+    conclusion_required = {"theory_confirmed", "confidence_rationale", "suggested_admiralty", "signal_type", "dominant_pillar"}
+
+    for section, required in [("geo_signals", geo_required), ("cyber_signals", cyber_required), ("conclusion", conclusion_required)]:
+        if section not in result:
+            raise ValueError(f"synthesize_signals: LLM response missing section: {section}")
+        missing = required - result[section].keys()
+        if missing:
+            raise ValueError(f"synthesize_signals: {section} missing keys: {missing}")
+
+    return result["geo_signals"], result["cyber_signals"], result["conclusion"]
+
+
 def run_mock_mode(region: str) -> None:
     """Delegate to existing collectors unchanged."""
     for collector in ("geo_collector", "cyber_collector"):
