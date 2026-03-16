@@ -1,5 +1,7 @@
 # Agent Config Tab — Design Spec
 
+> **Revision 2** — Three improvements applied: Topics+Sources merged into one view, Prompts frontmatter protected, JSON diff normalised.
+
 ## Goal
 
 Add a **Config** tab to the AeroGrid analyst workstation that lets users edit the three core agent configuration types — OSINT topics, YouTube sources, and agent prompts — through a structured UI, with a diff preview before any change is written to disk.
@@ -16,7 +18,7 @@ Add a **Config** tab to the AeroGrid analyst workstation that lets users edit th
 **Files written by the UI:**
 - `data/osint_topics.json` — tracked events and trends
 - `data/youtube_sources.json` — approved YouTube channels
-- `.claude/agents/{agent}.md` — agent prompt markdown files
+- `.claude/agents/{agent}.md` — agent prompt markdown files (body only rewritten; frontmatter preserved)
 
 ---
 
@@ -38,8 +40,19 @@ POST /api/config/sources      → accepts {"sources": [...]} body, writes data/y
 
 ### Prompts
 ```
-GET  /api/config/prompts                → returns list of {agent, content} sorted alphabetically by agent name
-POST /api/config/prompts/{agent}        → accepts {content: string}, writes .claude/agents/{agent}.md
+GET  /api/config/prompts
+  → returns list of {agent, frontmatter, body} sorted alphabetically by agent name
+  → frontmatter: parsed object of YAML keys between the first --- delimiters
+  → body: raw string of everything after the closing --- delimiter
+
+POST /api/config/prompts/{agent}
+  → accepts {"body": string}
+  → reads current file from disk, extracts existing frontmatter block, writes:
+      ---
+      {existing frontmatter verbatim}
+      ---
+      {new body}
+  → frontmatter is never touched by the POST
 ```
 
 The `agent` field in the GET response is the filename stem without extension (e.g. `gatekeeper-agent`). The list is sorted alphabetically.
@@ -47,8 +60,6 @@ The `agent` field in the GET response is the filename stem without extension (e.
 **Write safety:** All POSTs write to a `.tmp` file first, then use `os.replace()` to atomically rename it to the target path.
 
 **Path traversal protection:** `{agent}` in `POST /api/config/prompts/{agent}` is validated against the allowlist returned by `GET /api/config/prompts`. Unknown agent names return HTTP 400.
-
-**Content validation:** The backend performs no validation of prompt file content — frontmatter integrity is the user's responsibility. The backend writes whatever string it receives.
 
 **Response format:** All POSTs return `{"ok": true}` on success or `{"error": "<message>"}` on failure. On any error, the modal always stays open with the error shown inline — the modal never closes on failure.
 
@@ -81,7 +92,7 @@ The `agent` field in the GET response is the filename stem without extension (e.
 ]
 ```
 
-All JSON keys use `snake_case` matching the field names in the column definitions.
+All JSON keys use `snake_case`. JSON files are canonically serialised with 2-space indentation.
 
 ---
 
@@ -89,94 +100,108 @@ All JSON keys use `snake_case` matching the field names in the column definition
 
 ### Navigation
 
-New **"Config"** tab added to the existing top-level nav. Three sub-tabs inside:
+New **"Config"** tab added to the existing top-level nav. Two sub-tabs:
 
 ```
 Config
-├── Topics
-├── Sources
+├── Intelligence Sources   (Topics + Sources as a split view)
 └── Prompts
 ```
 
 Active sub-tab persists in memory during the session (not URL-routed).
 
-**Dirty state:** Each sub-tab tracks its own dirty state independently. All three can be dirty simultaneously.
+**Dirty state:** Each sub-tab tracks its own dirty state independently.
 
 **Unsaved changes:** Navigating away from a dirty sub-tab (or switching agents in Prompts) shows a custom confirmation modal: "You have unsaved changes. Leave anyway?" with Confirm and Cancel. `window.onbeforeunload` is not required.
 
-**Loading:** The Save button is disabled and all table/textarea inputs are read-only until the sub-tab's initial fetch resolves. This prevents a dirty-state race condition during load.
+**Loading:** The Save button is disabled and all inputs are read-only until the sub-tab's initial fetch resolves.
 
 ---
 
-### Topics Sub-tab
+### Intelligence Sources Sub-tab
+
+Split view: Topics panel on the left, Sources panel on the right. Both panels are visible simultaneously. No loading dependency between them — Sources `topics` multi-select options are sourced from the Topics panel's in-memory state (already loaded on the same page).
+
+Each panel has its own independent Save button and dirty state. Saving Topics does not affect Sources state and vice versa.
+
+#### Topics Panel
 
 Editable table. Each row represents one tracked topic.
 
-**Columns:**
-
 | Field | Editable | Notes |
 |---|---|---|
-| `id` | New rows only | Read-only on existing rows to prevent orphaned Source references. Slug format, e.g. `iran-us-tensions`. Must be unique — validated on Save; preview flow blocked with inline error on duplicates. |
+| `id` | New rows only | Read-only on existing rows to prevent orphaned Source references. Slug format. Must be unique — validated on Save; preview blocked with inline error on duplicates. |
 | `type` | Yes | `event` / `trend` / `mixed` |
-| `keywords` | Yes | Displayed as comma-separated string; split on comma with whitespace trimming before save; stored as JSON array |
+| `keywords` | Yes | Comma-separated display; split with whitespace trimming on save; stored as JSON array |
 | `regions` | Yes | Multi-select: APAC, AME, LATAM, MED, NCE |
-| `active` | Yes | Toggle — disables topic without deleting |
+| `active` | Yes | Toggle — disables without deleting |
 
-**Actions:**
-- **Add row** — appends a blank row (`type: "event"`, `active: true`, empty strings elsewhere). `id` is editable until first save.
-- **Delete** — inline row-level confirmation: clicking Delete shows a "Confirm delete" button on the row; clicking that removes it. No modal.
+- **Add row** — blank row (`type: "event"`, `active: true`). `id` editable until first save.
+- **Delete** — inline row-level confirmation (no modal): Delete → "Confirm?" → removes row.
 - **Save** — validates uniqueness, triggers preview flow.
+- **Save button:** Activates on diff from canonical baseline (see Diff Normalisation below). Disabled during fetch.
+- **Empty state:** "Add your first topic" with Add button.
 
-**Save button:** Activates when current table state differs from the state at last fetch or last successful save (deep equality of full array). Disabled during initial fetch.
-
-**Empty state:** "Add your first topic" with an Add button.
-
----
-
-### Sources Sub-tab
+#### Sources Panel
 
 Editable table. Each row represents one approved YouTube channel.
-
-**Columns:**
 
 | Field | Editable | Notes |
 |---|---|---|
 | `channel_id` | Yes | YouTube channel ID (`UCxxx`) |
 | `name` | Yes | Human-readable label |
 | `region_focus` | Yes | Multi-select: APAC, AME, LATAM, MED, NCE |
-| `topics` | Yes | Multi-select of topic IDs. Options populated from Topics GET response. Sources table waits for Topics fetch before rendering this column (skeleton placeholder while loading). If a saved ID no longer exists in the topics list, it renders as a selected option with a `(missing)` suffix. Missing IDs are permitted to be saved to disk — no enforcement. |
+| `topics` | Yes | Multi-select of topic IDs. Options come from the Topics panel's current in-memory state — no separate fetch needed. If a stored ID doesn't exist in current Topics, it renders with a `(missing)` suffix. Missing IDs are permitted to be saved to disk. |
 
-**Actions:** Add row, delete row (same inline row-level confirmation as Topics), Save (preview flow).
-
-**Save button:** Same deep-equality rule as Topics. Disabled during initial fetch.
-
-**Empty state:** "Add your first source" with an Add button.
+- **Add row**, **Delete** (inline row-level confirmation), **Save** — same pattern as Topics panel.
+- **Save button:** Same canonical baseline rule. Disabled during fetch.
+- **Empty state:** "Add your first source" with Add button.
 
 ---
 
 ### Prompts Sub-tab
 
-- **Agent selector** — dropdown populated from `GET /api/config/prompts` response (sorted alphabetically). Re-fetches on Config tab open. Not cached between sessions.
-- **Textarea** — full raw markdown content of the selected agent, editable directly. Frontmatter integrity is the user's responsibility — no validation.
-- **Save button:** Activates when textarea content differs from the content at last fetch or last successful save for the selected agent. Disabled during fetch.
-- Switching agents with unsaved changes triggers the standard unsaved-changes modal.
+- **Agent selector** — dropdown populated from `GET /api/config/prompts` (sorted alphabetically). Re-fetches on Config tab open. Not cached between sessions.
+- **Frontmatter panel** — read-only display of the selected agent's YAML frontmatter keys (`name`, `model`, `tools`, `hooks`). Rendered as labeled fields, not raw YAML. Not editable. This protects the structural keys that Claude Code runtime depends on.
+- **Body textarea** — raw markdown body below the frontmatter delimiter. Editable directly. This is the agent's instruction text.
+- **Save** — POSTs only `{body}`. Backend preserves frontmatter verbatim.
+- **Save button:** Activates when body differs from body at last fetch or last successful save. Disabled during fetch.
+- Switching agents with unsaved body changes triggers the unsaved-changes modal.
 - **Empty state:** If GET returns an empty list, dropdown is disabled and textarea shows: "No agent files found in .claude/agents/."
+
+---
+
+## Diff Normalisation
+
+**Problem:** Before-state (raw GET response) and after-state (re-serialised editor state) may use different whitespace, producing spurious diff noise even with no real changes.
+
+**Fix:** On fetch, immediately normalise the raw response to canonical form:
+```js
+const canonical = JSON.stringify(JSON.parse(rawJson), null, 2)
+```
+Use `canonical` as:
+- The **dirty-state baseline** (compare editor state against this to decide if Save activates)
+- The **before-state** for the diff modal
+
+After-state is always `JSON.stringify(currentEditorState, null, 2)`.
+
+Both sides use identical serialisation — diffs show only genuine content changes.
+
+For Prompts, no normalisation needed — both sides are raw strings.
 
 ---
 
 ## Save + Preview Flow
 
-Applies to all three sub-tabs.
+Applies to all panels/sub-tabs.
 
-1. User makes any edit → Save button activates
-2. User clicks Save → validation runs (uniqueness check for Topics). On failure: inline error, flow stops. On pass: preview modal opens.
+1. User makes any edit → Save button activates (compared against canonical baseline)
+2. User clicks Save → validation runs (uniqueness check for Topics panel). On failure: inline error, flow stops. On pass: preview modal opens.
 3. Modal shows a **unified diff** in a monospace block — additions green, removals red, context lines for orientation. Client-side via `jsdiff` (`diffLines`).
-   - **Before-state:** Raw string as returned by GET (not re-serialised)
-   - **After-state:** `JSON.stringify` with 2-space indentation (Topics/Sources) or raw textarea string (Prompts)
 4. Two actions:
-   - **Confirm** → POST to backend → on success: modal closes, success toast shown, Save button resets to disabled
+   - **Confirm** → POST to backend → on success: modal closes, success toast shown, canonical baseline updated to new saved state, Save button resets to disabled
    - **Cancel** → modal closes, edits remain unchanged
-5. On any backend error → modal stays open, error shown inline beneath the diff. Modal does not close on failure.
+5. On any backend error → modal stays open, error shown inline beneath the diff.
 
 **Success toast:** Bottom-right, auto-dismisses after 3 seconds, does not stack.
 
@@ -185,10 +210,10 @@ Applies to all three sub-tabs.
 ## Data Initialisation
 
 On Config tab first open:
-- All three GET endpoints called in parallel
-- Each sub-tab shows a loading state until its fetch resolves; inputs are read-only during load
-- Sources `topics` column additionally waits for Topics fetch (skeleton until resolved)
-- Prompts textarea defaults to first agent in the alphabetically sorted list
+- Topics GET, Sources GET, and Prompts GET all called in parallel
+- Each panel/sub-tab shows a loading state until its fetch resolves; inputs read-only during load
+- Sources panel renders immediately after its own fetch — no dependency on Topics fetch (topic options come from Topics in-memory state, which may still be loading; show skeleton in `topics` column until Topics resolves)
+- Prompts textarea defaults to body of first agent in the alphabetically sorted list
 
 ---
 
@@ -196,6 +221,6 @@ On Config tab first open:
 
 - Config history / audit trail (deferred)
 - Live reload of agents mid-run (changes take effect on next pipeline run only)
-- Enforcement of cross-field topic ID validity (stale IDs shown with `(missing)` suffix only)
-- Frontmatter validation for agent prompt files
+- Cross-field topic ID enforcement (stale IDs shown with `(missing)` suffix only)
+- Frontmatter editing (read-only display only)
 - Any CRQ database or master scenarios editing (immutable inputs)
