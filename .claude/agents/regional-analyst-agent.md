@@ -25,8 +25,18 @@ Read all of the following before writing anything:
 5. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
 6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
 7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
+8. `output/regional/{region_lower}/research_scratchpad.json` (if present — live mode only)
+   - `working_theory.hypothesis`: the collection hypothesis that drove OSINT. Use as an analytical starting frame — not a conclusion.
+   - `conclusion.signal_type`: the collector's suggested classification (event/trend/mixed). Validate it against your own reading of the signal files.
+   - `collection.gap_assessment` + `collection.gaps_identified`: what the collector could not find. Reference remaining gaps in your brief's forward-looking closing statement.
+   - If absent: proceed as normal.
 
 ## STEP 2 — SCENARIO COUPLING (your analytical judgment)
+
+If `research_scratchpad.json` is present, the working theory provides a starting analytical frame:
+- Hypothesis: `working_theory.hypothesis`
+- Do not accept it uncritically — validate it against the signal files and master_scenarios.json.
+- If the collector's hypothesis conflicts with what the signals actually show, use your judgment and state why.
 
 The `scenario_map.json` contains a keyword-matcher's best guess at the scenario. Your job is to **validate and own** the scenario determination:
 
