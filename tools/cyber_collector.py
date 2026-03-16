@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, ".")
 
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
@@ -42,6 +43,19 @@ ASSET_KEYWORDS = {
     "maintenance": "Predictive maintenance platforms",
     "telemetry": "Turbine telemetry and monitoring systems",
 }
+
+
+def _load_topics_for_region(region: str) -> list:
+    """Return active topics from data/osint_topics.json scoped to this region."""
+    path = Path("data/osint_topics.json")
+    if not path.exists():
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            all_topics = json.load(f)
+        return [t for t in all_topics if t.get("active") and region in t.get("regions", [])]
+    except (json.JSONDecodeError, KeyError):
+        return []
 
 
 def run_search(region, query, mock, window=None):
@@ -112,14 +126,26 @@ def normalize(articles):
 def collect(region, mock, window=None):
     articles1 = run_search(region, f"{region} cyber threat industrial control systems", mock, window)
     articles2 = run_search(region, f"{region} OT security wind energy", mock, window)
+
+    # Topic-focused pass: one search per active topic scoped to this region
+    topics = _load_topics_for_region(region)
+    topic_articles = []
+    for topic in topics:
+        query = " ".join(topic["keywords"][:4])
+        results = run_search(region, query, mock, window)
+        topic_articles.extend(results)
+
+    # Deduplicate across baseline + topic results by title
     seen = set()
     articles = []
-    for a in articles1 + articles2:
+    for a in articles1 + articles2 + topic_articles:
         key = a.get("title", "")
         if key not in seen:
             seen.add(key)
             articles.append(a)
+
     base = normalize(articles)
+    base["matched_topics"] = [t["id"] for t in topics]
 
     # Seerist +Cyber enrichment (requires SEERIST_API_KEY + SEERIST_CYBER_ADDON=true)
     if not mock and os.environ.get("SEERIST_API_KEY") and os.environ.get("SEERIST_CYBER_ADDON", "").lower() == "true":

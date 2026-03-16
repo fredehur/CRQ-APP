@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, ".")
 
 from dotenv import load_dotenv
+from pathlib import Path
 
 load_dotenv()
 
@@ -25,6 +26,19 @@ CYBER_KEYWORDS = ["cyber", "hack", "attack", "malware", "ransomware", "breach",
                   "intrusion", "vulnerability", "exploit", "phishing"]
 REGULATORY_KEYWORDS = ["regulat", "compliance", "legislat", "law", "directive",
                        "standard", "audit", "certif"]
+
+
+def _load_topics_for_region(region: str) -> list:
+    """Return active topics from data/osint_topics.json scoped to this region."""
+    path = Path("data/osint_topics.json")
+    if not path.exists():
+        return []
+    try:
+        with open(path, encoding="utf-8") as f:
+            all_topics = json.load(f)
+        return [t for t in all_topics if t.get("active") and region in t.get("regions", [])]
+    except (json.JSONDecodeError, KeyError):
+        return []
 
 
 def run_search(region, query, mock, window=None):
@@ -86,26 +100,37 @@ def normalize(articles):
 def collect(region, mock, window=None):
     articles1 = run_search(region, f"{region} geopolitical risk wind energy", mock, window)
     articles2 = run_search(region, f"{region} trade tensions manufacturing", mock, window)
-    # Deduplicate by title
+
+    # Topic-focused pass: one search per active topic scoped to this region.
+    # Baseline catches unexpected events; topic queries deepen focus on known ones.
+    topics = _load_topics_for_region(region)
+    topic_articles = []
+    for topic in topics:
+        query = " ".join(topic["keywords"][:4])  # max 4 keywords per query
+        results = run_search(region, query, mock, window)
+        topic_articles.extend(results)
+
+    # Deduplicate across baseline + topic results by title
     seen = set()
     articles = []
-    for a in articles1 + articles2:
+    for a in articles1 + articles2 + topic_articles:
         key = a.get("title", "")
         if key not in seen:
             seen.add(key)
             articles.append(a)
+
     base = normalize(articles)
+    # Record which topic IDs were searched for traceability
+    base["matched_topics"] = [t["id"] for t in topics]
 
     # Seerist enrichment (only when SEERIST_API_KEY is set)
     if not mock and os.environ.get("SEERIST_API_KEY"):
         try:
             from tools.seerist_client import get_full_intelligence
             seerist_data = get_full_intelligence(region)
-            # Only attach non-None Seerist results
             seerist_payload = {k: v for k, v in seerist_data.items() if v is not None}
             if seerist_payload:
                 base["seerist"] = seerist_payload
-                # Upgrade lead_indicators with EventsAI event titles if available
                 events = seerist_data.get("events") or []
                 if events:
                     seerist_indicators = [
@@ -113,10 +138,8 @@ def collect(region, mock, window=None):
                         for e in events[:3] if e.get("title")
                     ]
                     base["lead_indicators"] = seerist_indicators + base["lead_indicators"]
-                # Use ScribeAI assessment as primary summary if available
                 if seerist_data.get("scribe"):
                     base["seerist_assessment"] = seerist_data["scribe"]
-                # Flag hotspot anomaly
                 if seerist_data.get("hotspots"):
                     base["anomaly_detected"] = True
         except Exception as e:
