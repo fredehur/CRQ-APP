@@ -1,0 +1,50 @@
+[
+  {
+    "id": "ot-ics-cyber-attacks",
+    "label": "OT/ICS Cyber Attacks on Energy Sector",
+    "type": "trend",
+    "keywords": ["OT security", "ICS attack", "SCADA", "operational technology", "industrial control"],
+    "regions": ["AME", "NCE", "APAC"],
+    "active": true
+  },
+  {
+    "id": "ransomware-energy-grid",
+    "label": "Ransomware Targeting Energy Grid Operators",
+    "type": "event",
+    "keywords": ["ransomware", "energy grid", "wind farm", "power operator", "double extortion"],
+    "regions": ["AME", "NCE"],
+    "active": true
+  },
+  {
+    "id": "state-actor-wind-ip-theft",
+    "label": "State-Sponsored IP Theft Targeting Wind Technology",
+    "type": "trend",
+    "keywords": ["state-sponsored", "IP theft", "wind turbine design", "espionage", "technology transfer"],
+    "regions": ["APAC", "NCE"],
+    "active": true
+  },
+  {
+    "id": "supply-chain-wind-components",
+    "label": "Supply Chain Disruption — Wind Component Sourcing",
+    "type": "trend",
+    "keywords": ["wind turbine supply chain", "rare earth metals", "component shortage", "manufacturing disruption"],
+    "regions": ["AME", "LATAM", "MED"],
+    "active": true
+  },
+  {
+    "id": "eu-critical-infrastructure-directive",
+    "label": "EU Critical Infrastructure Security Directive",
+    "type": "trend",
+    "keywords": ["EU CER directive", "critical infrastructure", "energy security regulation", "NIS2"],
+    "regions": ["NCE", "MED"],
+    "active": true
+  },
+  {
+    "id": "iran-strait-energy-routes",
+    "label": "Iran–Strait of Hormuz Energy Route Pressure",
+    "type": "event",
+    "keywords": ["Iran", "Strait of Hormuz", "energy shipping", "Middle East escalation", "Gulf tension"],
+    "regions": ["MED", "APAC"],
+    "active": true
+  }
+]
