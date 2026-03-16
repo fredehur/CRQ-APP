@@ -1,0 +1,27 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo \"[PROTOCOL] Teams=ON | Opus orchestrates | Sonnet builds+validates | Parallel by default | Run /prime-dev before build tasks | Full rules: CLAUDE.md > Engineering Protocol\""
+          }
+        ]
+      }
+    ],
+    "TaskCompleted": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/validators/task-completed.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}
