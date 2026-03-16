@@ -24,6 +24,7 @@ Read all of the following before writing anything:
 4. `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals
 5. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
 6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
+7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
 
 ## STEP 2 — SCENARIO COUPLING (your analytical judgment)
 
@@ -105,6 +106,7 @@ This is a **terminal artifact consumed only by the dashboard UI**. It is NOT rea
       "name": "<4-8 word theme label>",
       "pillar": "<'Geo' or 'Cyber'>",
       "convergence": <int — number of sources contributing to this theme>,
+      "topic_id": "<id from data/osint_topics.json — omit field if no topic matches>",
       "sources": [
         { "name": "<source name>", "headline": "<title, max 120 chars>" }
       ]
@@ -113,6 +115,8 @@ This is a **terminal artifact consumed only by the dashboard UI**. It is NOT rea
 }
 ```
 
+`topic_id` is optional — omit the field entirely if no topic in `data/osint_topics.json` maps to this cluster.
+
 ### Clustering rules
 
 1. Group signals by dominant theme (e.g., "Grid infrastructure targeting", "State-sponsored espionage pressure", "Supply chain disruption risk").
@@ -120,6 +124,7 @@ This is a **terminal artifact consumed only by the dashboard UI**. It is NOT rea
 3. `convergence` = the number of distinct sources supporting that theme cluster.
 4. `sources` = the individual source entries (name + headline) that belong to that cluster.
 5. For **CLEAR regions**: write `"clusters": []`, `"total_signals": 0`, and set `sources_queried` to the actual count of source entries in the signal files (even if signals are empty).
+6. **Topic linking (optional):** Check `matched_topics` in `geo_signals.json` and `cyber_signals.json` — these are the topic IDs that were queried during collection. If a cluster's theme directly maps to one of those topic IDs (check labels and keywords in `data/osint_topics.json`), set `"topic_id": "<id>"` on that cluster. If no topic matches, omit the `topic_id` field entirely. Do not invent topic IDs not present in `data/osint_topics.json`.
 
 ### Write tool example (AME region)
 
