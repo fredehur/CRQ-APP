@@ -297,14 +297,37 @@ function renderAll() {
   renderRightPanel();
 }
 
+// Config tab state
+const cfgState = {
+  topics: [],
+  topicsBaseline: '',
+  sources: [],
+  sourcesBaseline: '',
+  prompts: [],
+  selectedAgent: null,
+  promptBaseline: '',
+  dirty: { topics: false, sources: false, prompt: false },
+  pendingNavAction: null,
+  loaded: false,
+};
+
 function switchTab(tab) {
+  if (cfgState.dirty.topics || cfgState.dirty.sources || cfgState.dirty.prompt) {
+    showUnsavedModal(() => _doSwitchTab(tab));
+    return;
+  }
+  _doSwitchTab(tab);
+}
+
+function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview','reports','history'].forEach(t => {
+  ['overview','reports','history','config'].forEach(t => {
     $(`tab-${t}`).classList.toggle('hidden', t !== tab);
     $(`nav-${t}`).classList.toggle('active', t === tab);
   });
   if (tab === 'reports') renderReports();
   if (tab === 'history') renderHistory();
+  if (tab === 'config') loadConfigTab();
 }
 
 // ── Run trigger ───────────────────────────────────────────────────────
@@ -390,6 +413,305 @@ function closePanel() {
   $('output-panel').classList.remove('panel-open');
   $('panel-overlay').classList.remove('visible');
   $('output-panel').setAttribute('aria-hidden', 'true');
+}
+
+// ── Config Tab ────────────────────────────────────────────────────────
+function switchCfgTab(tab) {
+  const leavingSources = $('cfg-tab-sources') && $('cfg-tab-sources').style.display !== 'none';
+  const leavingPrompts = $('cfg-tab-prompts') && $('cfg-tab-prompts').style.display !== 'none';
+  const isDirty = (leavingSources && (cfgState.dirty.topics || cfgState.dirty.sources)) ||
+                  (leavingPrompts && cfgState.dirty.prompt);
+  if (isDirty) {
+    showUnsavedModal(() => _doSwitchCfgTab(tab));
+    return;
+  }
+  _doSwitchCfgTab(tab);
+}
+
+function _doSwitchCfgTab(tab) {
+  ['sources','prompts'].forEach(t => {
+    $(`cfg-tab-${t}`).style.display = t === tab ? (t === 'sources' ? 'grid' : 'flex') : 'none';
+    $(`cfg-nav-${t}`).classList.toggle('active', t === tab);
+  });
+}
+
+async function loadConfigTab() {
+  if (cfgState.loaded) return;
+  const [topicsRaw, sourcesRaw, promptsRaw] = await Promise.all([
+    fetch('/api/config/topics').then(r => r.ok ? r.text() : '[]').catch(() => '[]'),
+    fetch('/api/config/sources').then(r => r.ok ? r.text() : '[]').catch(() => '[]'),
+    fetch('/api/config/prompts').then(r => r.ok ? r.json() : []).catch(() => []),
+  ]);
+  cfgState.topicsBaseline = JSON.stringify(JSON.parse(topicsRaw), null, 2);
+  cfgState.topics = JSON.parse(cfgState.topicsBaseline);
+  cfgState.sourcesBaseline = JSON.stringify(JSON.parse(sourcesRaw), null, 2);
+  cfgState.sources = JSON.parse(cfgState.sourcesBaseline);
+  cfgState.prompts = promptsRaw;
+  cfgState.dirty = { topics: false, sources: false, prompt: false };
+  cfgState.loaded = true;
+  renderTopicsTable();
+  renderSourcesTable();
+  renderPromptsPanel();
+}
+
+function markDirty(panel) {
+  cfgState.dirty[panel] = true;
+  const btnMap = { topics: 'btn-save-topics', sources: 'btn-save-sources', prompt: 'btn-save-prompt' };
+  const btn = $(btnMap[panel]);
+  if (btn) { btn.disabled = false; btn.style.opacity = '1'; btn.style.color = '#3fb950'; btn.style.borderColor = '#238636'; btn.style.cursor = 'pointer'; }
+}
+
+function resetSaveBtn(panel) {
+  cfgState.dirty[panel] = false;
+  const btnMap = { topics: 'btn-save-topics', sources: 'btn-save-sources', prompt: 'btn-save-prompt' };
+  const btn = $(btnMap[panel]);
+  if (btn) { btn.disabled = true; btn.style.opacity = '0.5'; btn.style.color = '#6e7681'; btn.style.borderColor = '#21262d'; btn.style.cursor = 'not-allowed'; }
+}
+
+// ── Topics ─────────────────────────────────────────────────────────────
+function renderTopicsTable() {
+  const loading = $('topics-loading'); const table = $('topics-table'); const empty = $('topics-empty');
+  loading.style.display = 'none';
+  if (cfgState.topics.length === 0) { table.style.display = 'none'; empty.style.display = 'block'; return; }
+  empty.style.display = 'none'; table.style.display = 'block';
+  table.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #21262d">
+      <th style="padding:6px 10px;text-align:left;width:160px">ID</th>
+      <th style="padding:6px 10px;text-align:left;width:80px">Type</th>
+      <th style="padding:6px 10px;text-align:left">Keywords</th>
+      <th style="padding:6px 10px;text-align:left;width:140px">Regions</th>
+      <th style="padding:6px 10px;text-align:center;width:50px">Active</th>
+      <th style="padding:6px 10px;width:60px"></th>
+    </tr></thead>
+    <tbody>${cfgState.topics.map((t, i) => renderTopicRow(t, i)).join('')}</tbody>
+  </table>`;
+}
+
+function renderTopicRow(t, i) {
+  const isNew = !!t._isNew;
+  const regionOpts = ['APAC','AME','LATAM','MED','NCE'].map(r =>
+    `<option value="${r}" ${(t.regions||[]).includes(r)?'selected':''}>${r}</option>`).join('');
+  return `<tr style="border-bottom:1px solid #161b22" id="topic-row-${i}">
+    <td style="padding:4px 10px">${isNew
+      ? `<input type="text" value="${esc(t.id||'')}" oninput="onTopicField(${i},'id',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:140px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px">`
+      : `<span style="color:#8b949e">${esc(t.id)}</span>`}</td>
+    <td style="padding:4px 10px"><select onchange="onTopicField(${i},'type',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 4px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px">
+      ${['event','trend','mixed'].map(tp => `<option value="${tp}" ${t.type===tp?'selected':''}>${tp}</option>`).join('')}
+    </select></td>
+    <td style="padding:4px 10px"><input type="text" value="${esc((t.keywords||[]).join(', '))}" oninput="onTopicField(${i},'keywords',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
+    <td style="padding:4px 10px"><select multiple onchange="onTopicField(${i},'regions',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${regionOpts}</select></td>
+    <td style="padding:4px 10px;text-align:center"><input type="checkbox" ${t.active?'checked':''} onchange="onTopicField(${i},'active',this.checked)" style="accent-color:#3fb950;cursor:pointer"></td>
+    <td style="padding:4px 10px"><button onclick="deleteTopicRow(${i})" id="del-topic-${i}" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:1px 8px;border-radius:2px;cursor:pointer">Del</button></td>
+  </tr>`;
+}
+
+function onTopicField(i, field, value) {
+  cfgState.topics[i][field] = field === 'keywords'
+    ? value.split(',').map(s => s.trim()).filter(Boolean)
+    : value;
+  markDirty('topics');
+}
+
+function addTopicRow() {
+  cfgState.topics.push({ id: '', type: 'event', keywords: [], regions: [], active: true, _isNew: true });
+  renderTopicsTable();
+  markDirty('topics');
+}
+
+function deleteTopicRow(i) {
+  const btn = $(`del-topic-${i}`);
+  if (btn && btn.dataset.confirming) {
+    cfgState.topics.splice(i, 1); renderTopicsTable(); markDirty('topics');
+  } else {
+    if (btn) { btn.textContent = 'Sure?'; btn.style.color = '#ff7b72'; btn.dataset.confirming = '1'; }
+    setTimeout(() => { if (btn) { btn.textContent = 'Del'; btn.style.color = '#6e7681'; delete btn.dataset.confirming; } }, 3000);
+  }
+}
+
+// ── Sources ────────────────────────────────────────────────────────────
+function renderSourcesTable() {
+  const loading = $('sources-loading'); const table = $('sources-table'); const empty = $('sources-empty');
+  loading.style.display = 'none';
+  if (cfgState.sources.length === 0) { table.style.display = 'none'; empty.style.display = 'block'; return; }
+  empty.style.display = 'none'; table.style.display = 'block';
+  const topicIds = cfgState.topics.map(t => t.id).filter(Boolean);
+  table.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #21262d">
+      <th style="padding:6px 10px;text-align:left">Channel ID</th>
+      <th style="padding:6px 10px;text-align:left">Name</th>
+      <th style="padding:6px 10px;text-align:left;width:140px">Region Focus</th>
+      <th style="padding:6px 10px;text-align:left;width:140px">Topics</th>
+      <th style="padding:6px 10px;width:60px"></th>
+    </tr></thead>
+    <tbody>${cfgState.sources.map((s, i) => renderSourceRow(s, i, topicIds)).join('')}</tbody>
+  </table>`;
+}
+
+function renderSourceRow(s, i, topicIds) {
+  const regionOpts = ['APAC','AME','LATAM','MED','NCE'].map(r =>
+    `<option value="${r}" ${(s.region_focus||[]).includes(r)?'selected':''}>${r}</option>`).join('');
+  const topicOpts = [
+    ...topicIds.map(id => `<option value="${id}" ${(s.topics||[]).includes(id)?'selected':''}>${esc(id)}</option>`),
+    ...(s.topics||[]).filter(id => !topicIds.includes(id)).map(id =>
+      `<option value="${id}" selected style="color:#e3b341">${esc(id)} (missing)</option>`),
+  ].join('');
+  return `<tr style="border-bottom:1px solid #161b22">
+    <td style="padding:4px 10px"><input type="text" value="${esc(s.channel_id||'')}" oninput="onSourceField(${i},'channel_id',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
+    <td style="padding:4px 10px"><input type="text" value="${esc(s.name||'')}" oninput="onSourceField(${i},'name',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
+    <td style="padding:4px 10px"><select multiple onchange="onSourceField(${i},'region_focus',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${regionOpts}</select></td>
+    <td style="padding:4px 10px"><select multiple onchange="onSourceField(${i},'topics',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${topicOpts}</select></td>
+    <td style="padding:4px 10px"><button onclick="deleteSourceRow(${i})" id="del-source-${i}" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:1px 8px;border-radius:2px;cursor:pointer">Del</button></td>
+  </tr>`;
+}
+
+function onSourceField(i, field, value) { cfgState.sources[i][field] = value; markDirty('sources'); }
+
+function addSourceRow() {
+  cfgState.sources.push({ channel_id: '', name: '', region_focus: [], topics: [] });
+  renderSourcesTable(); markDirty('sources');
+}
+
+function deleteSourceRow(i) {
+  const btn = $(`del-source-${i}`);
+  if (btn && btn.dataset.confirming) {
+    cfgState.sources.splice(i, 1); renderSourcesTable(); markDirty('sources');
+  } else {
+    if (btn) { btn.textContent = 'Sure?'; btn.style.color = '#ff7b72'; btn.dataset.confirming = '1'; }
+    setTimeout(() => { if (btn) { btn.textContent = 'Del'; btn.style.color = '#6e7681'; delete btn.dataset.confirming; } }, 3000);
+  }
+}
+
+// ── Diff modal ─────────────────────────────────────────────────────────
+let _pendingSave = null;
+
+function openDiffModal(beforeStr, afterStr, postFn, panel) {
+  _pendingSave = { postFn, panel };
+  $('diff-backend-error').style.display = 'none';
+  const lines = Diff.diffLines(beforeStr, afterStr);
+  let html = '';
+  lines.forEach(part => {
+    const color = part.added ? '#3fb950' : part.removed ? '#ff7b72' : '#6e7681';
+    const prefix = part.added ? '+ ' : part.removed ? '- ' : '  ';
+    part.value.split('\n').forEach((line, li, arr) => {
+      if (li < arr.length - 1 || line) html += `<span style="color:${color}">${prefix}${esc(line)}\n</span>`;
+    });
+  });
+  $('diff-output').innerHTML = html || '<span style="color:#6e7681">No changes detected.</span>';
+  $('diff-modal').style.display = 'flex';
+}
+
+function closeDiffModal() { $('diff-modal').style.display = 'none'; _pendingSave = null; }
+
+async function confirmSave() {
+  if (!_pendingSave) return;
+  const { postFn, panel } = _pendingSave;
+  $('btn-diff-confirm').disabled = true;
+  $('diff-backend-error').style.display = 'none';
+  try {
+    const result = await postFn();
+    if (!result.ok) throw new Error(result.error || 'Save failed');
+    closeDiffModal();
+    showToast('Saved');
+    resetSaveBtn(panel);
+    if (panel === 'topics') cfgState.topicsBaseline = JSON.stringify(cfgState.topics, null, 2);
+    if (panel === 'sources') cfgState.sourcesBaseline = JSON.stringify(cfgState.sources, null, 2);
+    if (panel === 'prompt') cfgState.promptBaseline = $('prompt-body').value;
+  } catch (err) {
+    $('diff-backend-error').textContent = err.message;
+    $('diff-backend-error').style.display = 'block';
+  } finally {
+    $('btn-diff-confirm').disabled = false;
+  }
+}
+
+async function saveTopics() {
+  cfgState.topics.forEach(t => delete t._isNew);
+  const ids = cfgState.topics.map(t => t.id).filter(Boolean);
+  const dupes = ids.filter((id, i) => ids.indexOf(id) !== i);
+  const errEl = $('topics-error');
+  if (dupes.length) { errEl.textContent = `Duplicate topic IDs: ${dupes.join(', ')}`; errEl.style.display = 'block'; return; }
+  errEl.style.display = 'none';
+  const afterStr = JSON.stringify(cfgState.topics, null, 2);
+  openDiffModal(cfgState.topicsBaseline, afterStr, async () => {
+    const r = await fetch('/api/config/topics', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ topics: cfgState.topics }) });
+    return r.json();
+  }, 'topics');
+}
+
+async function saveSources() {
+  $('sources-error').style.display = 'none';
+  const afterStr = JSON.stringify(cfgState.sources, null, 2);
+  openDiffModal(cfgState.sourcesBaseline, afterStr, async () => {
+    const r = await fetch('/api/config/sources', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ sources: cfgState.sources }) });
+    return r.json();
+  }, 'sources');
+}
+
+// ── Prompts ────────────────────────────────────────────────────────────
+function renderPromptsPanel() {
+  const sel = $('agent-select');
+  if (!cfgState.prompts.length) { sel.disabled = true; $('prompt-body').value = 'No agent files found.'; $('prompt-body').disabled = true; return; }
+  sel.innerHTML = cfgState.prompts.map(p => `<option value="${esc(p.agent)}">${esc(p.agent)}</option>`).join('');
+  sel.disabled = false; $('prompt-body').disabled = false;
+  loadAgentIntoEditor(cfgState.prompts[0]);
+}
+
+function loadAgentIntoEditor(agentObj) {
+  const fm = agentObj.frontmatter || {};
+  $('fm-panel').innerHTML = Object.entries(fm).map(([k, v]) =>
+    `<span><span style="color:#3fb950">${esc(k)}:</span> <span style="color:#8b949e">${esc(String(v))}</span></span>`).join('');
+  $('prompt-body').value = agentObj.body || '';
+  cfgState.promptBaseline = agentObj.body || '';
+  cfgState.selectedAgent = agentObj.agent;
+  resetSaveBtn('prompt');
+}
+
+function onAgentSelect() {
+  const agent = $('agent-select').value;
+  if (cfgState.dirty.prompt) {
+    showUnsavedModal(() => { const obj = cfgState.prompts.find(p => p.agent === agent); if (obj) loadAgentIntoEditor(obj); });
+    $('agent-select').value = cfgState.selectedAgent;
+    return;
+  }
+  const obj = cfgState.prompts.find(p => p.agent === agent);
+  if (obj) loadAgentIntoEditor(obj);
+}
+
+function onPromptEdit() { markDirty('prompt'); }
+
+async function savePrompt() {
+  const body = $('prompt-body').value;
+  openDiffModal(cfgState.promptBaseline, body, async () => {
+    const r = await fetch(`/api/config/prompts/${encodeURIComponent(cfgState.selectedAgent)}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ body }) });
+    return r.json();
+  }, 'prompt');
+}
+
+// ── Toast ──────────────────────────────────────────────────────────────
+let _toastTimer = null;
+function showToast(msg) {
+  let el = $('cfg-toast');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'cfg-toast';
+    el.style.cssText = 'position:fixed;bottom:20px;right:20px;z-index:90;background:#1a3a1a;border:1px solid #238636;color:#3fb950;font-size:10px;padding:6px 14px;border-radius:4px;font-family:"IBM Plex Mono",monospace;transition:opacity 0.3s';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.opacity = '1';
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => { el.style.opacity = '0'; }, 3000);
+}
+
+// ── Unsaved modal ──────────────────────────────────────────────────────
+function showUnsavedModal(onConfirm) {
+  cfgState.pendingNavAction = onConfirm;
+  $('unsaved-modal').style.display = 'flex';
+  $('btn-unsaved-cancel').onclick = () => { $('unsaved-modal').style.display = 'none'; cfgState.pendingNavAction = null; };
+  $('btn-unsaved-confirm').onclick = () => {
+    $('unsaved-modal').style.display = 'none';
+    cfgState.dirty = { topics: false, sources: false, prompt: false };
+    if (cfgState.pendingNavAction) cfgState.pendingNavAction();
+    cfgState.pendingNavAction = null;
+  };
 }
 
 // ── Init ──────────────────────────────────────────────────────────────

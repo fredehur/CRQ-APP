@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -192,6 +193,7 @@
       <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
       <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
+      <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
     </nav>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -271,6 +273,84 @@
       <button onclick="toggleTrace()" style="font-size:10px;color:#6e7681;cursor:pointer;background:none;border:none">&#9660;</button>
     </div>
     <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap"></pre>
+  </div>
+</div>
+
+<!-- ── CONFIG TAB ──────────────────────────────────────────────── -->
+<div id="tab-config" class="hidden" style="height:calc(100vh - 36px);display:flex;flex-direction:column;overflow:hidden">
+  <div style="display:flex;border-bottom:1px solid #21262d;flex-shrink:0;padding:0 16px">
+    <div class="nav-tab active" id="cfg-nav-sources" onclick="switchCfgTab('sources')">Intelligence Sources</div>
+    <div class="nav-tab" id="cfg-nav-prompts" onclick="switchCfgTab('prompts')">Prompts</div>
+  </div>
+  <!-- Intelligence Sources sub-tab -->
+  <div id="cfg-tab-sources" style="flex:1;display:grid;grid-template-columns:1fr 1fr;overflow:hidden">
+    <!-- Topics panel -->
+    <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow:hidden">
+      <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <span style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681">OSINT Topics</span>
+        <div style="display:flex;gap:6px">
+          <button id="btn-add-topic" onclick="addTopicRow()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer">+ Add</button>
+          <button id="btn-save-topics" onclick="saveTopics()" disabled style="font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:2px 10px;border-radius:2px;cursor:not-allowed;opacity:0.5">Save</button>
+        </div>
+      </div>
+      <div id="topics-error" style="display:none;padding:6px 14px;font-size:10px;color:#ff7b72;background:#2d0000;border-bottom:1px solid #da3633"></div>
+      <div id="topics-loading" style="padding:16px;font-size:11px;color:#6e7681">Loading...</div>
+      <div id="topics-table" style="display:none;flex:1;overflow-y:auto"></div>
+      <div id="topics-empty" style="display:none;padding:24px;text-align:center;font-size:11px;color:#6e7681">No topics yet. <button onclick="addTopicRow()" style="color:#3fb950;background:none;border:none;cursor:pointer;font-size:11px">Add your first topic</button></div>
+    </div>
+    <!-- Sources panel -->
+    <div style="display:flex;flex-direction:column;overflow:hidden">
+      <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+        <span style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681">YouTube Sources</span>
+        <div style="display:flex;gap:6px">
+          <button id="btn-add-source" onclick="addSourceRow()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer">+ Add</button>
+          <button id="btn-save-sources" onclick="saveSources()" disabled style="font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:2px 10px;border-radius:2px;cursor:not-allowed;opacity:0.5">Save</button>
+        </div>
+      </div>
+      <div id="sources-error" style="display:none;padding:6px 14px;font-size:10px;color:#ff7b72;background:#2d0000;border-bottom:1px solid #da3633"></div>
+      <div id="sources-loading" style="padding:16px;font-size:11px;color:#6e7681">Loading...</div>
+      <div id="sources-table" style="display:none;flex:1;overflow-y:auto"></div>
+      <div id="sources-empty" style="display:none;padding:24px;text-align:center;font-size:11px;color:#6e7681">No sources yet. <button onclick="addSourceRow()" style="color:#3fb950;background:none;border:none;cursor:pointer;font-size:11px">Add your first source</button></div>
+    </div>
+  </div>
+  <!-- Prompts sub-tab -->
+  <div id="cfg-tab-prompts" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px;flex-shrink:0">
+      <select id="agent-select" onchange="onAgentSelect()" style="background:#0d1117;border:1px solid #21262d;color:#c9d1d9;padding:3px 8px;border-radius:2px;font-size:11px;font-family:'IBM Plex Mono',monospace"></select>
+      <button id="btn-save-prompt" onclick="savePrompt()" disabled style="font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:2px 10px;border-radius:2px;cursor:not-allowed;opacity:0.5">Save</button>
+    </div>
+    <div id="prompts-error" style="display:none;padding:6px 14px;font-size:10px;color:#ff7b72;background:#2d0000;border-bottom:1px solid #da3633"></div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+      <div id="fm-panel" style="padding:10px 14px;border-bottom:1px solid #21262d;flex-shrink:0;font-size:10px;color:#6e7681;display:flex;gap:16px;flex-wrap:wrap"></div>
+      <textarea id="prompt-body" oninput="onPromptEdit()" style="flex:1;resize:none;background:#080c10;border:none;color:#c9d1d9;padding:14px;font-size:12px;font-family:'IBM Plex Mono',monospace;line-height:1.6;outline:none"></textarea>
+    </div>
+  </div>
+</div>
+
+<!-- Diff preview modal -->
+<div id="diff-modal" style="display:none;position:fixed;inset:0;z-index:70;background:rgba(0,0,0,0.75);backdrop-filter:blur(2px);align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;width:700px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column">
+    <div style="padding:12px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+      <span style="font-size:12px;color:#e6edf3">Preview changes</span>
+      <button onclick="closeDiffModal()" style="color:#6e7681;font-size:14px;background:none;border:none;cursor:pointer">&#x2715;</button>
+    </div>
+    <pre id="diff-output" style="flex:1;overflow-y:auto;padding:14px;font-size:11px;line-height:1.5;white-space:pre-wrap;font-family:'IBM Plex Mono',monospace;margin:0"></pre>
+    <div id="diff-backend-error" style="display:none;padding:6px 14px;font-size:10px;color:#ff7b72;background:#2d0000;border-top:1px solid #da3633"></div>
+    <div style="padding:10px 16px;border-top:1px solid #21262d;display:flex;justify-content:flex-end;gap:8px;flex-shrink:0">
+      <button onclick="closeDiffModal()" style="font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:4px 16px;border-radius:2px;cursor:pointer">Cancel</button>
+      <button id="btn-diff-confirm" onclick="confirmSave()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 16px;border-radius:2px;cursor:pointer">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Unsaved changes modal -->
+<div id="unsaved-modal" style="display:none;position:fixed;inset:0;z-index:80;background:rgba(0,0,0,0.75);align-items:center;justify-content:center">
+  <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:24px;width:360px">
+    <p style="font-size:12px;color:#c9d1d9;margin-bottom:16px">You have unsaved changes. Leave anyway?</p>
+    <div style="display:flex;justify-content:flex-end;gap:8px">
+      <button id="btn-unsaved-cancel" style="font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:4px 16px;border-radius:2px;cursor:pointer">Stay</button>
+      <button id="btn-unsaved-confirm" style="font-size:10px;color:#ff7b72;background:#2d0000;border:1px solid #da3633;padding:4px 16px;border-radius:2px;cursor:pointer">Leave</button>
+    </div>
   </div>
 </div>
 
