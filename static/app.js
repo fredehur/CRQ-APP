@@ -29,6 +29,7 @@ let state = {
   selectedRegion: null,
   activeTab: 'overview',
   expandedClusters: new Set(),
+  expandedBriefs: new Set(),
 };
 
 // Agent console state
@@ -58,6 +59,31 @@ const convDot = n => {
   return `<span class="conv-dot ${cls}"></span>`;
 };
 const sevClass = sev => SEV_CLASS[(sev||'').toUpperCase()] || 'sev';
+
+function signalTypeBadge(type) {
+  if (!type) return '';
+  const t = type.toLowerCase();
+  if (t === 'event') return `<span class="badge-event">EVENT</span>`;
+  if (t === 'trend') return `<span class="badge-trend">TREND</span>`;
+  if (t === 'mixed') return `<span class="badge-mixed">MIXED</span>`;
+  return '';
+}
+
+function velocityArrow(velocity) {
+  if (!velocity) return '';
+  const v = velocity.toLowerCase();
+  if (v === 'accelerating') return `<span class="vel-up" title="Accelerating">↑</span>`;
+  if (v === 'stable') return `<span class="vel-stable" title="Stable">→</span>`;
+  if (v === 'improving') return `<span class="vel-down" title="Improving">↓</span>`;
+  return '';
+}
+
+function pillarPillSm(pillar) {
+  if (!pillar) return '';
+  return pillar === 'Cyber'
+    ? `<span class="pill-cyber-sm">Cyber</span>`
+    : `<span class="pill-geo-sm">Geo</span>`;
+}
 
 // ── Section 4: API ─────────────────────────────────────────────────────
 async function fetchJSON(url) {
@@ -115,6 +141,47 @@ function renderLeftPanel() {
   const brief = gr?.synthesis_brief || (m?.status === 'no_data' ? 'No run data — click Run All to start.' : 'Run in progress...');
   $('synthesis-brief').textContent = brief;
 
+  // Priority region callout + velocity summary
+  const priorityEl = $('global-priority');
+  const velocityEl = $('global-velocity');
+  if (priorityEl && velocityEl && m?.regions) {
+    const escalated = Object.entries(m.regions)
+      .filter(([, v]) => v.status === 'escalated')
+      .sort((a, b) => {
+        const sevA = SEV_ORDER.indexOf((a[1].severity||'').toUpperCase());
+        const sevB = SEV_ORDER.indexOf((b[1].severity||'').toUpperCase());
+        return (sevA === -1 ? 99 : sevA) - (sevB === -1 ? 99 : sevB);
+      });
+
+    if (escalated.length > 0) {
+      const [topRegion, topData] = escalated[0];
+      const rd = state.regionData[topRegion] || {};
+      const parts = [
+        topRegion,
+        topData.severity,
+        rd.primary_scenario,
+        rd.signal_type,
+        rd.velocity ? (rd.velocity === 'accelerating' ? '↑' : rd.velocity === 'improving' ? '↓' : '→') : ''
+      ].filter(Boolean);
+      priorityEl.textContent = `Priority: ${parts.join(' · ')}`;
+
+      const velCounts = { accelerating: 0, stable: 0, improving: 0, unknown: 0 };
+      escalated.forEach(([rKey]) => {
+        const rd2 = state.regionData[rKey];
+        const vel = (rd2?.velocity || 'unknown').toLowerCase();
+        velCounts[vel in velCounts ? vel : 'unknown']++;
+      });
+      const parts2 = [];
+      if (velCounts.accelerating) parts2.push(`${velCounts.accelerating} accelerating`);
+      if (velCounts.stable) parts2.push(`${velCounts.stable} stable`);
+      if (velCounts.improving) parts2.push(`${velCounts.improving} improving`);
+      velocityEl.textContent = parts2.length ? `Velocity: ${parts2.join(', ')}` : '';
+    } else {
+      priorityEl.textContent = '';
+      velocityEl.textContent = '';
+    }
+  }
+
   // Status counts
   if (m && m.status !== 'no_data' && m.regions) {
     const vals = Object.values(m.regions);
@@ -141,19 +208,26 @@ function renderLeftPanel() {
   // Region rows
   $('region-list').innerHTML = REGIONS.map(r => {
     const d = state.regionData[r];
-    const c = state.regionClusters[r];
     const sev = (d?.severity || d?.status || 'UNKNOWN').toUpperCase();
-    const signals = c?.total_signals ?? 0;
-    const maxConv = Math.max(0, ...(c?.clusters?.map(cl => cl.convergence) ?? [0]));
     const isActive = r === state.selectedRegion;
     const color = SEV_COLOR[sev] || '#6e7681';
+    const scenario = d?.primary_scenario || '';
+    const signalType = d?.signal_type || '';
+    const velocity = d?.velocity || '';
+    const pillar = d?.dominant_pillar || '';
+    const isEscalated = d?.status === 'escalated';
+
     return `
 <div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')">
-  <span style="font-size:12px;font-weight:500;color:${color}">${r}</span>
-  <div style="display:flex;align-items:center;gap:6px">
-    ${convDot(maxConv)}
-    <span style="font-size:10px;color:${signals > 0 ? color : '#6e7681'}">${signals > 0 ? signals + ' signals' : sev === 'CLEAR' ? 'clear' : '—'}</span>
+  <div style="display:flex;align-items:center;justify-content:space-between">
+    <span style="font-size:12px;font-weight:500;color:${color}">${r}</span>
+    <div style="display:flex;align-items:center;gap:4px">
+      ${isEscalated ? signalTypeBadge(signalType) : ''}
+      ${isEscalated ? velocityArrow(velocity) : ''}
+      ${!isEscalated ? `<span style="font-size:10px;color:#3fb950">clear</span>` : ''}
+    </div>
   </div>
+  ${isEscalated && scenario ? `<div style="font-size:10px;color:#6e7681;margin-top:2px">${esc(scenario)} · ${pillar || '—'}</div>` : ''}
 </div>`;
   }).join('');
 }
@@ -191,12 +265,27 @@ function renderRightPanel() {
     return;
   }
 
+  const contextStrip = `
+<div class="context-strip">
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+    ${d.primary_scenario ? `<span style="font-size:11px;color:#e6edf3;font-weight:500">${esc(d.primary_scenario)}</span>` : ''}
+    ${signalTypeBadge(d.signal_type)}
+    ${pillarPillSm(d.dominant_pillar)}
+    ${velocityArrow(d.velocity)}
+    ${d.velocity ? `<span style="font-size:10px;color:#6e7681">${esc(d.velocity)}</span>` : ''}
+  </div>
+  ${d.rationale ? `<div class="rationale-text">${esc(d.rationale)}</div>` : ''}
+</div>`;
+
+  const briefSection = renderBriefSection(r, d);
+
   if (!c || !c.clusters || c.clusters.length === 0) {
-    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
+    body.innerHTML = contextStrip + briefSection + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
     return;
   }
 
-  body.innerHTML = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
+  const clusterHtml = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
+  body.innerHTML = contextStrip + briefSection + clusterHtml;
 }
 
 function renderClusterCard(region, cl, i) {
@@ -249,9 +338,47 @@ function toggleCluster(id) {
   renderRightPanel();
 }
 
+function renderBriefSection(region, d) {
+  const isExpanded = state.expandedBriefs.has(region);
+  const signalType = d?.signal_type || '';
+  const label = signalType ? `${signalType.toUpperCase()} BRIEF` : 'ANALYST BRIEF';
+  const contentId = `brief-content-${region}`;
+
+  return `
+<div class="brief-section">
+  <div class="brief-header" onclick="toggleBrief('${region}')">
+    <span style="letter-spacing:.5px">${label}</span>
+    <span>${isExpanded ? '▼' : '▶'}</span>
+  </div>
+  ${isExpanded ? `<div class="${contentId} brief-content" id="${contentId}">Loading...</div>` : ''}
+</div>`;
+}
+
+function toggleBrief(region) {
+  if (state.expandedBriefs.has(region)) {
+    state.expandedBriefs.delete(region);
+    renderRightPanel();
+  } else {
+    state.expandedBriefs.add(region);
+    renderRightPanel();
+    // Fetch report.md after render
+    fetch(`/api/region/${region}/report`)
+      .then(r => r.text())
+      .then(text => {
+        const el = document.getElementById(`brief-content-${region}`);
+        if (el) el.textContent = text;
+      })
+      .catch(() => {
+        const el = document.getElementById(`brief-content-${region}`);
+        if (el) el.textContent = 'Brief not available for this run.';
+      });
+  }
+}
+
 function selectRegion(r) {
   state.selectedRegion = r;
   state.expandedClusters.clear();
+  state.expandedBriefs.clear();
   renderLeftPanel();
   renderRightPanel();
 }
