@@ -267,6 +267,63 @@ async def post_prompt(agent: str, body: dict):
     return {"ok": True}
 
 
+# ── API: Feedback ────────────────────────────────────────────────────────
+@app.get("/api/feedback/{run_id}")
+async def get_feedback(run_id: str):
+    """Return feedback entries for a pipeline run."""
+    runs_dir = BASE / "output" / "runs"
+    if not runs_dir.exists():
+        return JSONResponse({"error": f"Run not found: {run_id}"}, status_code=404)
+    for folder in sorted(runs_dir.iterdir()):
+        manifest_path = folder / "run_manifest.json"
+        if manifest_path.exists():
+            m = json.loads(manifest_path.read_text(encoding="utf-8"))
+            if m.get("pipeline_id") == run_id:
+                fb_path = folder / "feedback.json"
+                if fb_path.exists():
+                    return json.loads(fb_path.read_text(encoding="utf-8"))
+                return []
+    return JSONResponse({"error": f"Run not found: {run_id}"}, status_code=404)
+
+
+@app.post("/api/feedback/{run_id}")
+async def post_feedback(run_id: str, body: dict):
+    """Append a feedback entry for a pipeline run."""
+    VALID_RATINGS = {"accurate", "overstated", "understated", "false_positive"}
+    VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE", "global"}
+
+    region = body.get("region", "")
+    rating = body.get("rating", "")
+    if region not in VALID_REGIONS:
+        return JSONResponse({"error": f"Invalid region: {region}"}, status_code=400)
+    if rating not in VALID_RATINGS:
+        return JSONResponse({"error": f"Invalid rating: {rating}"}, status_code=400)
+
+    from datetime import datetime, timezone
+    entry = {
+        "region": region,
+        "rating": rating,
+        "note": body.get("note", ""),
+        "analyst": body.get("analyst", "anonymous"),
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+    runs_dir = BASE / "output" / "runs"
+    if runs_dir.exists():
+        for folder in sorted(runs_dir.iterdir()):
+            manifest_path = folder / "run_manifest.json"
+            if manifest_path.exists():
+                m = json.loads(manifest_path.read_text(encoding="utf-8"))
+                if m.get("pipeline_id") == run_id:
+                    fb_path = folder / "feedback.json"
+                    existing = json.loads(fb_path.read_text(encoding="utf-8")) if fb_path.exists() else []
+                    existing.append(entry)
+                    _write_json_atomic(fb_path, existing)
+                    return {"ok": True, "entry": entry}
+
+    return JSONResponse({"error": f"Run not found: {run_id}"}, status_code=404)
+
+
 # ── API: Run Pipeline ────────────────────────────────────────────────────
 async def _emit(event: str, data: dict):
     """Push a structured SSE event. Drops oldest if queue is full."""

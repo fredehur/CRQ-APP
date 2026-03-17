@@ -38,6 +38,13 @@ Store `WINDOW` for use in Phase 1 and Phase 6.
 
 Clear stale log: `rm -f output/system_trace.log`
 
+**Load prior run feedback (if any):**
+Run: `uv run python tools/feedback_writer.py --summarize`
+If prior run feedback exists, this prints a summary of analyst ratings from the most recent run.
+Capture the output as `PRIOR_FEEDBACK`. If output is empty or the tool errors, set `PRIOR_FEEDBACK=""`.
+Pass `PRIOR_FEEDBACK` as additional context to the gatekeeper and regional analyst agents in Phase 1 using the format:
+"PRIOR RUN ANALYST FEEDBACK: {PRIOR_FEEDBACK}" — if non-empty, prepend this to each agent's task description.
+
 ## PHASE 1 — REGIONAL ANALYSIS (PARALLEL FAN-OUT)
 
 Read `data/mock_crq_database.json` to load all regional data.
