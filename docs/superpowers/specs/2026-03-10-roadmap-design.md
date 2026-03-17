@@ -930,7 +930,7 @@ F-2  Analyst dashboard           SIGINT terminal workstation, split-pane, signal
      Agent Config tab            Edit topics/sources/prompts from UI                            ✅ Done (2026-03-17)
 G    Deep OSINT (GPT Researcher)  deep_research.py, --deep flag, Haiku extraction, discover.py  ✅ Done (2026-03-17)
 K    Analyst-First Dashboard Cards  scenario/type/velocity/rationale/brief on cards              (planned, spec: 2026-03-17-analyst-cards-design.md)
-H    YouTube OSINT Collector      topic/event/trend tracking, curated channels, Haiku extraction  (planned)
+H    YouTube OSINT Collector      topic/event/trend tracking, curated channels, Haiku extraction  ✅ Done (2026-03-17)
 I    Analyst Feedback Loop        per-run ratings, pipeline reads prior feedback                  ✅ Done (2026-03-17)
 J    Historical Intelligence Charts  VaCR sparklines, severity heatmap, scenario drift           (planned, J-1 done 2026-03-17)
 F-5  Polish (parked)             audience tabs, interactive chat, scheduler
