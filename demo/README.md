@@ -26,6 +26,8 @@ This pipeline was built to address all three. It runs on demand across all five 
 | NCE (N. & Central Europe) | Clear | LOW | $0 | Geopolitical | C3 |
 
 > *$0 for CLEAR regions reflects no active scenario trigger — not a data gap.*
+>
+> *Dominant Pillar indicates whether the primary threat driver for that region is Geopolitical (macro-structural conditions: state actor intent, economic instability, regulatory pressure) or Cyber (direct technical exposure to a specific attack vector).*
 
 **Three regions escalated simultaneously** — and the most significant finding from this run is not the individual regional exposures but what the synthesis layer identified across them: all three escalated threats, despite originating from different actors using different methods (state-directed collection in APAC, financially motivated extortion in AME, insider access abuse in MED), independently target the same crown jewel asset class — turbine operational technology, predictive maintenance systems, and proprietary manufacturing IP. This is a compound risk posture, not three isolated incidents. No individual regional assessment would have surfaced it.
 
