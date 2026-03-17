@@ -322,7 +322,9 @@ function switchTab(tab) {
 function _doSwitchTab(tab) {
   state.activeTab = tab;
   ['overview','reports','history','config'].forEach(t => {
-    $(`tab-${t}`).classList.toggle('hidden', t !== tab);
+    const el = $(`tab-${t}`);
+    el.classList.toggle('hidden', t !== tab);
+    el.style.display = t === tab ? (t === 'config' ? 'flex' : '') : '';
     $(`nav-${t}`).classList.toggle('active', t === tab);
   });
   if (tab === 'reports') renderReports();
@@ -405,6 +407,12 @@ function startEventStream() {
     const d = JSON.parse(e.data);
     appendConsoleEntry(`<span style="color:#6e7681;font-size:9px">${esc(d.line||'')}</span>`);
   });
+  es.addEventListener('deep_research', e => {
+    const d = JSON.parse(e.data);
+    appendConsoleEntry(
+      `<span style="color:#79c0ff;font-size:10px">[deep] ${esc(d.region||'')} ${esc(d.type||'')} — ${esc(d.message||'')}</span>`
+    );
+  });
   es.onerror = () => {};
 }
 
@@ -452,6 +460,7 @@ async function loadConfigTab() {
   renderTopicsTable();
   renderSourcesTable();
   renderPromptsPanel();
+  loadSuggestions(); // async, non-blocking
 }
 
 function markDirty(panel) {
@@ -685,6 +694,117 @@ async function savePrompt() {
     const r = await fetch(`/api/config/prompts/${encodeURIComponent(cfgState.selectedAgent)}`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ body }) });
     return r.json();
   }, 'prompt');
+}
+
+// ── Discovery ──────────────────────────────────────────────────────────
+// Store last discover results for Add button access
+let _lastDiscoverResults = { topic: [], source: [] };
+
+async function discoverTopics() {
+  const query = $('topic-discover-input').value.trim();
+  if (!query) return;
+  $('btn-discover-topics').disabled = true;
+  $('topic-discover-loading').style.display = 'block';
+  $('topic-discover-error').style.display = 'none';
+  $('topic-discover-results').innerHTML = '';
+  try {
+    const r = await fetch('/api/discover/topics', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ query, depth: 'quick' }),
+    });
+    const results = await r.json();
+    if (!r.ok) throw new Error(results.error || 'Discovery failed');
+    _lastDiscoverResults.topic = results;
+    $('topic-discover-results').innerHTML = renderDiscoverResults(results, 'topic');
+  } catch(err) {
+    $('topic-discover-error').textContent = err.message;
+    $('topic-discover-error').style.display = 'block';
+  } finally {
+    $('btn-discover-topics').disabled = false;
+    $('topic-discover-loading').style.display = 'none';
+  }
+}
+
+async function discoverSources() {
+  const query = $('source-discover-input').value.trim();
+  if (!query) return;
+  $('btn-discover-sources').disabled = true;
+  $('source-discover-loading').style.display = 'block';
+  $('source-discover-error').style.display = 'none';
+  $('source-discover-results').innerHTML = '';
+  try {
+    const r = await fetch('/api/discover/sources', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ query, depth: 'quick' }),
+    });
+    const results = await r.json();
+    if (!r.ok) throw new Error(results.error || 'Discovery failed');
+    _lastDiscoverResults.source = results;
+    $('source-discover-results').innerHTML = renderDiscoverResults(results, 'source');
+  } catch(err) {
+    $('source-discover-error').textContent = err.message;
+    $('source-discover-error').style.display = 'block';
+  } finally {
+    $('btn-discover-sources').disabled = false;
+    $('source-discover-loading').style.display = 'none';
+  }
+}
+
+function renderDiscoverResults(items, type) {
+  if (!items || !items.length) return '<p style="font-size:11px;color:#6e7681;margin-top:6px">No suggestions found.</p>';
+  return items.map((item, i) => `
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:8px 10px;margin-top:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;color:#e6edf3">${esc(item.id || item.name || item.channel_id || '')}</span>
+        <button onclick="addDiscoveredItem(${i}, '${type}')"
+          style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:1px 8px;border-radius:2px;cursor:pointer">+ Add</button>
+      </div>
+      ${item.rationale ? `<div style="font-size:10px;color:#6e7681">${esc(item.rationale)}</div>` : ''}
+      ${type === 'topic' && item.keywords ? `<div style="font-size:10px;color:#8b949e;margin-top:2px">${esc(item.keywords.join(', '))}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function addDiscoveredItem(i, type) {
+  const items = _lastDiscoverResults[type];
+  if (!items || !items[i]) return;
+  if (type === 'topic') {
+    const t = { ...items[i], _isNew: true };
+    delete t.rationale;
+    cfgState.topics.push(t);
+    renderTopicsTable();
+    markDirty('topics');
+    showToast('Topic added — review and save');
+  } else {
+    const s = { ...items[i] };
+    delete s.rationale;
+    cfgState.sources.push(s);
+    renderSourcesTable();
+    markDirty('sources');
+    showToast('Source added — review and save');
+  }
+}
+
+async function loadSuggestions() {
+  try {
+    const r = await fetch('/api/discover/suggestions');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (!data || (!data.topics?.length && !data.sources?.length)) return;
+
+    if (data.topics?.length) {
+      _lastDiscoverResults.topic = data.topics;
+      const ts = $('topics-suggestions-body');
+      if (ts) ts.innerHTML = renderDiscoverResults(data.topics, 'topic') +
+        (data.generated_at ? `<div style="font-size:9px;color:#6e7681;margin-top:6px">Generated ${new Date(data.generated_at).toLocaleString()}</div>` : '');
+    }
+    if (data.sources?.length) {
+      _lastDiscoverResults.source = data.sources;
+      const ss = $('sources-suggestions-body');
+      if (ss) ss.innerHTML = renderDiscoverResults(data.sources, 'source') +
+        (data.generated_at ? `<div style="font-size:9px;color:#6e7681;margin-top:6px">Generated ${new Date(data.generated_at).toLocaleString()}</div>` : '');
+    }
+  } catch(_) {}
 }
 
 // ── Toast ──────────────────────────────────────────────────────────────

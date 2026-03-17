@@ -112,6 +112,39 @@ for REGION in apac ame med latam nce:
                    Re-run the auditor on the rewritten brief.
 ```
 
+## PHASE 1.5 — DEEP RESEARCH PASS (CONDITIONAL)
+
+Only runs if `--deep` flag is present in the invocation (e.g., `/run-crq --deep`).
+
+**Parse flags from invocation:**
+- `--deep` → enables this phase
+- `--deep-scope=all` → run deep research for ALL 5 regions; default is `escalated` only
+- `--depth=quick|standard|deep` → controls research depth per region (default: `standard`)
+
+**Scope logic:**
+- `escalated` (default): run only for regions where gatekeeper returned ESCALATE
+- `all`: run for all 5 regions regardless of gatekeeper decision
+
+**For each in-scope region, run in parallel via Task fan-out:**
+```bash
+uv run python tools/deep_research.py {REGION} geo  --depth={depth}
+uv run python tools/deep_research.py {REGION} cyber --depth={depth}
+```
+
+These commands overwrite the shallow `geo_signals.json` and `cyber_signals.json` files written in Phase 1. Progress is streamed to the Agent Activity Console. The regional-analyst-agent in Phase 2 reads the enriched versions.
+
+Log on entry:
+```bash
+uv run python tools/audit_logger.py PHASE_COMPLETE "Deep research pass started — scope={scope} depth={depth}"
+```
+
+Log on completion:
+```bash
+uv run python tools/audit_logger.py PHASE_COMPLETE "Deep research pass complete"
+```
+
+If `--deep` is not present, skip this phase entirely.
+
 ## PHASE 2 — VELOCITY ANALYSIS
 
 Run: `uv run python tools/trend_analyzer.py`

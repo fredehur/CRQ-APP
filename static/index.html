@@ -277,7 +277,7 @@
 </div>
 
 <!-- ── CONFIG TAB ──────────────────────────────────────────────── -->
-<div id="tab-config" class="hidden" style="height:calc(100vh - 36px);display:flex;flex-direction:column;overflow:hidden">
+<div id="tab-config" class="hidden" style="height:calc(100vh - 36px);flex-direction:column;overflow:hidden">
   <div style="display:flex;border-bottom:1px solid #21262d;flex-shrink:0;padding:0 16px">
     <div class="nav-tab active" id="cfg-nav-sources" onclick="switchCfgTab('sources')">Intelligence Sources</div>
     <div class="nav-tab" id="cfg-nav-prompts" onclick="switchCfgTab('prompts')">Prompts</div>
@@ -297,6 +297,25 @@
       <div id="topics-loading" style="padding:16px;font-size:11px;color:#6e7681">Loading...</div>
       <div id="topics-table" style="display:none;flex:1;overflow-y:auto"></div>
       <div id="topics-empty" style="display:none;padding:24px;text-align:center;font-size:11px;color:#6e7681">No topics yet. <button onclick="addTopicRow()" style="color:#3fb950;background:none;border:none;cursor:pointer;font-size:11px">Add your first topic</button></div>
+      <!-- Topics discovery -->
+      <div style="border-top:1px solid #21262d;padding:10px 14px;flex-shrink:0">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Discover Topics</div>
+        <div style="display:flex;gap:6px">
+          <input id="topic-discover-input" type="text" placeholder="e.g. OT cyber attacks energy sector"
+            style="flex:1;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"
+            onkeydown="if(event.key==='Enter')discoverTopics()">
+          <button onclick="discoverTopics()" id="btn-discover-topics"
+            style="font-size:10px;color:#79c0ff;background:#0d1f36;border:1px solid #1f6feb;padding:2px 10px;border-radius:2px;cursor:pointer">Search</button>
+        </div>
+        <div id="topic-discover-loading" style="display:none;font-size:10px;color:#6e7681;margin-top:6px">Researching...</div>
+        <div id="topic-discover-error" style="display:none;font-size:10px;color:#ff7b72;margin-top:6px"></div>
+        <div id="topic-discover-results"></div>
+      </div>
+      <!-- Post-run suggestions -->
+      <div id="topics-suggestions" style="border-top:1px solid #21262d;padding:10px 14px;flex-shrink:0">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Post-Run Suggestions</div>
+        <div id="topics-suggestions-body" style="font-size:11px;color:#6e7681">No suggestions yet — run the pipeline to generate.</div>
+      </div>
     </div>
     <!-- Sources panel -->
     <div style="display:flex;flex-direction:column;overflow:hidden">
@@ -311,6 +330,25 @@
       <div id="sources-loading" style="padding:16px;font-size:11px;color:#6e7681">Loading...</div>
       <div id="sources-table" style="display:none;flex:1;overflow-y:auto"></div>
       <div id="sources-empty" style="display:none;padding:24px;text-align:center;font-size:11px;color:#6e7681">No sources yet. <button onclick="addSourceRow()" style="color:#3fb950;background:none;border:none;cursor:pointer;font-size:11px">Add your first source</button></div>
+      <!-- Sources discovery -->
+      <div style="border-top:1px solid #21262d;padding:10px 14px;flex-shrink:0">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Discover Channels</div>
+        <div style="display:flex;gap:6px">
+          <input id="source-discover-input" type="text" placeholder="e.g. geopolitical risk wind energy APAC"
+            style="flex:1;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"
+            onkeydown="if(event.key==='Enter')discoverSources()">
+          <button onclick="discoverSources()" id="btn-discover-sources"
+            style="font-size:10px;color:#79c0ff;background:#0d1f36;border:1px solid #1f6feb;padding:2px 10px;border-radius:2px;cursor:pointer">Search</button>
+        </div>
+        <div id="source-discover-loading" style="display:none;font-size:10px;color:#6e7681;margin-top:6px">Researching...</div>
+        <div id="source-discover-error" style="display:none;font-size:10px;color:#ff7b72;margin-top:6px"></div>
+        <div id="source-discover-results"></div>
+      </div>
+      <!-- Post-run suggestions -->
+      <div id="sources-suggestions" style="border-top:1px solid #21262d;padding:10px 14px;flex-shrink:0">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Post-Run Suggestions</div>
+        <div id="sources-suggestions-body" style="font-size:11px;color:#6e7681">No suggestions yet — run the pipeline to generate.</div>
+      </div>
     </div>
   </div>
   <!-- Prompts sub-tab -->

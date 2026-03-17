@@ -267,6 +267,54 @@ async def post_prompt(agent: str, body: dict):
     return {"ok": True}
 
 
+# ── API: Discovery ───────────────────────────────────────────────────────
+@app.post("/api/discover/topics")
+async def discover_topics(body: dict):
+    query = body.get("query", "").strip()
+    depth = body.get("depth", "quick")
+    if not query:
+        return JSONResponse({"error": "query required"}, status_code=400)
+    proc = await asyncio.create_subprocess_exec(
+        "uv", "run", "python", str(BASE / "tools" / "discover.py"),
+        "topics", query, f"--depth={depth}",
+        cwd=str(BASE),
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=180)
+    if proc.returncode != 0:
+        return JSONResponse({"error": stderr.decode(errors="replace")[:300]}, status_code=500)
+    return JSONResponse(json.loads(stdout.decode(errors="replace")))
+
+
+@app.post("/api/discover/sources")
+async def discover_sources(body: dict):
+    query = body.get("query", "").strip()
+    depth = body.get("depth", "quick")
+    if not query:
+        return JSONResponse({"error": "query required"}, status_code=400)
+    proc = await asyncio.create_subprocess_exec(
+        "uv", "run", "python", str(BASE / "tools" / "discover.py"),
+        "sources", query, f"--depth={depth}",
+        cwd=str(BASE),
+        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=180)
+    if proc.returncode != 0:
+        return JSONResponse({"error": stderr.decode(errors="replace")[:300]}, status_code=500)
+    return JSONResponse(json.loads(stdout.decode(errors="replace")))
+
+
+@app.get("/api/discover/suggestions")
+async def get_suggestions():
+    path = OUTPUT / "config_suggestions.json"
+    if not path.exists():
+        return {"topics": [], "sources": [], "generated_at": None}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"topics": [], "sources": [], "generated_at": None}
+
+
 # ── API: Feedback ────────────────────────────────────────────────────────
 @app.get("/api/feedback/{run_id}")
 async def get_feedback(run_id: str):
