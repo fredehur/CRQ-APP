@@ -854,10 +854,60 @@ H-5  Mock fixtures        5 regional youtube_signals.json fixtures for CI       
 
 ---
 
+## Phase I — Analyst Feedback Loop
+
+**Added 2026-03-17. Priority: high.**
+
+Analysts reading reports have no way to rate signal quality, flag false positives, or note when the gatekeeper got it wrong. Without this, the platform has no signal about whether it's improving over time.
+
+### Design
+
+- Per-run `feedback.json` stored alongside `run_manifest.json` in `output/runs/{timestamp}/`
+- Schema: `[{ "region": "AME", "rating": "accurate|overstated|understated|false_positive", "note": "...", "analyst": "...", "timestamp": "..." }]`
+- Lightweight UI: thumbs up/down + optional text comment per region card in the dashboard
+- FastAPI endpoint: `POST /api/feedback/{run_id}` writes to the run's `feedback.json`
+- Pipeline reads prior run's `feedback.json` at startup (Phase 0) and passes it as context to the gatekeeper and analyst agents — "last time you called this ESCALATE, the analyst rated it overstated"
+- `tools/feedback_summary.py` aggregates feedback across runs into `output/feedback_trends.json` for meta-review
+
+### Build order
+
+```
+I-1  feedback.json schema + FastAPI endpoint                         ~1 hour
+I-2  Dashboard UI — rating buttons per region card                   ~1 hour
+I-3  Pipeline reads prior feedback — passes to gatekeeper + analyst  ~1 hour
+I-4  feedback_summary.py aggregation tool                            ~30 min
+```
+
+---
+
+## Phase J — Historical Intelligence Charts
+
+**Added 2026-03-17. Priority: medium.**
+
+6 archived runs exist. The velocity analysis reads them but only outputs a text brief. VaCR over time and severity trend are invisible in the UI — a word ("stable") when it should be a sparkline.
+
+### Design
+
+- `tools/build_history.py` — reads `output/runs/*/run_manifest.json`, emits `output/history.json` with per-region time series: `[{ "timestamp", "severity", "vacr_usd", "status", "primary_scenario" }]`
+- Dashboard **History tab** — per-region VaCR sparkline (last 10 runs), severity heatmap calendar, scenario drift view ("AME has been Ransomware for 6 consecutive runs")
+- No new dependencies — chart rendering via inline SVG or a minimal library already in scope
+- `build_history.py` called at end of Phase 6 (finalize) each pipeline run, after `archive_run.py`
+
+### Build order
+
+```
+J-1  build_history.py — reads archived runs, writes history.json      ~1 hour
+J-2  Wire into Phase 6 of run-crq.md                                  ~15 min
+J-3  Dashboard History tab — sparklines + severity heatmap            ~2 hours
+J-4  Scenario drift detection — flag when primary_scenario unchanged  ~30 min
+     N consecutive runs ("AME: Ransomware for 6 runs") → note in global brief
+```
+
+---
+
 ## Phase F-5 — Parked (Longer Horizon)
 
 - **Audience tabs** — Board / CISO / Ops / Sales overlays on same JSON data
-- **Historical trend charts** — VaCR sparklines over time (data already exists in `output/runs/`)
 - **Interactive analyst chat** — ask follow-ups about pipeline output via Claude API
 - **Scheduled runs + digest notifications** — cron + Slack/email summary
 - **NotebookLM audio briefing** — podcast-style board briefing (API access required)
@@ -867,17 +917,20 @@ H-5  Mock fixtures        5 regional youtube_signals.json fixtures for CI       
 ## Build Order Summary
 
 ```
-D-0  Close agentic gaps          global-validator-agent + mock feed audit      ✅ Done
-D-1  OSINT tool chain            osint_search → geo → cyber → scenario_mapper  ✅ Done
-D-2  Wire it in                  gatekeeper + run-crq Phase 1                  ✅ Done
-E    Intelligence Transparency   decision basis, sources, live telemetry        ✅ Done
-F-1  Output quality fixes        admiralty completeness, clear summaries, trend  ✅ Done
-F-3  Intelligence quality        agent exploration, scenario coupling, event/trend, brief standard  ✅ Done
-F-4  Live OSINT                  remove --mock, add Tavily key                  ✅ Done
-G-0  Shared OSINT Topic Registry  osint_topics.json, retrofit geo+cyber collectors, convergence   ✅ Done (2026-03-16)
-F-2  Analyst dashboard           SIGINT terminal workstation, split-pane, signal clusters         ✅ UI built. Gap: add synthesis_brief to global-builder-agent + json-auditor.py, then run pipeline to populate signal_clusters.json
-     Note: F-2 spec superseded by docs/superpowers/specs/2026-03-16-analyst-dashboard-design.md
-G    Deep OSINT (GPT Researcher)  deep_collector.py, --deep mode, topic-driven queries            (planned)
+D-0  Close agentic gaps          global-validator-agent + mock feed audit                      ✅ Done
+D-1  OSINT tool chain            osint_search → geo → cyber → scenario_mapper                  ✅ Done
+D-2  Wire it in                  gatekeeper + run-crq Phase 1                                  ✅ Done
+E    Intelligence Transparency   decision basis, sources, live telemetry                        ✅ Done
+F-1  Output quality fixes        admiralty completeness, clear summaries, trend                 ✅ Done
+F-3  Intelligence quality        agent exploration, scenario coupling, event/trend, brief std   ✅ Done
+F-4  Live OSINT                  remove --mock, add Tavily key                                  ✅ Done
+G-0  Shared OSINT Topic Registry  osint_topics.json, retrofit geo+cyber collectors, convergence ✅ Done (2026-03-16)
+F-2  Analyst dashboard           SIGINT terminal workstation, split-pane, signal clusters       ✅ Done (2026-03-17)
+     Research collector          Target-centric OSINT loop — 3 LLM calls, scratchpad            ✅ Done (2026-03-16, PR #3)
+     Agent Config tab            Edit topics/sources/prompts from UI                            ✅ Done (2026-03-17)
+G    Deep OSINT (GPT Researcher)  deep_research.py, --deep flag, Haiku extraction, discover.py  ✅ Done (2026-03-17)
 H    YouTube OSINT Collector      topic/event/trend tracking, curated channels, Haiku extraction  (planned)
-F-5  Polish (parked)             audience tabs, charts, scheduler
+I    Analyst Feedback Loop        per-run ratings, pipeline reads prior feedback                  (planned)
+J    Historical Intelligence Charts  VaCR sparklines, severity heatmap, scenario drift           (planned)
+F-5  Polish (parked)             audience tabs, interactive chat, scheduler
 ```

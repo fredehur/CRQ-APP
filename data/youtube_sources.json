@@ -1,0 +1,58 @@
+[
+  {
+    "channel_id": "@ForeignAffairs",
+    "name": "Foreign Affairs",
+    "region_focus": ["APAC", "MED", "NCE", "AME", "LATAM"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@CFR_org",
+    "name": "Council on Foreign Relations",
+    "region_focus": ["APAC", "AME", "LATAM"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@CISSecurity",
+    "name": "Center for Internet Security",
+    "region_focus": ["AME", "NCE"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@SANSInstitute",
+    "name": "SANS Institute",
+    "region_focus": ["AME", "NCE", "APAC"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@chathamhouse",
+    "name": "Chatham House",
+    "region_focus": ["MED", "NCE", "APAC"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@IISS_org",
+    "name": "IISS — International Institute for Strategic Studies",
+    "region_focus": ["MED", "NCE", "APAC", "LATAM"],
+    "topics": [],
+    "credibility_tier": "A"
+  },
+  {
+    "channel_id": "@DW_Global_Ideas",
+    "name": "DW Global Ideas",
+    "region_focus": ["MED", "NCE", "LATAM"],
+    "topics": [],
+    "credibility_tier": "B"
+  },
+  {
+    "channel_id": "@MandiantThreatIntel",
+    "name": "Mandiant Threat Intelligence",
+    "region_focus": ["AME", "APAC", "NCE"],
+    "topics": [],
+    "credibility_tier": "A"
+  }
+]

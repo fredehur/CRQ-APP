@@ -76,6 +76,12 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
    - `cyber_signals.json`
    - `scenario_map.json`
 
+   **YouTube signals (always run, both modes):**
+   - `uv run python tools/youtube_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
+   - Writes `output/regional/{region_lower}/youtube_signals.json`
+   - If no approved channels exist for the region, tool exits 0 with an empty signals file — this is expected and not an error.
+   - `OSINT_MODE` passes `--mock` in mock mode; omit in live mode.
+
 2. Run `uv run python tools/geopolitical_context.py {REGION}`
 
 3. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.

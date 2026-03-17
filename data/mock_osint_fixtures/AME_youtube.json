@@ -1,0 +1,29 @@
+{
+  "summary": "CFR and CIS Security analysts highlight a marked increase in ransomware campaigns against North American energy infrastructure operators in early 2026, with wind farm operators emerging as named targets in two confirmed incidents. Expert commentary frames this as a deliberate strategy to disrupt the US clean energy transition and test critical infrastructure resilience ahead of contract renewal cycles. Mandiant identifies a specific threat group with persistent interest in wind energy SCADA systems.",
+  "lead_indicators": [
+    "CFR: US energy sector ransomware incidents doubled in Q1 2026 versus Q4 2025 baseline",
+    "Mandiant: APT group UNC4871 confirmed interest in wind farm SCADA and energy management systems",
+    "CIS Security: North American wind operators underreporting OT incidents to regulators — compliance gap widening"
+  ],
+  "dominant_pillar": "Cyber",
+  "matched_topics": [
+    "ransomware-energy-grid",
+    "ot-ics-cyber-attacks"
+  ],
+  "source_videos": [
+    {
+      "title": "Ransomware and the US Energy Sector: 2026 Threat Landscape",
+      "channel": "Council on Foreign Relations",
+      "channel_id": "@CFR_org",
+      "url": "https://youtube.com/watch?v=mock_ame_cyber_001",
+      "published_at": "2026-03-12"
+    },
+    {
+      "title": "APT Targeting of Wind Energy OT: What We Know",
+      "channel": "Mandiant Threat Intelligence",
+      "channel_id": "@MandiantThreatIntel",
+      "url": "https://youtube.com/watch?v=mock_ame_cyber_002",
+      "published_at": "2026-03-09"
+    }
+  ]
+}

@@ -111,7 +111,30 @@ Rules:
 - Return ONLY the JSON object, no markdown, no explanation
 """
 
-EXTRACTION_PROMPTS = {"geo": GEO_EXTRACTION_PROMPT, "cyber": CYBER_EXTRACTION_PROMPT}
+YOUTUBE_EXTRACTION_PROMPT = """You are extracting structured intelligence signals from YouTube video transcripts.
+
+Region: {region}
+Transcript content:
+{report}
+
+Extract and return ONLY valid JSON matching this exact schema:
+{{
+  "summary": "2-3 sentence synthesis of what analysts are saying about {region} wind energy risk",
+  "lead_indicators": ["specific claim 1", "specific claim 2", "specific claim 3"],
+  "dominant_pillar": "Geopolitical|Cyber",
+  "matched_topics": []
+}}
+
+Rules:
+- summary must synthesise analyst opinion, not just describe the video topic
+- lead_indicators must be specific, attributable claims from the transcript
+- dominant_pillar: "Geopolitical" if primarily about politics/state actors/trade; "Cyber" if primarily about attacks/threats
+- matched_topics is always empty array (pipeline populates it separately)
+- Write for a business executive, not a security engineer
+- Return ONLY the JSON object, no markdown, no explanation
+"""
+
+EXTRACTION_PROMPTS = {"geo": GEO_EXTRACTION_PROMPT, "cyber": CYBER_EXTRACTION_PROMPT, "youtube": YOUTUBE_EXTRACTION_PROMPT}
 
 
 # ── Validation ─────────────────────────────────────────────────────────
@@ -131,7 +154,15 @@ def _validate_cyber_signals(data: dict) -> dict:
     return data
 
 
-VALIDATORS = {"geo": _validate_geo_signals, "cyber": _validate_cyber_signals}
+def _validate_youtube_signals(data: dict) -> dict:
+    required = {"summary", "lead_indicators", "dominant_pillar", "matched_topics"}
+    missing = required - set(data.keys())
+    if missing:
+        raise ValueError(f"Missing keys in youtube signals: {missing}")
+    return data
+
+
+VALIDATORS = {"geo": _validate_geo_signals, "cyber": _validate_cyber_signals, "youtube": _validate_youtube_signals}
 
 
 # ── Haiku extraction ───────────────────────────────────────────────────

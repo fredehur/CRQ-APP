@@ -22,7 +22,8 @@ Read all of the following before writing anything:
 2. `data/master_scenarios.json` — the full CRQ scenario register with `financial_rank`, `frequency_rank`, `records_affected_rank`, and scenario descriptions
 3. `output/regional/{region_lower}/geo_signals.json` — geopolitical lead indicators
 4. `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals
-5. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
+5. `output/regional/{region_lower}/youtube_signals.json` (if present) — analyst opinion from curated YouTube channels. Treat as corroborating evidence, not primary source. Cite channel names (not URLs) when referencing. If absent or `lead_indicators` is empty, note signal absence — do not fabricate.
+6. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
 6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
 7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
 8. `output/regional/{region_lower}/research_scratchpad.json` (if present — live mode only)
