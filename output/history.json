@@ -1,0 +1,316 @@
+{
+  "generated_at": "2026-03-17T07:33:31Z",
+  "run_count": 6,
+  "regions": {
+    "APAC": [
+      {
+        "timestamp": "2026-03-09T12:50:38Z",
+        "pipeline_id": "crq-2026-03-09T125038Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-09T15:10:24Z",
+        "pipeline_id": "crq-2026-03-09T151024Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-13T12:04:53Z",
+        "pipeline_id": "crq-2026-03-13T120453Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-14T09:41:30Z",
+        "pipeline_id": "crq-2026-03-14T094130Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-15T19:10:48Z",
+        "pipeline_id": "crq-2026-03-15T191048Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Cyber"
+      },
+      {
+        "timestamp": "2026-03-16T17:12:49Z",
+        "pipeline_id": "crq-2026-03-16T171249Z",
+        "severity": "HIGH",
+        "vacr_usd": 18500000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      }
+    ],
+    "AME": [
+      {
+        "timestamp": "2026-03-09T12:50:38Z",
+        "pipeline_id": "crq-2026-03-09T125038Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-09T15:10:24Z",
+        "pipeline_id": "crq-2026-03-09T151024Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-13T12:04:53Z",
+        "pipeline_id": "crq-2026-03-13T120453Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-14T09:41:30Z",
+        "pipeline_id": "crq-2026-03-14T094130Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "B1",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-15T19:10:48Z",
+        "pipeline_id": "crq-2026-03-15T191048Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "B1",
+        "velocity": "stable",
+        "dominant_pillar": "Cyber"
+      },
+      {
+        "timestamp": "2026-03-16T17:12:49Z",
+        "pipeline_id": "crq-2026-03-16T171249Z",
+        "severity": "CRITICAL",
+        "vacr_usd": 22000000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Cyber"
+      }
+    ],
+    "LATAM": [
+      {
+        "timestamp": "2026-03-09T12:50:38Z",
+        "pipeline_id": "crq-2026-03-09T125038Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-09T15:10:24Z",
+        "pipeline_id": "crq-2026-03-09T151024Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-13T12:04:53Z",
+        "pipeline_id": "crq-2026-03-13T120453Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "C3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-14T09:41:30Z",
+        "pipeline_id": "crq-2026-03-14T094130Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "C3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-15T19:10:48Z",
+        "pipeline_id": "crq-2026-03-15T191048Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "C3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-16T17:12:49Z",
+        "pipeline_id": "crq-2026-03-16T171249Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "E5",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      }
+    ],
+    "MED": [
+      {
+        "timestamp": "2026-03-09T12:50:38Z",
+        "pipeline_id": "crq-2026-03-09T125038Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-09T15:10:24Z",
+        "pipeline_id": "crq-2026-03-09T151024Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-13T12:04:53Z",
+        "pipeline_id": "crq-2026-03-13T120453Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-14T09:41:30Z",
+        "pipeline_id": "crq-2026-03-14T094130Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-15T19:10:48Z",
+        "pipeline_id": "crq-2026-03-15T191048Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Cyber"
+      },
+      {
+        "timestamp": "2026-03-16T17:12:49Z",
+        "pipeline_id": "crq-2026-03-16T171249Z",
+        "severity": "MEDIUM",
+        "vacr_usd": 4200000,
+        "status": "escalated",
+        "admiralty": "B2",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      }
+    ],
+    "NCE": [
+      {
+        "timestamp": "2026-03-09T12:50:38Z",
+        "pipeline_id": "crq-2026-03-09T125038Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-09T15:10:24Z",
+        "pipeline_id": "crq-2026-03-09T151024Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "",
+        "velocity": "",
+        "dominant_pillar": ""
+      },
+      {
+        "timestamp": "2026-03-13T12:04:53Z",
+        "pipeline_id": "crq-2026-03-13T120453Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "B3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-14T09:41:30Z",
+        "pipeline_id": "crq-2026-03-14T094130Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "B3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-15T19:10:48Z",
+        "pipeline_id": "crq-2026-03-15T191048Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "B3",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      },
+      {
+        "timestamp": "2026-03-16T17:12:49Z",
+        "pipeline_id": "crq-2026-03-16T171249Z",
+        "severity": "LOW",
+        "vacr_usd": 0,
+        "status": "clear",
+        "admiralty": "E5",
+        "velocity": "stable",
+        "dominant_pillar": "Geopolitical"
+      }
+    ]
+  }
+}

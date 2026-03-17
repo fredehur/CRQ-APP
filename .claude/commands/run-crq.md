@@ -152,5 +152,7 @@ Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the m
 
 Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
 
+Run: `uv run python tools/build_history.py`
+
 Run: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "AeroGrid CRQ Pipeline complete — all outputs generated"`
 List all files in `output/latest/` recursively and confirm pipeline success.
