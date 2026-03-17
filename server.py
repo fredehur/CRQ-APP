@@ -383,102 +383,44 @@ async def _emit(event: str, data: dict):
     await event_queue.put({"event": event, "data": json.dumps(data)})
 
 
-async def _run_tools_mode(regions: list[str], window: str = "7d"):
-    """Drive layer: tools-only mode — runs Python scripts directly."""
-    pipeline_state.update(running=True, phase="gatekeeper", regions_pending=list(regions), regions_done=[], started_at=time.time())
-    await _emit("pipeline", {"status": "started", "regions": regions})
-
-    try:
-        # Phase 1-2: Gatekeeper + regional analysis
-        for r in regions:
-            await _emit("phase", {"phase": "gatekeeper", "region": r})
-            await _run("regional_search.py", r, "--mock")
-            await _run("threat_scorer.py", r)
-
-            # Read the feed to determine gatekeeper decision
-            TOP_4_SCENARIOS = {"Ransomware", "Accidental disclosure", "System intrusion", "Insider misuse"}
-            feed = _read_json(BASE / "data" / "mock_threat_feeds" / f"{r.lower()}_feed.json")
-            active = feed.get("active_threats", False) if feed else False
-            severity = feed.get("severity", "LOW") if feed else "LOW"
-            scenario = feed.get("primary_scenario", "None") if feed else "None"
-
-            if not active:
-                status = "clear"
-                decision = "CLEAR"
-            elif scenario in TOP_4_SCENARIOS:
-                status = "escalated"
-                decision = "ESCALATE"
-            else:
-                status = "monitor"
-                decision = "MONITOR"
-
-            await _emit("gatekeeper", {"region": r, "decision": decision, "severity": severity})
-
-            # Write data.json
-            await _run("write_region_data.py", r, status)
-
-            # Log gatekeeper event
-            event_type = "GATEKEEPER_YES" if status == "escalated" else "GATEKEEPER_NO"
-            msg = f"{r} — {decision.lower()}: {scenario}"
-            await _run("audit_logger.py", event_type, msg)
-
-            pipeline_state["regions_done"].append(r)
-            pipeline_state["regions_pending"] = [x for x in pipeline_state["regions_pending"] if x != r]
-
-        await _emit("phase", {"phase": "gatekeeper", "status": "complete"})
-
-        # Phase 2: Velocity analysis
-        pipeline_state["phase"] = "trend"
-        await _emit("phase", {"phase": "trend", "status": "running"})
-        await _run("trend_analyzer.py")
-        await _emit("phase", {"phase": "trend", "status": "complete"})
-
-        # Phase 3: Cross-regional diff
-        pipeline_state["phase"] = "diff"
-        await _emit("phase", {"phase": "diff", "status": "running"})
-        await _run("report_differ.py")
-        await _emit("phase", {"phase": "diff", "status": "complete"})
-
-        # Phase 4: Write manifest
-        pipeline_state["phase"] = "manifest"
-        await _run("write_manifest.py", "--window", window)
-
-        # Phase 5: Build dashboard
-        pipeline_state["phase"] = "dashboard"
-        await _emit("phase", {"phase": "dashboard", "status": "running"})
-        await _run("build_dashboard.py")
-        await _emit("phase", {"phase": "dashboard", "status": "complete"})
-
-        pipeline_state["phase"] = "complete"
-        await _emit("pipeline", {"status": "complete"})
-
-    except Exception as exc:
-        log.exception("Pipeline failed")
-        await _emit("pipeline", {"status": "error", "message": str(exc)})
-    finally:
-        pipeline_state.update(running=False)
-
-
 async def _run_full_mode(regions: list[str], window: str = "7d"):
-    """Drive layer: full mode — shells out to claude CLI for real LLM analysis.
-    window is accepted for API consistency but not yet passed to claude CLI
-    (full-mode window support is deferred to a future plan).
-    """
+    """Drive layer: full mode — shells out to claude CLI for real LLM analysis."""
     pipeline_state.update(running=True, phase="running", regions_pending=list(regions), regions_done=[], started_at=time.time())
     await _emit("pipeline", {"status": "started", "mode": "full", "regions": regions})
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "claude", "-p", "/run-crq",
+            "claude", "-p", f"/run-crq --window {window}",
             cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
         )
 
-        # Stream stdout lines as log events
+        # Stream stdout lines as log events, parsing structured markers
         async def stream_with_timeout():
             async for line in proc.stdout:
                 text = line.decode(errors="replace").strip()
-                if text:
-                    await _emit("log", {"message": text})
+                if not text:
+                    continue
+                # Emit raw log for all lines
+                await _emit("log", {"line": text})
+                # Parse structured events from known output patterns
+                # GATEKEEPER: lines like "APAC — ESCALATE (B2, HIGH, ...)"  or  "`APAC — CLEAR`"
+                import re
+                gk = re.search(r'`?([A-Z]{2,5})\s*[—-]+\s*(ESCALATE|MONITOR|CLEAR)', text)
+                if gk:
+                    region, decision = gk.group(1), gk.group(2)
+                    await _emit("gatekeeper", {"region": region, "decision": decision})
+                    if decision in ("ESCALATE", "MONITOR", "CLEAR"):
+                        rd = pipeline_state["regions_done"]
+                        if region not in rd:
+                            rd.append(region)
+                        pending = pipeline_state["regions_pending"]
+                        if region in pending:
+                            pipeline_state["regions_pending"] = [x for x in pending if x != region]
+                    continue
+                # PHASE markers: lines like "PIPELINE_START", "PHASE_COMPLETE", "PIPELINE_COMPLETE"
+                phase = re.search(r'\[(PIPELINE_START|PIPELINE_COMPLETE|PHASE_COMPLETE|GATEKEEPER_YES|GATEKEEPER_NO|HOOK_PASS|HOOK_FAIL)\]', text)
+                if phase:
+                    await _emit("phase", {"phase": phase.group(1), "message": text})
             await proc.wait()
 
         try:
@@ -501,20 +443,17 @@ async def _run_full_mode(regions: list[str], window: str = "7d"):
 
 @app.post("/api/run/all")
 async def run_all(
-    mode: str = Query(default="tools"),
     window: Literal["1d", "7d", "30d", "90d"] = Query(default="7d"),
 ):
     if pipeline_state["running"]:
         return JSONResponse({"error": "Pipeline already running"}, status_code=409)
-    driver = _run_full_mode if mode == "full" else _run_tools_mode
-    asyncio.create_task(driver(REGIONS, window=window))
-    return {"started": True, "mode": mode, "regions": REGIONS, "window": window}
+    asyncio.create_task(_run_full_mode(REGIONS, window=window))
+    return {"started": True, "regions": REGIONS, "window": window}
 
 
 @app.post("/api/run/region/{region}")
 async def run_region(
     region: str,
-    mode: str = Query(default="tools"),
     window: Literal["1d", "7d", "30d", "90d"] = Query(default="7d"),
 ):
     r = region.upper()
@@ -522,9 +461,8 @@ async def run_region(
         return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
     if pipeline_state["running"]:
         return JSONResponse({"error": "Pipeline already running"}, status_code=409)
-    driver = _run_full_mode if mode == "full" else _run_tools_mode
-    asyncio.create_task(driver([r], window=window))
-    return {"started": True, "mode": mode, "regions": [r], "window": window}
+    asyncio.create_task(_run_full_mode([r], window=window))
+    return {"started": True, "regions": [r], "window": window}
 
 
 # ── SSE Stream ───────────────────────────────────────────────────────────

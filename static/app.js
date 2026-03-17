@@ -571,7 +571,7 @@ async function runAll() {
   showConsole();
   _consoleEverStarted = true;
   try {
-    const r = await fetch(`/api/run/all?mode=tools&window=${windowVal}`, { method: 'POST' });
+    const r = await fetch(`/api/run/all?window=${windowVal}`, { method: 'POST' });
     if (!r.ok) {
       const err = await r.json().catch(() => ({}));
       $('pipeline-status').textContent = err.error || 'Run failed';
@@ -635,7 +635,8 @@ function startEventStream() {
   });
   es.addEventListener('log', e => {
     const d = JSON.parse(e.data);
-    appendConsoleEntry(`<span style="color:#6e7681;font-size:9px">${esc(d.line||'')}</span>`);
+    const text = d.line || d.message || '';
+    if (text) appendConsoleEntry(`<span style="color:#6e7681;font-size:9px">${esc(text)}</span>`);
   });
   es.addEventListener('deep_research', e => {
     const d = JSON.parse(e.data);
