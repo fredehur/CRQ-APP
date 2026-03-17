@@ -17,8 +17,6 @@ This pipeline was built to address all three. It runs on demand across all five 
 
 ## The Last Run at a Glance
 
-Pipeline run: **2026-03-16** | Total combined VaCR exposure: **$44,700,000**
-
 | Region | Status | Severity | VaCR Exposure | Dominant Pillar | Admiralty |
 |---|---|---|---|---|---|
 | AME (North America) | Escalated | CRITICAL | $22,000,000 | Cyber | B2 |
@@ -26,6 +24,8 @@ Pipeline run: **2026-03-16** | Total combined VaCR exposure: **$44,700,000**
 | MED (Mediterranean) | Escalated | MEDIUM | $4,200,000 | Geopolitical | B2 |
 | LATAM | Clear | LOW | $0 | Geopolitical | C3 |
 | NCE (N. & Central Europe) | Clear | LOW | $0 | Geopolitical | C3 |
+
+> *$0 for CLEAR regions reflects no active scenario trigger — not a data gap.*
 
 **Three regions escalated simultaneously** — and the most significant finding from this run is not the individual regional exposures but what the synthesis layer identified across them: all three escalated threats, despite originating from different actors using different methods (state-directed collection in APAC, financially motivated extortion in AME, insider access abuse in MED), independently target the same crown jewel asset class — turbine operational technology, predictive maintenance systems, and proprietary manufacturing IP. This is a compound risk posture, not three isolated incidents. No individual regional assessment would have surfaced it.
 
@@ -107,7 +107,7 @@ The gatekeeper also assigns an Admiralty rating to each decision, which propagat
 
 ### Regional Analyst Agent — Intelligence Writing
 
-For escalated regions, a dedicated analytical agent writes the three-pillar brief. It reads geo signals, cyber signals, open-source video intelligence, and the empirical master scenario register — then makes the authoritative determination of which scenario type best fits the evidence.
+For escalated regions, a dedicated analytical agent writes the three-pillar brief. It reads geopolitical signals, cyber signals, open-source video briefings from institutions such as the Council on Foreign Relations and the International Institute for Strategic Studies, and the empirical master scenario register — then makes the authoritative determination of which scenario type best fits the evidence.
 
 The scenario determination is owned by this agent, not by keyword matching. An automated keyword scorer provides an initial hint, but the analyst validates that hint against the empirical register and overrides it if the evidence warrants. This is the quality gate that prevents low-fidelity pattern matching from reaching the board.
 
@@ -141,7 +141,7 @@ This convergence is only visible when all five regions are assessed in the same 
 
 Every pipeline run produces a full audit trace — a timestamped log of every agent decision, every quality gate result, and every rewrite event. Intelligence quality is not a function of who ran the pipeline that day or how carefully they applied the methodology. The same signals, run through the same pipeline, produce the same calibrated output. Every quality gate outcome is logged and reviewable.
 
-This matters for governance. When a board asks "how confident are we in this assessment?", the answer is not "it depends on the analyst." The answer is a logged Admiralty rating, a documented quality gate pass, and a rewrite count that shows the report met the jargon-free standard on the first or second attempt.
+This matters for governance. When a board asks "how confident are we in this assessment?", the answer is not "it depends on the analyst." The answer is a logged Admiralty rating, a documented quality gate pass, and a rewrite log that shows the report met the jargon-free standard — with a circuit-breaker that flags persistent failures for human review.
 
 ---
 
