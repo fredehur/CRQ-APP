@@ -171,6 +171,102 @@ async def get_pptx():
     )
 
 
+# ── API: Config ───────────────────────────────────────────────────────
+def _write_json_atomic(path: Path, data) -> None:
+    """Write JSON atomically via tmp file + os.replace."""
+    import os
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+    os.replace(tmp, path)
+
+
+@app.get("/api/config/topics")
+async def get_topics():
+    path = BASE / "data" / "osint_topics.json"   # inline — do not extract to module constant
+    raw = path.read_text(encoding="utf-8") if path.exists() else "[]"
+    return json.loads(raw)
+
+
+@app.post("/api/config/topics")
+async def post_topics(body: dict):
+    topics = body.get("topics")
+    if not isinstance(topics, list):
+        return JSONResponse({"error": "topics must be an array"}, status_code=400)
+    _write_json_atomic(BASE / "data" / "osint_topics.json", topics)
+    return {"ok": True}
+
+
+@app.get("/api/config/sources")
+async def get_sources():
+    path = BASE / "data" / "youtube_sources.json"
+    if not path.exists():
+        return []
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.post("/api/config/sources")
+async def post_sources(body: dict):
+    sources = body.get("sources")
+    if not isinstance(sources, list):
+        return JSONResponse({"error": "sources must be an array"}, status_code=400)
+    _write_json_atomic(BASE / "data" / "youtube_sources.json", sources)
+    return {"ok": True}
+
+
+def _parse_agent_md(path: Path) -> dict:
+    """Split agent .md into frontmatter object + body string."""
+    import re
+    content = path.read_text(encoding="utf-8")
+    # Match --- block at start of file
+    m = re.match(r"^---\n(.*?)\n---\n?(.*)", content, re.DOTALL)
+    if not m:
+        return {"frontmatter": {}, "body": content, "_frontmatter_raw": ""}
+    fm_raw = m.group(1)
+    body = m.group(2)
+    # Parse YAML frontmatter keys into dict (simple key: value, no nested support needed)
+    fm = {}
+    for line in fm_raw.splitlines():
+        if ":" in line:
+            k, _, v = line.partition(":")
+            fm[k.strip()] = v.strip()
+    return {"frontmatter": fm, "body": body, "_frontmatter_raw": fm_raw}
+
+
+def _get_agent_allowlist() -> list[str]:
+    """Return sorted list of agent stems from .claude/agents/*.md"""
+    agents_dir = BASE / ".claude" / "agents"
+    if not agents_dir.exists():
+        return []
+    return sorted(p.stem for p in agents_dir.glob("*.md"))
+
+
+@app.get("/api/config/prompts")
+async def get_prompts():
+    agents = []
+    for stem in _get_agent_allowlist():
+        path = BASE / ".claude" / "agents" / f"{stem}.md"
+        parsed = _parse_agent_md(path)
+        agents.append({"agent": stem, "frontmatter": parsed["frontmatter"], "body": parsed["body"]})
+    return agents
+
+
+@app.post("/api/config/prompts/{agent}")
+async def post_prompt(agent: str, body: dict):
+    import os
+    allowlist = _get_agent_allowlist()
+    if agent not in allowlist:
+        return JSONResponse({"error": f"Unknown agent: {agent}"}, status_code=400)
+    new_body = body.get("body", "")
+    path = BASE / ".claude" / "agents" / f"{agent}.md"
+    parsed = _parse_agent_md(path)
+    # Reconstruct file: original frontmatter block preserved verbatim
+    new_content = f"---\n{parsed['_frontmatter_raw']}\n---\n{new_body}"
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(new_content, encoding="utf-8")
+    os.replace(tmp, path)
+    return {"ok": True}
+
+
 # ── API: Run Pipeline ────────────────────────────────────────────────────
 async def _emit(event: str, data: dict):
     """Push a structured SSE event. Drops oldest if queue is full."""
