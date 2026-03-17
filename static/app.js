@@ -354,10 +354,10 @@ function renderBriefSection(region, d) {
 
   return `
 <div class="brief-section">
-  <div class="brief-header" onclick="toggleBrief('${region}')">
-    <span style="letter-spacing:.5px">${label}</span>
+  <button onclick="toggleBrief('${region}')" style="background:${isExpanded ? '#21262d' : 'transparent'};border:1px solid #30363d;color:#e6edf3;font-size:10px;font-family:inherit;letter-spacing:.5px;padding:4px 10px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:${isExpanded ? '8px' : '0'}">
     <span>${isExpanded ? '▼' : '▶'}</span>
-  </div>
+    <span>${label}</span>
+  </button>
   ${isExpanded ? `<div class="${contentId} brief-content" id="${contentId}">Loading...</div>` : ''}
 </div>`;
 }
