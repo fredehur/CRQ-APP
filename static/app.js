@@ -30,6 +30,7 @@ let state = {
   activeTab: 'overview',
   expandedClusters: new Set(),
   expandedBriefs: new Set(),
+  feedbackByRegion: {},   // { [region]: {rating, note, submitted_at} }
 };
 
 // Agent console state
@@ -112,6 +113,9 @@ async function loadLatestData() {
       state.regionClusters[r] = clusters;
     }));
   }
+
+  // Load feedback for current run
+  await loadFeedback();
 
   // Default selected region: highest total_signals, tie-break by severity
   if (!state.selectedRegion) {
@@ -279,13 +283,17 @@ function renderRightPanel() {
 
   const briefSection = renderBriefSection(r, d);
 
+  const feedbackHtml = `<div class="feedback-section" id="feedback-section-${r}"></div>`;
+
   if (!c || !c.clusters || c.clusters.length === 0) {
-    body.innerHTML = contextStrip + briefSection + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
+    body.innerHTML = contextStrip + briefSection + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>` + feedbackHtml;
+    renderFeedbackUI(r);
     return;
   }
 
   const clusterHtml = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
-  body.innerHTML = contextStrip + briefSection + clusterHtml;
+  body.innerHTML = contextStrip + briefSection + clusterHtml + feedbackHtml;
+  renderFeedbackUI(r);
 }
 
 function renderClusterCard(region, cl, i) {
@@ -363,10 +371,10 @@ function toggleBrief(region) {
     renderRightPanel();
     // Fetch report.md after render
     fetch(`/api/region/${region}/report`)
-      .then(r => r.text())
-      .then(text => {
+      .then(r => r.json())
+      .then(data => {
         const el = document.getElementById(`brief-content-${region}`);
-        if (el) el.textContent = text;
+        if (el) el.textContent = data.report || 'Brief not available.';
       })
       .catch(() => {
         const el = document.getElementById(`brief-content-${region}`);
@@ -381,6 +389,101 @@ function selectRegion(r) {
   state.expandedBriefs.clear();
   renderLeftPanel();
   renderRightPanel();
+}
+
+// ── Section 6b: Feedback Rating UI ────────────────────────────────────
+async function loadFeedback() {
+  state.feedbackByRegion = {};
+  const runId = state.manifest?.pipeline_id;
+  if (!runId) return;
+  const entries = await fetchJSON(`/api/feedback/${encodeURIComponent(runId)}`);
+  if (!entries || !Array.isArray(entries)) return;
+  // Keep only the latest entry per region
+  entries.forEach(e => {
+    if (e.region) {
+      state.feedbackByRegion[e.region] = {
+        rating: e.rating,
+        note: e.note || '',
+        submitted_at: e.submitted_at || e.timestamp,
+      };
+    }
+  });
+}
+
+async function submitFeedback(region, rating, note) {
+  const runId = state.manifest?.pipeline_id;
+  if (!runId) return;
+  try {
+    const r = await fetch(`/api/feedback/${encodeURIComponent(runId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ region, rating, note: note || '' }),
+    });
+    if (!r.ok) return;
+    state.feedbackByRegion[region] = {
+      rating,
+      note: note || '',
+      submitted_at: new Date().toISOString(),
+    };
+    renderFeedbackUI(region);
+    showToast('Saved');
+  } catch (_) {}
+}
+
+function renderFeedbackUI(region) {
+  const container = $(`feedback-section-${region}`);
+  if (!container) return;
+
+  const runId = state.manifest?.pipeline_id;
+  if (!runId) { container.innerHTML = ''; return; }
+
+  const existing = state.feedbackByRegion[region];
+  const selectedRating = existing?.rating || null;
+
+  const ratings = [
+    { value: 'accurate',       label: 'Accurate',       icon: '&#10003;' },
+    { value: 'overstated',     label: 'Overstated',     icon: '&#8593;' },
+    { value: 'understated',    label: 'Understated',     icon: '&#8595;' },
+    { value: 'false_positive', label: 'False positive',  icon: '&#10007;' },
+  ];
+
+  const btnsHtml = ratings.map(r =>
+    `<button class="feedback-btn${selectedRating === r.value ? ' selected' : ''}"
+       onclick="selectFeedbackRating('${region}','${r.value}')"
+       data-rating="${r.value}">${r.icon} ${r.label}</button>`
+  ).join('');
+
+  const noteVal = existing?.note || '';
+  const statusHtml = existing?.submitted_at
+    ? `<div class="feedback-status">Last submitted: ${esc(existing.rating)} ${existing.submitted_at ? relTime(existing.submitted_at) : ''}</div>`
+    : '';
+
+  container.innerHTML = `
+    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Rate this assessment</div>
+    <div class="feedback-btns">${btnsHtml}</div>
+    <textarea class="feedback-note" id="feedback-note-${region}" placeholder="Optional note...">${esc(noteVal)}</textarea>
+    <button class="feedback-submit" onclick="doSubmitFeedback('${region}')">Submit</button>
+    ${statusHtml}`;
+}
+
+function selectFeedbackRating(region, rating) {
+  // Toggle selection in UI
+  const container = $(`feedback-section-${region}`);
+  if (!container) return;
+  container.querySelectorAll('.feedback-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.rating === rating);
+  });
+  container.dataset.selectedRating = rating;
+}
+
+function doSubmitFeedback(region) {
+  const container = $(`feedback-section-${region}`);
+  if (!container) return;
+  const rating = container.dataset.selectedRating || state.feedbackByRegion[region]?.rating;
+  if (!rating) { showToast('Select a rating first'); return; }
+  const noteEl = $(`feedback-note-${region}`);
+  const note = noteEl ? noteEl.value.trim() : '';
+  submitFeedback(region, rating, note);
 }
 
 // ── Section 7: Render — Reports + History ─────────────────────────────
