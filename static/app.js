@@ -645,6 +645,9 @@ const cfgState = {
   dirty: { topics: false, sources: false, prompt: false },
   pendingNavAction: null,
   loaded: false,
+  footprintLoaded: false,
+  footprintData: {},
+  footprintDirty: {},
 };
 
 function switchTab(tab) {
@@ -764,8 +767,10 @@ function closePanel() {
 function switchCfgTab(tab) {
   const leavingSources = $('cfg-tab-sources') && $('cfg-tab-sources').style.display !== 'none';
   const leavingPrompts = $('cfg-tab-prompts') && $('cfg-tab-prompts').style.display !== 'none';
+  const leavingFootprint = $('cfg-tab-footprint') && $('cfg-tab-footprint').style.display !== 'none';
   const isDirty = (leavingSources && (cfgState.dirty.topics || cfgState.dirty.sources)) ||
-                  (leavingPrompts && cfgState.dirty.prompt);
+                  (leavingPrompts && cfgState.dirty.prompt) ||
+                  (leavingFootprint && Object.values(cfgState.footprintDirty).some(Boolean));
   if (isDirty) {
     showUnsavedModal(() => _doSwitchCfgTab(tab));
     return;
@@ -774,10 +779,13 @@ function switchCfgTab(tab) {
 }
 
 function _doSwitchCfgTab(tab) {
-  ['sources','prompts'].forEach(t => {
-    $(`cfg-tab-${t}`).style.display = t === tab ? (t === 'sources' ? 'grid' : 'flex') : 'none';
+  ['sources','footprint','prompts'].forEach(t => {
+    const el = $(`cfg-tab-${t}`);
+    if (!el) return;
+    el.style.display = t === tab ? (t === 'sources' ? 'grid' : t === 'prompts' ? 'flex' : 'block') : 'none';
     $(`cfg-nav-${t}`).classList.toggle('active', t === tab);
   });
+  if (tab === 'footprint') loadFootprint();
 }
 
 async function loadConfigTab() {
@@ -798,6 +806,89 @@ async function loadConfigTab() {
   renderSourcesTable();
   renderPromptsPanel();
   loadSuggestions(); // async, non-blocking
+}
+
+// ── Footprint panel ────────────────────────────────────────────────────
+
+async function loadFootprint() {
+  if (cfgState.footprintLoaded) { renderFootprint(); return; }
+  const data = await fetch('/api/footprint').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  cfgState.footprintData = data;
+  cfgState.footprintDirty = {};
+  cfgState.footprintLoaded = true;
+  renderFootprint();
+}
+
+function renderFootprint() {
+  const container = $('footprint-panels');
+  if (!container) return;
+  const regions = ['APAC', 'AME', 'LATAM', 'MED', 'NCE'];
+  container.innerHTML = regions.map(region => {
+    const d = cfgState.footprintData[region] || {};
+    const rsm = (d.stakeholders || []).find(s => s.role === `${region} RSM`) || {};
+    const isDirty = cfgState.footprintDirty[region];
+    return `
+<div class="fp-region${isDirty ? ' fp-dirty' : ''}" id="fp-card-${region}">
+  <div class="fp-region-header" onclick="toggleFpRegion('${region}')">
+    <span>${region}</span>
+    <span style="font-size:9px;text-transform:none;letter-spacing:0;color:#6e7681;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.summary || 'No data')}</span>
+    <span>▾</span>
+  </div>
+  <div class="fp-region-body" id="fp-body-${region}">
+    <div class="fp-field">
+      <label>Summary</label>
+      <input type="text" id="fp-summary-${region}" value="${esc(d.summary || '')}" oninput="markFpDirty('${region}')">
+    </div>
+    <div class="fp-field">
+      <label>Headcount</label>
+      <input type="number" id="fp-headcount-${region}" value="${d.headcount || ''}" oninput="markFpDirty('${region}')">
+    </div>
+    <div class="fp-field">
+      <label>RSM Email</label>
+      <input type="text" id="fp-rsm-${region}" value="${esc(rsm.email || '')}" oninput="markFpDirty('${region}')">
+    </div>
+    <div class="fp-field">
+      <label>Notes (sites, contracts, crown jewels — freetext)</label>
+      <textarea id="fp-notes-${region}" oninput="markFpDirty('${region}')">${esc(d.notes || '')}</textarea>
+    </div>
+    <div style="text-align:right;margin-top:8px">
+      <button class="fp-save-btn" onclick="saveFpRegion('${region}')">Save</button>
+    </div>
+  </div>
+</div>`;
+  }).join('');
+}
+
+function toggleFpRegion(region) {
+  const body = $(`fp-body-${region}`);
+  if (body) body.classList.toggle('open');
+}
+
+function markFpDirty(region) {
+  cfgState.footprintDirty[region] = true;
+  const card = $(`fp-card-${region}`);
+  if (card) card.classList.add('fp-dirty');
+}
+
+async function saveFpRegion(region) {
+  const payload = {
+    summary:   $(`fp-summary-${region}`)?.value || '',
+    headcount: parseInt($(`fp-headcount-${region}`)?.value || '0', 10),
+    rsm_email: $(`fp-rsm-${region}`)?.value || '',
+    notes:     $(`fp-notes-${region}`)?.value || '',
+  };
+  const r = await fetch(`/api/footprint/${region}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (r.ok) {
+    cfgState.footprintDirty[region] = false;
+    cfgState.footprintLoaded = false;
+    await loadFootprint();
+  } else {
+    alert(`Save failed for ${region}: ${r.status}`);
+  }
 }
 
 function markDirty(panel) {

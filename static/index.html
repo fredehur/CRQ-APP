@@ -235,6 +235,20 @@
     .sparkline-container { display: inline-block; }
     .history-meta { font-size: 10px; color: #8b949e; margin-top: 6px; }
 
+    /* Footprint panel */
+    .fp-region { border: 1px solid #21262d; border-radius: 4px; margin-bottom: 10px; }
+    .fp-region-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; cursor: pointer; background: #161b22; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #8b949e; user-select: none; }
+    .fp-region-header:hover { color: #c9d1d9; }
+    .fp-region-body { padding: 12px; display: none; }
+    .fp-region-body.open { display: block; }
+    .fp-field { margin-bottom: 8px; }
+    .fp-field label { display: block; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: #6e7681; margin-bottom: 3px; }
+    .fp-field input, .fp-field textarea { width: 100%; background: #0d1117; border: 1px solid #21262d; color: #c9d1d9; padding: 4px 8px; border-radius: 2px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; box-sizing: border-box; }
+    .fp-field textarea { resize: vertical; min-height: 60px; }
+    .fp-save-btn { font-size: 10px; color: #6e7681; background: #0d1117; border: 1px solid #21262d; padding: 2px 10px; border-radius: 2px; cursor: pointer; }
+    .fp-save-btn:hover { color: #c9d1d9; border-color: #58a6ff; }
+    .fp-dirty .fp-region-header { color: #e3b341; }
+
     /* Run button */
     #btn-run-all {
       background: #1a3a1a; border: 1px solid #238636; color: #3fb950;
@@ -380,6 +394,7 @@
 <div id="tab-config" class="hidden" style="height:calc(100vh - 36px);flex-direction:column;overflow:hidden">
   <div style="display:flex;border-bottom:1px solid #21262d;flex-shrink:0;padding:0 16px">
     <div class="nav-tab active" id="cfg-nav-sources" onclick="switchCfgTab('sources')">Intelligence Sources</div>
+    <div class="nav-tab" id="cfg-nav-footprint" onclick="switchCfgTab('footprint')">Footprint</div>
     <div class="nav-tab" id="cfg-nav-prompts" onclick="switchCfgTab('prompts')">Prompts</div>
   </div>
   <!-- Intelligence Sources sub-tab -->
@@ -450,6 +465,10 @@
         <div id="sources-suggestions-body" style="font-size:11px;color:#6e7681">No suggestions yet — run the pipeline to generate.</div>
       </div>
     </div>
+  </div>
+  <!-- Footprint sub-tab -->
+  <div id="cfg-tab-footprint" style="display:none;flex:1;overflow-y:auto;padding:16px 20px">
+    <div id="footprint-panels"></div>
   </div>
   <!-- Prompts sub-tab -->
   <div id="cfg-tab-prompts" style="display:none;flex:1;flex-direction:column;overflow:hidden">
