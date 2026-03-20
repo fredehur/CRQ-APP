@@ -1,0 +1,19 @@
+{
+  "region": "NCE",
+  "window_days": 7,
+  "pulse": {
+    "score": 81,
+    "score_prev": 81,
+    "delta": 0,
+    "security_risk": "Low",
+    "political_risk": "Low",
+    "sub_categories": {
+      "civil_unrest": "Low",
+      "organized_crime": "Low",
+      "border_tension": "Low"
+    }
+  },
+  "events": [],
+  "hotspots": [],
+  "collected_at": "2026-03-20T09:34:10Z"
+}
