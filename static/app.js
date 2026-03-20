@@ -255,7 +255,8 @@ function renderRightPanel() {
   $('right-run-ts').textContent = d.timestamp ? fmtTime(d.timestamp) : '';
 
   // Body
-  $('right-empty-state').style.display = 'none';
+  const _emptyState = $('right-empty-state');
+  if (_emptyState) _emptyState.style.display = 'none';
   const body = $('right-panel-body');
 
   if (!d.region && !c) {
