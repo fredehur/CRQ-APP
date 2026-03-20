@@ -122,6 +122,51 @@ async def get_history():
     return {"regions": {r: [] for r in REGIONS}, "drift": {}, "generated_at": None}
 
 
+@app.get("/api/footprint")
+async def get_footprint():
+    """Return full regional_footprint.json."""
+    path = Path("data/regional_footprint.json")
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
+@app.put("/api/footprint/{region}")
+async def update_footprint(region: str, body: dict):
+    """Update four editable fields for one region. Atomic write."""
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+
+    path = Path("data/regional_footprint.json")
+    if not path.exists():
+        return JSONResponse({"error": "regional_footprint.json not found"}, status_code=500)
+
+    footprint = json.loads(path.read_text(encoding="utf-8"))
+
+    if r not in footprint:
+        return JSONResponse({"error": f"Region {r} not in footprint file"}, status_code=404)
+
+    entry = footprint[r]
+    if "summary" in body:
+        entry["summary"] = body["summary"]
+    if "headcount" in body:
+        entry["headcount"] = int(body["headcount"])
+    if "notes" in body:
+        entry["notes"] = body["notes"]
+    if "rsm_email" in body:
+        rsm_role = f"{r} RSM"
+        for stakeholder in entry.get("stakeholders", []):
+            if stakeholder.get("role") == rsm_role:
+                stakeholder["email"] = body["rsm_email"]
+                break
+
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps(footprint, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(path)
+    return {"ok": True}
+
+
 @app.get("/api/trace")
 async def get_trace():
     path = OUTPUT / "system_trace.log"
