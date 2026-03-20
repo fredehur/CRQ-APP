@@ -54,6 +54,14 @@ uv run python tools/trend_analyzer.py                             # Compute velo
 uv run python tools/build_dashboard.py                            # Build HTML dashboard + MD export from JSON
 uv run python tools/export_pdf.py [out.pdf]                       # Export board PDF (Playwright + Jinja2); defaults to output/board_report.pdf
 uv run python tools/export_pptx.py [out.pptx]                     # Export board PPTX (python-pptx); defaults to output/board_report.pptx
+uv run python tools/seerist_collector.py <REGION> [--mock] [--window 7d]     # Collect Seerist signals → output/regional/{region}/seerist_signals.json
+uv run python tools/delta_computer.py <REGION>                                # Diff current vs previous Seerist signals → region_delta.json
+uv run python tools/threshold_evaluator.py [--force-weekly] [--check-flash]  # Evaluate audience routing → output/routing_decisions.json
+uv run python tools/rsm_dispatcher.py --weekly --mock                         # Generate + deliver weekly INTSUM for all RSMs (mock mode)
+uv run python tools/rsm_dispatcher.py --check-flash --mock                    # Evaluate + dispatch flash alerts (mock mode)
+uv run python tools/notifier.py output/routing_decisions.json [--mock]        # Deliver briefs per routing decisions → delivery_log.jsonl
+uv run python tools/scheduler.py --once                                       # Run all due scheduler jobs once
+uv run python tools/scheduler.py --list                                       # List jobs and last-run times
 
 # Validate the CRQ database schema
 uv run python .claude/hooks/validators/crq-schema-validator.py data/mock_crq_database.json

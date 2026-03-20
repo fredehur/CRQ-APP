@@ -202,3 +202,13 @@ Run: `uv run python tools/build_history.py`
 
 Run: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "AeroGrid CRQ Pipeline complete — all outputs generated"`
 List all files in `output/latest/` recursively and confirm pipeline success.
+
+## PHASE 7 — RSM BRIEFS (OPTIONAL)
+
+If `--rsm` flag is present in invocation arguments:
+
+Run: `uv run python tools/rsm_dispatcher.py --weekly --mock`
+
+This generates RSM weekly INTSUMs using the Seerist signal files already collected in Phase 1. If `SEERIST_API_KEY` is set, the seerist_collector will have run in live mode; otherwise mock fixtures are used.
+
+Log: `uv run python tools/audit_logger.py PHASE_COMPLETE "RSM briefs generated and delivered"`
