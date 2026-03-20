@@ -1,0 +1,15 @@
+{
+  "region": "LATAM",
+  "window_days": 7,
+  "pulse": {
+    "score": 63,
+    "score_prev": 63,
+    "delta": 0,
+    "security_risk": "Medium",
+    "political_risk": "Low",
+    "sub_categories": {"civil_unrest": "Low", "organized_crime": "Medium", "border_tension": "Low"}
+  },
+  "events": [],
+  "hotspots": [],
+  "collected_at": "2026-03-20T05:00:00Z"
+}

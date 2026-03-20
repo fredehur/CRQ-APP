@@ -1,0 +1,26 @@
+{
+  "region": "AME",
+  "window_days": 7,
+  "pulse": {
+    "score": 72,
+    "score_prev": 74,
+    "delta": -2,
+    "security_risk": "Medium",
+    "political_risk": "Medium",
+    "sub_categories": {"civil_unrest": "Low", "organized_crime": "Medium", "border_tension": "Low"}
+  },
+  "events": [
+    {
+      "event_id": "ame-mock-001",
+      "category": "Crime",
+      "severity": 2,
+      "title": "Houston port area petty crime increase reported near energy district",
+      "location": {"name": "Houston, TX, US", "lat": 29.76, "lon": -95.37, "country_code": "US"},
+      "timestamp": "2026-03-18T10:00:00Z",
+      "verified": false,
+      "source_count": 3
+    }
+  ],
+  "hotspots": [],
+  "collected_at": "2026-03-20T05:00:00Z"
+}

@@ -1,0 +1,44 @@
+{
+  "region": "APAC",
+  "window_days": 7,
+  "pulse": {
+    "score": 51,
+    "score_prev": 58,
+    "delta": -7,
+    "security_risk": "High",
+    "political_risk": "Medium",
+    "sub_categories": {"border_tension": "High", "civil_unrest": "Medium", "organized_crime": "Low"}
+  },
+  "events": [
+    {
+      "event_id": "apac-mock-001",
+      "category": "Unrest",
+      "severity": 4,
+      "title": "Kaohsiung dockworker strike enters second day",
+      "location": {"name": "Kaohsiung, TW", "lat": 22.62, "lon": 120.30, "country_code": "TW"},
+      "timestamp": "2026-03-19T08:00:00Z",
+      "verified": true,
+      "source_count": 12
+    },
+    {
+      "event_id": "apac-mock-002",
+      "category": "Maritime",
+      "severity": 3,
+      "title": "South China Sea patrol assertiveness elevated near Spratly Islands",
+      "location": {"name": "South China Sea", "lat": 10.00, "lon": 114.00, "country_code": "CN"},
+      "timestamp": "2026-03-18T14:00:00Z",
+      "verified": true,
+      "source_count": 8
+    }
+  ],
+  "hotspots": [
+    {
+      "hotspot_id": "apac-hot-001",
+      "location": {"name": "Taipei industrial district, TW", "country_code": "TW"},
+      "deviation_score": 0.87,
+      "category_hint": "Unrest",
+      "detected_at": "2026-03-19T14:00:00Z"
+    }
+  ],
+  "collected_at": "2026-03-20T05:00:00Z"
+}

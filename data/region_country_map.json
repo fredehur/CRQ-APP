@@ -1,0 +1,7 @@
+{
+  "APAC": ["CN", "AU", "TW", "JP", "SG", "KR", "IN"],
+  "AME":  ["US", "CA", "MX"],
+  "LATAM":["BR", "CL", "CO", "AR", "PE"],
+  "MED":  ["IT", "ES", "GR", "TR", "MA", "EG"],
+  "NCE":  ["DE", "PL", "DK", "SE", "NO", "FI"]
+}
