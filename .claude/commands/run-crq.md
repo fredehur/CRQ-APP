@@ -45,6 +45,19 @@ Capture the output as `PRIOR_FEEDBACK`. If output is empty or the tool errors, s
 Pass `PRIOR_FEEDBACK` as additional context to the gatekeeper and regional analyst agents in Phase 1 using the format:
 "PRIOR RUN ANALYST FEEDBACK: {PRIOR_FEEDBACK}" — if non-empty, prepend this to each agent's task description.
 
+**Build regional footprint context blocks:**
+For each region in [APAC, AME, LATAM, MED, NCE]:
+  Run: `uv run python tools/build_context.py {REGION}`
+  If the command fails (exit non-zero): run `uv run python tools/audit_logger.py FOOTPRINT_WARN "context block missing for {REGION} — agent proceeds without it"` and continue. This is non-fatal.
+
+**Build gatekeeper summaries:**
+Run: `uv run python tools/build_context.py --gatekeeper-summary`
+Capture the output as `FOOTPRINT_SUMMARIES` — a dict keyed by region code. Parse each output line as `{REGION} footprint: {rest}`.
+If this command fails, set `FOOTPRINT_SUMMARIES` to an empty dict and continue.
+When spawning each regional task in Phase 1, if `FOOTPRINT_SUMMARIES[{REGION}]` is non-empty, also prepend to the task description:
+"REGIONAL FOOTPRINT SUMMARY: {FOOTPRINT_SUMMARIES[REGION]}"
+Pass this to the gatekeeper invocation within the task — the gatekeeper reads it from its task description, no additional file reads required.
+
 ## PHASE 1 — REGIONAL ANALYSIS (PARALLEL FAN-OUT)
 
 Read `data/mock_crq_database.json` to load all regional data.

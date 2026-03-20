@@ -27,6 +27,11 @@ Read all of the following before writing anything:
 6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
 7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
 8. `output/regional/{region_lower}/research_scratchpad.json` (if present — live mode only)
+9. `output/regional/{region_lower}/context_block.txt` (if present) —
+   AeroGrid's physical footprint in this region: sites, headcount,
+   crown jewels, supply chain dependencies, key contracts.
+   Cite specific assets when describing business impact in the So What section.
+   If absent, proceed without it — do not fabricate footprint data.
    - `working_theory.hypothesis`: the collection hypothesis that drove OSINT. Use as an analytical starting frame — not a conclusion.
    - `conclusion.signal_type`: the collector's suggested classification (event/trend/mixed). Validate it against your own reading of the signal files.
    - `collection.gap_assessment` + `collection.gaps_identified`: what the collector could not find. Reference remaining gaps in your brief's forward-looking closing statement.
