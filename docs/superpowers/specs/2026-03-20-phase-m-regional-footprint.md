@@ -2,7 +2,7 @@
 
 **Date:** 2026-03-20
 **Status:** Design approved, awaiting implementation plan
-**Phase:** M (follows Phase L — RSM Intelligence Brief)
+**Phase:** M (precedes Phase L — RSM Intelligence Brief)
 
 ---
 
@@ -13,7 +13,7 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
 **Three purposes, one file:**
 1. **Analysis quality** — agents cite specific sites, headcount, contracts in the "so what" section
 2. **Triage calibration** — gatekeeper uses site criticality to calibrate escalation threshold
-3. **Phase L foundation** — stakeholders field seeds RSM routing (which RSM covers which region, how to reach them)
+3. **RSM contact seed** — stakeholders field records which RSM covers each region and how to reach them; this data informs (but does not replace) Phase L's `audience_config.json`
 
 ---
 
@@ -41,8 +41,8 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
     "headcount": 3200,
     "sites": [
       {"name": "Kaohsiung Manufacturing Hub", "country": "TW", "type": "manufacturing", "criticality": "primary"},
-      {"name": "Singapore Regional HQ",       "country": "SG", "type": "headquarters",  "criticality": "high"},
-      {"name": "Tokyo Service Centre",         "country": "JP", "type": "service",       "criticality": "medium"}
+      {"name": "Shanghai Service Hub",         "country": "CN", "type": "service",       "criticality": "high"},
+      {"name": "Tokyo Regional Office",        "country": "JP", "type": "service",       "criticality": "medium"}
     ],
     "crown_jewels": ["Series 7 production line", "SCADA network TW-01", "OT predictive maintenance stack"],
     "supply_chain_dependencies": ["Taiwanese semiconductor components", "Korean rare earth supply"],
@@ -57,9 +57,8 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
     "summary": "Primary North American operations. Wind farm service hub and growing manufacturing presence.",
     "headcount": 2100,
     "sites": [
-      {"name": "Houston Operations Centre",    "country": "US", "type": "headquarters",  "criticality": "high"},
-      {"name": "Monterrey Assembly Plant",     "country": "MX", "type": "manufacturing", "criticality": "high"},
-      {"name": "Toronto Service Hub",          "country": "CA", "type": "service",       "criticality": "medium"}
+      {"name": "Houston Operations Center",    "country": "US", "type": "service",       "criticality": "high"},
+      {"name": "Toronto Engineering Hub",      "country": "CA", "type": "service",       "criticality": "medium"}
     ],
     "crown_jewels": ["Wind farm telemetry network NA-01", "Predictive maintenance IP"],
     "supply_chain_dependencies": ["US steel imports", "Canadian logistics network"],
@@ -90,9 +89,8 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
     "summary": "Manufacturing and service hub for Southern Europe and North Africa. Offshore wind growth market.",
     "headcount": 1400,
     "sites": [
-      {"name": "Tarragona Manufacturing Plant", "country": "ES", "type": "manufacturing", "criticality": "high"},
-      {"name": "Athens Service Centre",         "country": "GR", "type": "service",       "criticality": "medium"},
-      {"name": "Casablanca Logistics Hub",      "country": "MA", "type": "service",       "criticality": "medium"}
+      {"name": "Palermo Offshore Ops",  "country": "IT", "type": "manufacturing", "criticality": "high"},
+      {"name": "Malaga Service Hub",    "country": "ES", "type": "service",       "criticality": "medium"}
     ],
     "crown_jewels": ["Offshore blade assembly process", "Mediterranean service network"],
     "supply_chain_dependencies": ["Spanish steel supply", "North African logistics corridor"],
@@ -107,10 +105,9 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
     "summary": "Largest European presence. Mature wind market. Key R&D and engineering functions.",
     "headcount": 2800,
     "sites": [
-      {"name": "Hamburg Engineering HQ",       "country": "DE", "type": "headquarters",  "criticality": "high"},
-      {"name": "Gdansk Manufacturing Plant",   "country": "PL", "type": "manufacturing", "criticality": "high"},
-      {"name": "Copenhagen R&D Centre",        "country": "DK", "type": "r_and_d",       "criticality": "high"},
-      {"name": "Oslo Service Hub",             "country": "NO", "type": "service",       "criticality": "medium"}
+      {"name": "Hamburg Manufacturing Hub",    "country": "DE", "type": "manufacturing", "criticality": "high"},
+      {"name": "Gdansk Blade Plant",           "country": "PL", "type": "manufacturing", "criticality": "high"},
+      {"name": "Copenhagen Engineering Hub",   "country": "DK", "type": "service",       "criticality": "high"}
     ],
     "crown_jewels": ["Core turbine aerodynamic IP", "R&D roadmap and prototype designs", "OT/SCADA networks EU-01/EU-02"],
     "supply_chain_dependencies": ["German precision engineering components", "Nordic offshore logistics"],
@@ -125,6 +122,10 @@ The pipeline currently reasons against a thin, global `company_profile.json` (4 
 ```
 
 **`criticality` values:** `primary` / `high` / `medium` — used by gatekeeper for triage calibration.
+
+**Relationship to `data/aerowind_sites.json`:** That file is the exhaustive geocoded site list (lat/lon) used by Phase L's `threshold_evaluator.py` for proximity calculations. It is the canonical source for computational use. `regional_footprint.json` sites are a curated narrative subset for agent context — what agents should cite in briefs. The two files serve different purposes and are maintained independently. When sites are added or removed, both files should be updated to stay consistent, but exact field parity is not required.
+
+**Stakeholders and Phase L:** The `stakeholders` array records RSM contact details for human-routing awareness. Phase L's `audience_config.json` is the authoritative routing config (cadence, timezone, flash thresholds, delivery channel). The RSM email in `stakeholders` serves as the reference value when populating `audience_config.json` for Phase L — it does not replace it. If the two diverge, `audience_config.json` takes precedence for delivery. The `notify_on` field in `stakeholders` is informational context for the pipeline, not a delivery trigger.
 
 ---
 
@@ -146,8 +147,8 @@ Headcount: 3,200
 
 Sites:
   - Kaohsiung Manufacturing Hub (TW) — manufacturing, PRIMARY
-  - Singapore Regional HQ (SG) — headquarters, HIGH
-  - Tokyo Service Centre (JP) — service, MEDIUM
+  - Shanghai Service Hub (CN) — service, HIGH
+  - Tokyo Regional Office (JP) — service, MEDIUM
 
 Crown Jewels: Series 7 production line | SCADA network TW-01 | OT predictive maintenance stack
 Supply Chain Dependencies: Taiwanese semiconductor components | Korean rare earth supply
@@ -159,13 +160,13 @@ Notes:
 
 **Gatekeeper summary** (separate function `build_gatekeeper_summary(data)`):
 ```
-APAC footprint: 3,200 staff | Sites: Kaohsiung (manufacturing, PRIMARY), Singapore (HQ, HIGH), Tokyo (service, MEDIUM)
+APAC footprint: 3,200 staff | Sites: Kaohsiung (manufacturing, PRIMARY), Shanghai (service, HIGH), Tokyo (service, MEDIUM)
 ```
 
 **Error behaviour:**
-- Unknown region → stderr + exit 1
+- Unknown region (not in KNOWN_REGIONS) → stderr + exit 1
 - Missing `regional_footprint.json` → stderr + exit 1
-- Region key absent from file → writes empty `context_block.txt` + exit 0
+- Region key absent from an otherwise valid file → stderr warning (not error) + writes empty `context_block.txt` + exit 0. This is intentional: a pipeline operator may configure footprint for only some regions. The agent proceeds without context. The warning makes the gap visible in logs without blocking the pipeline.
 
 ---
 
@@ -173,13 +174,28 @@ APAC footprint: 3,200 staff | Sites: Kaohsiung (manufacturing, PRIMARY), Singapo
 
 ### `run-crq.md` — Phase 0
 
-After loading prior feedback, before OSINT fan-out:
-```
-For each region, run: uv run python tools/build_context.py {REGION}
-```
-All 5 regions. Fast — pure file I/O, no LLM. Failures are logged but non-fatal (agent proceeds without context).
+After loading prior feedback (`PRIOR_FEEDBACK`), add these steps before spawning Phase 1 tasks:
 
-The orchestrator also reads `regional_footprint.json` directly to construct `FOOTPRINT_SUMMARY` for each region's gatekeeper invocation.
+```
+# Build context blocks for all 5 regions (fast, no LLM)
+For each region in [APAC, AME, LATAM, MED, NCE]:
+  Run: uv run python tools/build_context.py {REGION}
+  On failure: log warning, continue (non-fatal — agent proceeds without context)
+
+# Build per-region gatekeeper summaries
+Run: uv run python tools/build_context.py --gatekeeper-summary
+# Reads regional_footprint.json, prints one line per region:
+# APAC: 3,200 staff | Sites: Kaohsiung (manufacturing, PRIMARY), ...
+# Capture output as FOOTPRINT_SUMMARIES dict keyed by region.
+```
+
+When spawning each regional Task in Phase 1, prepend to the task description (same pattern as `PRIOR_FEEDBACK`):
+
+```
+"REGIONAL FOOTPRINT SUMMARY: {FOOTPRINT_SUMMARIES[REGION]}"
+```
+
+This is passed to the gatekeeper invocation within the task. The gatekeeper prompt reads it from its task description — no additional file reads required.
 
 ### `regional-analyst-agent.md` — STEP 1 input list
 
@@ -235,8 +251,10 @@ Per-region collapsible sections. Each section:
 
 - `summary` → `footprint[region].summary`
 - `headcount` → `footprint[region].headcount`
-- `rsm_email` → `footprint[region].stakeholders[role=RSM].email`
+- `rsm_email` → `footprint[region].stakeholders` entry where `role == "{REGION} RSM"` (exact match, e.g. `"APAC RSM"`). The PUT handler does a targeted update of that entry's `email` field only — `notify_on` is preserved unchanged.
 - `notes` → `footprint[region].notes` (appended verbatim to context_block.txt)
+
+**PUT handler behaviour:** Receives `{summary, headcount, rsm_email, notes}`. Reads current `regional_footprint.json`, updates only those four fields for the specified region, writes atomically. All other fields (`sites`, `crown_jewels`, `supply_chain_dependencies`, `key_contracts`, `stakeholders[*].notify_on`) are preserved unchanged.
 
 Dirty-state warning on tab navigation (same pattern as Topics/Sources).
 
