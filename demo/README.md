@@ -147,4 +147,55 @@ This matters for governance. When a board asks "how confident are we in this ass
 
 ---
 
+## RSM Intelligence Brief — Field Delivery
+
+The board report addresses one audience. AeroGrid's 30,000-person organisation contains many others — and not all of them need a synthesised global picture. Some need the opposite: a tight, actionable brief scoped to their region, calibrated for their background, delivered on their schedule.
+
+AeroGrid's Regional Security Managers (RSMs) are that audience. Former military, one per region, responsible for the physical and operational security of manufacturing hubs, service facilities, and field personnel. They don't need context built from scratch. They already know their region. They need delta — what changed since last week — and horizon — what's building before it hits the news.
+
+The pipeline's Phase L RSM delivery path is a second production track that runs alongside the board pipeline and targets these operators directly.
+
+### What's Different About the RSM Format
+
+The board report is structured for executive consumption: synthesised, financial-first, cross-regional. The RSM brief is structured for operational consumption: delta-first, physically grounded, and written like a peer intelligence debrief rather than a corporate risk document.
+
+Every brief carries five sections:
+
+- **SITUATION** — one sentence on overall posture change since last period
+- **PHYSICAL & GEOPOLITICAL** — new events only, from the Seerist EventsAI feed, each with an operational implication for AeroGrid assets in that region
+- **CYBER** — current sector and direct-targeting picture, explicitly distinguishing evidenced from assessed
+- **EARLY WARNING (PRE-MEDIA)** — Seerist HotspotsAI pre-media anomaly signals, scored and categorised, before open-source coverage exists
+- **ASSESSMENT + WATCH LIST** — the only sections written by the LLM reasoning layer: what the signals mean for AeroGrid specifically, and 3–5 concrete items to watch next week
+
+The header carries the fields an RSM actually uses: PRIORITY SCENARIO and its global financial rank, PULSE score movement, and Admiralty rating.
+
+### Two Products: Weekly INTSUM and Flash Alert
+
+The weekly INTSUM runs every Monday, regardless of signal volume. Stable regions get a brief that says they're stable. Active regions get the full picture. No region is silently skipped.
+
+The Flash Alert fires on threshold breach: a Seerist HotspotsAI anomaly score ≥ 0.85 within 100km of an AeroGrid facility, or an EventsAI event rated HIGH or above in the Conflict, Terrorism, or Unrest categories, or a cyber signal flagging direct AeroGrid targeting. It does not wait for Monday. It goes out within the collection cycle.
+
+### Machine Sections vs. LLM Sections
+
+The structured fact sections — Physical & Geopolitical, Cyber, Early Warning — are assembled deterministically from the signal files. The LLM does not invent events or decide which signals are notable. It formats what the data contains.
+
+The Assessment and Watch List are the only sections where reasoning happens. This separation concentrates the LLM cost on the interpretation layer — the only place where reasoning adds value — and keeps the factual record auditable and traceable to source.
+
+### RSM Intelligence Outputs (APAC, WK12-2026)
+
+- [APAC Weekly INTSUM — WK12-2026](rsm/rsm_intsum_apac_wk12-2026.md) — deteriorating posture, Kaohsiung strike, pre-media Taipei anomaly, persistent cyber campaign
+- [APAC Flash Alert — 2026-03-19 14:00Z](rsm/rsm_flash_apac_20260319-1400z.md) — HotspotsAI score 0.87, Taipei industrial district, 18km from Kaohsiung Manufacturing Hub
+
+> These are representative outputs generated from the same signal data used in the board pipeline run. The INTSUM and Flash formats are the unmodified output structure of the rsm-formatter-agent.
+
+### Signal Propagation: One Source, Multiple Audiences
+
+The architecture behind the RSM path is designed for extensibility. Adding a new stakeholder — a country manager, a sales region, a legal team — requires one config entry in `audience_config.json` and one new formatter agent. The signal collection, delta computation, threshold evaluation, and delivery infrastructure require zero changes.
+
+The same pattern governs source extensibility. Adding a new signal feed — a commercial threat intelligence platform, an insurance risk data provider, an internal security tool — requires one new collector script that writes to the standard schema. Everything downstream reads the new file automatically.
+
+This is the same principle that governs the existing pipeline: `osint_topics.json` (add a topic, no code change), `youtube_sources.json` (add a channel, no code change), `audience_config.json` (add a stakeholder, no code change).
+
+---
+
 *Pipeline: CRQ Geopolitical Intelligence System | Client: AeroGrid Wind Solutions (Anonymized) | Built with Claude Code*
