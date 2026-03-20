@@ -113,6 +113,15 @@ async def list_runs():
     return runs
 
 
+@app.get("/api/history")
+async def get_history():
+    """Return history.json for the History tab charts."""
+    path = OUTPUT / "history.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"regions": {r: [] for r in REGIONS}, "drift": {}, "generated_at": None}
+
+
 @app.get("/api/trace")
 async def get_trace():
     path = OUTPUT / "system_trace.log"

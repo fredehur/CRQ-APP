@@ -905,6 +905,14 @@ J-4  Scenario drift detection — flag when primary_scenario unchanged  ~30 min
 
 ---
 
+## Known Bugs
+
+| ID | Component | Description | Priority |
+|----|-----------|-------------|----------|
+| K-1 | `static/app.js` — `toggleBrief()` | Event Brief expand panel does not unfold when clicked. Button renders but click does nothing visible — the brief content stays hidden. Root cause unknown; likely a DOM selector mismatch or the `/api/region/{region}/report` fetch fails silently. | High |
+
+---
+
 ## Phase F-5 — Parked (Longer Horizon)
 
 - **Audience tabs** — Board / CISO / Ops / Sales overlays on same JSON data
@@ -929,9 +937,9 @@ F-2  Analyst dashboard           SIGINT terminal workstation, split-pane, signal
      Research collector          Target-centric OSINT loop — 3 LLM calls, scratchpad            ✅ Done (2026-03-16, PR #3)
      Agent Config tab            Edit topics/sources/prompts from UI                            ✅ Done (2026-03-17)
 G    Deep OSINT (GPT Researcher)  deep_research.py, --deep flag, Haiku extraction, discover.py  ✅ Done (2026-03-17)
-K    Analyst-First Dashboard Cards  scenario/type/velocity/rationale/brief on cards              (planned, spec: 2026-03-17-analyst-cards-design.md)
+K    Analyst-First Dashboard Cards  scenario/type/velocity/rationale/brief on cards              ✅ Done (2026-03-20) — NOTE: Event Brief expand panel does not unfold (known bug, tracked for K-fix)
 H    YouTube OSINT Collector      topic/event/trend tracking, curated channels, Haiku extraction  ✅ Done (2026-03-17)
 I    Analyst Feedback Loop        per-run ratings, pipeline reads prior feedback                  ✅ Done (2026-03-17)
-J    Historical Intelligence Charts  VaCR sparklines, severity heatmap, scenario drift           (planned, J-1 done 2026-03-17)
+J    Historical Intelligence Charts  VaCR sparklines, severity heatmap, scenario drift           ✅ Done (2026-03-20)
 F-5  Polish (parked)             audience tabs, interactive chat, scheduler
 ```

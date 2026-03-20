@@ -499,14 +499,107 @@ async function renderReports() {
   }
 }
 
+// ── History helpers ────────────────────────────────────────────────────
+function _sevHeatColor(severity) {
+  const s = (severity || '').toUpperCase();
+  if (s === 'CRITICAL') return '#f85149';
+  if (s === 'HIGH')     return '#d29922';
+  if (s === 'MEDIUM')   return '#3fb950';
+  return '#6e7681';
+}
+
+function _buildSparkline(points) {
+  // points: array of numbers (vacr_usd). Returns SVG string.
+  const W = 200, H = 40, PAD = 4;
+  if (!points.length) return '';
+  const vals = points.map(v => v || 0);
+  const mn = Math.min(...vals), mx = Math.max(...vals);
+  const range = mx - mn || 1;
+  const xs = vals.map((_, i) => PAD + (i / Math.max(vals.length - 1, 1)) * (W - PAD * 2));
+  const ys = vals.map(v => H - PAD - ((v - mn) / range) * (H - PAD * 2));
+  const polyPts = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
+  const dots = xs.map((x, i) => {
+    const fill = vals[i] === 0 ? '#6e7681' : '#58a6ff';
+    return `<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="2" fill="${fill}"/>`;
+  }).join('');
+  return `<svg class="sparkline-container" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <polyline points="${polyPts}" stroke="#58a6ff" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
+    ${dots}
+  </svg>`;
+}
+
+function _buildHeatmap(runs) {
+  // runs: array of {severity, vacr_usd, timestamp} newest last
+  const last10 = runs.slice(-10);
+  return last10.map(r => {
+    const color = _sevHeatColor(r.severity);
+    const label = `${r.timestamp ? r.timestamp.slice(0, 10) : '?'}: ${r.severity || 'CLEAR'} $${((r.vacr_usd || 0) / 1e6).toFixed(1)}M`;
+    return `<div class="heatmap-square" style="background:${color}" title="${esc(label)}"></div>`;
+  }).join('');
+}
+
+function _velArrow(velocity) {
+  if (!velocity) return '';
+  if (velocity === 'accelerating') return ' <span style="color:#f85149">↑</span>';
+  if (velocity === 'improving')    return ' <span style="color:#3fb950">↓</span>';
+  return ' <span style="color:#8b949e">→</span>';
+}
+
 async function renderHistory() {
-  const runs = await fetchJSON('/api/runs') || [];
-  $('run-history-list').innerHTML = runs.length === 0
+  const [history, runs] = await Promise.all([
+    fetchJSON('/api/history'),
+    fetchJSON('/api/runs'),
+  ]);
+
+  const chartsEl = $('history-charts');
+  const regionData = history?.regions || {};
+  const drift = history?.drift || {};
+  const hasAny = REGIONS.some(r => (regionData[r] || []).length > 0);
+
+  if (!hasAny) {
+    chartsEl.innerHTML = '<p style="color:#6e7681;font-size:11px">Run the pipeline to build history.</p>';
+  } else {
+    chartsEl.innerHTML = REGIONS.map(region => {
+      const pts = regionData[region] || [];
+      if (!pts.length) return '';
+      const last = pts[pts.length - 1];
+      const driftInfo = drift[region];
+      const driftBadge = driftInfo && driftInfo.consecutive_runs >= 2
+        ? `<span class="drift-badge">${esc(driftInfo.current_scenario)} &times; ${driftInfo.consecutive_runs} runs</span>`
+        : '';
+
+      const sparkline = _buildSparkline(pts.map(p => p.vacr_usd || 0));
+      const heatmap = _buildHeatmap(pts);
+      const scenario = last.primary_scenario
+        ? `<span style="color:#c9d1d9">${esc(last.primary_scenario)}</span>${_velArrow(last.velocity)}`
+        : `<span style="color:#6e7681">—</span>`;
+
+      return `<div class="history-region-card">
+        <div class="history-region-header">
+          <span class="history-region-label">${esc(region)}</span>
+          ${driftBadge}
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+          <div>
+            <div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">VaCR Exposure</div>
+            ${sparkline}
+          </div>
+          <div>
+            <div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">Severity (last ${Math.min(pts.length, 10)} runs)</div>
+            <div class="severity-heatmap">${heatmap}</div>
+          </div>
+        </div>
+        <div class="history-meta">Last run: ${scenario} &nbsp;·&nbsp; ${pts.length} run${pts.length !== 1 ? 's' : ''} recorded</div>
+      </div>`;
+    }).join('');
+  }
+
+  // Archived runs list
+  const runsEl = $('run-history-list');
+  runsEl.innerHTML = !runs?.length
     ? '<p style="color:#6e7681;font-size:11px">No archived runs yet.</p>'
-    : runs.map(run => {
+    : (runs).map(run => {
         const m = run.manifest || {};
-        // Note: archive-run loading (click to view a past run) is out of scope for this plan.
-        // The row renders the timestamp and window_used for visual completeness; onclick is intentionally omitted.
         return `<div style="border:1px solid #21262d;border-radius:4px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:#8b949e">
           <span style="color:#e6edf3">${esc(m.run_timestamp ? fmtTime(m.run_timestamp) : run.name)}</span>
           ${m.window_used ? `<span style="color:#6e7681;margin-left:8px">${esc(m.window_used)} window</span>` : ''}
