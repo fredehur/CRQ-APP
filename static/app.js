@@ -561,13 +561,22 @@ async function renderHistory() {
   } else {
     chartsEl.innerHTML = REGIONS.map(region => {
       const pts = regionData[region] || [];
-      if (!pts.length) return '';
-      const last = pts[pts.length - 1];
       const driftInfo = drift[region];
       const driftBadge = driftInfo && driftInfo.consecutive_runs >= 2
         ? `<span class="drift-badge">${esc(driftInfo.current_scenario)} &times; ${driftInfo.consecutive_runs} runs</span>`
         : '';
 
+      if (!pts.length) {
+        return `<div class="history-region-card">
+          <div class="history-region-header">
+            <span class="history-region-label">${esc(region)}</span>
+            <span style="font-size:10px;color:#6e7681">${esc(REGION_LABELS[region] || region)}</span>
+          </div>
+          <div style="font-size:10px;color:#6e7681;padding:8px 0">No run data yet.</div>
+        </div>`;
+      }
+
+      const last = pts[pts.length - 1];
       const sparkline = _buildSparkline(pts.map(p => p.vacr_usd || 0));
       const heatmap = _buildHeatmap(pts);
       const scenario = last.primary_scenario
@@ -577,7 +586,10 @@ async function renderHistory() {
       return `<div class="history-region-card">
         <div class="history-region-header">
           <span class="history-region-label">${esc(region)}</span>
-          ${driftBadge}
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:10px;color:#6e7681">${esc(REGION_LABELS[region] || region)}</span>
+            ${driftBadge}
+          </div>
         </div>
         <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
           <div>
