@@ -1,0 +1,122 @@
+{
+  "rsm_apac": {
+    "label": "APAC Regional Security Manager",
+    "formatter_agent": "rsm-formatter-agent",
+    "regions": ["APAC"],
+    "products": {
+      "weekly_intsum": {
+        "cadence": "monday",
+        "time_local": "07:00",
+        "timezone": "Asia/Singapore"
+      },
+      "flash": {
+        "threshold": {
+          "hotspot_score_min": 0.85,
+          "site_proximity_km": 100,
+          "event_severity_min": 4,
+          "categories": ["Conflict", "Terrorism", "Unrest"]
+        }
+      }
+    },
+    "delivery": {
+      "channel": "email",
+      "recipients": ["rsm-apac@aerowind.com"]
+    }
+  },
+  "rsm_ame": {
+    "label": "AME Regional Security Manager",
+    "formatter_agent": "rsm-formatter-agent",
+    "regions": ["AME"],
+    "products": {
+      "weekly_intsum": {
+        "cadence": "monday",
+        "time_local": "07:00",
+        "timezone": "America/New_York"
+      },
+      "flash": {
+        "threshold": {
+          "hotspot_score_min": 0.85,
+          "site_proximity_km": 100,
+          "event_severity_min": 4,
+          "categories": ["Conflict", "Terrorism", "Unrest"]
+        }
+      }
+    },
+    "delivery": {
+      "channel": "email",
+      "recipients": ["rsm-ame@aerowind.com"]
+    }
+  },
+  "rsm_latam": {
+    "label": "LATAM Regional Security Manager",
+    "formatter_agent": "rsm-formatter-agent",
+    "regions": ["LATAM"],
+    "products": {
+      "weekly_intsum": {
+        "cadence": "monday",
+        "time_local": "07:00",
+        "timezone": "America/Sao_Paulo"
+      },
+      "flash": {
+        "threshold": {
+          "hotspot_score_min": 0.85,
+          "site_proximity_km": 100,
+          "event_severity_min": 4,
+          "categories": ["Conflict", "Terrorism", "Unrest"]
+        }
+      }
+    },
+    "delivery": {
+      "channel": "email",
+      "recipients": ["rsm-latam@aerowind.com"]
+    }
+  },
+  "rsm_med": {
+    "label": "MED Regional Security Manager",
+    "formatter_agent": "rsm-formatter-agent",
+    "regions": ["MED"],
+    "products": {
+      "weekly_intsum": {
+        "cadence": "monday",
+        "time_local": "07:00",
+        "timezone": "Europe/Rome"
+      },
+      "flash": {
+        "threshold": {
+          "hotspot_score_min": 0.85,
+          "site_proximity_km": 100,
+          "event_severity_min": 4,
+          "categories": ["Conflict", "Terrorism", "Unrest"]
+        }
+      }
+    },
+    "delivery": {
+      "channel": "email",
+      "recipients": ["rsm-med@aerowind.com"]
+    }
+  },
+  "rsm_nce": {
+    "label": "NCE Regional Security Manager",
+    "formatter_agent": "rsm-formatter-agent",
+    "regions": ["NCE"],
+    "products": {
+      "weekly_intsum": {
+        "cadence": "monday",
+        "time_local": "07:00",
+        "timezone": "Europe/Berlin"
+      },
+      "flash": {
+        "threshold": {
+          "hotspot_score_min": 0.85,
+          "site_proximity_km": 100,
+          "event_severity_min": 4,
+          "categories": ["Conflict", "Terrorism", "Unrest"]
+        }
+      }
+    },
+    "delivery": {
+      "channel": "email",
+      "recipients": ["rsm-nce@aerowind.com"]
+    }
+  }
+}

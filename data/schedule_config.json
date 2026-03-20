@@ -1,0 +1,32 @@
+{
+  "jobs": [
+    {
+      "id": "seerist_collect_all",
+      "command": "uv run python tools/seerist_collector.py {region} --mock",
+      "regions": ["APAC", "AME", "LATAM", "MED", "NCE"],
+      "cron": "0 */6 * * *",
+      "description": "Collect Seerist signals every 6 hours for all regions"
+    },
+    {
+      "id": "delta_compute_all",
+      "command": "uv run python tools/delta_computer.py {region}",
+      "regions": ["APAC", "AME", "LATAM", "MED", "NCE"],
+      "cron": "15 */6 * * *",
+      "description": "Compute signal deltas 15 min after seerist collection"
+    },
+    {
+      "id": "rsm_dispatch_flash",
+      "command": "uv run python tools/rsm_dispatcher.py --check-flash",
+      "regions": null,
+      "cron": "30 */6 * * *",
+      "description": "Evaluate flash thresholds and dispatch triggered alerts"
+    },
+    {
+      "id": "rsm_dispatch_weekly",
+      "command": "uv run python tools/rsm_dispatcher.py --weekly",
+      "regions": null,
+      "cron": "0 5 * * 1",
+      "description": "Generate and deliver weekly INTSUM every Monday 05:00 UTC"
+    }
+  ]
+}
