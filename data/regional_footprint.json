@@ -1,0 +1,84 @@
+{
+  "APAC": {
+    "summary": "Primary manufacturing region. 60% of global turbine output. Highest operational sensitivity.",
+    "headcount": 3200,
+    "sites": [
+      {"name": "Kaohsiung Manufacturing Hub", "country": "TW", "type": "manufacturing", "criticality": "primary"},
+      {"name": "Shanghai Service Hub",         "country": "CN", "type": "service",       "criticality": "high"},
+      {"name": "Tokyo Regional Office",        "country": "JP", "type": "service",       "criticality": "medium"}
+    ],
+    "crown_jewels": ["Series 7 production line", "SCADA network TW-01", "OT predictive maintenance stack"],
+    "supply_chain_dependencies": ["Taiwanese semiconductor components", "Korean rare earth supply"],
+    "key_contracts": ["TEPCO 5yr turbine supply agreement", "Vestas APAC logistics JV"],
+    "notes": "",
+    "stakeholders": [
+      {"role": "APAC Regional Ops Lead", "email": "apac-ops@aerowind.com",  "notify_on": ["escalated"]},
+      {"role": "APAC RSM",               "email": "rsm-apac@aerowind.com",  "notify_on": ["escalated", "monitor"]}
+    ]
+  },
+  "AME": {
+    "summary": "Primary North American operations. Wind farm service hub and growing manufacturing presence.",
+    "headcount": 2100,
+    "sites": [
+      {"name": "Houston Operations Center", "country": "US", "type": "service", "criticality": "high"},
+      {"name": "Toronto Engineering Hub",   "country": "CA", "type": "service", "criticality": "medium"}
+    ],
+    "crown_jewels": ["Wind farm telemetry network NA-01", "Predictive maintenance IP"],
+    "supply_chain_dependencies": ["US steel imports", "Canadian logistics network"],
+    "key_contracts": ["NextEra Energy 3yr maintenance contract", "Ontario Wind Power service agreement"],
+    "notes": "",
+    "stakeholders": [
+      {"role": "AME Regional Ops Lead", "email": "ame-ops@aerowind.com",  "notify_on": ["escalated"]},
+      {"role": "AME RSM",               "email": "rsm-ame@aerowind.com",  "notify_on": ["escalated", "monitor"]}
+    ]
+  },
+  "LATAM": {
+    "summary": "Growing service and maintenance presence. No primary manufacturing. Emerging wind market.",
+    "headcount": 680,
+    "sites": [
+      {"name": "São Paulo Regional Office", "country": "BR", "type": "service", "criticality": "medium"},
+      {"name": "Santiago Service Centre",   "country": "CL", "type": "service", "criticality": "medium"}
+    ],
+    "crown_jewels": ["Regional service contracts", "Field technician network"],
+    "supply_chain_dependencies": ["Brazilian logistics partners"],
+    "key_contracts": ["Enel Chile wind maintenance 2yr", "Neoenergia turbine service Brazil"],
+    "notes": "",
+    "stakeholders": [
+      {"role": "LATAM Regional Ops Lead", "email": "latam-ops@aerowind.com", "notify_on": ["escalated"]},
+      {"role": "LATAM RSM",               "email": "rsm-latam@aerowind.com", "notify_on": ["escalated"]}
+    ]
+  },
+  "MED": {
+    "summary": "Manufacturing and service hub for Southern Europe and North Africa. Offshore wind growth market.",
+    "headcount": 1400,
+    "sites": [
+      {"name": "Palermo Offshore Ops", "country": "IT", "type": "manufacturing", "criticality": "high"},
+      {"name": "Malaga Service Hub",   "country": "ES", "type": "service",       "criticality": "medium"}
+    ],
+    "crown_jewels": ["Offshore blade assembly process", "Mediterranean service network"],
+    "supply_chain_dependencies": ["Spanish steel supply", "North African logistics corridor"],
+    "key_contracts": ["Iberdrola offshore maintenance 4yr", "ENEL MED service contract"],
+    "notes": "",
+    "stakeholders": [
+      {"role": "MED Regional Ops Lead", "email": "med-ops@aerowind.com",  "notify_on": ["escalated"]},
+      {"role": "MED RSM",               "email": "rsm-med@aerowind.com",  "notify_on": ["escalated", "monitor"]}
+    ]
+  },
+  "NCE": {
+    "summary": "Largest European presence. Mature wind market. Key R&D and engineering functions.",
+    "headcount": 2800,
+    "sites": [
+      {"name": "Hamburg Manufacturing Hub",  "country": "DE", "type": "manufacturing", "criticality": "high"},
+      {"name": "Gdansk Blade Plant",         "country": "PL", "type": "manufacturing", "criticality": "high"},
+      {"name": "Copenhagen Engineering Hub", "country": "DK", "type": "service",       "criticality": "high"}
+    ],
+    "crown_jewels": ["Core turbine aerodynamic IP", "R&D roadmap and prototype designs", "OT/SCADA networks EU-01/EU-02"],
+    "supply_chain_dependencies": ["German precision engineering components", "Nordic offshore logistics"],
+    "key_contracts": ["Ørsted offshore wind 5yr maintenance", "Vattenfall EU service agreement"],
+    "notes": "",
+    "stakeholders": [
+      {"role": "NCE Regional Ops Lead", "email": "nce-ops@aerowind.com",  "notify_on": ["escalated"]},
+      {"role": "NCE RSM",               "email": "rsm-nce@aerowind.com",  "notify_on": ["escalated", "monitor"]}
+    ]
+  }
+}
