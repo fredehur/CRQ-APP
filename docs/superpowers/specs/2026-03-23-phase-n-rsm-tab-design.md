@@ -39,13 +39,13 @@ The RSM tab surfaces weekly INTSUM and flash alert content for AeroGrid's Region
 
 - Label: `RSM`
 - Red dot indicator (`●`) appended to label when **any** region has an active flash alert
-- Driven by `state.rsmHasFlash`; set to `true` when any `/api/rsm/{region}` response returns `flash !== null`
+- Driven by `state.rsmHasFlash`; populated on `loadLatestData()` from `GET /api/rsm/status` (see 4.2)
 
 ### 3.2 Sidebar
 
 - Five region rows: APAC, AME, LATAM, MED, NCE (fixed order)
 - Each row: region name only
-- `⚡` prefix on rows where a flash alert file exists in the API response (`flash !== null`)
+- `⚡` prefix on rows where `state.rsmStatus[region].has_flash === true`
 - Selected row: blue left border + subtle blue background (matches existing Overview selected style)
 - Default selection: first region with a flash alert, or APAC if none
 
@@ -73,13 +73,29 @@ Two sub-tabs per region:
 
 ## 4. Data Flow
 
-### 4.1 New API Endpoint
+### 4.1 Two API Endpoints
 
+**Endpoint A — Status (lightweight, called on every `loadLatestData()`):**
+```
+GET /api/rsm/status
+```
+Response:
+```json
+{
+  "APAC": {"has_flash": true,  "has_intsum": true},
+  "AME":  {"has_flash": false, "has_intsum": true},
+  "LATAM":{"has_flash": false, "has_intsum": true},
+  "MED":  {"has_flash": false, "has_intsum": true},
+  "NCE":  {"has_flash": false, "has_intsum": true}
+}
+```
+Server logic: for each region, check whether `rsm_flash_*` and `rsm_brief_*` files exist in `output/regional/{region_lower}/`. Return boolean flags only — no file content read.
+
+**Endpoint B — Content (lazy, called only when user selects a region):**
 ```
 GET /api/rsm/{region}
 ```
-
-**Response:**
+Response:
 ```json
 {
   "region": "APAC",
@@ -87,17 +103,16 @@ GET /api/rsm/{region}
   "flash": "AEROWIND // APAC FLASH // 2026-03-20 14:00Z\n..." | null
 }
 ```
-
-**Server logic (`server.py`):**
-1. Read `output/regional/{region_lower}/rsm_brief_{region_lower}_*.md` — latest by filename date — as `intsum`
-2. Read `output/regional/{region_lower}/rsm_flash_{region_lower}_*.md` — latest by filename date — as `flash`
+Server logic:
+1. Read `output/regional/{region_lower}/rsm_brief_{region_lower}_*.md` — latest by lexicographic sort (ISO date filenames sort correctly alphabetically) — as `intsum`
+2. Read `output/regional/{region_lower}/rsm_flash_{region_lower}_*.md` — latest by lexicographic sort — as `flash`
 3. Both fields return `null` if no matching file found
 
-> **Note:** The file prefix (`rsm_brief_` vs `rsm_flash_`) is the discriminator between INTSUM and flash briefs. No content inspection required. Flash tab only appears when a real flash brief file exists — regions with no flash file show only the INTSUM tab.
+> **Note:** The file prefix (`rsm_brief_` vs `rsm_flash_`) is the discriminator between INTSUM and flash briefs. No content inspection required. Flash tab only appears when a real flash brief file exists. Current mock placeholder files (`[MOCK] RSM WEEKLY_INTSUM...`) will display as-is in the INTSUM panel — this is expected until the dispatcher generates real briefs.
 
-### 4.2 Tab Dot Logic (client)
+### 4.2 Tab Dot and Sidebar Logic (client)
 
-On `loadLatestData()`, fetch `/api/rsm/apac`, `/api/rsm/ame`, `/api/rsm/latam`, `/api/rsm/med`, `/api/rsm/nce` in parallel. If **any** response has `flash !== null`, set `state.rsmHasFlash = true` → render `RSM●` in tab bar.
+On `loadLatestData()`, call `GET /api/rsm/status` (one cheap request). Populate `state.rsmStatus`. Set `state.rsmHasFlash = true` if any region has `has_flash === true` → render `RSM●` in tab bar. Drive sidebar ⚡ indicators from `state.rsmStatus[region].has_flash`.
 
 ### 4.3 State
 
@@ -105,14 +120,15 @@ Add to existing `state` object:
 
 ```js
 state.selectedRsmRegion = 'APAC'   // currently selected RSM sidebar region
-state.rsmBriefs = {}               // keyed by region, cached API responses
+state.rsmStatus = {}               // from /api/rsm/status: { APAC: {has_flash, has_intsum}, ... }
+state.rsmBriefs = {}               // keyed by region, cached full content from /api/rsm/{region}
 state.rsmActiveTab = {}            // keyed by region: 'flash' | 'intsum'
 state.rsmHasFlash = false          // drives tab dot
 
 // Initialisation: rsmActiveTab[region] is set to 'flash' if API response has flash !== null, otherwise 'intsum'
 ```
 
-RSM briefs are fetched lazily on first region selection and cached for the session. They are not re-fetched on SSE pipeline completion (briefs are weekly cadence, not per-run).
+`rsmStatus` is refreshed on every `loadLatestData()`. `rsmBriefs` is fetched lazily on first region selection and cached for the session — not re-fetched on SSE pipeline completion (briefs are weekly cadence, not per-run).
 
 ---
 
@@ -120,7 +136,7 @@ RSM briefs are fetched lazily on first region selection and cached for the sessi
 
 | File | Change |
 |------|--------|
-| `server.py` | Add `GET /api/rsm/{region}` endpoint |
+| `server.py` | Add `GET /api/rsm/status` and `GET /api/rsm/{region}` endpoints |
 | `static/app.js` | Add RSM tab render, sidebar, content area, state fields. **Must also** update `_doSwitchTab` to include `'rsm'` in its tab name array, and add `tab-rsm` / `nav-rsm` element IDs following the existing pattern — omitting this will cause the previously active tab to remain visible when switching to RSM |
 
 No new files required.
