@@ -39,7 +39,7 @@ The RSM tab surfaces weekly INTSUM and flash alert content for AeroGrid's Region
 
 - Label: `RSM`
 - Red dot indicator (`●`) appended to label when **any** region has an active flash alert
-- Implemented by checking `routing_decisions.json` for any entry with `{ triggered: true, delivered: true }` and a flash-type brief present
+- Driven by `state.rsmHasFlash`; set to `true` when any `/api/rsm/{region}` response returns `flash !== null`
 
 ### 3.2 Sidebar
 
@@ -60,7 +60,7 @@ Two sub-tabs per region:
 
 - Flash tab is selected by default when present
 - If no flash, only the INTSUM tab is rendered (no empty tab)
-- Week number in INTSUM tab label parsed from the brief header line (`WK12-2026` → `WK12`)
+- Week number in INTSUM tab label parsed from the brief header line (`WK12-2026` → `WK12`). If the pattern cannot be found (e.g. mock placeholder files), tab label falls back to `INTSUM` with no week suffix — no error thrown
 
 ### 3.4 Brief Content Renderer
 
@@ -90,11 +90,10 @@ GET /api/rsm/{region}
 
 **Server logic (`server.py`):**
 1. Read `output/regional/{region_lower}/rsm_brief_{region_lower}_*.md` — latest by filename date — as `intsum`
-2. Read `output/mock_delivery/rsm_brief_{region_lower}_*.md` — latest by filename date — as `flash` candidate
-3. Flash is returned only if the file content does NOT start with `[MOCK]` (mock placeholders are suppressed) — or if a real flash brief exists
-4. Both fields return `null` if no file found
+2. Read `output/regional/{region_lower}/rsm_flash_{region_lower}_*.md` — latest by filename date — as `flash`
+3. Both fields return `null` if no matching file found
 
-> **Note:** Current `output/mock_delivery/` files are `[MOCK]` placeholders. The flash tab will only appear once the dispatcher generates a real flash brief. This is correct behaviour — no flash tab on clean/quiet regions.
+> **Note:** The file prefix (`rsm_brief_` vs `rsm_flash_`) is the discriminator between INTSUM and flash briefs. No content inspection required. Flash tab only appears when a real flash brief file exists — regions with no flash file show only the INTSUM tab.
 
 ### 4.2 Tab Dot Logic (client)
 
@@ -109,6 +108,8 @@ state.selectedRsmRegion = 'APAC'   // currently selected RSM sidebar region
 state.rsmBriefs = {}               // keyed by region, cached API responses
 state.rsmActiveTab = {}            // keyed by region: 'flash' | 'intsum'
 state.rsmHasFlash = false          // drives tab dot
+
+// Initialisation: rsmActiveTab[region] is set to 'flash' if API response has flash !== null, otherwise 'intsum'
 ```
 
 RSM briefs are fetched lazily on first region selection and cached for the session. They are not re-fetched on SSE pipeline completion (briefs are weekly cadence, not per-run).
@@ -120,7 +121,7 @@ RSM briefs are fetched lazily on first region selection and cached for the sessi
 | File | Change |
 |------|--------|
 | `server.py` | Add `GET /api/rsm/{region}` endpoint |
-| `static/app.js` | Add RSM tab render, sidebar, content area, state fields |
+| `static/app.js` | Add RSM tab render, sidebar, content area, state fields. **Must also** update `_doSwitchTab` to include `'rsm'` in its tab name array, and add `tab-rsm` / `nav-rsm` element IDs following the existing pattern — omitting this will cause the previously active tab to remain visible when switching to RSM |
 
 No new files required.
 
