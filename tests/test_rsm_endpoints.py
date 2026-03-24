@@ -60,7 +60,7 @@ def test_rsm_status_flash_present(tmp_path):
     assert data["AME"]["has_intsum"] is True
 
 
-def test_rsm_region_no_files(tmp_path):
+def test_rsm_region_no_files():
     r = client.get("/api/rsm/apac")
     assert r.status_code == 200
     data = r.json()
@@ -89,6 +89,6 @@ def test_rsm_region_both_files(tmp_path):
     assert "FLASH" in data["flash"]
 
 
-def test_rsm_region_unknown(tmp_path):
+def test_rsm_region_unknown():
     r = client.get("/api/rsm/zzz")
     assert r.status_code == 404
