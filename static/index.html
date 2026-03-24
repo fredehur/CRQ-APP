@@ -487,10 +487,10 @@
 
 <!-- ── RSM TAB ──────────────────────────────────────────────── -->
 <div id="tab-rsm" class="hidden">
-  <div id="split-pane">
+  <div style="display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 36px);overflow:hidden">
 
     <!-- RSM left panel — region list -->
-    <div id="left-panel">
+    <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
       <div style="padding:10px 12px;border-bottom:1px solid #21262d">
         <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">REGIONS</div>
       </div>
@@ -498,7 +498,7 @@
     </div>
 
     <!-- RSM right panel — brief content -->
-    <div id="right-panel">
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
       <div id="rsm-panel-header" style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px;flex-shrink:0">
         <span id="rsm-region-label" style="font-size:13px;color:#e6edf3"></span>
         <div id="rsm-inner-tabs" style="margin-left:auto;display:flex;gap:4px"></div>
