@@ -102,6 +102,29 @@ async def get_rsm_status():
     return result
 
 
+@app.get("/api/rsm/{region}")
+async def get_rsm_brief(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
+    r_lower = r.lower()
+    base = OUTPUT / "regional" / r_lower
+
+    def _latest_md(pattern: str) -> str | None:
+        if not base.exists():
+            return None
+        files = sorted(base.glob(pattern))  # ISO date filenames sort lexicographically
+        if not files:
+            return None
+        return files[-1].read_text(encoding="utf-8", errors="replace")
+
+    return {
+        "region": r,
+        "intsum": _latest_md(f"rsm_brief_{r_lower}_*.md"),
+        "flash":  _latest_md(f"rsm_flash_{r_lower}_*.md"),
+    }
+
+
 @app.get("/api/global-report")
 async def get_global_report():
     data = _read_json(OUTPUT / "global_report.json")

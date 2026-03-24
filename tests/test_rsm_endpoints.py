@@ -58,3 +58,37 @@ def test_rsm_status_flash_present(tmp_path):
     data = r.json()
     assert data["AME"]["has_flash"] is True
     assert data["AME"]["has_intsum"] is True
+
+
+def test_rsm_region_no_files(tmp_path):
+    r = client.get("/api/rsm/apac")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["region"] == "APAC"
+    assert data["intsum"] is None
+    assert data["flash"] is None
+
+
+def test_rsm_region_intsum_only(tmp_path):
+    # Also verifies lowercase region path param is normalised to uppercase in response
+    _make_rsm_files(tmp_path, "APAC", intsum=True, flash=False)
+    r = client.get("/api/rsm/apac")
+    assert r.status_code == 200
+    data = r.json()
+    assert data["region"] == "APAC"
+    assert "WK12-2026" in data["intsum"]
+    assert data["flash"] is None
+
+
+def test_rsm_region_both_files(tmp_path):
+    _make_rsm_files(tmp_path, "AME", intsum=True, flash=True)
+    r = client.get("/api/rsm/ame")
+    assert r.status_code == 200
+    data = r.json()
+    assert "WK12-2026" in data["intsum"]
+    assert "FLASH" in data["flash"]
+
+
+def test_rsm_region_unknown(tmp_path):
+    r = client.get("/api/rsm/zzz")
+    assert r.status_code == 404
