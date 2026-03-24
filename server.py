@@ -86,6 +86,22 @@ async def get_region_report(region: str):
     return {"region": r, "report": None}
 
 
+@app.get("/api/rsm/status")
+async def get_rsm_status():
+    """Lightweight check — returns boolean flags for each region. No file content read."""
+    result = {}
+    for region in REGIONS:
+        r = region.lower()
+        base = OUTPUT / "regional" / r
+        intsum_files = list(base.glob(f"rsm_brief_{r}_*.md")) if base.exists() else []
+        flash_files  = list(base.glob(f"rsm_flash_{r}_*.md"))  if base.exists() else []
+        result[region] = {
+            "has_intsum": len(intsum_files) > 0,
+            "has_flash":  len(flash_files)  > 0,
+        }
+    return result
+
+
 @app.get("/api/global-report")
 async def get_global_report():
     data = _read_json(OUTPUT / "global_report.json")
