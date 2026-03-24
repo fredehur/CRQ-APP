@@ -3,7 +3,10 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 
-from report_builder import RegionStatus, RegionEntry, ReportData, _parse_pillars, build
+from report_builder import (
+    RegionStatus, RegionEntry, ReportData, _parse_pillars, build,
+    _confidence_label, _threat_characterisation, _extract_board_bullets,
+)
 
 
 def test_region_status_values():
@@ -125,3 +128,65 @@ def test_build_graceful_when_report_md_missing(mock_output):
     ame = next(r for r in data.regions if r.name == "AME")
     assert ame.status == RegionStatus.ESCALATED
     assert ame.why_text is None  # graceful — no crash
+
+
+# ── _confidence_label ──────────────────────────────────────────────────────────
+
+def test_confidence_label_high():
+    assert _confidence_label("A1") == "High"
+    assert _confidence_label("B2") == "High"
+    assert _confidence_label("B3") == "High"
+
+def test_confidence_label_medium():
+    assert _confidence_label("C2") == "Medium"
+    assert _confidence_label("C3") == "Medium"
+
+def test_confidence_label_low():
+    assert _confidence_label("D3") == "Low"
+    assert _confidence_label("E3") == "Low"
+    assert _confidence_label("F6") == "Low"
+
+def test_confidence_label_none():
+    assert _confidence_label(None) == "Unknown"
+
+
+# ── _threat_characterisation ───────────────────────────────────────────────────
+
+def test_threat_characterisation_cyber():
+    assert _threat_characterisation("Cyber") == "Financially motivated threat"
+
+def test_threat_characterisation_geo():
+    assert _threat_characterisation("Geopolitical") == "State-directed threat"
+
+def test_threat_characterisation_mixed():
+    assert _threat_characterisation("Mixed") == "Mixed-motive threat"
+
+def test_threat_characterisation_none():
+    assert _threat_characterisation(None) == "Unknown"
+
+
+# ── _extract_board_bullets ─────────────────────────────────────────────────────
+
+def test_extract_board_bullets_normal():
+    why = "Structural instability is driving state interest in energy IP. Secondary sentence."
+    how = "Wind turbine control systems are the primary target. More detail here."
+    so_what = "If this materialises, blade production schedules will be disrupted. Watch for credential abuse."
+    bullets = _extract_board_bullets(why, how, so_what)
+    assert bullets is not None
+    assert len(bullets) == 4
+    assert bullets[0] == "Structural instability is driving state interest in energy IP."
+    assert bullets[1] == "Wind turbine control systems are the primary target."
+    assert bullets[2] == "If this materialises, blade production schedules will be disrupted."
+    assert bullets[3] == "Watch for credential abuse."
+
+def test_extract_board_bullets_skips_vacr_sentence():
+    so_what = "AeroGrid's quantified exposure stands at $4,200,000 (VaCR). If this materialises, maintenance access will be disrupted. Watch for access reviews failing."
+    bullets = _extract_board_bullets("why.", "how.", so_what)
+    assert bullets is not None
+    assert "$" not in bullets[2]
+    assert "maintenance access" in bullets[2]
+
+def test_extract_board_bullets_returns_none_when_missing():
+    assert _extract_board_bullets(None, "how.", "so_what.") is None
+    assert _extract_board_bullets("why.", None, "so_what.") is None
+    assert _extract_board_bullets("why.", "how.", None) is None

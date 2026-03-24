@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
@@ -35,6 +36,11 @@ class RegionEntry:
     why_text: str | None
     how_text: str | None
     so_what_text: str | None
+    dominant_pillar: str | None = None
+    signal_type: str | None = None
+    board_bullets: list[str] | None = None
+    confidence_label: str | None = None
+    threat_characterisation: str | None = None
 
 
 @dataclass
@@ -58,6 +64,78 @@ _PILLAR_HEADERS = [
     # Legacy headers (pre-Phase C agent output)
     ("## Situation Overview", "## Risk Context", "## Board-Level"),
 ]
+
+
+# ── Sentence utilities ────────────────────────────────────────────────────────
+
+_SENT_RE = re.compile(r'(?<=[.!?])\s+')
+
+
+def _split_sentences(text: str) -> list[str]:
+    return [s.strip() for s in _SENT_RE.split(text.strip()) if s.strip()]
+
+
+def _first_sentence(text: str | None) -> str | None:
+    if not text:
+        return None
+    parts = _split_sentences(text)
+    return parts[0] if parts else None
+
+
+def _last_sentence(text: str | None) -> str | None:
+    if not text:
+        return None
+    parts = _split_sentences(text)
+    return parts[-1] if parts else None
+
+
+def _first_non_vacr_sentence(text: str | None) -> str | None:
+    """Return first sentence that contains no dollar amount or VaCR reference."""
+    if not text:
+        return None
+    for s in _split_sentences(text):
+        if '$' not in s and 'vacr' not in s.lower():
+            return s
+    return _split_sentences(text)[0] if text else None
+
+
+def _confidence_label(admiralty: str | None) -> str:
+    if not admiralty:
+        return "Unknown"
+    prefix = admiralty[0].upper()
+    if prefix in ('A', 'B'):
+        return "High"
+    if prefix == 'C':
+        return "Medium"
+    return "Low"
+
+
+def _threat_characterisation(dominant_pillar: str | None) -> str:
+    return {
+        "Cyber":        "Financially motivated threat",
+        "Geopolitical": "State-directed threat",
+        "Mixed":        "Mixed-motive threat",
+    }.get(dominant_pillar or "", "Unknown")
+
+
+def _extract_board_bullets(
+    why: str | None,
+    how: str | None,
+    so_what: str | None,
+) -> list[str] | None:
+    """Derive [Driver, Exposure, Impact, Watch] from pillar text.
+
+    Returns None if any source pillar is absent.
+    """
+    if not all([why, how, so_what]):
+        return None
+    driver   = _first_sentence(why)
+    exposure = _first_sentence(how)
+    impact   = _first_non_vacr_sentence(so_what)
+    watch    = _last_sentence(so_what)
+    if not all([driver, exposure, impact, watch]):
+        return None
+    return [driver, exposure, impact, watch]
 
 
 def _header_matches(line: str, prefix: str) -> bool:
@@ -189,6 +267,10 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
                     region_name,
                 )
 
+        dominant_pillar = d.get("dominant_pillar")
+        signal_type     = d.get("signal_type")
+        board_bullets   = _extract_board_bullets(why_text, how_text, so_what_text)
+
         regions.append(RegionEntry(
             name=region_name,
             status=status,
@@ -200,6 +282,11 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             why_text=why_text,
             how_text=how_text,
             so_what_text=so_what_text,
+            dominant_pillar=dominant_pillar,
+            signal_type=signal_type,
+            board_bullets=board_bullets,
+            confidence_label=_confidence_label(d.get("admiralty")),
+            threat_characterisation=_threat_characterisation(dominant_pillar),
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]
