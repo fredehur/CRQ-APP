@@ -170,6 +170,14 @@ Run: `uv run python tools/trend_analyzer.py`
 This reads archived runs from `output/runs/`, computes velocity per region, writes `output/trend_brief.json`, and patches velocity into each `output/regional/{region}/data.json`.
 Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Velocity analysis complete — trend_brief.json written"`
 
+## PHASE 2.5 — TREND SYNTHESIS
+
+Delegate to `trends-synthesis-agent` with this task description:
+"Read output/trend_brief.json and all output/runs/*/regional/*/data.json files. Synthesize longitudinal patterns across all archived runs. Write output/trend_analysis.json per your agent instructions. Region: ALL"
+
+On completion: `uv run python tools/audit_logger.py PHASE_COMPLETE "Trend synthesis complete — output/trend_analysis.json written"`
+If the agent fails or errors: `uv run python tools/audit_logger.py TREND_WARN "Trend synthesis failed — dashboard will show no trend data"` — then continue. This phase is **non-fatal**.
+
 ## PHASE 3 — CROSS-REGIONAL DIFF
 
 Run: `uv run python tools/report_differ.py`

@@ -206,6 +206,73 @@ async def update_footprint(region: str, body: dict):
     return {"ok": True}
 
 
+@app.get("/api/trends")
+async def get_trends():
+    path = OUTPUT / "trend_analysis.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"status": "no_data"}
+
+
+@app.get("/api/review/{region}")
+async def get_review(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+    path = OUTPUT / "regional" / region.lower() / "review_status.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"status": "draft"}
+
+
+@app.put("/api/review/{region}")
+async def put_review(region: str, body: dict):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+    if "reviewer" not in body or "status" not in body:
+        return JSONResponse({"error": "Body must include 'reviewer' and 'status'"}, status_code=422)
+    if body["status"] not in ("published", "draft"):
+        return JSONResponse({"error": "status must be 'published' or 'draft'"}, status_code=422)
+
+    review = {
+        "reviewer": body["reviewer"],
+        "status": body["status"],
+        "notes": body.get("notes", ""),
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat() + "Z",
+    }
+    region_lower = region.lower()
+    out_dir = OUTPUT / "regional" / region_lower
+    out_dir.mkdir(parents=True, exist_ok=True)
+    tmp = out_dir / "review_status.tmp"
+    tmp.write_text(json.dumps(review, indent=2, ensure_ascii=False), encoding="utf-8")
+    tmp.replace(out_dir / "review_status.json")
+
+    # Trigger audience card generation on publish if report exists
+    if body["status"] == "published":
+        report_path = out_dir / "report.md"
+        if report_path.exists():
+            asyncio.create_task(
+                asyncio.create_subprocess_exec(
+                    "uv", "run", "python", "tools/generate_audience_cards.py", r,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+            )
+    return {"ok": True}
+
+
+@app.get("/api/audience/{region}")
+async def get_audience(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+    path = OUTPUT / "regional" / region.lower() / "audience_cards.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {}
+
+
 @app.get("/api/trace")
 async def get_trace():
     path = OUTPUT / "system_trace.log"

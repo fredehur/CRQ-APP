@@ -299,17 +299,23 @@ function renderRightPanel() {
 
   const briefSection = renderBriefSection(r, d);
 
+  const reviewHtml = `<div id="review-badge" style="display:flex;align-items:center;margin:8px 0 4px 0"></div>`;
+  const audienceHtml = `<div id="audience-cards-panel"></div>`;
   const feedbackHtml = `<div class="feedback-section" id="feedback-section-${r}"></div>`;
 
   if (!c || !c.clusters || c.clusters.length === 0) {
-    body.innerHTML = contextStrip + briefSection + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>` + feedbackHtml;
+    body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>` + feedbackHtml;
     renderFeedbackUI(r);
+    renderReviewBadge(r);
+    renderAudienceCards(r);
     return;
   }
 
   const clusterHtml = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
-  body.innerHTML = contextStrip + briefSection + clusterHtml + feedbackHtml;
+  body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + clusterHtml + feedbackHtml;
   renderFeedbackUI(r);
+  renderReviewBadge(r);
+  renderAudienceCards(r);
 }
 
 function renderClusterCard(region, cl, i) {
@@ -642,6 +648,156 @@ function toggleTrace() {
   $('audit-trace').classList.toggle('hidden');
 }
 
+// ── Trends Tab ────────────────────────────────────────────────────────
+
+async function renderTrends() {
+  const container = $('trends-content');
+  if (!container) return;
+  container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">Loading trend data...</div>';
+
+  const data = await fetch('/api/trends').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+
+  if (!data.regions || data.status === 'no_data') {
+    container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">No trend data yet — run the pipeline to generate historical analysis.</div>';
+    return;
+  }
+
+  const TREND_REGIONS = ['APAC','AME','LATAM','MED','NCE'];
+  const sevColor = s => s==='CRITICAL'?'#ff7b72':s==='HIGH'?'#ffa657':s==='MEDIUM'?'#e3b341':s==='LOW'?'#3fb950':'#484f58';
+  const sevVal  = s => s==='CRITICAL'?3:s==='HIGH'?2:s==='MEDIUM'?1:0;
+
+  function buildTrendSparkline(trajectory) {
+    if (!trajectory || !trajectory.length) return '<span style="color:#484f58;font-size:10px">no data</span>';
+    const w=160,h=32,n=trajectory.length;
+    const pts = trajectory.map((s,i) => {
+      const x = n===1 ? w/2 : (i/(n-1))*w;
+      const y = h-4 - (sevVal(s)/3)*(h-8);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    const last = trajectory[trajectory.length-1];
+    const circles = pts.map((p,i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="2" fill="${sevColor(trajectory[i])}"/>`).join('');
+    return `<svg width="${w}" height="${h}" style="display:block"><polyline points="${pts.join(' ')}" fill="none" stroke="${sevColor(last)}" stroke-width="1.5"/>${circles}</svg>`;
+  }
+
+  function buildScenarioBars(freq) {
+    if (!freq || !Object.keys(freq).length) return '<span style="color:#484f58;font-size:10px">none</span>';
+    const max = Math.max(...Object.values(freq));
+    const w = 160;
+    return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name,count]) => {
+      const bw = max>0 ? Math.round((count/max)*w) : 0;
+      return `<div style="margin-bottom:4px"><div style="font-size:9px;color:#8b949e;margin-bottom:2px">${esc(name)} (${count})</div><svg width="${w}" height="8"><rect x="0" y="0" width="${bw}" height="8" fill="#58a6ff" rx="2"/></svg></div>`;
+    }).join('');
+  }
+
+  const runCount = data.run_count || 0;
+  const cellW = Math.min(20, Math.max(6, Math.floor(280/Math.max(runCount,1))));
+  const heatmapHtml = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Escalation Heatmap — ${runCount} runs</div>
+      <div class="heatmap-grid">
+        ${TREND_REGIONS.map(r => {
+          const traj = (data.regions[r]||{}).severity_trajectory||[];
+          return `<div class="heatmap-row"><span class="heatmap-label">${r}</span>${traj.map(s=>`<div style="width:${cellW}px;height:12px;background:${sevColor(s)};border-radius:2px;opacity:0.85" title="${s}"></div>`).join('')}${!traj.length?'<span style="color:#484f58;font-size:9px">no data</span>':''}</div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  const regionCards = TREND_REGIONS.map(r => {
+    const rd = data.regions[r];
+    if (!rd) return '';
+    return `
+<div class="trend-region-card">
+  <div class="trend-region-header">
+    <span>${r}</span>
+    <span style="color:#c9d1d9;font-size:10px;text-transform:none;letter-spacing:0">Escalated ${rd.escalation_count||0}/${runCount} runs</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div><div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase">Severity Trend</div>${buildTrendSparkline(rd.severity_trajectory)}</div>
+    <div><div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase">Top Scenarios</div>${buildScenarioBars(rd.scenario_frequency)}</div>
+  </div>
+  ${rd.assessment?`<div style="font-size:11px;color:#8b949e;margin-top:10px;line-height:1.6;border-top:1px solid #21262d;padding-top:8px">${esc(rd.assessment)}</div>`:''}
+</div>`;
+  }).join('');
+
+  const talkingPoints = (data.ciso_talking_points||[]).map(tp=>`<div class="talking-point-card">▸ ${esc(tp)}</div>`).join('');
+  const cross = data.cross_regional||{};
+
+  container.innerHTML = `
+    <div style="margin-bottom:20px">
+      <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:10px">CISO Talking Points</div>
+      ${talkingPoints||'<div style="color:#484f58;font-size:11px">No talking points generated.</div>'}
+    </div>
+    ${heatmapHtml}
+    ${cross.compound_risk?`<div style="margin-bottom:16px;padding:12px;background:#161b22;border:1px solid #21262d;border-radius:4px"><div style="font-size:9px;color:#6e7681;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Cross-Regional Risk</div><div style="font-size:11px;color:#c9d1d9;line-height:1.6">${esc(cross.compound_risk)}</div></div>`:''}
+    <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:12px">Regional Analysis</div>
+    ${regionCards}
+    <div style="font-size:9px;color:#484f58;margin-top:8px">Based on ${runCount} pipeline runs · Generated ${data.generated_at?new Date(data.generated_at).toLocaleString():'unknown'}</div>
+  `;
+}
+
+// ── Review Gate ────────────────────────────────────────────────────────
+
+async function loadReviewStatus(region) {
+  return fetch(`/api/review/${region}`).then(r=>r.ok?r.json():{status:'draft'}).catch(()=>({status:'draft'}));
+}
+
+async function publishRegion(region) {
+  const reviewer = prompt('Your name or email (will appear on the published brief):');
+  if (!reviewer) return;
+  const notes = prompt('Optional notes (press Enter to skip):') || '';
+  const r = await fetch(`/api/review/${region}`, {
+    method: 'PUT',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({reviewer, status:'published', notes})
+  });
+  if (r.ok) {
+    renderRightPanel();
+  } else {
+    alert(`Publish failed: ${r.status}`);
+  }
+}
+
+async function renderReviewBadge(region) {
+  const el = $('review-badge');
+  if (!el) return;
+  const rs = await loadReviewStatus(region.toUpperCase());
+  const isDraft = rs.status !== 'published';
+  el.innerHTML = isDraft
+    ? `<span class="review-draft">DRAFT</span><button class="publish-btn" onclick="publishRegion('${region.toUpperCase()}')">Publish</button>`
+    : `<span class="review-published">PUBLISHED</span><span style="font-size:9px;color:#6e7681;margin-left:8px">by ${esc(rs.reviewer||'')} · ${rs.timestamp?new Date(rs.timestamp).toLocaleDateString():''}</span>`;
+}
+
+// ── Audience Cards ─────────────────────────────────────────────────────
+
+async function renderAudienceCards(region) {
+  const el = $('audience-cards-panel');
+  if (!el) return;
+
+  const [cards, rs] = await Promise.all([
+    fetch(`/api/audience/${region}`).then(r=>r.ok?r.json():{}).catch(()=>({})),
+    loadReviewStatus(region.toUpperCase())
+  ]);
+
+  if (rs.status !== 'published') {
+    el.innerHTML = '<div style="color:#6e7681;font-size:10px;padding:8px 0;font-style:italic">Publish brief to generate audience cards.</div>';
+    return;
+  }
+
+  if (!cards.cards) {
+    el.innerHTML = '<div style="color:#6e7681;font-size:10px;padding:8px 0">Generating audience cards...</div>';
+    return;
+  }
+
+  const {sales, ops, executive} = cards.cards;
+  el.innerHTML = `
+<div class="audience-cards-section">
+  <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Audience Cards</div>
+  ${sales?`<div class="audience-card"><div class="audience-card-title">${esc(sales.title)}</div><div class="audience-card-body"><ul style="margin:0;padding-left:16px">${(sales.bullets||[]).map(b=>`<li>${esc(b)}</li>`).join('')}</ul></div></div>`:''}
+  ${ops?`<div class="audience-card"><div class="audience-card-title">${esc(ops.title)}</div><div class="audience-card-body"><span style="color:#8b949e">Signal:</span> ${esc(ops.signal||'')} <br><span style="color:#8b949e">Action:</span> ${esc(ops.action||'')}</div></div>`:''}
+  ${executive?`<div class="audience-card"><div class="audience-card-title">${esc(executive.title)}</div><div class="audience-card-body">VaCR: <b>$${((executive.vacr_exposure||0)/1e6).toFixed(1)}M</b> · ${esc(executive.scenario||'')} (Rank #${executive.financial_rank||'?'})<br>${esc(executive.assessment||'')}</div></div>`:''}
+</div>`;
+}
+
 // ── Section 8: Tab switching + Run + Agent Console + SSE ──────────────
 function renderAll() {
   renderLeftPanel();
@@ -675,14 +831,17 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview', 'reports', 'history', 'config', 'rsm'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'rsm'].forEach(t => {
     const el = $(`tab-${t}`);
+    if (!el) return;
     el.classList.toggle('hidden', t !== tab);
     el.style.display = t === tab ? (t === 'config' ? 'flex' : '') : '';
-    $(`nav-${t}`).classList.toggle('active', t === tab);
+    const nav = $(`nav-${t}`);
+    if (nav) nav.classList.toggle('active', t === tab);
   });
   if (tab === 'reports') renderReports();
   if (tab === 'history') renderHistory();
+  if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
   if (tab === 'rsm')     renderRsmTab();
 }

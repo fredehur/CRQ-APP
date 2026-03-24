@@ -235,6 +235,23 @@
     .sparkline-container { display: inline-block; }
     .history-meta { font-size: 10px; color: #8b949e; margin-top: 6px; }
 
+    /* Trends tab */
+    .trend-region-card { border:1px solid #21262d; border-radius:6px; background:#161b22; padding:14px 16px; margin-bottom:12px; }
+    .trend-region-header { font-size:10px; letter-spacing:0.08em; text-transform:uppercase; color:#8b949e; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+    .talking-point-card { background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:10px 12px; margin-bottom:8px; font-size:11px; color:#c9d1d9; line-height:1.6; }
+    .heatmap-grid { display:flex; flex-direction:column; gap:4px; }
+    .heatmap-row { display:flex; align-items:center; gap:4px; }
+    .heatmap-label { font-size:9px; color:#6e7681; width:40px; flex-shrink:0; }
+    /* Review gate */
+    .review-draft { background:#2d2208; color:#d29922; border:1px solid #d29922; border-radius:3px; padding:1px 6px; font-size:10px; }
+    .review-published { background:#0f2d0f; color:#3fb950; border:1px solid #238636; border-radius:3px; padding:1px 6px; font-size:10px; }
+    .publish-btn { font-size:10px; color:#79c0ff; background:#0d1f36; border:1px solid #1f6feb; padding:2px 10px; border-radius:2px; cursor:pointer; margin-left:8px; }
+    /* Audience cards */
+    .audience-cards-section { margin-top:16px; border-top:1px solid #21262d; padding-top:12px; }
+    .audience-card { background:#0d1117; border:1px solid #21262d; border-radius:4px; padding:10px 12px; margin-bottom:8px; }
+    .audience-card-title { font-size:9px; letter-spacing:0.08em; text-transform:uppercase; color:#6e7681; margin-bottom:6px; }
+    .audience-card-body { font-size:11px; color:#c9d1d9; line-height:1.6; }
+
     /* Footprint panel */
     .fp-region { border: 1px solid #21262d; border-radius: 4px; margin-bottom: 10px; }
     .fp-region-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; cursor: pointer; background: #161b22; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: #8b949e; user-select: none; }
@@ -303,6 +320,7 @@
       <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
       <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
+      <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
       <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
       <div class="nav-tab" id="nav-rsm"      onclick="switchTab('rsm')"><span id="nav-rsm-label">RSM</span></div>
     </nav>
@@ -374,6 +392,11 @@
     <span id="report-generated-ts" style="font-size:10px;color:#6e7681;align-self:center"></span>
   </div>
   <div id="report-preview">Loading report...</div>
+</div>
+
+<!-- ── TRENDS TAB ──────────────────────────────────────────────── -->
+<div id="tab-trends" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 36px)">
+  <div id="trends-content"></div>
 </div>
 
 <!-- ── HISTORY TAB ─────────────────────────────────────────────── -->
