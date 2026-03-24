@@ -31,6 +31,11 @@ let state = {
   expandedClusters: new Set(),
   expandedBriefs: new Set(),
   feedbackByRegion: {},   // { [region]: {rating, note, submitted_at} }
+  selectedRsmRegion: 'APAC',
+  rsmStatus: {},        // { APAC: {has_flash, has_intsum}, ... } from /api/rsm/status
+  rsmBriefs: {},        // keyed by region, cached {intsum, flash} from /api/rsm/{region}
+  rsmActiveTab: {},     // keyed by region: 'flash' | 'intsum'
+  rsmHasFlash: false,   // drives ● dot on tab label
 };
 
 // Agent console state
@@ -116,6 +121,16 @@ async function loadLatestData() {
 
   // Load feedback for current run
   await loadFeedback();
+
+  // Load RSM brief status (cheap — boolean flags only).
+  const rsmStatus = await fetchJSON('/api/rsm/status');
+  if (rsmStatus) {
+    state.rsmStatus = rsmStatus;
+    state.rsmHasFlash = Object.values(rsmStatus).some(v => v.has_flash);
+  }
+  // Update tab dot
+  const rsmLabel = $('nav-rsm-label');
+  if (rsmLabel) rsmLabel.textContent = state.rsmHasFlash ? 'RSM●' : 'RSM';
 
   // Default selected region: highest total_signals, tie-break by severity
   if (!state.selectedRegion) {
@@ -660,7 +675,7 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview','reports','history','config'].forEach(t => {
+  ['overview', 'reports', 'history', 'config', 'rsm'].forEach(t => {
     const el = $(`tab-${t}`);
     el.classList.toggle('hidden', t !== tab);
     el.style.display = t === tab ? (t === 'config' ? 'flex' : '') : '';
@@ -668,7 +683,8 @@ function _doSwitchTab(tab) {
   });
   if (tab === 'reports') renderReports();
   if (tab === 'history') renderHistory();
-  if (tab === 'config') loadConfigTab();
+  if (tab === 'config')  loadConfigTab();
+  if (tab === 'rsm')     renderRsmTab();
 }
 
 // ── Run trigger ───────────────────────────────────────────────────────
