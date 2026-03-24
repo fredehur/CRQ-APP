@@ -9,6 +9,11 @@ from server import app
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _patch_output(tmp_path, monkeypatch):
+    monkeypatch.setattr(server, "OUTPUT", tmp_path / "output")
+
+
 def _make_rsm_files(tmp_path, region, intsum=True, flash=False):
     """Create stub RSM brief files under tmp_path/output/regional/{region}/"""
     r = region.lower()
@@ -26,9 +31,7 @@ def _make_rsm_files(tmp_path, region, intsum=True, flash=False):
         )
 
 
-def test_rsm_status_all_missing(tmp_path, monkeypatch):
-    # Use object-attribute form — matches existing project convention in test_config_api.py
-    monkeypatch.setattr(server, "OUTPUT", tmp_path / "output")
+def test_rsm_status_all_missing(tmp_path):
     r = client.get("/api/rsm/status")
     assert r.status_code == 200
     data = r.json()
@@ -38,8 +41,7 @@ def test_rsm_status_all_missing(tmp_path, monkeypatch):
         assert v["has_intsum"] is False
 
 
-def test_rsm_status_intsum_present(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "OUTPUT", tmp_path / "output")
+def test_rsm_status_intsum_present(tmp_path):
     _make_rsm_files(tmp_path, "APAC", intsum=True, flash=False)
     r = client.get("/api/rsm/status")
     assert r.status_code == 200
@@ -49,8 +51,7 @@ def test_rsm_status_intsum_present(tmp_path, monkeypatch):
     assert data["AME"]["has_intsum"] is False
 
 
-def test_rsm_status_flash_present(tmp_path, monkeypatch):
-    monkeypatch.setattr(server, "OUTPUT", tmp_path / "output")
+def test_rsm_status_flash_present(tmp_path):
     _make_rsm_files(tmp_path, "AME", intsum=True, flash=True)
     r = client.get("/api/rsm/status")
     assert r.status_code == 200
