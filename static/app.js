@@ -734,6 +734,93 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// ── Section 9: Render — RSM Tab ────────────────────────────────────────
+function renderRsmTab() {
+  renderRsmSidebar();
+  renderRsmContent(state.selectedRsmRegion);
+}
+
+function renderRsmSidebar() {
+  const list = $('rsm-region-list');
+  if (!list) return;
+  list.innerHTML = REGIONS.map(r => {
+    const hasFlash = state.rsmStatus[r]?.has_flash;
+    const isActive = r === state.selectedRsmRegion;
+    return `
+<div class="region-row ${isActive ? 'active' : ''}" onclick="selectRsmRegion('${r}')">
+  <span style="font-size:12px;font-weight:500;color:${isActive ? '#e6edf3' : '#8b949e'}">
+    ${hasFlash ? '⚡ ' : ''}${r}
+  </span>
+</div>`;
+  }).join('');
+}
+
+function selectRsmRegion(r) {
+  state.selectedRsmRegion = r;
+  renderRsmSidebar();
+  renderRsmContent(r);
+}
+
+async function renderRsmContent(region) {
+  const header = $('rsm-region-label');
+  const body   = $('rsm-panel-body');
+  const tabs   = $('rsm-inner-tabs');
+  if (!header || !body || !tabs) return;
+
+  header.textContent = REGION_LABELS[region] || region;
+  body.textContent = 'Loading...';
+  tabs.innerHTML = '';
+
+  // Fetch lazily — cache hit skips network
+  if (!state.rsmBriefs[region]) {
+    const data = await fetchJSON(`/api/rsm/${region.toLowerCase()}`);
+    if (!data) {
+      body.innerHTML = `<p style="color:#6e7681;font-size:11px">No brief available for this region.</p>`;
+      return;
+    }
+    state.rsmBriefs[region] = data;
+    // Set default active tab
+    if (!state.rsmActiveTab[region]) {
+      state.rsmActiveTab[region] = data.flash ? 'flash' : 'intsum';
+    }
+  }
+
+  const brief = state.rsmBriefs[region];
+  const activeTab = state.rsmActiveTab[region] || 'intsum';
+
+  // Render inner tab buttons
+  const tabBtns = [];
+  if (brief.flash) {
+    tabBtns.push(`<button onclick="switchRsmInnerTab('${region}','flash')"
+      style="font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;cursor:pointer;
+             background:${activeTab==='flash' ? '#da3633' : 'transparent'};
+             border:1px solid ${activeTab==='flash' ? '#da3633' : '#30363d'};
+             color:${activeTab==='flash' ? '#fff' : '#8b949e'}">⚡ FLASH</button>`);
+  }
+  // Parse week number from INTSUM header line
+  const weekMatch = (brief.intsum || '').match(/WK(\d+)/i);
+  const weekLabel = weekMatch ? `INTSUM WK${weekMatch[1]}` : 'INTSUM';
+  tabBtns.push(`<button onclick="switchRsmInnerTab('${region}','intsum')"
+    style="font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;cursor:pointer;
+           background:${activeTab==='intsum' ? '#21262d' : 'transparent'};
+           border:1px solid ${activeTab==='intsum' ? '#58a6ff' : '#30363d'};
+           color:${activeTab==='intsum' ? '#e6edf3' : '#8b949e'}">${weekLabel}</button>`);
+  tabs.innerHTML = tabBtns.join('');
+
+  // Render content
+  const content = activeTab === 'flash' ? brief.flash : brief.intsum;
+  if (!content) {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No brief available for this region.</p>`;
+    return;
+  }
+  body.innerHTML = `<pre style="font-size:10px;color:#e6edf3;white-space:pre-wrap;word-break:break-word;line-height:1.6;margin:0">${esc(content)}</pre>`;
+}
+
+function switchRsmInnerTab(region, tab) {
+  state.rsmActiveTab[region] = tab;
+  renderRsmContent(region);
+}
+
 // ── SSE stream (identical pattern to current) ──────────────────────────
 function startEventStream() {
   const es = new EventSource('/api/logs/stream');
