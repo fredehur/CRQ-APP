@@ -1,0 +1,38 @@
+{
+  "region": "AME",
+  "timestamp": "2026-03-16T17:07:35Z",
+  "window_used": "7d",
+  "total_signals": 6,
+  "sources_queried": 6,
+  "clusters": [
+    {
+      "name": "Ransomware targeting energy service providers",
+      "pillar": "Cyber",
+      "convergence": 3,
+      "topic_id": "ransomware-energy-grid",
+      "sources": [
+        { "name": "Cyber Signal", "headline": "Ransomware group encrypts North American energy operator systems, demands $22M" },
+        { "name": "Cyber Signal", "headline": "Double-extortion campaign hits wind energy predictive maintenance platform" },
+        { "name": "Geo Signal", "headline": "Congressional hearing highlights ransomware threat to US energy grid operators" }
+      ]
+    },
+    {
+      "name": "Critical infrastructure regulatory escalation",
+      "pillar": "Geo",
+      "convergence": 2,
+      "sources": [
+        { "name": "Geo Signal", "headline": "US executive order expands critical infrastructure designation to offshore wind" },
+        { "name": "Geo Signal", "headline": "Canada-US energy policy divergence creates regulatory compliance burden" }
+      ]
+    },
+    {
+      "name": "Wind energy supply chain exposure",
+      "pillar": "Geo",
+      "convergence": 1,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        { "name": "Cyber Signal", "headline": "Wind turbine operational platforms and OT networks in confirmed target profile" }
+      ]
+    }
+  ]
+}

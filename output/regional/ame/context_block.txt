@@ -1,0 +1,11 @@
+[REGIONAL FOOTPRINT — AME]
+Summary: Primary North American operations. Wind farm service hub and growing manufacturing presence.
+Headcount: 2,100
+
+Sites:
+  - Houston Operations Center (US) — service, HIGH
+  - Toronto Engineering Hub (CA) — service, MEDIUM
+
+Crown Jewels: Wind farm telemetry network NA-01 | Predictive maintenance IP
+Supply Chain Dependencies: US steel imports | Canadian logistics network
+Key Contracts: NextEra Energy 3yr maintenance contract | Ontario Wind Power service agreement

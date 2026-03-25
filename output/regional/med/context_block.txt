@@ -1,0 +1,11 @@
+[REGIONAL FOOTPRINT — MED]
+Summary: Manufacturing and service hub for Southern Europe and North Africa. Offshore wind growth market.
+Headcount: 1,400
+
+Sites:
+  - Palermo Offshore Ops (IT) — manufacturing, HIGH
+  - Malaga Service Hub (ES) — service, MEDIUM
+
+Crown Jewels: Offshore blade assembly process | Mediterranean service network
+Supply Chain Dependencies: Spanish steel supply | North African logistics corridor
+Key Contracts: Iberdrola offshore maintenance 4yr | ENEL MED service contract

@@ -1,0 +1,38 @@
+{
+  "region": "MED",
+  "timestamp": "2026-03-16T17:07:36Z",
+  "window_used": "7d",
+  "total_signals": 6,
+  "sources_queried": 6,
+  "clusters": [
+    {
+      "name": "Southern European Economic Instability Pressure",
+      "pillar": "Geo",
+      "convergence": 2,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        { "name": "Geopolitical Feed", "headline": "Mediterranean geopolitical tensions affect energy infrastructure confidence" },
+        { "name": "Geopolitical Feed", "headline": "North Africa instability creates supply chain risk for MED wind operators" }
+      ]
+    },
+    {
+      "name": "EU Regulatory Scrutiny of Wind Suppliers",
+      "pillar": "Geo",
+      "convergence": 1,
+      "topic_id": "eu-critical-infrastructure-directive",
+      "sources": [
+        { "name": "Geopolitical Feed", "headline": "EU regulatory scrutiny of third-country wind component suppliers intensifies" }
+      ]
+    },
+    {
+      "name": "Insider Credential Misuse at Energy Operators",
+      "pillar": "Cyber",
+      "convergence": 3,
+      "sources": [
+        { "name": "Cyber Feed", "headline": "Insider misuse incident at Mediterranean energy operator — unauthorized telemetry access" },
+        { "name": "Cyber Feed", "headline": "Former maintenance contractor retained active credentials for six months post-departure" },
+        { "name": "Cyber Feed", "headline": "Third-party providers with privileged access present elevated insider misuse risk" }
+      ]
+    }
+  ]
+}

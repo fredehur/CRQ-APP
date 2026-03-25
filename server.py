@@ -254,7 +254,7 @@ async def put_review(region: str, body: dict):
         if report_path.exists():
             asyncio.create_task(
                 asyncio.create_subprocess_exec(
-                    "uv", "run", "python", "tools/generate_audience_cards.py", r,
+                    "uv", "run", "python", "tools/generate_audience_cards.py", r, "--mock",
                     stdout=asyncio.subprocess.DEVNULL,
                     stderr=asyncio.subprocess.DEVNULL,
                 )

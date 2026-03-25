@@ -1,0 +1,12 @@
+[REGIONAL FOOTPRINT — NCE]
+Summary: Largest European presence. Mature wind market. Key R&D and engineering functions.
+Headcount: 2,800
+
+Sites:
+  - Hamburg Manufacturing Hub (DE) — manufacturing, HIGH
+  - Gdansk Blade Plant (PL) — manufacturing, HIGH
+  - Copenhagen Engineering Hub (DK) — service, HIGH
+
+Crown Jewels: Core turbine aerodynamic IP | R&D roadmap and prototype designs | OT/SCADA networks EU-01/EU-02
+Supply Chain Dependencies: German precision engineering components | Nordic offshore logistics
+Key Contracts: Ørsted offshore wind 5yr maintenance | Vattenfall EU service agreement

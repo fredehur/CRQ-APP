@@ -1,0 +1,26 @@
+{
+  "generated_at": "2026-03-25T07:21:01.008538Z",
+  "region": "AME",
+  "cards": {
+    "sales": {
+      "title": "Sales Talking Points",
+      "bullets": [
+        "Current threat conditions in this region are elevated but do not affect delivery schedules at this time.",
+        "Customers may raise concerns about energy sector disruptions — our contingency sourcing arrangements remain intact.",
+        "No immediate impact on contract timelines or pricing structures."
+      ]
+    },
+    "ops": {
+      "title": "Operations Signal",
+      "signal": "Elevated threat activity has been identified in this region with potential implications for operational continuity.",
+      "action": "Verify backup procedures for key scheduling and logistics systems are current and tested."
+    },
+    "executive": {
+      "title": "Executive Summary",
+      "vacr_exposure": 22000000,
+      "scenario": "Ransomware",
+      "financial_rank": 1,
+      "assessment": "This region carries financial exposure consistent with the identified scenario. Pipeline continues to monitor for escalation."
+    }
+  }
+}

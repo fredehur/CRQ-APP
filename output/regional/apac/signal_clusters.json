@@ -1,0 +1,31 @@
+{
+  "region": "APAC",
+  "timestamp": "2026-03-16T17:07:25Z",
+  "window_used": "7d",
+  "total_signals": 6,
+  "sources_queried": 6,
+  "clusters": [
+    {
+      "name": "State-Sponsored Manufacturing IP Acquisition",
+      "pillar": "Geo",
+      "convergence": 3,
+      "topic_id": "state-actor-wind-ip-theft",
+      "sources": [
+        { "name": "Geopolitical Feed", "headline": "South China Sea tensions drive manufacturing supply chain restructuring" },
+        { "name": "Geopolitical Feed", "headline": "China-Taiwan strait risk assessment: industrial sector exposure" },
+        { "name": "Geopolitical Feed", "headline": "Australia tightens foreign investment screening for energy technology" }
+      ]
+    },
+    {
+      "name": "OT/SCADA Supply Chain Compromise Campaign",
+      "pillar": "Cyber",
+      "convergence": 3,
+      "topic_id": "ot-ics-cyber-attacks",
+      "sources": [
+        { "name": "Cyber Feed", "headline": "Intrusion campaigns targeting OT networks in APAC manufacturing sector" },
+        { "name": "Cyber Feed", "headline": "Supply chain attack on industrial automation software in wind energy" },
+        { "name": "Cyber Feed", "headline": "Blade production line control systems compromised via software updates" }
+      ]
+    }
+  ]
+}

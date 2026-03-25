@@ -1,0 +1,12 @@
+[REGIONAL FOOTPRINT — APAC]
+Summary: Primary manufacturing region. 60% of global turbine output. Highest operational sensitivity.
+Headcount: 3,200
+
+Sites:
+  - Kaohsiung Manufacturing Hub (TW) — manufacturing, PRIMARY
+  - Shanghai Service Hub (CN) — service, HIGH
+  - Tokyo Regional Office (JP) — service, MEDIUM
+
+Crown Jewels: Series 7 production line | SCADA network TW-01 | OT predictive maintenance stack
+Supply Chain Dependencies: Taiwanese semiconductor components | Korean rare earth supply
+Key Contracts: TEPCO 5yr turbine supply agreement | Vestas APAC logistics JV

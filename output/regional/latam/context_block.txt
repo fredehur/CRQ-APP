@@ -1,0 +1,11 @@
+[REGIONAL FOOTPRINT — LATAM]
+Summary: Growing service and maintenance presence. No primary manufacturing. Emerging wind market.
+Headcount: 680
+
+Sites:
+  - São Paulo Regional Office (BR) — service, MEDIUM
+  - Santiago Service Centre (CL) — service, MEDIUM
+
+Crown Jewels: Regional service contracts | Field technician network
+Supply Chain Dependencies: Brazilian logistics partners
+Key Contracts: Enel Chile wind maintenance 2yr | Neoenergia turbine service Brazil

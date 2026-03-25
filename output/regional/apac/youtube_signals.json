@@ -1,0 +1,30 @@
+{
+  "summary": "Analysts at Chatham House and IISS have assessed that South China Sea militarisation is accelerating supply chain fragmentation for advanced manufacturing sectors including wind energy. State-linked actors are conducting sustained intellectual property operations against offshore wind technology developers across the Asia-Pacific. Expert commentary identifies APAC wind OEM exposure as materially elevated relative to prior assessment periods.",
+  "lead_indicators": [
+    "IISS: South China Sea maritime law enforcement assertiveness increasing Q1 2026",
+    "Chatham House: APAC wind energy supply chain rerouting away from Chinese component sourcing accelerating",
+    "SANS Institute: OT-focused threat actor campaigns targeting APAC energy sector spiked January-March 2026"
+  ],
+  "dominant_pillar": "Geopolitical",
+  "matched_topics": [
+    "state-actor-wind-ip-theft",
+    "supply-chain-wind-components",
+    "ot-ics-cyber-attacks"
+  ],
+  "source_videos": [
+    {
+      "title": "South China Sea 2026: What the Escalation Means for Business",
+      "channel": "Chatham House",
+      "channel_id": "@chathamhouse",
+      "url": "https://youtube.com/watch?v=mock_apac_geo_001",
+      "published_at": "2026-03-10"
+    },
+    {
+      "title": "OT Security in Asia-Pacific: The Wind Energy Exposure",
+      "channel": "SANS Institute",
+      "channel_id": "@SANSInstitute",
+      "url": "https://youtube.com/watch?v=mock_apac_cyber_001",
+      "published_at": "2026-03-08"
+    }
+  ]
+}
