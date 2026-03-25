@@ -120,14 +120,23 @@ def build_cover(prs: Presentation, data: ReportData) -> None:
     _add_text(slide, "Global Cyber Risk\nIntelligence Brief",
               Inches(0.6), Inches(1.1), Inches(8.8), Inches(2.0),
               font_size=28, bold=True, color=WHITE)
+    _add_text(slide, "CISO Edition",
+              Inches(0.6), Inches(3.0), Inches(8.8), Inches(0.35),
+              font_size=14, color=RGBColor(0xBF,0xDB,0xFF))
 
-    # VaCR
-    _add_text(slide, "TOTAL VALUE AT CYBER RISK",
-              Inches(0.6), Inches(3.7), Inches(5), Inches(0.35),
-              font_size=9, color=SLATE)
-    _add_text(slide, _vacr_fmt(data.total_vacr),
-              Inches(0.6), Inches(4.0), Inches(5), Inches(0.9),
-              font_size=36, bold=True, color=BRAND)
+    # Status strip — ESCALATED / MONITOR / CLEAR counts
+    strip_data = [
+        (str(data.escalated_count), "ESCALATED", RED),
+        (str(data.monitor_count),   "MONITOR",   AMBER),
+        (str(data.clear_count),     "CLEAR",     GREEN),
+    ]
+    for i, (count, label, color) in enumerate(strip_data):
+        x = Inches(0.6 + i * 1.5)
+        _add_rect(slide, x, Inches(3.7), Inches(1.2), Inches(0.75), color)
+        _add_text(slide, count, x, Inches(3.73), Inches(1.2), Inches(0.4),
+                  font_size=20, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+        _add_text(slide, label, x, Inches(4.1), Inches(1.2), Inches(0.3),
+                  font_size=7, color=WHITE, align=PP_ALIGN.CENTER)
 
     # Meta
     meta = f"Pipeline ID: {data.run_id}   |   {data.timestamp}"
@@ -148,7 +157,7 @@ def build_exec_summary(prs: Presentation, data: ReportData) -> None:
     _add_text(slide, "Executive Summary", Inches(0.3), Inches(0.1),
               Inches(7), Inches(0.45), font_size=16, bold=True, color=WHITE)
 
-    # Status badges
+    # Status badges — no VaCR badge
     badge_data = [
         (str(data.escalated_count), "ESCALATED", RED),
         (str(data.monitor_count),   "MONITOR",   AMBER),
@@ -162,23 +171,14 @@ def build_exec_summary(prs: Presentation, data: ReportData) -> None:
         _add_text(slide, label, x, Inches(1.25), Inches(1.1), Inches(0.3),
                   font_size=7, color=WHITE, align=PP_ALIGN.CENTER)
 
-    # VaCR badge
-    _add_rect(slide, Inches(8.0), Inches(0.85), Inches(1.7), Inches(0.75), BRAND)
-    _add_text(slide, _vacr_fmt(data.total_vacr),
-              Inches(8.0), Inches(0.88), Inches(1.7), Inches(0.4),
-              font_size=16, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
-    _add_text(slide, "TOTAL VaCR",
-              Inches(8.0), Inches(1.25), Inches(1.7), Inches(0.3),
-              font_size=7, color=WHITE, align=PP_ALIGN.CENTER)
-
     # Exec summary text
     _add_text(slide, data.exec_summary,
               Inches(0.4), Inches(1.8), Inches(9.2), Inches(1.0),
               font_size=10, color=DARK, wrap=True)
 
-    # Admiralty table header
-    cols = ["Region", "Scenario", "VaCR", "Admiralty", "Velocity", "Severity"]
-    col_widths = [Inches(1.2), Inches(2.2), Inches(1.2), Inches(1.1), Inches(1.8), Inches(1.2)]
+    # Region table header — no VaCR, no Admiralty; add Confidence
+    cols = ["Region", "Scenario", "Severity", "Velocity", "Confidence"]
+    col_widths = [Inches(1.2), Inches(2.2), Inches(1.4), Inches(1.8), Inches(1.4)]
     y_header = Inches(3.0)
     x = Inches(0.4)
     for col, w in zip(cols, col_widths):
@@ -189,8 +189,8 @@ def build_exec_summary(prs: Presentation, data: ReportData) -> None:
     escalated = [r for r in data.regions if r.status == RegionStatus.ESCALATED]
     for row_i, r in enumerate(escalated):
         y = Inches(3.35 + row_i * 0.45)
-        row = [r.name, r.scenario_match or "—", _vacr_fmt(r.vacr),
-               r.admiralty or "—", _vel_label(r.velocity), r.severity or "—"]
+        row = [r.name, r.scenario_match or "—", r.severity or "—",
+               _vel_label(r.velocity), r.confidence_label or "—"]
         x = Inches(0.4)
         for val, w in zip(row, col_widths):
             _add_text(slide, val, x, y, w, Inches(0.35), font_size=9, color=DARK)
@@ -207,50 +207,66 @@ def build_region(prs: Presentation, region: RegionEntry) -> None:
     _add_text(slide, region.scenario_match or "",
               Inches(0.3), Inches(0.38), Inches(6), Inches(0.25),
               font_size=9, color=RGBColor(0xBF,0xDB,0xFF))
-    # ESCALATED chip
-    _add_rect(slide, Inches(8.4), Inches(0.12), Inches(1.3), Inches(0.38), RED)
-    _add_text(slide, "ESCALATED", Inches(8.4), Inches(0.16),
+
+    # Severity chip — colour by severity
+    sev = (region.severity or "").upper()
+    if sev == "CRITICAL":
+        chip_color = RED
+    elif sev == "HIGH":
+        chip_color = RGBColor(0xEA, 0x58, 0x0C)
+    elif sev == "MEDIUM":
+        chip_color = AMBER
+    else:
+        chip_color = SLATE
+    chip_label = region.severity or "—"
+    _add_rect(slide, Inches(8.4), Inches(0.12), Inches(1.3), Inches(0.38), chip_color)
+    _add_text(slide, chip_label, Inches(8.4), Inches(0.16),
               Inches(1.3), Inches(0.3), font_size=8, bold=True,
               color=WHITE, align=PP_ALIGN.CENTER)
 
-    # Sidebar scorecard (left 1.4in)
-    sidebar_x = Inches(0.3)
-    kpi_items = [
-        ("VaCR Exposure", _vacr_fmt(region.vacr), BRAND),
-        ("Admiralty",     region.admiralty or "—", BRAND),
-        ("Velocity",      _vel_label(region.velocity),
-         RED if region.velocity == "accelerating" else SLATE),
-        ("Severity",      region.severity or "—",
-         RED if region.severity in ("CRITICAL","HIGH") else
-         AMBER if region.severity == "MEDIUM" else GREEN),
+    # Sub-header line
+    sub_parts = [
+        region.scenario_match or "—",
+        region.signal_type or "—",
+        f"Confidence: {region.confidence_label or '—'}",
     ]
-    for i, (label, value, color) in enumerate(kpi_items):
-        y = Inches(0.85 + i * 1.55)
-        _add_text(slide, label, sidebar_x, y, Inches(1.4), Inches(0.3),
-                  font_size=7, color=SLATE)
-        _add_text(slide, value, sidebar_x, Inches(0.85 + i*1.55 + 0.32),
-                  Inches(1.4), Inches(0.7), font_size=16, bold=True, color=color)
+    _add_text(slide, "  ·  ".join(sub_parts),
+              Inches(0.3), Inches(0.75), Inches(9), Inches(0.28),
+              font_size=9, color=SLATE)
 
-    # Body — three pillars
-    body_x = Inches(1.9)
-    body_w = Inches(7.8)
-    pillars = [
-        ("WHY — GEOPOLITICAL DRIVER", region.why_text),
-        ("HOW — CYBER VECTOR",        region.how_text),
-        ("SO WHAT — BUSINESS IMPACT", region.so_what_text),
-    ]
-    y = Inches(0.85)
-    for label, text in pillars:
-        if text:
-            _add_text(slide, label, body_x, y, body_w, Inches(0.28),
-                      font_size=8, bold=True, color=BRAND)
-            _add_text(slide, text[:400], body_x, y + Inches(0.3),
-                      body_w, Inches(1.5), font_size=9, color=DARK, wrap=True)
-            y += Inches(2.1)
+    # 2×2 grid of board_bullets
+    if region.board_bullets and len(region.board_bullets) >= 4:
+        cell_w = Inches(4.5)
+        cell_h = Inches(2.6)
+        cells = [
+            (Inches(0.3),             Inches(1.0),  "DRIVER",   BRAND),
+            (Inches(0.3)+Inches(4.7), Inches(1.0),  "EXPOSURE", BRAND),
+            (Inches(0.3),             Inches(3.7),  "IMPACT",   RED),
+            (Inches(0.3)+Inches(4.7), Inches(3.7),  "WATCH",    AMBER),
+        ]
+        for idx, (cx, cy, cell_label, border_color) in enumerate(cells):
+            # 3px left border
+            _add_rect(slide, cx, cy, Inches(0.05), cell_h, border_color)
+            # Label
+            _add_text(slide, cell_label,
+                      cx + Inches(0.1), cy, cell_w - Inches(0.1), Inches(0.28),
+                      font_size=7, bold=True, color=SLATE)
+            # Body text
+            _add_text(slide, region.board_bullets[idx],
+                      cx + Inches(0.1), cy + Inches(0.28),
+                      cell_w - Inches(0.1), cell_h - Inches(0.28),
+                      font_size=9, color=DARK, wrap=True)
 
-    if not region.why_text:
+        # Footer
+        _add_text(slide, _vel_label(region.velocity),
+                  Inches(0.3), Inches(6.4), Inches(2.5), Inches(0.3),
+                  font_size=8, color=SLATE)
+        _add_text(slide, region.threat_characterisation or "",
+                  Inches(3.0), Inches(6.4), Inches(6.5), Inches(0.3),
+                  font_size=8, color=SLATE)
+    else:
         _add_text(slide, "Regional intelligence report unavailable for this run.",
-                  body_x, Inches(1.0), body_w, Inches(0.5),
+                  Inches(0.3), Inches(1.0), Inches(9.4), Inches(0.5),
                   font_size=10, color=AMBER)
 
 
@@ -273,7 +289,7 @@ def build_appendix(prs: Presentation, data: ReportData) -> None:
         for r in monitor:
             if y >= Y_MAX:
                 break
-            txt = f"{r.name}  ·  {r.scenario_match or 'No scenario'}  ·  Admiralty {r.admiralty or '—'}  ·  {r.severity or '—'}"
+            txt = f"{r.name}  ·  {r.scenario_match or 'No scenario'}  ·  Confidence: {r.confidence_label or '—'}  ·  {r.severity or '—'}"
             _add_text(slide, txt, Inches(0.6), y, Inches(9), Inches(0.35),
                       font_size=9, color=DARK)
             y += Inches(0.38)

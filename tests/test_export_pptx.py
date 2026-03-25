@@ -39,12 +39,13 @@ def test_pptx_cover_slide_has_title(mock_output):
     assert any("Global Cyber Risk" in t for t in title_texts)
 
 
-def test_pptx_region_slides_contain_admiralty(mock_output):
+def test_pptx_region_slides_contain_confidence(mock_output):
     data = build(output_dir=str(mock_output))
     prs = ep.build_presentation(data)
-    # Slides 2 = exec, 3 = APAC, 4 = AME, 5 = appendix
+    # Slides: 0=cover, 1=exec summary, 2=APAC, 3=AME, 4=appendix
     apac_slide = prs.slides[2]
     all_text = " ".join(
         shape.text for shape in apac_slide.shapes if shape.has_text_frame
     )
-    assert "B2" in all_text  # APAC admiralty
+    assert "Confidence:" in all_text  # CISO layout sub-header shows confidence
+    assert "B2" not in all_text       # admiralty must not appear in new layout
