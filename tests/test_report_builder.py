@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 from report_builder import (
     RegionStatus, RegionEntry, ReportData, _parse_pillars, build,
     _confidence_label, _threat_characterisation, _extract_board_bullets,
+    _first_non_vacr_sentence,
 )
 
 
@@ -190,3 +191,13 @@ def test_extract_board_bullets_returns_none_when_missing():
     assert _extract_board_bullets(None, "how.", "so_what.") is None
     assert _extract_board_bullets("why.", None, "so_what.") is None
     assert _extract_board_bullets("why.", "how.", None) is None
+
+def test_first_non_vacr_sentence_whitespace_only():
+    assert _first_non_vacr_sentence("   ") is None
+
+def test_first_non_vacr_sentence_all_vacr_returns_none():
+    assert _first_non_vacr_sentence("Exposure is $4.2M. VaCR stands at $22M.") is None
+
+def test_extract_board_bullets_single_sentence_so_what_returns_none():
+    # Single-sentence so_what produces identical impact/watch — return None
+    assert _extract_board_bullets("Why sentence.", "How sentence.", "Watch for service disruption.") is None

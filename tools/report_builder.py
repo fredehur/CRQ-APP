@@ -68,7 +68,7 @@ _PILLAR_HEADERS = [
 
 # ── Sentence utilities ────────────────────────────────────────────────────────
 
-_SENT_RE = re.compile(r'(?<=[.!?])\s+')
+_SENT_RE = re.compile(r'(?<=[.!?])\s+(?=[A-Z"\'(])')
 
 
 def _split_sentences(text: str) -> list[str]:
@@ -90,13 +90,20 @@ def _last_sentence(text: str | None) -> str | None:
 
 
 def _first_non_vacr_sentence(text: str | None) -> str | None:
-    """Return first sentence that contains no dollar amount or VaCR reference."""
+    """Return first sentence that contains no dollar amount or VaCR reference.
+
+    Returns None if all sentences contain VaCR/dollar references, or if input
+    is empty/whitespace — callers treat None as unavailable content.
+    """
     if not text:
         return None
-    for s in _split_sentences(text):
+    parts = _split_sentences(text)
+    if not parts:
+        return None
+    for s in parts:
         if '$' not in s and 'vacr' not in s.lower():
             return s
-    return _split_sentences(text)[0] if text else None
+    return None  # all sentences contain VaCR — caller returns None board_bullets
 
 
 def _confidence_label(admiralty: str | None) -> str:
@@ -133,6 +140,9 @@ def _extract_board_bullets(
     exposure = _first_sentence(how)
     impact   = _first_non_vacr_sentence(so_what)
     watch    = _last_sentence(so_what)
+    # Duplicate guard: single-sentence so_what produces identical impact/watch
+    if impact is not None and impact == watch:
+        watch = None
     if not all([driver, exposure, impact, watch]):
         return None
     return [driver, exposure, impact, watch]
