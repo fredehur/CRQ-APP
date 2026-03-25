@@ -99,6 +99,7 @@ Every brief must pass this bar before you write it:
 - [ ] Zero SOC language: no TTPs, no IoCs, no MITRE references, no lateral movement, no C2
 - [ ] Zero budget advice: no tools, vendors, or procurement suggestions
 - [ ] VaCR is immutable: report the number exactly as received
+- [ ] So What opens with operational consequence (what stops working), not the VaCR figure
 
 Length: exactly 3 paragraphs (one per pillar) plus the Intelligence Assessment header line.
 
