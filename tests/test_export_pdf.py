@@ -66,6 +66,7 @@ def test_template_confidence_label_in_table(mock_output):
     """Exec summary table must show Confidence column header."""
     html = _render(mock_output)
     assert "Confidence" in html
+    assert "Admiralty" not in html   # raw Admiralty code label must not appear in CISO brief
 
 
 def test_template_cover_no_vacr_block(mock_output):

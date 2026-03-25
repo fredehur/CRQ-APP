@@ -49,3 +49,42 @@ def test_pptx_region_slides_contain_confidence(mock_output):
     )
     assert "Confidence:" in all_text  # CISO layout sub-header shows confidence
     assert "B2" not in all_text       # admiralty must not appear in new layout
+
+
+def test_pptx_cover_says_ciso(mock_output):
+    """Cover slide must contain 'CISO' somewhere."""
+    data = build(output_dir=str(mock_output))
+    prs = ep.build_presentation(data)
+    cover = prs.slides[0]
+    all_text = " ".join(shape.text for shape in cover.shapes if shape.has_text_frame)
+    assert "CISO" in all_text
+
+
+def test_pptx_cover_no_vacr(mock_output):
+    """Cover slide must not contain VaCR dollar amount or label."""
+    data = build(output_dir=str(mock_output))
+    prs = ep.build_presentation(data)
+    cover = prs.slides[0]
+    all_text = " ".join(shape.text for shape in cover.shapes if shape.has_text_frame)
+    assert "VaCR" not in all_text
+    assert "TOTAL VALUE AT CYBER RISK" not in all_text
+
+
+def test_pptx_exec_summary_no_vacr_column(mock_output):
+    """Exec summary slide must not contain VaCR column header or badge."""
+    data = build(output_dir=str(mock_output))
+    prs = ep.build_presentation(data)
+    exec_slide = prs.slides[1]
+    all_text = " ".join(shape.text for shape in exec_slide.shapes if shape.has_text_frame)
+    assert "VaCR" not in all_text
+    assert "TOTAL VaCR" not in all_text
+
+
+def test_pptx_region_slide_contains_driver_sentence(mock_output):
+    """Region slides must render board_bullets[0] (Driver sentence) as text."""
+    data = build(output_dir=str(mock_output))
+    prs = ep.build_presentation(data)
+    apac_slide = prs.slides[2]  # 0=cover, 1=exec, 2=APAC
+    all_text = " ".join(shape.text for shape in apac_slide.shapes if shape.has_text_frame)
+    # board_bullets[0] is the first sentence of APAC why_text
+    assert "State-sponsored" in all_text

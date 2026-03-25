@@ -76,7 +76,7 @@ Ransomware groups exploiting North American energy sector during regulatory tran
 Double-extortion ransomware targeting backup systems and operational databases.
 
 ## So What — Business Impact
-$22,000,000 at risk. Service delivery continuity for 25% of global operations at stake. Continued monitoring of threat actor activity is warranted.
+$22,000,000 at risk. Service delivery continuity for 25% of global operations at stake. North American wind farm service delivery timelines are at risk of disruption.
 """
 
 
