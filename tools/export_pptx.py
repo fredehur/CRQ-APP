@@ -94,12 +94,6 @@ def _add_text(slide, text: str, left, top, width, height,
     run.font.color.rgb = color
 
 
-def _vacr_fmt(vacr: float | None) -> str:
-    if vacr is None or vacr == 0:
-        return "—"
-    return f"${vacr / 1_000_000:.1f}M"
-
-
 def _vel_label(velocity: str | None) -> str:
     mapping = {"accelerating": "↑ Accelerating", "improving": "↓ Improving",
                "stable": "→ Stable", "unknown": "—"}
