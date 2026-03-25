@@ -125,7 +125,7 @@
   .cover-client {
     font-size: 10px;
     font-weight: 600;
-    text-transform: small-caps;
+    font-variant: small-caps;
     letter-spacing: 2px;
     color: var(--navy);
   }
@@ -410,8 +410,9 @@
         <tr>
           <th>Region</th>
           <th>Scenario</th>
-          <th>Severity</th>
+          <th>Confidence</th>
           <th>Velocity</th>
+          <th>Severity</th>
         </tr>
       </thead>
       <tbody>
@@ -419,12 +420,7 @@
         <tr>
           <td><strong>{{ r.name }}</strong></td>
           <td>{{ r.scenario_match or "—" }}</td>
-          <td>
-            {% if r.severity %}
-              {% set sev_lower = r.severity | lower %}
-              <span class="chip chip-sev-{{ sev_lower }}">{{ r.severity | upper }}</span>
-            {% else %}—{% endif %}
-          </td>
+          <td>{{ r.confidence_label or "Unknown" }}</td>
           <td>
             {% if r.velocity == "accelerating" %}
               <span class="vel-up">↑ Accelerating</span>
@@ -435,6 +431,12 @@
             {% else %}
               <span class="vel-none">— Unknown</span>
             {% endif %}
+          </td>
+          <td>
+            {% if r.severity %}
+              {% set sev_lower = r.severity | lower %}
+              <span class="chip chip-sev-{{ sev_lower }}">{{ r.severity | upper }}</span>
+            {% else %}—{% endif %}
           </td>
         </tr>
         {% endfor %}
@@ -473,22 +475,22 @@
       <div class="bullets-grid">
 
         <div class="bullet-cell driver">
-          <span class="label">Driver</span>
+          <span class="label">DRIVER</span>
           <p>{{ r.board_bullets[0] }}</p>
         </div>
 
         <div class="bullet-cell exposure">
-          <span class="label">Exposure</span>
+          <span class="label">EXPOSURE</span>
           <p>{{ r.board_bullets[1] }}</p>
         </div>
 
         <div class="bullet-cell impact">
-          <span class="label">Impact</span>
+          <span class="label">IMPACT</span>
           <p>{{ r.board_bullets[2] }}</p>
         </div>
 
         <div class="bullet-cell watch">
-          <span class="label">Watch</span>
+          <span class="label">WATCH</span>
           <p>{{ r.board_bullets[3] }}</p>
         </div>
 

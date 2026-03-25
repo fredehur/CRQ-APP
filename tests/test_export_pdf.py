@@ -27,7 +27,7 @@ def test_template_renders_without_error(mock_output):
 
 def test_template_contains_brand_color(mock_output):
     html = _render(mock_output)
-    assert "#104277" in html
+    assert "#1e3a5f" in html
 
 
 def test_template_contains_pipeline_id(mock_output):
@@ -35,9 +35,13 @@ def test_template_contains_pipeline_id(mock_output):
     assert "crq-test-001" in html
 
 
-def test_template_contains_vacr(mock_output):
+def test_template_does_not_contain_vacr_ui_elements(mock_output):
+    """CISO brief must not render VaCR KPI labels or columns."""
     html = _render(mock_output)
-    assert "44" in html  # $44.7M
+    assert "Total Value at Cyber Risk" not in html
+    assert "TOTAL VaCR" not in html
+    assert "VaCR Exposure" not in html
+    assert ">VaCR<" not in html  # column header
 
 
 def test_template_contains_escalated_regions(mock_output):
@@ -46,8 +50,24 @@ def test_template_contains_escalated_regions(mock_output):
     assert "AME" in html
 
 
-def test_template_contains_three_pillar_labels(mock_output):
+def test_template_contains_board_grid_labels(mock_output):
     html = _render(mock_output)
-    assert "Geopolitical Driver" in html
-    assert "Cyber Vector" in html
-    assert "Business Impact" in html
+    assert "DRIVER" in html
+    assert "EXPOSURE" in html
+    assert "WATCH" in html
+
+
+def test_template_cover_says_ciso_edition(mock_output):
+    html = _render(mock_output)
+    assert "CISO" in html
+
+
+def test_template_confidence_label_in_table(mock_output):
+    """Exec summary table must show Confidence column header."""
+    html = _render(mock_output)
+    assert "Confidence" in html
+
+
+def test_template_cover_no_vacr_block(mock_output):
+    html = _render(mock_output)
+    assert "cover-vacr" not in html

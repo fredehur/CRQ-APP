@@ -64,7 +64,7 @@ State-sponsored groups in the South China Sea corridor are targeting supply chai
 System intrusion attempts targeting OT networks at blade manufacturing plants.
 
 ## So What — Business Impact
-$18,500,000 at risk. Disruption threatens 75% of AeroGrid's manufacturing revenue.
+$18,500,000 at risk. Disruption threatens 75% of AeroGrid's manufacturing revenue. Watch for further escalation if diplomatic tensions intensify.
 """
 
 AME_REPORT_MD = """# AME Regional Executive Brief
@@ -76,7 +76,7 @@ Ransomware groups exploiting North American energy sector during regulatory tran
 Double-extortion ransomware targeting backup systems and operational databases.
 
 ## So What — Business Impact
-$22,000,000 at risk. Service delivery continuity for 25% of global operations at stake.
+$22,000,000 at risk. Service delivery continuity for 25% of global operations at stake. Continued monitoring of threat actor activity is warranted.
 """
 
 
