@@ -2,324 +2,574 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Global Cyber Risk Intelligence Brief</title>
+<title>Cyber Risk Intelligence Brief — CISO Edition</title>
 <style>
-  :root { --brand: #104277; --red: #dc2626; --amber: #d97706; --green: #16a34a; --slate: #64748b; }
+  :root {
+    --navy:  #1e3a5f;
+    --red:   #dc2626;
+    --amber: #d97706;
+    --green: #16a34a;
+    --grey:  #6b7280;
+    --divider: #f0f0f0;
+  }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; color: #1e293b; background: #fff; }
-
-  @page { size: A4; margin: 18mm 16mm; }
-
-  .page { page-break-before: always; min-height: 240mm; }
-  .page:first-child { page-break-before: avoid; }
-
-  /* ── Cover ──────────────────────────────────────────────────────────── */
-  .cover { display: flex; flex-direction: column; min-height: 257mm; }
-  .cover-band {
-    background: var(--brand); color: #fff;
-    padding: 40mm 16mm 20mm;
-    flex: 0 0 40%;
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 10px;
+    color: #333;
+    background: #fff;
+    line-height: 1.6;
   }
-  .cover-band .client { font-size: 13pt; opacity: 0.8; margin-bottom: 8mm; }
-  .cover-band .report-title { font-size: 22pt; font-weight: 700; line-height: 1.2; }
-  .cover-body { padding: 10mm 16mm; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
-  .cover-vacr { font-size: 36pt; font-weight: 700; color: var(--brand); margin: 6mm 0 2mm; }
-  .cover-vacr-label { font-size: 10pt; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; }
-  .cover-meta { font-size: 9pt; color: var(--slate); }
-  .cover-meta span { display: block; margin-bottom: 2mm; }
-  .cover-confidential { font-size: 8pt; font-weight: 700; color: var(--red); text-align: right; margin-top: auto; }
+
+  @page { size: A4; margin: 0; }
 
   @media print {
     * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   }
 
-  /* ── Section header ──────────────────────────────────────────────────── */
-  .section-header {
-    background: var(--brand); color: #fff;
-    padding: 5mm 6mm 4mm;
-    margin: 0 -16mm 6mm;
-    display: flex; justify-content: space-between; align-items: center;
+  /* ── Page shell ───────────────────────────────────────────────────── */
+  .page {
+    page-break-before: always;
+    width: 210mm;
+    min-height: 297mm;
+    position: relative;
+    padding: 0 0 16mm 0;
+    background: #fff;
   }
-  .section-header h2 { font-size: 14pt; font-weight: 700; }
-  .section-header .sub { font-size: 9pt; opacity: 0.8; }
+  .page:first-child { page-break-before: avoid; }
 
-  /* ── Executive Summary ───────────────────────────────────────────────── */
-  .status-strip { display: flex; gap: 4mm; margin-bottom: 6mm; }
-  .status-badge {
-    padding: 2mm 4mm; border-radius: 3px;
-    font-size: 9pt; font-weight: 700;
-    display: flex; flex-direction: column; align-items: center; gap: 1mm;
-  }
-  .status-badge .count { font-size: 18pt; line-height: 1; }
-  .badge-red    { background: #fee2e2; color: var(--red); border: 1px solid #fca5a5; }
-  .badge-amber  { background: #fef3c7; color: var(--amber); border: 1px solid #fcd34d; }
-  .badge-green  { background: #dcfce7; color: var(--green); border: 1px solid #86efac; }
-  .badge-blue   { background: #dbeafe; color: var(--brand); border: 1px solid #93c5fd; }
-
-  .total-vacr { font-size: 28pt; font-weight: 700; color: var(--brand); margin: 4mm 0 2mm; }
-  .total-vacr-label { font-size: 9pt; color: var(--slate); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5mm; }
-
-  .exec-summary-text { font-size: 10.5pt; line-height: 1.6; color: #334155; margin-bottom: 6mm; }
-
-  .admiralty-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 4mm; }
-  .admiralty-table th { background: #f1f5f9; color: var(--slate); text-transform: uppercase;
-    font-size: 8pt; letter-spacing: 0.5px; padding: 2mm 3mm; text-align: left;
-    border-bottom: 2px solid #e2e8f0; }
-  .admiralty-table td { padding: 2mm 3mm; border-bottom: 1px solid #f1f5f9; }
-
-  /* ── Region pages ────────────────────────────────────────────────────── */
-  .region-layout { display: flex; gap: 5mm; margin-top: 5mm; }
-  .region-sidebar {
-    width: 32mm; flex-shrink: 0;
-    border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden;
-  }
-  .kpi-cell {
-    padding: 3mm 2mm; text-align: center;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  .kpi-cell:last-child { border-bottom: none; }
-  .kpi-label { font-size: 7pt; color: var(--slate); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 1mm; }
-  .kpi-value { font-size: 13pt; font-weight: 700; color: var(--brand); line-height: 1; }
-  .kpi-value.red { color: var(--red); }
-  .kpi-value.amber { color: var(--amber); }
-  .kpi-value.green { color: var(--green); }
-
-  .region-body { flex: 1; }
-  .pillar { margin-bottom: 5mm; }
-  .pillar-label {
-    font-size: 8pt; font-weight: 700; color: var(--brand);
-    text-transform: uppercase; letter-spacing: 0.5px;
-    border-left: 3px solid var(--brand); padding-left: 2mm;
-    margin-bottom: 2mm;
-  }
-  .pillar-text { font-size: 10pt; line-height: 1.6; color: #334155; }
-
-  .unavailable-notice {
-    background: #fef3c7; border: 1px solid #fcd34d; border-radius: 4px;
-    padding: 4mm; font-size: 9pt; color: var(--amber);
+  /* 3px navy stripe top of every page */
+  .page::before {
+    content: "";
+    display: block;
+    height: 3px;
+    background: var(--navy);
+    width: 100%;
   }
 
-  /* ── Status badge chips ──────────────────────────────────────────────── */
+  /* Inner content wrapper — uniform horizontal padding */
+  .page-body {
+    padding: 10mm 16mm 0;
+  }
+
+  /* ── Typography ────────────────────────────────────────────────────── */
+  h1 { font-size: 22px; font-weight: 700; color: #111; line-height: 1.25; }
+  h2 { font-size: 16px; font-weight: 700; color: #111; line-height: 1.3; }
+  h3 { font-size: 12px; font-weight: 700; color: #111; }
+
+  .label {
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--navy);
+  }
+
+  .meta-text {
+    font-size: 9px;
+    color: var(--grey);
+  }
+
+  /* ── Chips ─────────────────────────────────────────────────────────── */
   .chip {
-    display: inline-block; padding: 1mm 3mm; border-radius: 3px;
-    font-size: 8pt; font-weight: 700;
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 8px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
   }
-  .chip-red    { background: #dc2626; color: #fff; }
-  .chip-amber  { background: #d97706; color: #fff; }
-  .chip-green  { background: #16a34a; color: #fff; }
+  .chip-esc   { background: #dc2626; color: #fff; }
+  .chip-mon   { background: #d97706; color: #fff; }
+  .chip-clr   { background: #16a34a; color: #fff; }
+  .chip-sev-critical { background: #dc2626; color: #fff; }
+  .chip-sev-high     { background: #ea580c; color: #fff; }
+  .chip-sev-medium   { background: #d97706; color: #fff; }
+  .chip-sev-low      { background: #16a34a; color: #fff; }
 
-  /* ── Velocity arrows ─────────────────────────────────────────────────── */
-  .vel-up   { color: var(--red); }
-  .vel-down { color: var(--green); }
-  .vel-flat { color: var(--slate); }
+  /* Inline status strip — three chips in a row */
+  .status-strip {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .status-strip .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 9px;
+    font-weight: 600;
+  }
 
-  /* ── Appendix ────────────────────────────────────────────────────────── */
-  .monitor-card {
-    border-left: 4px solid var(--amber); background: #fefce8;
-    padding: 3mm 4mm; border-radius: 0 4px 4px 0; margin-bottom: 3mm;
+  /* ── Divider ───────────────────────────────────────────────────────── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--divider);
+    margin: 8px 0;
   }
-  .monitor-card h4 { font-size: 10pt; font-weight: 700; color: var(--amber); margin-bottom: 1mm; }
-  .clear-row {
-    display: flex; align-items: center; gap: 3mm;
-    padding: 2mm 3mm; border-bottom: 1px solid #f1f5f9; font-size: 9.5pt;
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* COVER PAGE                                                         */
+  /* ══════════════════════════════════════════════════════════════════ */
+  .cover-body {
+    padding: 20mm 16mm 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12mm;
   }
-  .meta-table { width: 100%; border-collapse: collapse; font-size: 9pt; margin-top: 3mm; }
-  .meta-table td { padding: 2mm 3mm; border-bottom: 1px solid #f1f5f9; }
-  .meta-table td:first-child { color: var(--slate); width: 40%; }
+
+  .cover-client {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: small-caps;
+    letter-spacing: 2px;
+    color: var(--navy);
+  }
+
+  .cover-title { margin-top: 4mm; }
+
+  .cover-subtitle {
+    font-size: 14px;
+    color: var(--grey);
+    margin-top: 4px;
+  }
+
+  .cover-meta-block {
+    margin-top: 10mm;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cover-classification {
+    display: inline-block;
+    font-size: 9px;
+    font-weight: 700;
+    color: #dc2626;
+    border: 1px solid #dc2626;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    margin-top: 2mm;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* GLOBAL POSTURE PAGE                                               */
+  /* ══════════════════════════════════════════════════════════════════ */
+  .page-heading {
+    margin-bottom: 6mm;
+    border-bottom: 1px solid var(--divider);
+    padding-bottom: 4mm;
+  }
+  .page-heading h2 { margin-bottom: 4px; }
+
+  .exec-summary {
+    font-size: 10px;
+    line-height: 1.7;
+    color: #333;
+    margin: 6mm 0;
+  }
+
+  /* Region summary table */
+  .region-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+    margin-top: 4mm;
+  }
+  .region-table th {
+    background: #f8f8f8;
+    color: var(--navy);
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 5px 8px;
+    text-align: left;
+    border-bottom: 2px solid var(--divider);
+  }
+  .region-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: middle;
+  }
+  .region-table tr:last-child td { border-bottom: none; }
+
+  .vel-up   { color: #dc2626; font-weight: 600; }
+  .vel-down { color: #16a34a; font-weight: 600; }
+  .vel-flat { color: var(--grey); font-weight: 600; }
+  .vel-none { color: var(--grey); }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* ESCALATED REGION PAGES                                            */
+  /* ══════════════════════════════════════════════════════════════════ */
+  .region-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 3mm;
+  }
+
+  .region-header-left h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .region-sub {
+    font-size: 9px;
+    color: var(--grey);
+    margin-top: 3px;
+  }
+
+  /* 2×2 board bullets grid */
+  .bullets-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4mm;
+    margin-top: 5mm;
+  }
+
+  .bullet-cell {
+    border-radius: 3px;
+    padding: 5mm;
+    background: #fafafa;
+    border: 1px solid var(--divider);
+  }
+
+  .bullet-cell.driver  { border-left: 3px solid var(--navy); }
+  .bullet-cell.exposure { border-left: 3px solid var(--navy); }
+  .bullet-cell.impact  { border-left: 3px solid #dc2626; }
+  .bullet-cell.watch   { border-left: 3px solid #d97706; }
+
+  .bullet-cell .label {
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .bullet-cell p {
+    font-size: 10px;
+    line-height: 1.6;
+    color: #333;
+  }
+
+  /* Unavailable notice */
+  .unavailable-notice {
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 4px;
+    padding: 8mm;
+    font-size: 9px;
+    color: #92400e;
+    margin-top: 5mm;
+  }
+
+  /* Region page footer */
+  .region-footer {
+    position: absolute;
+    bottom: 6mm;
+    left: 16mm;
+    right: 16mm;
+    border-top: 1px solid var(--divider);
+    padding-top: 4px;
+    font-size: 8px;
+    color: var(--grey);
+    display: flex;
+    gap: 12px;
+  }
+
+  /* ══════════════════════════════════════════════════════════════════ */
+  /* APPENDIX PAGE                                                     */
+  /* ══════════════════════════════════════════════════════════════════ */
+  .appendix-section { margin-bottom: 8mm; }
+
+  .appendix-section h3 {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--grey);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 4mm;
+    padding-bottom: 2px;
+    border-bottom: 1px solid var(--divider);
+  }
+
+  .appendix-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--divider);
+    font-size: 9px;
+  }
+  .appendix-row:last-child { border-bottom: none; }
+
+  .appendix-row .region-name {
+    font-weight: 700;
+    width: 40px;
+  }
+
+  .appendix-row .row-detail {
+    color: var(--grey);
+  }
+
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9px;
+  }
+  .meta-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid var(--divider);
+    vertical-align: top;
+  }
+  .meta-table td:first-child {
+    color: var(--grey);
+    width: 38%;
+    font-weight: 500;
+  }
+  .meta-table tr:last-child td { border-bottom: none; }
 </style>
 </head>
 <body>
 
 {# ══════════════════════════════════════════════════════════════════ COVER #}
-<div class="page cover">
-  <div class="cover-band">
-    <div class="client">AeroGrid Wind Solutions</div>
-    <div class="report-title">Global Cyber Risk<br>Intelligence Brief</div>
-  </div>
+<div class="page">
   <div class="cover-body">
+
     <div>
-      <div class="cover-vacr-label">Total Value at Cyber Risk</div>
-      <div class="cover-vacr">${{ "%.1f"|format(data.total_vacr / 1_000_000) }}M</div>
-      <div class="cover-meta"><span style="font-size:11pt;font-weight:700;">Trend vs Prior Run: {{ data.trend_delta }}</span></div>
-      <div class="cover-meta">
-        <span>Pipeline ID: {{ data.run_id }}</span>
-        <span>Run Date: {{ data.timestamp }}</span>
-        <span>Regions Assessed: {{ data.regions|length }}</span>
+      <div class="cover-client">AeroGrid Wind Solutions</div>
+      <div class="cover-title">
+        <h1>Cyber Risk Intelligence Brief</h1>
+        <div class="cover-subtitle">CISO Edition</div>
       </div>
     </div>
-    <div class="cover-confidential">CONFIDENTIAL</div>
+
+    <div>
+      <div class="status-strip">
+        <span class="item">
+          <span class="chip chip-esc">ESCALATED</span>
+          <strong>{{ data.escalated_count }}</strong>
+        </span>
+        <span class="item">
+          <span class="chip chip-mon">MONITOR</span>
+          <strong>{{ data.monitor_count }}</strong>
+        </span>
+        <span class="item">
+          <span class="chip chip-clr">CLEAR</span>
+          <strong>{{ data.clear_count }}</strong>
+        </span>
+      </div>
+    </div>
+
+    <div class="cover-meta-block">
+      <div class="meta-text">Date: {{ data.timestamp }}</div>
+      <div class="meta-text">Pipeline ID: {{ data.run_id }}</div>
+      <div class="meta-text">Regions Assessed: {{ data.regions | length }}</div>
+      <div><span class="cover-classification">CONFIDENTIAL</span></div>
+    </div>
+
   </div>
 </div>
 
-{# ══════════════════════════════════════════════════════════════════ EXEC SUMMARY #}
+{# ══════════════════════════════════════════════════════════════════ GLOBAL POSTURE #}
 <div class="page">
-  <div class="section-header">
-    <h2>Executive Summary</h2>
-    <span class="sub">Board-Level Intelligence Brief</span>
+  <div class="page-body">
+
+    <div class="page-heading">
+      <h2>Global Risk Posture</h2>
+      <div style="margin-top:4px;">
+        <div class="status-strip">
+          <span class="item">
+            <span class="chip chip-esc">ESCALATED</span>
+            <strong>{{ data.escalated_count }}</strong>
+          </span>
+          <span class="item">
+            <span class="chip chip-mon">MONITOR</span>
+            <strong>{{ data.monitor_count }}</strong>
+          </span>
+          <span class="item">
+            <span class="chip chip-clr">CLEAR</span>
+            <strong>{{ data.clear_count }}</strong>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="exec-summary">{{ data.exec_summary }}</div>
+
+    {% set escalated_regions = data.regions | selectattr("status", "equalto", "escalated") | list %}
+    {% if escalated_regions %}
+    <hr class="divider">
+    <table class="region-table">
+      <thead>
+        <tr>
+          <th>Region</th>
+          <th>Scenario</th>
+          <th>Severity</th>
+          <th>Velocity</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in escalated_regions %}
+        <tr>
+          <td><strong>{{ r.name }}</strong></td>
+          <td>{{ r.scenario_match or "—" }}</td>
+          <td>
+            {% if r.severity %}
+              {% set sev_lower = r.severity | lower %}
+              <span class="chip chip-sev-{{ sev_lower }}">{{ r.severity | upper }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td>
+            {% if r.velocity == "accelerating" %}
+              <span class="vel-up">↑ Accelerating</span>
+            {% elif r.velocity == "improving" %}
+              <span class="vel-down">↓ Improving</span>
+            {% elif r.velocity == "stable" %}
+              <span class="vel-flat">→ Stable</span>
+            {% else %}
+              <span class="vel-none">— Unknown</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
   </div>
-
-  <div class="status-strip">
-    <div class="status-badge badge-red">
-      <span class="count">{{ data.escalated_count }}</span>
-      <span>ESCALATED</span>
-    </div>
-    <div class="status-badge badge-amber">
-      <span class="count">{{ data.monitor_count }}</span>
-      <span>MONITOR</span>
-    </div>
-    <div class="status-badge badge-green">
-      <span class="count">{{ data.clear_count }}</span>
-      <span>CLEAR</span>
-    </div>
-    <div class="status-badge badge-blue" style="margin-left:auto;">
-      <span class="count">${{ "%.1f"|format(data.total_vacr / 1_000_000) }}M</span>
-      <span>TOTAL VaCR</span>
-    </div>
-    <div class="status-badge" style="border:1px solid #e2e8f0;">
-      <span class="count" style="font-size:14pt;">{{ data.trend_delta }}</span>
-      <span>TREND</span>
-    </div>
-  </div>
-
-  <div class="exec-summary-text">{{ data.exec_summary }}</div>
-
-  {% set escalated_regions = data.regions | selectattr("status", "equalto", "escalated") | list %}
-  {% if escalated_regions %}
-  <table class="admiralty-table">
-    <thead>
-      <tr>
-        <th>Region</th>
-        <th>Scenario</th>
-        <th>VaCR Exposure</th>
-        <th>Admiralty</th>
-        <th>Velocity</th>
-        <th>Severity</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for r in escalated_regions %}
-      <tr>
-        <td><strong>{{ r.name }}</strong></td>
-        <td>{{ r.scenario_match or "—" }}</td>
-        <td>${{ "%.1f"|format((r.vacr or 0) / 1_000_000) }}M</td>
-        <td>{{ r.admiralty or "—" }}</td>
-        <td>
-          {% if r.velocity == "accelerating" %}<span class="vel-up">↑ Accelerating</span>
-          {% elif r.velocity == "improving"   %}<span class="vel-down">↓ Improving</span>
-          {% else %}<span class="vel-flat">→ {{ r.velocity | title if r.velocity else "—" }}</span>
-          {% endif %}
-        </td>
-        <td>{{ r.severity or "—" }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-  {% endif %}
 </div>
 
 {# ══════════════════════════════════════════════════════════════════ REGION PAGES #}
 {% for r in data.regions if r.status == "escalated" %}
 <div class="page">
-  <div class="section-header">
-    <div>
-      <h2>{{ r.name }}</h2>
-      <span class="sub">{{ r.scenario_match or "" }}</span>
+  <div class="page-body">
+
+    <div class="region-header">
+      <div class="region-header-left">
+        <h2>{{ r.name }}</h2>
+        <div class="region-sub">
+          {{ r.scenario_match or "" }}
+          {% if r.signal_type %} · {{ r.signal_type }}{% endif %}
+          {% if r.confidence_label %} · Confidence: {{ r.confidence_label }}{% endif %}
+        </div>
+      </div>
+      <div>
+        {% if r.severity %}
+          {% set sev_lower = r.severity | lower %}
+          <span class="chip chip-sev-{{ sev_lower }}">{{ r.severity | upper }}</span>
+        {% endif %}
+      </div>
     </div>
-    <span class="chip chip-red">ESCALATED</span>
+
+    <hr class="divider">
+
+    {% if r.board_bullets is not none and r.board_bullets | length >= 4 %}
+      <div class="bullets-grid">
+
+        <div class="bullet-cell driver">
+          <span class="label">Driver</span>
+          <p>{{ r.board_bullets[0] }}</p>
+        </div>
+
+        <div class="bullet-cell exposure">
+          <span class="label">Exposure</span>
+          <p>{{ r.board_bullets[1] }}</p>
+        </div>
+
+        <div class="bullet-cell impact">
+          <span class="label">Impact</span>
+          <p>{{ r.board_bullets[2] }}</p>
+        </div>
+
+        <div class="bullet-cell watch">
+          <span class="label">Watch</span>
+          <p>{{ r.board_bullets[3] }}</p>
+        </div>
+
+      </div>
+    {% else %}
+      <div class="unavailable-notice">
+        Detailed intelligence analysis is unavailable for this region this cycle. Check pipeline logs for details.
+        {% if r.why_text %}
+          <div style="margin-top:6px;font-size:9px;color:#78350f;">{{ r.why_text }}</div>
+        {% endif %}
+      </div>
+    {% endif %}
+
   </div>
 
-  <div class="region-layout">
-    <div class="region-sidebar">
-      <div class="kpi-cell">
-        <div class="kpi-label">VaCR Exposure</div>
-        <div class="kpi-value">${{ "%.1f"|format((r.vacr or 0) / 1_000_000) }}M</div>
-      </div>
-      <div class="kpi-cell">
-        <div class="kpi-label">Admiralty</div>
-        <div class="kpi-value">{{ r.admiralty or "—" }}</div>
-      </div>
-      <div class="kpi-cell">
-        <div class="kpi-label">Velocity</div>
-        <div class="kpi-value {% if r.velocity == 'accelerating' %}red{% elif r.velocity == 'improving' %}green{% else %}{% endif %}">
-          {% if r.velocity == "accelerating" %}↑ Accel.
-          {% elif r.velocity == "improving"  %}↓ Impr.
-          {% else %}→ {{ r.velocity | title if r.velocity else "—" }}
-          {% endif %}
-        </div>
-      </div>
-      <div class="kpi-cell">
-        <div class="kpi-label">Severity</div>
-        <div class="kpi-value {% if r.severity in ('CRITICAL','HIGH') %}red{% elif r.severity == 'MEDIUM' %}amber{% endif %}">
-          {{ r.severity or "—" }}
-        </div>
-      </div>
-    </div>
-
-    <div class="region-body">
-      {% if r.why_text %}
-        <div class="pillar">
-          <div class="pillar-label">Why — Geopolitical Driver</div>
-          <div class="pillar-text">{{ r.why_text }}</div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-label">How — Cyber Vector</div>
-          <div class="pillar-text">{{ r.how_text or "—" }}</div>
-        </div>
-        <div class="pillar">
-          <div class="pillar-label">So What — Business Impact</div>
-          <div class="pillar-text">{{ r.so_what_text or "—" }}</div>
-        </div>
-      {% else %}
-        <div class="unavailable-notice">
-          Regional intelligence report unavailable for this run. Check pipeline logs.
-        </div>
-      {% endif %}
-    </div>
+  <div class="region-footer">
+    <span>
+      Trend:&nbsp;
+      {% if r.velocity == "accelerating" %}<span class="vel-up">↑ Accelerating</span>
+      {% elif r.velocity == "improving"  %}<span class="vel-down">↓ Improving</span>
+      {% elif r.velocity == "stable"     %}<span class="vel-flat">→ Stable</span>
+      {% else %}<span class="vel-none">— Unknown</span>{% endif %}
+    </span>
+    {% if r.threat_characterisation %}
+      <span>·&nbsp;{{ r.threat_characterisation }}</span>
+    {% endif %}
   </div>
 </div>
 {% endfor %}
 
 {# ══════════════════════════════════════════════════════════════════ APPENDIX #}
 <div class="page">
-  <div class="section-header">
-    <h2>Appendix</h2>
-    <span class="sub">Monitor Regions · Clear Regions · Run Metadata</span>
-  </div>
+  <div class="page-body">
 
-  {% set monitor_regions = data.regions | selectattr("status", "equalto", "monitor") | list %}
-  {% if monitor_regions %}
-  <h3 style="font-size:10pt;color:var(--amber);margin-bottom:3mm;">Watch — Monitor Regions</h3>
-  {% for r in monitor_regions %}
-  <div class="monitor-card">
-    <h4>{{ r.name }} <span style="font-weight:400;font-size:9pt;">· {{ r.scenario_match or "No scenario" }} · Admiralty {{ r.admiralty or "—" }}</span></h4>
-    <div style="font-size:9pt;color:#78350f;">Low-level activity detected. No full analysis triggered. Severity: {{ r.severity or "—" }}</div>
-  </div>
-  {% endfor %}
-  {% endif %}
+    <div class="page-heading">
+      <h2>Appendix</h2>
+    </div>
 
-  {% set clear_regions = data.regions | selectattr("status", "equalto", "clear") | list %}
-  {% if clear_regions %}
-  <h3 style="font-size:10pt;color:var(--green);margin-top:5mm;margin-bottom:2mm;">Clear Regions</h3>
-  {% for r in clear_regions %}
-  <div class="clear-row">
-    <span class="chip chip-green">CLEAR</span>
-    <strong>{{ r.name }}</strong>
-    <span style="color:var(--slate);">No active threat detected this cycle.</span>
-  </div>
-  {% endfor %}
-  {% endif %}
+    {% set monitor_regions = data.regions | selectattr("status", "equalto", "monitor") | list %}
+    {% if monitor_regions %}
+    <div class="appendix-section">
+      <h3>Monitor Regions</h3>
+      {% for r in monitor_regions %}
+      <div class="appendix-row">
+        <span class="chip chip-mon">MONITOR</span>
+        <span class="region-name">{{ r.name }}</span>
+        <span class="row-detail">
+          {{ r.scenario_match or "No scenario matched" }}
+          {% if r.severity %} · {{ r.severity }}{% endif %}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
 
-  <h3 style="font-size:10pt;color:var(--slate);margin-top:6mm;margin-bottom:2mm;">Run Metadata</h3>
-  <table class="meta-table">
-    <tr><td>Pipeline ID</td><td>{{ data.run_id }}</td></tr>
-    <tr><td>Run Timestamp</td><td>{{ data.timestamp }}</td></tr>
-    <tr><td>Regions Assessed</td><td>{{ data.regions | map(attribute="name") | join(", ") }}</td></tr>
-    <tr><td>Escalated</td><td>{{ data.escalated_count }}</td></tr>
-    <tr><td>Monitor</td><td>{{ data.monitor_count }}</td></tr>
-    <tr><td>Clear</td><td>{{ data.clear_count }}</td></tr>
-  </table>
+    {% set clear_regions = data.regions | selectattr("status", "equalto", "clear") | list %}
+    {% if clear_regions %}
+    <div class="appendix-section">
+      <h3>Clear Regions</h3>
+      {% for r in clear_regions %}
+      <div class="appendix-row">
+        <span class="chip chip-clr">CLEAR</span>
+        <span class="region-name">{{ r.name }}</span>
+        <span class="row-detail">No active threat this cycle.</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="appendix-section">
+      <h3>Run Metadata</h3>
+      <table class="meta-table">
+        <tr><td>Pipeline ID</td><td>{{ data.run_id }}</td></tr>
+        <tr><td>Timestamp</td><td>{{ data.timestamp }}</td></tr>
+        <tr><td>Escalated</td><td>{{ data.escalated_count }}</td></tr>
+        <tr><td>Monitor</td><td>{{ data.monitor_count }}</td></tr>
+        <tr><td>Clear</td><td>{{ data.clear_count }}</td></tr>
+      </table>
+    </div>
+
+  </div>
 </div>
 
 </body>
