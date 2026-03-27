@@ -517,6 +517,9 @@
     {% if r.threat_characterisation %}
       <span>·&nbsp;{{ r.threat_characterisation }}</span>
     {% endif %}
+    {% if r.top_sources %}
+      <span style="margin-left:auto;font-style:italic;">Sources: {{ r.top_sources | join(" · ") }}</span>
+    {% endif %}
   </div>
 </div>
 {% endfor %}

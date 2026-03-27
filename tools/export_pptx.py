@@ -258,6 +258,11 @@ def build_region(prs: Presentation, region: RegionEntry) -> None:
         _add_text(slide, region.threat_characterisation or "",
                   Inches(3.0), Inches(6.4), Inches(6.5), Inches(0.3),
                   font_size=8, color=SLATE)
+        if region.top_sources:
+            sources_line = "Sources: " + " · ".join(region.top_sources)
+            _add_text(slide, sources_line,
+                      Inches(0.3), Inches(6.8), Inches(9.4), Inches(0.28),
+                      font_size=7, color=SLATE)
     else:
         _add_text(slide, "Regional intelligence report unavailable for this run.",
                   Inches(0.3), Inches(1.0), Inches(9.4), Inches(0.5),

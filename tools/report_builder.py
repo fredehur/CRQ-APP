@@ -41,6 +41,7 @@ class RegionEntry:
     board_bullets: list[str] | None = None
     confidence_label: str | None = None
     threat_characterisation: str | None = None
+    top_sources: list[str] | None = None
 
 
 @dataclass
@@ -189,6 +190,32 @@ def _parse_pillars(text: str) -> tuple[str | None, str | None, str | None]:
     return text.strip(), None, None
 
 
+_GENERIC_SOURCES = {
+    "Cyber Signal", "Geo Signal", "YouTube Signal",
+    "cyber_signals", "geo_signals", "youtube_signals",
+}
+
+
+def _load_named_sources(base: Path, region_name: str) -> list[str]:
+    """Return unique named sources from signal_clusters.json, excluding generic labels."""
+    clusters_path = base / "regional" / region_name.lower() / "signal_clusters.json"
+    if not clusters_path.exists():
+        return []
+    try:
+        data = json.loads(clusters_path.read_text(encoding="utf-8"))
+    except Exception:
+        return []
+    seen: set[str] = set()
+    names: list[str] = []
+    for cluster in data.get("clusters", []):
+        for source in cluster.get("sources", []):
+            name = source.get("name", "").strip()
+            if name and name not in _GENERIC_SOURCES and name not in seen:
+                seen.add(name)
+                names.append(name)
+    return names
+
+
 def _get_previous_total_vacr(output_dir: str) -> float | None:
     """Return total VaCR from the most recent archived run, or None."""
     runs_dir = Path(output_dir) / "runs"
@@ -281,6 +308,12 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
         signal_type     = d.get("signal_type")
         board_bullets   = _extract_board_bullets(why_text, how_text, so_what_text)
 
+        top_sources = (
+            _load_named_sources(base, region_name)
+            if status == RegionStatus.ESCALATED
+            else None
+        )
+
         regions.append(RegionEntry(
             name=region_name,
             status=status,
@@ -297,6 +330,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             board_bullets=board_bullets,
             confidence_label=_confidence_label(d.get("admiralty")),
             threat_characterisation=_threat_characterisation(dominant_pillar),
+            top_sources=top_sources,
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]
