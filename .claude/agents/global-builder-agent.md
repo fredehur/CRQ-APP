@@ -8,6 +8,8 @@ hooks:
     - type: command
       command: "uv run python .claude/hooks/validators/json-auditor.py output/global_report.json global"
     - type: command
+      command: "uv run python .claude/hooks/validators/validate_global_report.py"
+    - type: command
       command: "uv run python .claude/hooks/validators/jargon-auditor.py output/global_report.json global"
 ---
 
