@@ -103,8 +103,11 @@ run-crq  (Orchestrator — opus)
 │         Owns scenario coupling — validates mapper hint against master_scenarios.json
 │         Classifies signal as Event / Trend / Mixed
 │         Writes 3-paragraph executive brief (Why → How → So What)
+│         Writes signal_clusters.json (source clusters for dashboard + attribution)
 │         Updates data.json with primary_scenario, financial_rank, signal_type
-│         └── Stop hook → jargon-auditor.py
+│         └── Stop hook → regional-analyst-stop.py
+│               ├── jargon-auditor.py (forbidden language gate)
+│               └── source-attribution-auditor.py (evidenced claims must cite named sources)
 │
 ├── trend_analyzer.py  [after fan-in]
 │     Computes velocity per region, patches data.json, writes trend_brief.json
@@ -117,12 +120,21 @@ run-crq  (Orchestrator — opus)
 │     Synthesizes executive_summary: cross-regional patterns, compound risk, velocity narrative
 │     Writes global_report.json
 │     ├── Stop hook → json-auditor.py (schema validation)
+│     ├── Stop hook → validate_global_report.py (deterministic: VaCR arithmetic,
+│     │     Admiralty consistency, scenario cross-check, phantom region guard)
 │     └── Stop hook → jargon-auditor.py
 │
 └── global-validator-agent  (Devil's Advocate — haiku)
       Read-only cross-check of global_report.json against regional source data
-      Checks: VaCR arithmetic, Admiralty consistency, scenario mapping, region counts
       Returns APPROVED or REWRITE (max 2 cycles, then circuit breaker)
+
+RSM Dispatch (separate path, triggered by scheduler / rsm_dispatcher.py)
+│
+└── rsm-formatter-agent  (sonnet)
+      Reads seerist_signals, region_delta, cyber_signals, audience_config
+      Writes weekly INTSUM brief and/or flash alert per region
+      └── Stop hook → rsm-formatter-stop.py
+            └── rsm-brief-auditor.py (structure, ADM format, WATCH LIST depth, jargon)
 ```
 
 **Five operational regions:** APAC · AME (North America) · LATAM · MED (Mediterranean) · NCE (Northern & Central Europe)
@@ -182,6 +194,14 @@ Skips Phases 1–2 and re-synthesizes the global report and exports from existin
 
 Re-runs the pipeline for one region without touching the other four. Useful when fresh intelligence arrives mid-cycle.
 
+### Load architecture context
+
+```
+/prime-crq
+```
+
+Hot-loads the full architecture reference: agent hierarchy, file-passing contract, `data.json` schema, stop hook wiring, mock configuration, and all tool commands. Run this before any pipeline development work.
+
 ---
 
 ## Output Files
@@ -240,20 +260,27 @@ A UI can render escalated regions as threat cards and clear/monitor regions as s
 
 ## Hooks & Quality Gates
 
-| Hook | Trigger | Action |
-|------|---------|--------|
-| `jargon-auditor.py` | Stop on `regional-analyst-agent` | Audits `report.md` for forbidden language |
-| `jargon-auditor.py` | Stop on `global-builder-agent` | Audits `global_report.json` for forbidden language |
-| `json-auditor.py` | Stop on `global-builder-agent` | Validates JSON schema: required keys, types, regional threat entries |
-| `crq-schema-validator.py` | Phase 0 | Validates `data/mock_crq_database.json` before pipeline runs |
+| Hook | Trigger | What it checks |
+|------|---------|----------------|
+| `jargon-auditor.py` | Stop on `regional-analyst-agent` | Forbidden language in `report.md` |
+| `source-attribution-auditor.py` | Stop on `regional-analyst-agent` | Every "evidenced" claim cites a named source from `signal_clusters.json` |
+| `json-auditor.py` | Stop on `global-builder-agent` | JSON schema: required keys, types, regional threat entries |
+| `validate_global_report.py` | Stop on `global-builder-agent` | Deterministic: VaCR arithmetic, Admiralty consistency vs `gatekeeper_decision.json`, scenario cross-check vs `data.json`, phantom region guard |
+| `jargon-auditor.py` | Stop on `global-builder-agent` | Forbidden language in `global_report.json` |
+| `rsm-brief-auditor.py` | Stop on `rsm-formatter-agent` | INTSUM/FLASH structure, valid ADM field, WATCH LIST ≥3 items, correct reply line, jargon |
+| `crq-schema-validator.py` | Phase 0 | `data/mock_crq_database.json` schema before pipeline runs |
 
-The jargon auditor enforces three categories of forbidden output:
+**Jargon gate** enforces three categories of forbidden output:
 
 - **Technical cyber jargon** — CVE identifiers, IP addresses, malware hashes
 - **SOC operational language** — TTPs, IoCs, MITRE ATT&CK, lateral movement, C2
 - **Unsolicited budget advice** — procurement, vendor recommendations, tool purchases
 
-Audit failures return `exit(2)` and force agent rewrite. On rewrite, the full audit output (specific violations) is passed to the agent — it never rewrites blind. A circuit breaker at `output/.retries/{label}.retries` caps retries at 3 to prevent infinite loops.
+**Source attribution gate** closes the hallucination vector: any claim marked "evidenced" must cite a named source from `signal_clusters.json`. Generic labels (`"Cyber Signal"`, `"Geo Signal"`) do not satisfy the requirement.
+
+**Deterministic validation** (`validate_global_report.py`) replaces the previous LLM-based arithmetic check — Python does the math, not the model.
+
+All audit failures return `exit(2)` and force agent rewrite with the full violation output passed inline. Circuit breaker at `output/.retries/{label}.retries` caps retries at 3.
 
 ---
 
@@ -314,9 +341,16 @@ All agents run in mock mode by default. No live API keys or external data source
 | `write_manifest.py` | Assemble `run_manifest.json` from all regional `data.json` files |
 | `archive_run.py` | Archive current run to `output/runs/{timestamp}/` + update `output/latest/` |
 | `build_dashboard.py` | JSON + trace → HTML dashboard + MD export |
-| `export_pdf.py [out.pdf]` | Export board PDF (Playwright + Jinja2) |
-| `export_pptx.py [out.pptx]` | Export board PPTX (python-pptx) |
+| `export_pdf.py [out.pdf]` | Export board PDF (Playwright + Jinja2) — includes named source citations per region |
+| `export_pptx.py [out.pptx]` | Export board PPTX (python-pptx) — includes named source citations per region |
 | `audit_logger.py <EVENT> <MESSAGE>` | Append timestamped event to `system_trace.log` |
+| `seerist_collector.py <REGION> [--mock]` | Collect Seerist geopolitical signals → `seerist_signals.json` |
+| `delta_computer.py <REGION>` | Diff current vs previous Seerist signals → `region_delta.json` |
+| `threshold_evaluator.py [--force-weekly] [--check-flash]` | Evaluate audience routing → `routing_decisions.json` |
+| `rsm_dispatcher.py --weekly [--mock]` | Generate + deliver weekly INTSUM for all RSMs |
+| `rsm_dispatcher.py --check-flash [--mock]` | Evaluate + dispatch flash alerts |
+| `notifier.py <routing_decisions.json> [--mock]` | Deliver briefs per routing decisions → `delivery_log.jsonl` |
+| `scheduler.py --once` | Run all due scheduler jobs once |
 
 All tools are invoked via `uv run python tools/<tool>`.
 
