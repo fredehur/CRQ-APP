@@ -309,10 +309,8 @@ function renderRightPanel() {
 
   const reviewHtml = `<div id="review-badge" style="display:flex;align-items:center;margin:8px 0 4px 0"></div>`;
   const audienceHtml = `<div id="audience-cards-panel"></div>`;
-  const feedbackHtml = `<div class="feedback-section" id="feedback-section-${r}"></div>`;
-
   if (!c || !c.clusters || c.clusters.length === 0) {
-    body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>` + feedbackHtml;
+    body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
     renderFeedbackUI(r);
     renderReviewBadge(r);
     renderAudienceCards(r);
@@ -320,7 +318,7 @@ function renderRightPanel() {
   }
 
   const clusterHtml = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
-  body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + clusterHtml + feedbackHtml;
+  body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + clusterHtml;
   renderFeedbackUI(r);
   renderReviewBadge(r);
   renderAudienceCards(r);
@@ -330,6 +328,7 @@ function renderClusterCard(region, cl, i) {
   const id = `cluster-${region}-${i}`;
   const isExpanded = state.expandedClusters.has(id);
   const pillCls = cl.pillar === 'Cyber' ? 'pill-cyber' : 'pill-geo';
+  const pillarCardCls = cl.pillar === 'Cyber' ? 'pillar-cyber' : cl.pillar === 'Mixed' ? 'pillar-mixed' : 'pillar-geo';
   const convColor = cl.convergence >= 3 ? '#ff7b72' : cl.convergence >= 2 ? '#e3b341' : '#6e7681';
 
   const sourcesHtml = isExpanded ? `
@@ -342,7 +341,7 @@ function renderClusterCard(region, cl, i) {
 </div>` : '';
 
   return `
-<div class="cluster-card">
+<div class="cluster-card ${pillarCardCls}">
   <div class="cluster-card-header" onclick="toggleCluster('${id}')">
     <span class="${pillCls}">${cl.pillar || '?'}</span>
     <span style="flex:1;font-size:12px;color:#e6edf3">${esc(cl.name || '')}</span>
@@ -461,13 +460,13 @@ async function submitFeedback(region, rating, note) {
 }
 
 function renderFeedbackUI(region) {
-  const container = $(`feedback-section-${region}`);
+  const container = $('right-panel-footer');
   if (!container) return;
 
   const runId = state.manifest?.pipeline_id;
   if (!runId) { container.innerHTML = ''; return; }
 
-  container.style.cssText = 'border-top:1px solid #21262d;margin-top:12px;padding-top:10px;background:#0a0e13;padding:10px 0 0 0';
+  container.style.cssText = '';
 
   const existing = state.feedbackByRegion[region];
   const selectedRating = existing?.rating || null;
@@ -773,8 +772,8 @@ async function renderReviewBadge(region) {
   const rs = await loadReviewStatus(region.toUpperCase());
   const isDraft = rs.status !== 'published';
   el.innerHTML = isDraft
-    ? `<span class="review-draft">DRAFT</span><button class="publish-btn" onclick="publishRegion('${region.toUpperCase()}')">Publish</button>`
-    : `<span class="review-published">PUBLISHED</span><span style="font-size:9px;color:#6e7681;margin-left:8px">by ${esc(rs.reviewer||'')} · ${rs.timestamp?new Date(rs.timestamp).toLocaleDateString():''}</span>`;
+    ? `<span style="font-size:10px;color:#d29922;font-weight:600">DRAFT</span><button onclick="publishRegion('${region.toUpperCase()}')" style="font-size:10px;color:#3fb950;background:#0d2a0d;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer;margin-left:6px">Publish</button>`
+    : `<span style="font-size:10px;color:#3fb950;font-weight:600">PUBLISHED</span><span style="font-size:9px;color:#6e7681;margin-left:8px">by ${esc(rs.reviewer||'')} · ${rs.timestamp?new Date(rs.timestamp).toLocaleDateString():''}</span>`;
 }
 
 // ── Audience Cards ─────────────────────────────────────────────────────
@@ -934,68 +933,61 @@ function selectRsmRegion(r) {
 async function renderRsmContent(region) {
   const header = $('rsm-region-label');
   const body   = $('rsm-panel-body');
-  const tabs   = $('rsm-inner-tabs');
-  if (!header || !body || !tabs) return;
+  if (!header || !body) return;
 
   header.textContent = REGION_LABELS[region] || region;
-  body.textContent = 'Loading...';
-  tabs.innerHTML = '';
+  body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">Loading...</p>`;
 
   // Fetch lazily — cache hit skips network
   if (!state.rsmBriefs[region]) {
     const data = await fetchJSON(`/api/rsm/${region.toLowerCase()}`);
     if (!data) {
-      body.innerHTML = `<p style="color:#6e7681;font-size:11px">No brief available for this region.</p>`;
+      body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">No brief available for this region.</p>`;
       return;
     }
     state.rsmBriefs[region] = data;
-    // Set default active tab
-    if (!state.rsmActiveTab[region]) {
-      state.rsmActiveTab[region] = data.flash ? 'flash' : 'intsum';
-    }
   }
 
   const brief = state.rsmBriefs[region];
-  const activeTab = state.rsmActiveTab[region] || 'intsum';
+  const r = region.toLowerCase();
 
-  // Render inner tab buttons
-  const tabBtns = [];
-  if (brief.flash) {
-    tabBtns.push(`<button onclick="switchRsmInnerTab('${region}','flash')"
-      style="font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;cursor:pointer;
-             background:${activeTab==='flash' ? '#da3633' : 'transparent'};
-             border:1px solid ${activeTab==='flash' ? '#da3633' : '#30363d'};
-             color:${activeTab==='flash' ? '#fff' : '#8b949e'}">⚡ FLASH</button>`);
+  // Build one split pane
+  function _pane(type, content) {
+    const weekMatch = type === 'intsum' ? (content || '').match(/WK(\d+)/i) : null;
+    const label = type === 'flash'
+      ? `<span style="color:#da3633;font-weight:600;font-size:10px">⚡ FLASH</span>`
+      : `<span style="color:#58a6ff;font-weight:600;font-size:10px">${weekMatch ? `INTSUM WK${weekMatch[1]}` : 'INTSUM'}</span>`;
+    const pdf = `<a href="/api/rsm/${r}/pdf?type=${type}" download
+      style="margin-left:auto;font-size:9px;font-family:inherit;padding:2px 8px;border-radius:3px;
+             background:transparent;border:1px solid #30363d;color:#6e7681;text-decoration:none"
+      title="Download as PDF">&#8659; PDF</a>`;
+    const text = content
+      ? `<pre style="font-size:10px;color:#e6edf3;white-space:pre-wrap;word-break:break-word;line-height:1.6;margin:0;padding:12px 14px">${esc(content)}</pre>`
+      : `<p style="color:#6e7681;font-size:11px;padding:12px 14px">No ${type.toUpperCase()} brief available.</p>`;
+    return `
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
+        <div style="padding:6px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:6px;flex-shrink:0">
+          ${label}${pdf}
+        </div>
+        <div style="flex:1;overflow-y:auto">${text}</div>
+      </div>`;
   }
-  // Parse week number from INTSUM header line
-  const weekMatch = (brief.intsum || '').match(/WK(\d+)/i);
-  const weekLabel = weekMatch ? `INTSUM WK${weekMatch[1]}` : 'INTSUM';
-  tabBtns.push(`<button onclick="switchRsmInnerTab('${region}','intsum')"
-    style="font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;cursor:pointer;
-           background:${activeTab==='intsum' ? '#21262d' : 'transparent'};
-           border:1px solid ${activeTab==='intsum' ? '#58a6ff' : '#30363d'};
-           color:${activeTab==='intsum' ? '#e6edf3' : '#8b949e'}">${weekLabel}</button>`);
-  // PDF download button — right-aligned, always shows for active tab type
-  const pdfBtn = `<a href="/api/rsm/${region.toLowerCase()}/pdf?type=${activeTab}"
-    download
-    style="margin-left:auto;font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;
-           cursor:pointer;background:transparent;border:1px solid #30363d;color:#8b949e;
-           text-decoration:none;display:inline-flex;align-items:center;gap:4px"
-    title="Download ${activeTab.toUpperCase()} brief as PDF">&#8659; PDF</a>`;
-  tabs.innerHTML = `<div style="display:flex;align-items:center;gap:6px;width:100%">${tabBtns.join('')}${pdfBtn}</div>`;
 
-  // Render content
-  const content = activeTab === 'flash' ? brief.flash : brief.intsum;
-  if (!content) {
-    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No brief available for this region.</p>`;
-    return;
+  const hasFlash  = !!brief.flash;
+  const hasIntsum = !!brief.intsum;
+
+  if (hasFlash && hasIntsum) {
+    body.innerHTML = `
+      ${_pane('flash', brief.flash)}
+      <div style="width:1px;background:#21262d;flex-shrink:0"></div>
+      ${_pane('intsum', brief.intsum)}`;
+  } else if (hasFlash) {
+    body.innerHTML = _pane('flash', brief.flash);
+  } else if (hasIntsum) {
+    body.innerHTML = _pane('intsum', brief.intsum);
+  } else {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">No briefs available for this region.</p>`;
   }
-  body.innerHTML = `<pre style="font-size:10px;color:#e6edf3;white-space:pre-wrap;word-break:break-word;line-height:1.6;margin:0">${esc(content)}</pre>`;
-}
-
-function switchRsmInnerTab(region, tab) {
-  state.rsmActiveTab[region] = tab;
-  renderRsmContent(region);
 }
 
 // ── SSE stream (identical pattern to current) ──────────────────────────
