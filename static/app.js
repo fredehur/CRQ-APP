@@ -58,13 +58,21 @@ const relTime = iso => {
 const admiraltyTooltip = rating => {
   if (!rating || rating.length < 2) return rating || '—';
   const rel = ADMIRALTY_MAP[rating[0]], cred = ADMIRALTY_MAP[rating[1]];
-  return `${rating} — ${rel || '?'} / ${cred || '?'}`;
+  return `${rating} — ${rel || '?'} · ${cred || '?'}`;
 };
 const convDot = n => {
   const cls = n >= 3 ? 'conv-strong' : n >= 2 ? 'conv-weak' : 'conv-none';
   return `<span class="conv-dot ${cls}"></span>`;
 };
 const sevClass = sev => SEV_CLASS[(sev||'').toUpperCase()] || 'sev';
+
+function cleanAgentText(str) {
+  if (!str) return '';
+  const keepAbbr = new Set(['OT','IP','AME','APAC','MED','NCE','LATAM']);
+  let out = str.replace(/\b\w+_\w+\b/g, '');
+  out = out.replace(/\b[A-Z_]{3,}\b/g, m => keepAbbr.has(m) ? m : '');
+  return out.replace(/\s{2,}/g, ' ').trim();
+}
 
 function signalTypeBadge(type) {
   if (!type) return '';
@@ -243,7 +251,7 @@ function renderLeftPanel() {
     <div style="display:flex;align-items:center;gap:4px">
       ${isEscalated ? signalTypeBadge(signalType) : ''}
       ${isEscalated ? velocityArrow(velocity) : ''}
-      ${!isEscalated ? `<span style="font-size:10px;color:#3fb950">clear</span>` : ''}
+      ${!isEscalated ? `<span style="font-size:9px;color:#3fb950;background:#0d1f0d;border:1px solid #238636;padding:1px 6px;border-radius:2px;letter-spacing:0.04em">CLEAR</span>` : ''}
     </div>
   </div>
   ${isEscalated && scenario ? `<div style="font-size:10px;color:#6e7681;margin-top:2px">${esc(scenario)} · ${pillar || '—'}</div>` : ''}
@@ -294,7 +302,7 @@ function renderRightPanel() {
     ${velocityArrow(d.velocity)}
     ${d.velocity ? `<span style="font-size:10px;color:#6e7681">${esc(d.velocity)}</span>` : ''}
   </div>
-  ${d.rationale ? `<div class="rationale-text">${esc(d.rationale)}</div>` : ''}
+  ${d.rationale ? `<div class="rationale-text">${esc(cleanAgentText(d.rationale))}</div>` : ''}
 </div>`;
 
   const briefSection = renderBriefSection(r, d);
@@ -338,7 +346,7 @@ function renderClusterCard(region, cl, i) {
   <div class="cluster-card-header" onclick="toggleCluster('${id}')">
     <span class="${pillCls}">${cl.pillar || '?'}</span>
     <span style="flex:1;font-size:12px;color:#e6edf3">${esc(cl.name || '')}</span>
-    <span style="font-size:10px;color:${convColor}">&times;${cl.convergence} ${isExpanded ? '&#9662;' : '&#9658;'}</span>
+    <span style="font-size:10px;color:${convColor}">${cl.convergence} signal${cl.convergence === 1 ? '' : 's'} ${isExpanded ? '&#9662;' : '&#9658;'}</span>
   </div>
   ${sourcesHtml}
 </div>`;
@@ -351,7 +359,7 @@ function renderClearPanel(region, d, c) {
 <div style="padding:8px 0">
   <div style="color:#3fb950;font-size:12px;margin-bottom:12px">&#10003; Signal check confirmed — no active threats detected</div>
   <div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:11px;color:#8b949e">
-    <div style="margin-bottom:6px"><span style="color:#6e7681">Gatekeeper rationale: </span>${esc(d.rationale || '—')}</div>
+    <div style="margin-bottom:6px"><span style="color:#6e7681">Gatekeeper rationale: </span>${esc(cleanAgentText(d.rationale || '—'))}</div>
     <div style="margin-bottom:6px"><span style="color:#6e7681">Admiralty: </span>${esc(d.admiralty || '—')} — ${admiraltyTooltip(d.admiralty)}</div>
     <div style="margin-bottom:6px"><span style="color:#6e7681">Window: </span>${esc(windowVal)}</div>
     <div><span style="color:#6e7681">Sources queried: </span>${queried}</div>
@@ -458,6 +466,8 @@ function renderFeedbackUI(region) {
 
   const runId = state.manifest?.pipeline_id;
   if (!runId) { container.innerHTML = ''; return; }
+
+  container.style.cssText = 'border-top:1px solid #21262d;margin-top:12px;padding-top:10px;background:#0a0e13;padding:10px 0 0 0';
 
   const existing = state.feedbackByRegion[region];
   const selectedRating = existing?.rating || null;
@@ -758,7 +768,7 @@ async function publishRegion(region) {
 }
 
 async function renderReviewBadge(region) {
-  const el = $('review-badge');
+  const el = $('right-review-badge') || $('review-badge');
   if (!el) return;
   const rs = await loadReviewStatus(region.toUpperCase());
   const isDraft = rs.status !== 'published';
@@ -779,7 +789,7 @@ async function renderAudienceCards(region) {
   ]);
 
   if (rs.status !== 'published') {
-    el.innerHTML = '<div style="color:#6e7681;font-size:10px;padding:8px 0;font-style:italic">Publish brief to generate audience cards.</div>';
+    el.innerHTML = '<div style="color:#6e7681;font-size:10px;padding:8px 0;font-style:italic">\u2191 Publish above to generate audience cards for CISO, board, and regional ops.</div>';
     return;
   }
 
@@ -831,11 +841,11 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview', 'reports', 'history', 'trends', 'config', 'rsm'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'rsm', 'validate'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' ? 'flex' : '') : '';
+    el.style.display = t === tab ? (t === 'config' ? 'flex' : 'block') : '';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
@@ -844,6 +854,7 @@ function _doSwitchTab(tab) {
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
   if (tab === 'rsm')     renderRsmTab();
+  if (tab === 'validate') renderValidateTab();
 }
 
 // ── Run trigger ───────────────────────────────────────────────────────
@@ -964,7 +975,14 @@ async function renderRsmContent(region) {
            background:${activeTab==='intsum' ? '#21262d' : 'transparent'};
            border:1px solid ${activeTab==='intsum' ? '#58a6ff' : '#30363d'};
            color:${activeTab==='intsum' ? '#e6edf3' : '#8b949e'}">${weekLabel}</button>`);
-  tabs.innerHTML = tabBtns.join('');
+  // PDF download button — right-aligned, always shows for active tab type
+  const pdfBtn = `<a href="/api/rsm/${region.toLowerCase()}/pdf?type=${activeTab}"
+    download
+    style="margin-left:auto;font-size:10px;font-family:inherit;padding:2px 10px;border-radius:3px;
+           cursor:pointer;background:transparent;border:1px solid #30363d;color:#8b949e;
+           text-decoration:none;display:inline-flex;align-items:center;gap:4px"
+    title="Download ${activeTab.toUpperCase()} brief as PDF">&#8659; PDF</a>`;
+  tabs.innerHTML = `<div style="display:flex;align-items:center;gap:6px;width:100%">${tabBtns.join('')}${pdfBtn}</div>`;
 
   // Render content
   const content = activeTab === 'flash' ? brief.flash : brief.intsum;
@@ -1186,10 +1204,16 @@ function renderTopicsTable() {
   </table>`;
 }
 
+function _regionChips(selected, onToggle) {
+  return ['APAC','AME','LATAM','MED','NCE'].map(r => {
+    const on = selected.includes(r);
+    return `<button onclick="${onToggle}('${r}')" style="font-size:9px;padding:1px 6px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;border:1px solid ${on?'#238636':'#30363d'};background:${on?'#1a3a1a':'transparent'};color:${on?'#3fb950':'#6e7681'}">${r}</button>`;
+  }).join('');
+}
+
 function renderTopicRow(t, i) {
   const isNew = !!t._isNew;
-  const regionOpts = ['APAC','AME','LATAM','MED','NCE'].map(r =>
-    `<option value="${r}" ${(t.regions||[]).includes(r)?'selected':''}>${r}</option>`).join('');
+  const regionChips = _regionChips(t.regions||[], `(r=>onTopicField(${i},'regions',(cfgState.topics[${i}].regions||[]).includes(r)?cfgState.topics[${i}].regions.filter(x=>x!==r):[...(cfgState.topics[${i}].regions||[]),r]))`);
   return `<tr style="border-bottom:1px solid #161b22" id="topic-row-${i}">
     <td style="padding:4px 10px">${isNew
       ? `<input type="text" value="${esc(t.id||'')}" oninput="onTopicField(${i},'id',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:140px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px">`
@@ -1198,7 +1222,7 @@ function renderTopicRow(t, i) {
       ${['event','trend','mixed'].map(tp => `<option value="${tp}" ${t.type===tp?'selected':''}>${tp}</option>`).join('')}
     </select></td>
     <td style="padding:4px 10px"><input type="text" value="${esc((t.keywords||[]).join(', '))}" oninput="onTopicField(${i},'keywords',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
-    <td style="padding:4px 10px"><select multiple onchange="onTopicField(${i},'regions',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${regionOpts}</select></td>
+    <td style="padding:4px 10px"><div style="display:flex;gap:3px;flex-wrap:wrap">${regionChips}</div></td>
     <td style="padding:4px 10px;text-align:center"><input type="checkbox" ${t.active?'checked':''} onchange="onTopicField(${i},'active',this.checked)" style="accent-color:#3fb950;cursor:pointer"></td>
     <td style="padding:4px 10px"><button onclick="deleteTopicRow(${i})" id="del-topic-${i}" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:1px 8px;border-radius:2px;cursor:pointer">Del</button></td>
   </tr>`;
@@ -1247,18 +1271,16 @@ function renderSourcesTable() {
 }
 
 function renderSourceRow(s, i, topicIds) {
-  const regionOpts = ['APAC','AME','LATAM','MED','NCE'].map(r =>
-    `<option value="${r}" ${(s.region_focus||[]).includes(r)?'selected':''}>${r}</option>`).join('');
-  const topicOpts = [
-    ...topicIds.map(id => `<option value="${id}" ${(s.topics||[]).includes(id)?'selected':''}>${esc(id)}</option>`),
-    ...(s.topics||[]).filter(id => !topicIds.includes(id)).map(id =>
-      `<option value="${id}" selected style="color:#e3b341">${esc(id)} (missing)</option>`),
-  ].join('');
+  const regionChips = _regionChips(s.region_focus||[], `(r=>onSourceField(${i},'region_focus',(cfgState.sources[${i}].region_focus||[]).includes(r)?cfgState.sources[${i}].region_focus.filter(x=>x!==r):[...(cfgState.sources[${i}].region_focus||[]),r]))`);
+  const allTopics = [...new Set([...topicIds, ...(s.topics||[])])];
+  const activeSrcTopics = (s.topics||[]);
+  const inactiveCount = allTopics.filter(id => !activeSrcTopics.includes(id)).length;
+  const topicOverflowBadge = inactiveCount > 0 ? `<span style="font-size:9px;color:#484f58;white-space:nowrap">+${inactiveCount} off</span>` : '';
   return `<tr style="border-bottom:1px solid #161b22">
     <td style="padding:4px 10px"><input type="text" value="${esc(s.channel_id||'')}" oninput="onSourceField(${i},'channel_id',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
     <td style="padding:4px 10px"><input type="text" value="${esc(s.name||'')}" oninput="onSourceField(${i},'name',this.value)" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:2px 6px;width:100%;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px"></td>
-    <td style="padding:4px 10px"><select multiple onchange="onSourceField(${i},'region_focus',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${regionOpts}</select></td>
-    <td style="padding:4px 10px"><select multiple onchange="onSourceField(${i},'topics',[...this.selectedOptions].map(o=>o.value))" style="background:#080c10;border:1px solid #21262d;color:#c9d1d9;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;width:130px;height:52px">${topicOpts}</select></td>
+    <td style="padding:4px 10px"><div style="display:flex;gap:3px;flex-wrap:wrap">${regionChips}</div></td>
+    <td style="padding:4px 10px"><div style="display:flex;gap:3px;align-items:center;flex-wrap:nowrap;overflow:hidden">${activeSrcTopics.length ? allTopics.filter(id=>activeSrcTopics.includes(id)).map(id=>{const missing=!topicIds.includes(id);return `<button onclick="(id=>onSourceField(${i},'topics',(cfgState.sources[${i}].topics||[]).includes(id)?cfgState.sources[${i}].topics.filter(x=>x!==id):[...(cfgState.sources[${i}].topics||[]),id]))('${esc(id)}')" style="font-size:9px;padding:1px 6px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;white-space:nowrap;border:1px solid ${missing?'#9e6a03':'#1f6feb'};background:${missing?'#2d1f00':'#0d1f36'};color:${missing?'#e3b341':'#79c0ff'}">${esc(id)}</button>`;}).join('')+''+topicOverflowBadge : `<span style="color:#484f58;font-size:10px">No topics</span>${allTopics.length?`&nbsp;<span style="font-size:9px;color:#484f58">(${allTopics.length} avail)</span>`:''}`}</div></td>
     <td style="padding:4px 10px"><button onclick="deleteSourceRow(${i})" id="del-source-${i}" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:1px 8px;border-radius:2px;cursor:pointer">Del</button></td>
   </tr>`;
 }
@@ -1522,6 +1544,261 @@ function showUnsavedModal(onConfirm) {
     if (cfgState.pendingNavAction) cfgState.pendingNavAction();
     cfgState.pendingNavAction = null;
   };
+}
+
+// ── Section: Validate Tab ──────────────────────────────────────────────
+
+async function renderValidateTab() {
+  await Promise.all([loadValScenarios(), loadValSources(), loadValCandidates()]);
+}
+
+async function loadValScenarios() {
+  const el = $('val-scenarios');
+  try {
+    const data = await fetch('/api/validation/flags').then(r => r.json());
+    if (!data || data.status === 'no_data' || !data.scenarios?.length) {
+      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No validation data — run validation first.</div>';
+      return;
+    }
+    $('val-last-run').textContent = data.generated_at ? `Last run: ${data.generated_at.slice(0,10)}` : '';
+    const rows = data.scenarios.map(s => {
+      const vacr = s.our_vacr_usd ? `$${(s.our_vacr_usd/1e6).toFixed(1)}M` : '—';
+      const dev = s.deviation_pct != null ? `+${s.deviation_pct.toFixed(0)}%` : '—';
+      const src = s.supporting_sources?.[0];
+      const srcLabel = src ? `${src.source_id.split('-')[0].toUpperCase()} ${src.admiralty}` : '—';
+      let verdict, verdictColor;
+      if (s.verdict === 'supported') { verdict = '✓ SUPPORTED'; verdictColor = '#3fb950'; }
+      else if (s.verdict === 'challenged' || s.flagged_for_review) { verdict = '⚠ REVIEW'; verdictColor = '#e3b341'; }
+      else { verdict = `— ${s.verdict.toUpperCase().replace('_',' ')}`; verdictColor = '#6e7681'; }
+      return `<div style="display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #21262d;font-size:11px">
+        <span style="color:#e6edf3;width:180px;flex-shrink:0">${s.scenario}</span>
+        <span style="color:#8b949e;width:60px;flex-shrink:0;font-family:monospace">${vacr}</span>
+        <span style="color:${verdictColor};width:120px;flex-shrink:0;font-weight:500">${verdict}</span>
+        <span style="color:#6e7681;width:60px;flex-shrink:0">${dev}</span>
+        <span style="color:#484f58;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${srcLabel}</span>
+      </div>`;
+    }).join('');
+    const sm = data.summary || {};
+    const summary = `<div style="padding:6px 12px;background:#161b22;font-size:10px;color:#6e7681;border-top:1px solid #21262d">
+      ${sm.supported||0} supported · ${sm.challenged||0} challenged · ${sm.no_data||0} no data · ${sm.sources_used||0} sources
+    </div>`;
+    el.innerHTML = rows + summary;
+  } catch {
+    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load validation flags.</div>';
+  }
+}
+
+async function loadValSources() {
+  const el = $('val-sources');
+  const MASTER_SCENARIOS = ['System intrusion','Ransomware','Accidental disclosure','Physical threat','Insider misuse','DoS attack','Scam or fraud','Defacement','System failure'];
+  const scenarioCheckboxes = MASTER_SCENARIOS.map(s =>
+    `<label style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#8b949e;margin-right:8px;cursor:pointer">
+      <input type="checkbox" value="${s}" style="accent-color:#3fb950"> ${s}
+    </label>`
+  ).join('');
+
+  const addForm = `<div id="val-add-source-form" style="padding:10px 12px;border-bottom:1px solid #21262d;background:#0d1117">
+    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Add Source</div>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <input id="val-src-url" type="text" placeholder="https://..." style="flex:2;background:#161b22;border:1px solid #21262d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;outline:none" />
+      <input id="val-src-name" type="text" placeholder="Source name" style="flex:2;background:#161b22;border:1px solid #21262d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;outline:none" />
+      <select id="val-src-cadence" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:11px;padding:4px 6px;border-radius:2px">
+        <option value="annual">Annual</option>
+        <option value="quarterly">Quarterly</option>
+        <option value="biannual">Biannual</option>
+        <option value="unknown">Unknown</option>
+      </select>
+      <button onclick="submitAddSource()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 12px;border-radius:2px;cursor:pointer;white-space:nowrap">+ Add</button>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:2px">${scenarioCheckboxes}</div>
+    <div id="val-add-source-err" style="font-size:10px;color:#f85149;margin-top:4px;display:none"></div>
+  </div>`;
+
+  try {
+    const data = await fetch('/api/validation/sources').then(r => r.json());
+    const sources = data.sources || [];
+    if (!sources.length) {
+      el.innerHTML = addForm + '<div style="color:#6e7681;font-size:11px;padding:12px">No sources registered.</div>';
+      return;
+    }
+    const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
+      <span style="width:220px;flex-shrink:0">Source</span>
+      <span style="width:40px;flex-shrink:0">Adm.</span>
+      <span style="width:80px;flex-shrink:0">Cadence</span>
+      <span style="width:90px;flex-shrink:0">Checked</span>
+      <span style="flex:1">Scenarios</span>
+    </div>`;
+    const rows = sources.map(s => {
+      const admColor = s.admiralty_reliability === 'A' ? '#3fb950' : s.admiralty_reliability === 'B' ? '#58a6ff' : '#6e7681';
+      const checked = s.last_checked ? s.last_checked.slice(0,10) : 'Never';
+      const scenarios = (s.scenario_tags||[]).join(', ');
+      return `<div style="display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #21262d;font-size:11px">
+        <span style="color:#e6edf3;width:220px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.name}">${s.name}</span>
+        <span style="color:${admColor};width:40px;flex-shrink:0;font-family:monospace;font-weight:700">${s.admiralty_reliability}</span>
+        <span style="color:#8b949e;width:80px;flex-shrink:0;text-transform:capitalize">${s.cadence||'—'}</span>
+        <span style="color:#6e7681;width:90px;flex-shrink:0">${checked}</span>
+        <span style="color:#484f58;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${scenarios}</span>
+        <a href="${s.url}" target="_blank" rel="noopener" title="Open source" style="flex-shrink:0;margin-left:8px;color:#6e7681;text-decoration:none;font-size:12px;opacity:0.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">&#8599;</a>
+        <button onclick="deleteValSource('${s.id}')" title="Delete source" style="flex-shrink:0;margin-left:6px;background:none;border:none;color:#6e7681;font-size:12px;cursor:pointer;opacity:0.5;padding:0 2px" onmouseover="this.style.opacity='1';this.style.color='#f85149'" onmouseout="this.style.opacity='0.5';this.style.color='#6e7681'">&#10005;</button>
+      </div>`;
+    }).join('');
+    el.innerHTML = addForm + header + rows;
+  } catch {
+    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load sources.</div>';
+  }
+}
+
+async function submitAddSource() {
+  const url = $('val-src-url').value.trim();
+  const name = $('val-src-name').value.trim();
+  const cadence = $('val-src-cadence').value;
+  const errEl = $('val-add-source-err');
+  errEl.style.display = 'none';
+
+  if (!url || !name) { errEl.textContent = 'URL and name are required.'; errEl.style.display = 'block'; return; }
+
+  const checkedBoxes = document.querySelectorAll('#val-add-source-form input[type=checkbox]:checked');
+  const scenario_tags = Array.from(checkedBoxes).map(cb => cb.value);
+
+  try {
+    const r = await fetch('/api/validation/sources/add', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url, name, cadence, scenario_tags}),
+    });
+    const data = await r.json();
+    if (!r.ok) { errEl.textContent = data.error || 'Add failed'; errEl.style.display = 'block'; return; }
+    await loadValSources();
+  } catch {
+    errEl.textContent = 'Server error'; errEl.style.display = 'block';
+  }
+}
+
+async function deleteValSource(sourceId) {
+  if (!confirm(`Delete source "${sourceId}" from registry?`)) return;
+  try {
+    const r = await fetch(`/api/validation/sources/${encodeURIComponent(sourceId)}`, {method: 'DELETE'});
+    const data = await r.json();
+    if (!r.ok) { alert(data.error || 'Delete failed'); return; }
+    await loadValSources();
+  } catch {
+    alert('Server error');
+  }
+}
+
+async function loadValCandidates() {
+  const el = $('val-candidates');
+  const countEl = $('val-candidate-count');
+  try {
+    const data = await fetch('/api/validation/candidates').then(r => r.json());
+    const pending = (data.candidates||[]).filter(c => c.status === 'pending_review');
+    countEl.textContent = pending.length ? `(${pending.length} pending)` : '';
+    if (!pending.length) {
+      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No pending candidates.</div>';
+      return;
+    }
+    const rows = pending.map(c => {
+      const year = c.estimated_year || '—';
+      const hasDollar = c.has_dollar_figure ? '<span style="color:#3fb950">$</span>' : '<span style="color:#484f58">—</span>';
+      const scenarios = (c.scenario_tags||[]).join(', ');
+      const title = (c.title||c.url||'').slice(0,60);
+      const snippet = (c.snippet||'').slice(0,100);
+      return `<div style="padding:8px 12px;border-bottom:1px solid #21262d;font-size:11px">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <div style="flex:1;min-width:0">
+            <div style="color:#e6edf3;margin-bottom:2px">${title}</div>
+            <div style="color:#484f58;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.url||''}</div>
+            <div style="color:#6e7681;font-size:10px;margin-top:2px">${snippet}</div>
+            <div style="margin-top:4px;font-size:10px;color:#6e7681">${year} · ${hasDollar} dollar figure · ${scenarios}</div>
+          </div>
+          <button onclick="promoteCandidate('${encodeURIComponent(c.url||'')}')"
+            style="flex-shrink:0;font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer;white-space:nowrap">
+            Promote
+          </button>
+          <button onclick="dismissCandidate('${encodeURIComponent(c.url||'')}')"
+            style="flex-shrink:0;font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:2px 10px;border-radius:2px;cursor:pointer">
+            Dismiss
+          </button>
+        </div>
+      </div>`;
+    }).join('');
+    el.innerHTML = rows;
+  } catch {
+    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load candidates.</div>';
+  }
+}
+
+async function promoteCandidate(encodedUrl) {
+  const url = decodeURIComponent(encodedUrl);
+  try {
+    const r = await fetch('/api/validation/promote', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({url}),
+    });
+    const data = await r.json();
+    if (!r.ok) { alert(data.error || 'Promote failed'); return; }
+    await loadValCandidates();
+    await loadValSources();
+  } catch {
+    alert('Promote failed — server error');
+  }
+}
+
+async function dismissCandidate(encodedUrl) {
+  // Mark as dismissed in candidates file via a simple promote-like endpoint
+  // For now, just reload — the candidate will be filtered on next discovery run
+  await loadValCandidates();
+}
+
+async function runValidate() {
+  const btn = $('btn-run-validate');
+  const prog = $('val-progress');
+  btn.disabled = true;
+  prog.style.display = 'block';
+  prog.textContent = 'Starting validation run...';
+  try {
+    const r = await fetch('/api/run/validate', {method: 'POST'});
+    if (!r.ok) {
+      const err = await r.json().catch(()=>({}));
+      prog.textContent = `Error: ${err.error || 'Run failed'}`;
+      btn.disabled = false;
+      return;
+    }
+    // Poll status + listen to SSE for validation events
+    _listenValidationSSE(btn, prog);
+  } catch {
+    prog.textContent = 'Server offline';
+    btn.disabled = false;
+  }
+}
+
+function _listenValidationSSE(btn, prog) {
+  // Reuse the existing SSE stream, filter for validation events
+  const stepLabels = {
+    source_harvester: 'Fetching known sources...',
+    source_discoverer: 'Discovering new sources...',
+    benchmark_extractor: 'Extracting benchmarks via Haiku...',
+    crq_comparator: 'Comparing VaCR figures...',
+  };
+  const es = new EventSource('/api/logs/stream');
+  es.addEventListener('validation', e => {
+    const d = JSON.parse(e.data);
+    if (d.status === 'step') {
+      prog.textContent = stepLabels[d.step] || d.message || d.step;
+    } else if (d.status === 'complete') {
+      prog.textContent = '✓ Validation complete';
+      btn.disabled = false;
+      es.close();
+      renderValidateTab();
+    } else if (d.status === 'error') {
+      prog.textContent = `✗ Error at ${d.step||'unknown step'}: ${d.message||''}`;
+      btn.disabled = false;
+      es.close();
+    }
+  });
+  // Auto-close after 10 min safety
+  setTimeout(() => { es.close(); btn.disabled = false; }, 600_000);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────

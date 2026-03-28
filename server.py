@@ -29,6 +29,11 @@ pipeline_state = {
     "regions_done": [],
     "started_at": None,
 }
+validation_state = {
+    "running": False,
+    "phase": None,
+    "started_at": None,
+}
 event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 
 
@@ -123,6 +128,81 @@ async def get_rsm_brief(region: str):
         "intsum": _latest_md(f"rsm_brief_{r_lower}_*.md"),
         "flash":  _latest_md(f"rsm_flash_{r_lower}_*.md"),
     }
+
+
+@app.get("/api/rsm/{region}/pdf")
+async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(flash|intsum)$")):
+    """Export an RSM brief (FLASH or INTSUM) as a downloadable PDF."""
+    import io
+    import tempfile
+    import os
+    from fpdf import FPDF
+
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
+    r_lower = r.lower()
+    base = OUTPUT / "regional" / r_lower
+
+    def _latest_md(pattern: str):
+        if not base.exists():
+            return None
+        files = sorted(base.glob(pattern))
+        return files[-1] if files else None
+
+    if type == "flash":
+        md_path = _latest_md(f"rsm_flash_{r_lower}_*.md")
+        label = "FLASH"
+    else:
+        md_path = _latest_md(f"rsm_brief_{r_lower}_*.md")
+        label = "INTSUM"
+
+    if not md_path:
+        return JSONResponse({"error": f"No {label} brief found for {r}"}, status_code=404)
+
+    raw = md_path.read_text(encoding="utf-8", errors="replace")
+    # Sanitize to latin-1 (fpdf2 core fonts); replace common symbols, strip rest
+    _sym = {"⚡": "[FLASH]", "●": "*", "—": "-", "\u2019": "'", "\u201c": '"', "\u201d": '"'}
+    for k, v in _sym.items():
+        raw = raw.replace(k, v)
+    content = raw.encode("latin-1", errors="replace").decode("latin-1")
+
+    # Render to PDF using fpdf2
+    pdf = FPDF()
+    pdf.set_margins(20, 20, 20)        # must be set before add_page
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+
+    # Header bar
+    pdf.set_fill_color(13, 17, 23)   # GitHub dark
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Courier", "B", 11)
+    pdf.cell(0, 10, f"AEROWIND // {r} {label} // RESTRICTED", fill=True, new_x="LMARGIN", new_y="NEXT", align="C")
+    pdf.ln(4)
+
+    # Body — monospaced, dark-on-white
+    pdf.set_text_color(30, 30, 30)
+    pdf.set_font("Courier", size=9)
+    w = pdf.epw  # effective page width respects margins
+    for line in content.splitlines():
+        pdf.multi_cell(w, 4.5, line if line else " ")
+
+    # Write to temp file and serve
+    tmp = tempfile.NamedTemporaryFile(suffix=".pdf", delete=False)
+    tmp.close()
+    try:
+        pdf.output(tmp.name)
+        filename = f"rsm_{label.lower()}_{r_lower}_{md_path.stem.split('_')[-1]}.pdf"
+        return FileResponse(
+            tmp.name,
+            media_type="application/pdf",
+            filename=filename,
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+            background=None,
+        )
+    except Exception as e:
+        os.unlink(tmp.name)
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/api/global-report")
@@ -637,6 +717,175 @@ async def logs_stream():
                 yield {"event": "ping", "data": ""}
 
     return EventSourceResponse(generate())
+
+
+# ── API: Validation ──────────────────────────────────────────────────────
+@app.get("/api/validation/flags")
+async def get_validation_flags():
+    data = _read_json(OUTPUT / "validation_flags.json")
+    return data or {"status": "no_data", "scenarios": [], "summary": {}}
+
+
+@app.get("/api/validation/sources")
+async def get_validation_sources():
+    path = BASE / "data" / "validation_sources.json"
+    data = _read_json(path)
+    return data or {"sources": []}
+
+
+@app.get("/api/validation/candidates")
+async def get_validation_candidates():
+    data = _read_json(OUTPUT / "validation_candidates.json")
+    return data or {"candidates": [], "generated_at": None}
+
+
+@app.post("/api/validation/sources/add")
+async def add_validation_source(body: dict):
+    """Manually add a source to the trusted registry."""
+    import re
+    url = body.get("url", "").strip()
+    name = body.get("name", "").strip()
+    if not url or not name:
+        return JSONResponse({"error": "url and name required"}, status_code=400)
+
+    sources_path = BASE / "data" / "validation_sources.json"
+    sources_data = json.loads(sources_path.read_text(encoding="utf-8")) if sources_path.exists() else {"sources": []}
+    if any(s["url"] == url for s in sources_data.get("sources", [])):
+        return JSONResponse({"error": "Source URL already in registry"}, status_code=409)
+
+    source_id = re.sub(r"[^a-z0-9]+", "-", name[:40].lower()).strip("-")
+    new_source = {
+        "id": source_id,
+        "name": name,
+        "url": url,
+        "cadence": body.get("cadence", "annual"),
+        "admiralty_reliability": "C",
+        "sector_tags": body.get("sector_tags", []),
+        "scenario_tags": body.get("scenario_tags", []),
+        "last_checked": None,
+        "last_new_content": None,
+    }
+    sources_data["sources"].append(new_source)
+    _write_json_atomic(sources_path, sources_data)
+    return {"ok": True, "source_id": source_id}
+
+
+@app.delete("/api/validation/sources/{source_id}")
+async def delete_validation_source(source_id: str):
+    sources_path = BASE / "data" / "validation_sources.json"
+    if not sources_path.exists():
+        return JSONResponse({"error": "No sources file"}, status_code=404)
+    sources_data = json.loads(sources_path.read_text(encoding="utf-8"))
+    original = sources_data.get("sources", [])
+    filtered = [s for s in original if s["id"] != source_id]
+    if len(filtered) == len(original):
+        return JSONResponse({"error": f"Source not found: {source_id}"}, status_code=404)
+    sources_data["sources"] = filtered
+    _write_json_atomic(sources_path, sources_data)
+    return {"ok": True, "deleted": source_id}
+
+
+@app.post("/api/validation/promote")
+async def promote_candidate(body: dict):
+    """Promote a discovered candidate into the trusted source registry."""
+    import os
+    url = body.get("url", "").strip()
+    if not url:
+        return JSONResponse({"error": "url required"}, status_code=400)
+
+    # Load candidates, mark as promoted
+    cands_path = OUTPUT / "validation_candidates.json"
+    if not cands_path.exists():
+        return JSONResponse({"error": "No candidates file"}, status_code=404)
+    cands_data = json.loads(cands_path.read_text(encoding="utf-8"))
+    candidate = next((c for c in cands_data.get("candidates", []) if c.get("url") == url), None)
+    if not candidate:
+        return JSONResponse({"error": "Candidate not found"}, status_code=404)
+
+    # Build new source entry
+    import re
+    source_id = re.sub(r"[^a-z0-9]+", "-", (candidate.get("title", url)[:40]).lower()).strip("-")
+    new_source = {
+        "id": source_id,
+        "name": candidate.get("title", url)[:80],
+        "url": url,
+        "cadence": "unknown",
+        "admiralty_reliability": "C",
+        "sector_tags": candidate.get("sector_tags", []),
+        "scenario_tags": candidate.get("scenario_tags", []),
+        "last_checked": None,
+        "last_new_content": None,
+    }
+
+    # Append to validation_sources.json
+    sources_path = BASE / "data" / "validation_sources.json"
+    sources_data = json.loads(sources_path.read_text(encoding="utf-8")) if sources_path.exists() else {"sources": []}
+    # Guard against duplicates
+    existing_urls = {s["url"] for s in sources_data.get("sources", [])}
+    if url in existing_urls:
+        return JSONResponse({"error": "Source already in registry"}, status_code=409)
+    sources_data["sources"].append(new_source)
+    _write_json_atomic(sources_path, sources_data)
+
+    # Mark candidate as promoted
+    for c in cands_data.get("candidates", []):
+        if c.get("url") == url:
+            c["status"] = "promoted"
+    _write_json_atomic(cands_path, cands_data)
+
+    return {"ok": True, "source_id": source_id}
+
+
+async def _run_validation():
+    """Run the 4-script validation chain. Emits SSE events."""
+    validation_state.update(running=True, phase="harvesting", started_at=time.time())
+    await _emit("validation", {"status": "started"})
+    try:
+        await _emit("validation", {"status": "step", "step": "source_harvester", "message": "Fetching known sources..."})
+        rc = await _run("source_harvester.py", timeout=120)
+        if rc != 0:
+            await _emit("validation", {"status": "error", "step": "source_harvester"})
+            return
+
+        await _emit("validation", {"status": "step", "step": "source_discoverer", "message": "Discovering new sources..."})
+        rc = await _run("source_discoverer.py", timeout=120)
+        if rc != 0:
+            await _emit("validation", {"status": "error", "step": "source_discoverer"})
+            return
+
+        await _emit("validation", {"status": "step", "step": "benchmark_extractor", "message": "Extracting benchmarks..."})
+        rc = await _run("benchmark_extractor.py", timeout=180)
+        if rc != 0:
+            await _emit("validation", {"status": "error", "step": "benchmark_extractor"})
+            return
+
+        await _emit("validation", {"status": "step", "step": "crq_comparator", "message": "Comparing VaCR figures..."})
+        rc = await _run("crq_comparator.py", timeout=60)
+        if rc != 0:
+            await _emit("validation", {"status": "error", "step": "crq_comparator"})
+            return
+
+        await _emit("validation", {"status": "complete"})
+    except Exception as exc:
+        log.exception("Validation run failed")
+        await _emit("validation", {"status": "error", "message": str(exc)})
+    finally:
+        validation_state.update(running=False, phase=None)
+
+
+@app.post("/api/run/validate")
+async def run_validate():
+    if validation_state["running"]:
+        return JSONResponse({"error": "Validation already running"}, status_code=409)
+    if pipeline_state["running"]:
+        return JSONResponse({"error": "Main pipeline is running — try again after it completes"}, status_code=409)
+    asyncio.create_task(_run_validation())
+    return {"started": True}
+
+
+@app.get("/api/validation/status")
+async def get_validation_status():
+    return validation_state
 
 
 # ── Static Files ─────────────────────────────────────────────────────────
