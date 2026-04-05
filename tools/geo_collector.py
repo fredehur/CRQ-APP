@@ -20,6 +20,10 @@ load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
+
+def _generate_signal_id(region: str, pillar: str, sequence: int) -> str:
+    return f"{region.lower()}-{pillar.lower()}-{sequence:03d}"
+
 GEO_KEYWORDS = ["trade", "sanction", "tariff", "geopolit", "diplomatic", "border",
                  "government", "policy", "regulation", "political", "alliance"]
 CYBER_KEYWORDS = ["cyber", "hack", "attack", "malware", "ransomware", "breach",
@@ -71,11 +75,15 @@ def infer_dominant_pillar(articles):
     return max(scores, key=scores.get)
 
 
-def normalize(articles):
+def normalize(articles, region="unknown"):
     if not articles:
         return {
             "summary": "No active geopolitical signals detected in current period.",
-            "lead_indicators": ["No significant geopolitical developments identified"],
+            "lead_indicators": [
+                {"text": "No significant geopolitical developments identified",
+                 "signal_id": _generate_signal_id(region, "geo", 1),
+                 "source_url": "", "source_name": ""}
+            ],
             "dominant_pillar": "Geopolitical",
         }
 
@@ -84,9 +92,15 @@ def normalize(articles):
         a.get("summary", a.get("title", ""))[:250] for a in top
     ).strip()
 
-    lead_indicators = [a.get("title", "")[:120] for a in articles[:3] if a.get("title")]
-    if not lead_indicators:
-        lead_indicators = ["No specific indicators identified"]
+    lead_indicators_raw = [a.get("title", "")[:120] for a in articles[:3] if a.get("title")]
+    if not lead_indicators_raw:
+        lead_indicators_raw = ["No specific indicators identified"]
+
+    lead_indicators = [
+        {"text": ind, "signal_id": _generate_signal_id(region, "geo", i + 1),
+         "source_url": "", "source_name": ""}
+        for i, ind in enumerate(lead_indicators_raw)
+    ]
 
     dominant_pillar = infer_dominant_pillar(articles)
 
@@ -119,7 +133,7 @@ def collect(region, mock, window=None):
             seen.add(key)
             articles.append(a)
 
-    base = normalize(articles)
+    base = normalize(articles, region)
     # Record which topic IDs were searched for traceability
     base["matched_topics"] = [t["id"] for t in topics]
 
@@ -133,9 +147,12 @@ def collect(region, mock, window=None):
                 base["seerist"] = seerist_payload
                 events = seerist_data.get("events") or []
                 if events:
+                    existing_count = len(base["lead_indicators"])
                     seerist_indicators = [
-                        f"[{e.get('category', 'Event')}] {e.get('title', '')}"
-                        for e in events[:3] if e.get("title")
+                        {"text": f"[{e.get('category', 'Event')}] {e.get('title', '')}",
+                         "signal_id": _generate_signal_id(region, "geo", existing_count + j + 1),
+                         "source_url": "", "source_name": "Seerist"}
+                        for j, e in enumerate(events[:3]) if e.get("title")
                     ]
                     base["lead_indicators"] = seerist_indicators + base["lead_indicators"]
                 if seerist_data.get("scribe"):
@@ -176,6 +193,12 @@ def main():
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     print(f"[geo_collector] wrote {out_path}", file=sys.stderr)
+
+    # Collection quality check (writes collection_quality.json if cyber_signals also exists)
+    cyber_path = f"{out_dir}/cyber_signals.json"
+    if os.path.exists(cyber_path):
+        from tools.collection_gate import check_collection_quality
+        check_collection_quality(region)
 
 
 if __name__ == "__main__":

@@ -23,6 +23,11 @@ If the user invokes this as `/run-crq rebuild` or explicitly says "rebuild from 
 Run: `uv run python .claude/hooks/validators/crq-schema-validator.py data/mock_crq_database.json`
 If validation fails, stop and report the error.
 
+**Validate environment:**
+Run: `uv run python tools/validate_env.py`
+If output is `LIVE mode`, also run: `uv run python tools/validate_env.py --live`
+If either exits non-zero, stop and report the missing variables.
+
 **Determine OSINT mode:**
 Run: `python -c "from dotenv import load_dotenv; import os; load_dotenv(); print('live' if os.environ.get('OSINT_LIVE','').lower()=='true' else 'mock')"`
 - If output is `live`: collector calls will omit `--mock` (Tavily/DDG active). Log: `uv run python tools/audit_logger.py PIPELINE_START "AeroGrid CRQ Pipeline initiated — LIVE OSINT mode — processing 5 regions"`
@@ -62,8 +67,9 @@ Pass this to the gatekeeper invocation within the task — the gatekeeper reads 
 
 Read `data/mock_crq_database.json` to load all regional data.
 
-Spawn all 5 regional pipelines simultaneously using the Task tool with `run_in_background: true`.
+Spawn all 5 regional pipelines simultaneously using the Agent tool with `run_in_background: true` and `mode: "bypassPermissions"`.
 Each task is self-contained and writes its own output files. Do NOT wait for one to finish before starting the next.
+**CRITICAL:** Always set `mode: "bypassPermissions"` on every background regional agent — without it they cannot execute Bash commands and will fail immediately.
 
 **Spawn these 5 tasks in a single batch:**
 
@@ -95,9 +101,13 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
    - If no approved channels exist for the region, tool exits 0 with an empty signals file — this is expected and not an error.
    - `OSINT_MODE` passes `--mock` in mock mode; omit in live mode.
 
-2. Run `uv run python tools/geopolitical_context.py {REGION}`
+2. **Collection Quality Gate:**
+   Run: `uv run python tools/collection_gate.py {REGION}`
+   Writes `output/regional/{region_lower}/collection_quality.json`. The gatekeeper reads this automatically.
 
-3. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
+3. Run `uv run python tools/geopolitical_context.py {REGION}`
+
+4. Delegate to `gatekeeper-agent` with region and its critical assets from the CRQ database.
    The gatekeeper writes `output/regional/{region_lower}/gatekeeper_decision.json` and returns one word: ESCALATE, MONITOR, or CLEAR.
 
 4. **If CLEAR:**
@@ -130,6 +140,16 @@ for REGION in apac ame med latam nce:
                    The agent MUST see the specific violations — do not re-delegate blind.
                    Re-run the auditor on the rewritten brief.
 ```
+
+**Enrich cluster sources:** After jargon audits complete, enrich `signal_clusters.json` for each escalated region:
+
+```
+for REGION in apac ame med latam nce:
+  if output/regional/{REGION}/signal_clusters.json exists:
+    uv run python tools/enrich_clusters.py {REGION}
+```
+
+This adds `url` and `credibility_tier` to each cluster source entry by matching against the region's `geo_signals.json` and `cyber_signals.json`.
 
 ## PHASE 1.5 — DEEP RESEARCH PASS (CONDITIONAL)
 
@@ -212,12 +232,30 @@ Generates `output/dashboard.html` (Tailwind executive dashboard with Admiralty b
 
 Run: `uv run python tools/export_pdf.py output/board_report.pdf`
 Run: `uv run python tools/export_pptx.py output/board_report.pptx`
+Run: `uv run python tools/export_ciso_docx.py`
 
 ## PHASE 6 — FINALIZE
 
 Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
 
 Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
+
+Run: `uv run python tools/update_source_registry.py`
+
+**Enrich region data** — runs immediately after source_appearances is populated. Read `pipeline_id` from `output/run_manifest.json` and call `enrich_region_data` for each region that has a `data.json`:
+
+```
+for REGION in apac ame med latam nce:
+  if output/regional/{REGION}/data.json exists:
+    uv run python -c "
+import sys, json; sys.path.insert(0, 'tools')
+from pathlib import Path
+manifest = json.loads(Path('output/run_manifest.json').read_text(encoding='utf-8')) if Path('output/run_manifest.json').exists() else {}
+run_id = manifest.get('pipeline_id', 'unknown')
+from update_source_registry import enrich_region_data
+enrich_region_data('{REGION}', run_id)
+"
+```
 
 Run: `uv run python tools/feedback_summary.py` to aggregate analyst feedback across all archived runs into `output/feedback_trends.json`.
 

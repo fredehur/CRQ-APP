@@ -340,7 +340,8 @@ async def _run_live(region: str, window: timedelta) -> dict:
     matched = set()
     for t in topics:
         for indicator in merged["lead_indicators"]:
-            if any(kw.lower() in indicator.lower() for kw in t.get("keywords", [])):
+            ind_text = indicator.get("text", "") if isinstance(indicator, dict) else str(indicator)
+            if any(kw.lower() in ind_text.lower() for kw in t.get("keywords", [])):
                 matched.add(t["id"])
     merged["matched_topics"] = list(matched)
 

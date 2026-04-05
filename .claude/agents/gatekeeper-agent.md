@@ -26,6 +26,11 @@ Use site criticality to calibrate escalation threshold — a region with a PRIMA
 2. Read: `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals
 3. Read: `output/regional/{region_lower}/scenario_map.json` — scenario mapping output with financial rank
 4. If it exists, read: `output/regional/{region_lower}/research_scratchpad.json`
+
+5. If it exists, read: `output/regional/{region_lower}/collection_quality.json`
+   - If `thin_collection: true`, factor this into your Admiralty rating — the source basis is limited.
+   - Note the collection gap in your rationale.
+   - Absence of this file is non-fatal — proceed normally.
    - Contains the target-centric working theory and pre-assessed confidence from the research collector.
    - If present: read `conclusion.suggested_admiralty` and `conclusion.confidence_rationale`.
      Your Admiralty assignment must either confirm or explicitly challenge it with a one-sentence rationale.

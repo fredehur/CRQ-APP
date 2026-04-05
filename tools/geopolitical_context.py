@@ -52,7 +52,8 @@ if __name__ == "__main__":
         print(f"\n=== Geopolitical Signals (The Why) ===")
         print(f"  {geo_signals.get('summary', '')}")
         for indicator in geo_signals.get("lead_indicators", []):
-            print(f"  • {indicator}")
+            text = indicator.get("text", "") if isinstance(indicator, dict) else str(indicator)
+            print(f"  • {text}")
 
     cyber_signals = feed.get("cyber_signals", {})
     if cyber_signals:

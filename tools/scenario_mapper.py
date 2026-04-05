@@ -32,10 +32,17 @@ def load_signals(region):
     return geo, cyber
 
 
+def _indicator_text(indicator) -> str:
+    """Extract text from a lead_indicator (string or dict with 'text' key)."""
+    if isinstance(indicator, dict):
+        return indicator.get("text", "")
+    return str(indicator)
+
+
 def build_signal_text(geo, cyber):
     parts = [
         geo.get("summary", ""),
-        " ".join(geo.get("lead_indicators", [])),
+        " ".join(_indicator_text(i) for i in geo.get("lead_indicators", [])),
         cyber.get("summary", ""),
         cyber.get("threat_vector", ""),
         " ".join(cyber.get("target_assets", [])),

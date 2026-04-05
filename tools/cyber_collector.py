@@ -20,6 +20,10 @@ load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 
+
+def _generate_signal_id(region: str, pillar: str, sequence: int) -> str:
+    return f"{region.lower()}-{pillar.lower()}-{sequence:03d}"
+
 THREAT_VECTOR_PATTERNS = [
     ("ransomware", "Ransomware deployment via phishing and credential theft"),
     ("supply chain", "Supply chain compromise through third-party software updates"),
@@ -98,12 +102,17 @@ def extract_target_assets(articles):
     return found[:3]
 
 
-def normalize(articles):
+def normalize(articles, region="unknown"):
     if not articles:
         return {
             "summary": "No active cyber threat signals detected in current period.",
             "threat_vector": "No active threat vector identified",
             "target_assets": ["Operational technology systems"],
+            "lead_indicators": [
+                {"text": "No active cyber threat signals detected",
+                 "signal_id": _generate_signal_id(region, "cyber", 1),
+                 "source_url": "", "source_name": ""}
+            ],
         }
 
     top = articles[:2]
@@ -116,10 +125,22 @@ def normalize(articles):
     if not target_assets:
         target_assets = ["Operational technology systems"]
 
+    # Build lead_indicators from article titles (same as geo pattern)
+    lead_indicators_raw = [a.get("title", "")[:120] for a in articles[:3] if a.get("title")]
+    if not lead_indicators_raw:
+        lead_indicators_raw = [threat_vector]
+
+    lead_indicators = [
+        {"text": ind, "signal_id": _generate_signal_id(region, "cyber", i + 1),
+         "source_url": "", "source_name": ""}
+        for i, ind in enumerate(lead_indicators_raw)
+    ]
+
     return {
         "summary": summary,
         "threat_vector": threat_vector,
         "target_assets": target_assets,
+        "lead_indicators": lead_indicators,
     }
 
 
@@ -144,7 +165,7 @@ def collect(region, mock, window=None):
             seen.add(key)
             articles.append(a)
 
-    base = normalize(articles)
+    base = normalize(articles, region)
     base["matched_topics"] = [t["id"] for t in topics]
 
     # Seerist +Cyber enrichment (requires SEERIST_API_KEY + SEERIST_CYBER_ADDON=true)
@@ -188,6 +209,12 @@ def main():
         json.dump(result, f, indent=2, ensure_ascii=False)
 
     print(f"[cyber_collector] wrote {out_path}", file=sys.stderr)
+
+    # Collection quality check (writes collection_quality.json if geo_signals also exists)
+    geo_path = f"{out_dir}/geo_signals.json"
+    if os.path.exists(geo_path):
+        from tools.collection_gate import check_collection_quality
+        check_collection_quality(region)
 
 
 if __name__ == "__main__":

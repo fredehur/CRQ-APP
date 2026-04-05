@@ -28,6 +28,75 @@ VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
+def _generate_signal_id(region: str, pillar: str, sequence: int) -> str:
+    return f"{region.lower()}-{pillar.lower()}-{sequence:03d}"
+
+
+def _enrich_indicators_with_ids(indicators: list, region: str, pillar: str, sources: list) -> list:
+    """Convert plain string indicators to dicts with signal_id and source_url."""
+    enriched = []
+    for i, indicator in enumerate(indicators):
+        if isinstance(indicator, dict):
+            # Already enriched (idempotent)
+            enriched.append(indicator)
+            continue
+        source_url = sources[0]["url"] if sources else ""
+        source_name = sources[0]["name"] if sources else ""
+        enriched.append({
+            "text": indicator,
+            "signal_id": _generate_signal_id(region, pillar, i + 1),
+            "source_url": source_url,
+            "source_name": source_name,
+        })
+    return enriched
+
+
+# Canonical implementation lives in collection_gate.py
+from tools.collection_gate import check_collection_quality  # noqa: F401 — re-exported for back-compat
+
+_JUNK_DOMAINS = {
+    "raw.githubusercontent.com",
+    "git.selfmade.ninja",
+    "codalab.org",
+    "downloads.cs.stanford.edu",
+    "facebook.com",
+}
+_JUNK_SUBSTRINGS = {"/vocab", "wordlist", "SecLists", "sitemap", "Vital_articles", "vocab_wiki"}
+
+
+def _load_blocked_urls() -> set:
+    """Load dynamically blocked URLs from the analyst-managed flat file."""
+    blocked_file = Path(__file__).resolve().parent.parent / "data" / "blocked_urls.txt"
+    if not blocked_file.exists():
+        return set()
+    try:
+        return {line.strip() for line in blocked_file.read_text(encoding="utf-8").splitlines() if line.strip()}
+    except Exception:
+        return set()
+
+
+_BLOCKED_URLS: set = _load_blocked_urls()
+
+
+def _is_junk_url(url: str) -> bool:
+    """Return True if the URL is a known low-quality or irrelevant source."""
+    if url in _BLOCKED_URLS:
+        return True
+    try:
+        from urllib.parse import urlparse
+        domain = urlparse(url).netloc.lower()
+    except Exception:
+        return False
+    if domain in _JUNK_DOMAINS:
+        return True
+    for sub in _JUNK_SUBSTRINGS:
+        if sub in url:
+            return True
+    if url.lower().endswith(".xml"):
+        return True
+    return False
+
+
 def _call_llm(prompt: str, model: str = "claude-haiku-4-5-20251001", max_tokens: int = 1024) -> dict:
     """Call Anthropic API, parse JSON response. Raises ValueError on bad JSON."""
     client = anthropic.Anthropic()
@@ -116,7 +185,7 @@ def run_search_pass(region: str, queries: list[str], query_type: str, window: st
         cmd = [sys.executable, "tools/osint_search.py", region, query, "--type", query_type]
         if window:
             cmd += ["--window", window]
-        proc = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO_ROOT)
+        proc = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", cwd=REPO_ROOT)
         if proc.returncode != 0 or not proc.stdout.strip():
             continue
         try:
@@ -209,14 +278,19 @@ Return ONLY valid JSON (no markdown fences):
     "summary": "2-3 sentence geopolitical context",
     "lead_indicators": ["indicator 1", "indicator 2", "indicator 3"],
     "dominant_pillar": "Geopolitical",
-    "matched_topics": ["topic-id-if-matched"]
+    "matched_topics": ["topic-id-if-matched"],
+    "sources": [
+      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>"}}
+    ]
   }},
   "cyber_signals": {{
     "summary": "2-3 sentence cyber threat summary",
-    "threat_vector": "How the threat reaches the organisation",
-    "target_assets": ["asset 1", "asset 2"],
+    "lead_indicators": ["named threat actor or group 1", "specific confirmed incident (target, method, outcome) 2", "documented attack vector or campaign 3"],
     "dominant_pillar": "Cyber",
-    "matched_topics": ["topic-id-if-matched"]
+    "matched_topics": ["topic-id-if-matched"],
+    "sources": [
+      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>"}}
+    ]
   }},
   "conclusion": {{
     "theory_confirmed": true,
@@ -228,14 +302,25 @@ Return ONLY valid JSON (no markdown fences):
 }}
 
 signal_type must be one of: event, trend, mixed.
-Only include topic IDs from the ACTIVE TOPICS list in matched_topics."""
+Only include topic IDs from the ACTIVE TOPICS list in matched_topics.
+cyber_signals.lead_indicators must contain discrete, attributable items — each must be one of:
+  a named threat actor or group (e.g. "APT41 targeting OT networks in {region}"),
+  a specific confirmed incident with named target, method, and outcome, or
+  a documented attack vector or active campaign observed in the evidence.
+Do not use generic statements. If named actors or incidents are absent from the evidence, note that explicitly as an indicator.
+For sources in both geo_signals and cyber_signals:
+  - Include only sources whose URL appears in the COLLECTED EVIDENCE list above.
+  - Derive name from the article title and domain — e.g. reuters.com → "Reuters", unit42.paloaltonetworks.com → "Unit 42 (Palo Alto)", cisa.gov → "CISA", asd.gov.au → "Australian Signals Directorate".
+  - Include only sources that directly informed at least one lead_indicator — not every URL in the pool.
+  - Maximum 10 sources per signal type.
+  - No invented names — name must be derivable from the actual URL domain or article title."""
 
     # Use Sonnet for synthesis — quality-critical step
     result = _call_llm(prompt, model="claude-sonnet-4-6", max_tokens=2048)
 
     # Validate required keys in each sub-dict
     geo_required = {"summary", "lead_indicators", "dominant_pillar", "matched_topics"}
-    cyber_required = {"summary", "threat_vector", "target_assets", "dominant_pillar", "matched_topics"}
+    cyber_required = {"summary", "lead_indicators", "dominant_pillar", "matched_topics"}
     conclusion_required = {"theory_confirmed", "confidence_rationale", "suggested_admiralty", "signal_type", "dominant_pillar"}
 
     for section, required in [("geo_signals", geo_required), ("cyber_signals", cyber_required), ("conclusion", conclusion_required)]:
@@ -301,10 +386,33 @@ def run_live_mode(region: str, window: str | None = None) -> None:
     # --- LLM Call 3: Synthesize (Sonnet) ---
     geo_signals, cyber_signals, conclusion = synthesize_signals(region, working_theory, all_results)
 
-    # --- Enrich with metadata ---
+    # --- Collect source URLs from raw Tavily results (junk-filtered) ---
+    source_urls = list(dict.fromkeys(
+        r["url"] for r in all_results if r.get("url") and not _is_junk_url(r["url"])
+    ))
+
+    # --- Enrich with metadata (preserve LLM-derived sources if present) ---
     collected_at = datetime.now(timezone.utc).isoformat()
-    geo_signals.update({"region": region, "collected_at": collected_at})
-    cyber_signals.update({"region": region, "collected_at": collected_at})
+    geo_signals.update({
+        "region": region,
+        "collected_at": collected_at,
+        "source_urls": source_urls,
+        "sources": geo_signals.get("sources", []),
+    })
+    cyber_signals.update({
+        "region": region,
+        "collected_at": collected_at,
+        "source_urls": source_urls,
+        "sources": cyber_signals.get("sources", []),
+    })
+
+    # --- Enrich lead_indicators with signal_ids ---
+    geo_signals["lead_indicators"] = _enrich_indicators_with_ids(
+        geo_signals.get("lead_indicators", []), region, "geo", geo_signals.get("sources", [])
+    )
+    cyber_signals["lead_indicators"] = _enrich_indicators_with_ids(
+        cyber_signals.get("lead_indicators", []), region, "cyber", cyber_signals.get("sources", [])
+    )
 
     # --- Write outputs ---
     _write_json(out_dir / "geo_signals.json", geo_signals)
@@ -325,6 +433,9 @@ def run_live_mode(region: str, window: str | None = None) -> None:
         "conclusion": conclusion,
     }
     _write_json(out_dir / "research_scratchpad.json", scratchpad)
+
+    # --- Collection quality gate ---
+    check_collection_quality(region)
 
 
 def main() -> None:
