@@ -86,6 +86,8 @@ Each `lead_indicator` in `geo_signals.json` and `cyber_signals.json` gains two n
 
 **signal_id format:** `{region}-{pillar}-{sequence}` — e.g. `apac-geo-001`. Stable within a run, not across runs. Generated sequentially by the synthesiser as it processes Tavily results.
 
+**claim_id format:** `{region_lower}-{sequence:03d}` — e.g. `apac-001`. Sequentially numbered within a region. No cross-region uniqueness required since claims.json is a per-region file.
+
 **source_url:** Moves from the file-level `sources` array (current) to the **indicator level**. Traceability requires knowing which URL backs which specific indicator, not just which URLs appeared somewhere in the collection.
 
 ### Collection quality gate (new pre-analyst check)
@@ -100,6 +102,30 @@ After `research_collector.py` exits, before gatekeeper runs:
 **Why not write to `gatekeeper_decision.json` directly:** That file is created by the gatekeeper agent, not pre-existing. Writing to it before the agent runs and having the agent overwrite it is a race condition. The canonical pattern in this pipeline is: code writes inputs, agents transform them, code enforces constraints on outputs.
 
 This fixes the known P1-2 bug (cyber indicators returning 0) by making it a named, visible state rather than a silent failure that the analyst papers over with training data.
+
+### lead_indicators schema migration (breaking change)
+
+Current signal files store `lead_indicators` as a list of plain strings:
+
+```json
+"lead_indicators": [
+  "IRGC statements threatening vessels transiting the Strait of Hormuz..."
+]
+```
+
+This spec changes them to a list of dicts. This is a **breaking data contract change**. Every file that reads `lead_indicators` must be updated:
+
+| File | Change required |
+|---|---|
+| `tools/research_collector.py` | LLM synthesis prompt updated to return dicts; output schema updated |
+| `tools/geo_collector.py` | Fixture-based indicators promoted to dicts with generated signal_ids |
+| `tools/cyber_collector.py` | Same as geo_collector.py |
+| `.claude/agents/regional-analyst-agent.md` | Prompt updated to reference `indicator` field, not the string directly |
+| `.claude/agents/gatekeeper-agent.md` | Prompt updated to read `indicator` field |
+| `.claude/hooks/validators/grounding-validator.py` | Reads `signal_id` from indicator dict for resolution check |
+| `tools/update_source_registry.py` | Any code reading `lead_indicators` strings updated |
+
+The migration is in-place — no separate migration script. The new dict schema is written by Phase 1 and all downstream readers are updated in Phase 1 before any other phase begins.
 
 ### Mock mode compatibility
 
@@ -133,7 +159,6 @@ Replaces `signal_clusters.json` as the analytical source of truth. Written by th
       "pillar": "cyber",
       "text": "IRGC-affiliated groups maintain active campaigns against industrial control systems",
       "signal_ids": ["apac-cyber-003"],
-      "source_urls": ["https://trellix.com/..."],
       "confidence": "Confirmed",
       "paragraph": "how"
     },
@@ -143,7 +168,6 @@ Replaces `signal_clusters.json` as the analytical source of truth. Written by th
       "pillar": "geopolitical",
       "text": "APAC advanced manufacturing supply chains represent a documented state collection priority",
       "signal_ids": ["apac-geo-001", "apac-geo-002"],
-      "source_urls": [],
       "confidence": "Assessed",
       "paragraph": "why"
     },
@@ -153,7 +177,6 @@ Replaces `signal_clusters.json` as the analytical source of truth. Written by th
       "pillar": "cyber",
       "text": "China-centric IP theft vector requires further collection before confidence can be elevated",
       "signal_ids": [],
-      "source_urls": [],
       "confidence": "Analyst judgment",
       "paragraph": "how"
     }
@@ -163,11 +186,13 @@ Replaces `signal_clusters.json` as the analytical source of truth. Written by th
 
 ### Schema rules (enforced, not aspirational)
 
-| claim_type | signal_ids | source_urls | When to use |
-|---|---|---|---|
-| `fact` | **required, non-empty** | recommended | Named actor/incident with a collected source |
-| `assessment` | recommended | optional | Pattern inferred from multiple signals |
-| `estimate` | empty allowed | empty allowed | Explicit gap acknowledgment or forward-looking inference |
+| claim_type | signal_ids | When to use |
+|---|---|---|
+| `fact` | **required, non-empty** | Named actor/incident with a collected source |
+| `assessment` | recommended | Pattern inferred from multiple signals |
+| `estimate` | empty allowed | Explicit gap acknowledgment or forward-looking inference |
+
+**`source_urls` is not a claim field.** Source URLs are derived at render time from `signal_id` → `source_url` in the signal files. Storing them on the claim would create a second sourcing chain that can drift from the signal files with no validator check. The signal file is the single source of truth for URLs.
 
 The grounding validator rejects any `fact` claim with empty `signal_ids`. This is the structural enforcement — the analyst cannot write a confirmed statement without citing a signal.
 
@@ -223,18 +248,29 @@ The grounding validator runs after both writes and enforces claim integrity (no 
 
 Runs after regional-analyst-agent exits, before global-builder-agent starts.
 
+### Guard — non-ESCALATED regions
+
+The regional-analyst-agent only runs for ESCALATED regions, so the stop hook only fires for ESCALATED regions in normal pipeline operation. However, the validator must include an explicit guard at the top for safety (e.g., testing or manual invocation):
+
+```python
+gd = load_json(f"output/regional/{region}/gatekeeper_decision.json")
+if gd.get("decision") != "ESCALATE":
+    sys.exit(0)  # Not escalated — validator is a no-op
+```
+
+Without this guard, a missing `claims.json` on a MONITOR region would hard-fail the pipeline.
+
 ### Checks (deterministic — no prose parsing, no LLM judge)
 
+0. `claims.json.mtime` < `report.md.mtime` — if report.md was written before claims.json, the two-step order was violated; fail with explicit message directing the analyst to write claims first
 1. `claims.json` exists and parses as valid JSON
 2. Every `fact` claim has `signal_ids` non-empty
-3. Every `signal_id` referenced in claims exists as an indicator in `geo_signals.json` or `cyber_signals.json`
-4. No `source_url` in claims appears in `data/blocked_urls.txt`
-5. At least one claim per paragraph (`why`, `how`, `sowhat`)
+3. Every `signal_id` referenced in claims exists as an indicator in `geo_signals.json` or `cyber_signals.json` — **skipped when `research_scratchpad.json` is absent** (absence = mock mode; checking env var `OSINT_LIVE` is unreliable in hook subprocess context — file presence is the canonical mock/live signal in this pipeline)
+4. At least one claim per paragraph (`why`, `how`, `sowhat`), where an `estimate` claim counts as valid for a paragraph (it explicitly signals absence)
 
 ### Emits (logged, not fail conditions)
 
 - Claim type distribution: `{fact: N, assessment: N, estimate: N}` and ratio `fact_claims / total_claims` — written to `system_trace.log` as grounding score
-- Orphaned signal_ids: indicators collected but not cited in any claim
 - Orphaned signal_ids: indicators collected but not cited in any claim
 
 ### Fail conditions
@@ -272,7 +308,7 @@ def check_collection_quality(region: str) -> dict:
     }
 ```
 
-Result written to `gatekeeper_decision.json` as `collection_quality` field.
+Result written to `output/regional/{region}/collection_quality.json` (new standalone file — not `gatekeeper_decision.json`, which is written by the gatekeeper agent and would be overwritten).
 
 **Downstream effects:**
 - Gatekeeper: if `thin_collection: true`, cap Admiralty at C regardless of signal content
@@ -296,9 +332,9 @@ This plan (ships after master build)
   Phase 4 — collection quality gate
 ```
 
-Phase 1 is a prerequisite for all others. Phase 2 must precede Phase 3 — the grounding validator cannot be written or tested until claims.json exists. Phase 4 (collection quality gate) is independent and can run in parallel with Phase 2 or 3.
+Phase 1 is a prerequisite for all others. Phase 2 must precede Phase 3 — the grounding validator cannot be written or tested until claims.json exists and the analyst prompt is updated. Phase 4 (collection quality gate extraction) is independent and can run in parallel with Phase 2 or 3, but requires Phase 1 artifacts to exist.
 
-Correct order: 1 → 2 → 3, with 4 parallel to any phase after 1.
+Correct order: 1 → 2 → 3, with 4 parallel to Phase 2 (after Phase 1 complete).
 
 ### Future alignment with master build plan
 

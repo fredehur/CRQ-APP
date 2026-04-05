@@ -87,11 +87,23 @@ Add Phase 1.5 between collection and gatekeeper:
 
 **Admiralty cap enforcement (code, not agent):**
 ```python
+def _get_admiralty_reliability(gd: dict) -> str:
+    """Handle both nested dict and plain string admiralty formats."""
+    adm = gd.get("admiralty", "C")
+    if isinstance(adm, dict):
+        return adm.get("reliability", "C")
+    return str(adm)[0] if adm else "C"
+
 def enforce_admiralty_cap(region: str):
     cq = load_json(f"output/regional/{region}/collection_quality.json")
     gd = load_json(f"output/regional/{region}/gatekeeper_decision.json")
-    if cq.get("thin_collection") and gd.get("admiralty", "C")[0] < "C":
-        gd["admiralty"] = "C3"
+    if cq.get("thin_collection") and _get_admiralty_reliability(gd) < "C":
+        # admiralty is a nested dict — update both reliability and rating
+        if isinstance(gd.get("admiralty"), dict):
+            gd["admiralty"]["reliability"] = "C"
+            gd["admiralty"]["rating"] = f"C{gd['admiralty'].get('credibility', '3')}"
+        else:
+            gd["admiralty"] = "C3"
         gd["admiralty_cap_reason"] = "thin_collection — auto-capped by orchestrator"
         write_json(f"output/regional/{region}/gatekeeper_decision.json", gd)
 ```
@@ -176,10 +188,11 @@ the source basis is limited. Note the collection gap in your rationale.
 
 ### Phase 2 Done Criteria
 - [ ] `claims.json` written per region by analyst before `report.md`
-- [ ] Schema matches spec: `claim_id`, `claim_type`, `pillar`, `text`, `signal_ids`, `source_urls`, `confidence`, `paragraph`
+- [ ] Schema matches spec: `claim_id`, `claim_type`, `pillar`, `text`, `signal_ids`, `confidence`, `paragraph` (no `source_urls` — derived at render time)
 - [ ] No `fact` claim has empty `signal_ids` in a successful run
 - [ ] Analyst prompt has two explicit steps: claim formation then prose rendering
-- [ ] Gatekeeper reads `collection_quality.json`
+- [ ] Gatekeeper reads `collection_quality.json` and notes thin_collection in rationale
+- [ ] `signal_clusters.json` is **retained unchanged** in this phase — deprecation is a future cleanup pass after claims.json is stable
 
 ---
 
@@ -195,14 +208,21 @@ the source basis is limited. Note the collection gap in your rationale.
 Grounding validator — deterministic check of claims.json integrity.
 Runs as stop hook after regional-analyst-agent exits.
 
+Guard: if gatekeeper_decision.json shows decision != "ESCALATE", exit 0 immediately.
+
 Checks:
+0. claims.json.mtime < report.md.mtime — if report.md was written first,
+   the two-step order was violated (fail with explicit message)
 1. claims.json exists and is valid JSON
 2. Every fact claim has non-empty signal_ids
 3. Every signal_id in claims exists in geo/cyber_signals.json
-   (skipped when OSINT_LIVE=false)
-4. No source_url in claims is in data/blocked_urls.txt
-5. At least one claim per paragraph (why, how, sowhat)
-6. If region is ESCALATED and all claims are estimate → FAIL
+   (skipped when research_scratchpad.json is absent — absence = mock mode;
+    do NOT use os.environ OSINT_LIVE — env vars are unreliable in hook
+    subprocess context; research_scratchpad.json presence is the canonical
+    live/mock signal in this pipeline)
+4. At least one claim per paragraph (why, how, sowhat)
+   — estimate claims count as valid (they explicitly signal absence)
+5. If all claims are estimate AND region is ESCALATED → FAIL
 
 Emits to system_trace.log:
 - Claim type distribution {fact: N, assessment: N, estimate: N}
@@ -215,10 +235,6 @@ Follow the existing `jargon-auditor.py` pattern for:
 - Retry file at `output/.retries/{label}.retries`
 - Max 3 retries then force-approve with warning
 - Exit codes: 0 = pass, 1 = fail
-
-For the ESCALATED check: read `gatekeeper_decision.json` to get status. Only fail on all-estimate if status is `ESCALATED`.
-
-For signal_id resolution check: read `os.environ.get("OSINT_LIVE", "false")` — skip if `"false"`.
 
 ### Task 3-2: Wire grounding-validator as Stop hook in regional-analyst-agent.md
 
