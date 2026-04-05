@@ -202,6 +202,14 @@ Re-runs the pipeline for one region without touching the other four. Useful when
 
 Hot-loads the full architecture reference: agent hierarchy, file-passing contract, `data.json` schema, stop hook wiring, mock configuration, and all tool commands. Run this before any pipeline development work.
 
+### Pre-build ritual (development sessions)
+
+```
+/prime-dev
+```
+
+Required before any code-change session. Loads the agentic engineering principles from the `agent-team-blueprint` repo, declares the Opus/Sonnet team structure, and confirms the engineering protocol checklist — including `mode: "bypassPermissions"` on all background agent spawns, parallelism, stop hooks, and TeamDelete. Background agents silently block without `bypassPermissions`; this ritual enforces the requirement explicitly before work begins.
+
 ---
 
 ## Output Files
