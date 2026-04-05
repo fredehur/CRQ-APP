@@ -8,7 +8,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"[PROTOCOL] Teams=ON | Opus orchestrates | Sonnet builds+validates | Parallel by default | Run /prime-dev before build tasks | Full rules: CLAUDE.md > Engineering Protocol\""
+            "command": "uv run python \"$CLAUDE_PROJECT_DIR/.claude/hooks/validators/prompt-triage.py\""
           }
         ]
       }
