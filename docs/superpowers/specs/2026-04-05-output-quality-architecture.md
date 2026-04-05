@@ -93,14 +93,23 @@ Each `lead_indicator` in `geo_signals.json` and `cyber_signals.json` gains two n
 After `research_collector.py` exits, before gatekeeper runs:
 
 - Count `lead_indicators` with non-empty `source_url` per pillar
-- If either pillar returns < 3 grounded indicators: write `thin_collection: true` to `gatekeeper_decision.json`
-- Gatekeeper reads this flag → caps Admiralty at C regardless of signal content
-- Analyst reads this flag → must include at least one `estimate` claim acknowledging the collection gap
+- Write result to `output/regional/{region}/collection_quality.json` (new file — separate from `gatekeeper_decision.json`)
+- Gatekeeper reads `collection_quality.json` as an input and factors `thin_collection` into its Admiralty rating decision
+- After gatekeeper exits, the orchestrator enforces the Admiralty cap in code (same pattern as `enrich_region_data` in the master build plan) — the agent is not trusted to enforce it
+
+**Why not write to `gatekeeper_decision.json` directly:** That file is created by the gatekeeper agent, not pre-existing. Writing to it before the agent runs and having the agent overwrite it is a race condition. The canonical pattern in this pipeline is: code writes inputs, agents transform them, code enforces constraints on outputs.
 
 This fixes the known P1-2 bug (cyber indicators returning 0) by making it a named, visible state rather than a silent failure that the analyst papers over with training data.
 
+### Mock mode compatibility
+
+In mock mode (`OSINT_LIVE=false`), signal files come from `geo_collector.py` / `cyber_collector.py`, not `research_collector.py`. These do not go through the signal_id generation path.
+
+**Fix:** Mock collectors must generate signal_ids from fixture data using the same `{region}-{pillar}-{sequence}` format. Alternatively, the grounding validator skips the signal_id resolution check (check 3) when `OSINT_LIVE=false`. Either approach is acceptable — the latter is faster to ship.
+
 **Files changed:**
 - `tools/research_collector.py` — signal_id generation + source_url per indicator
+- `tools/geo_collector.py` + `tools/cyber_collector.py` — signal_id generation from fixtures (if mock-compat path chosen)
 - `.claude/commands/run-crq.md` — collection quality gate step wired before gatekeeper
 
 ---
@@ -109,7 +118,7 @@ This fixes the known P1-2 bug (cyber indicators returning 0) by making it a name
 
 New file: `output/regional/{region}/claims.json`
 
-Replaces `signal_clusters.json` as the analytical source of truth. Written by the analyst in Step 1 before any prose. Schema-enforced — the grounding validator runs on this file, not on the brief.
+Replaces `signal_clusters.json` as the analytical source of truth. Written by the analyst in Step 1 before any prose. Validator-enforced at runtime by `grounding-validator.py` — no separate JSON Schema file is required. "Schema-enforced" in this spec means the validator will reject non-compliant files and trigger a retry.
 
 ### Schema
 
@@ -202,6 +211,10 @@ Confidence zones in prose are natural outputs of claim_type:
 
 If the stop hook fails on `claims.json` validation, the retry prompt targets the claims file — not the prose. The analyst rewrites the specific fact claim that failed, not the entire brief.
 
+### Known limitation — prose cannot be structurally constrained
+
+The grounding validator runs after both writes and enforces claim integrity (no phantom signal_ids, no ungrounded fact claims). It cannot verify that `report.md` introduced no new facts beyond what is in `claims.json` — that would require prose parsing, which is explicitly excluded from this design. The constraint in the prose rendering prompt ("you may not introduce facts not in claims.json") is behavioural, not structural. This is a known gap, not an implementation oversight. The validator catches the most dangerous failure mode (phantom citations); the prose constraint catches the remainder with high but not guaranteed reliability.
+
 ---
 
 ## Section 4 — Grounding validator (new stop hook)
@@ -220,9 +233,9 @@ Runs after regional-analyst-agent exits, before global-builder-agent starts.
 
 ### Emits (logged, not fail conditions)
 
-- Grounding score: `confirmed_facts / total_claims` — written to `system_trace.log`
+- Claim type distribution: `{fact: N, assessment: N, estimate: N}` and ratio `fact_claims / total_claims` — written to `system_trace.log` as grounding score
 - Orphaned signal_ids: indicators collected but not cited in any claim
-- Claim type distribution: `{fact: N, assessment: N, estimate: N}` per region
+- Orphaned signal_ids: indicators collected but not cited in any claim
 
 ### Fail conditions
 
@@ -231,7 +244,7 @@ Runs after regional-analyst-agent exits, before global-builder-agent starts.
 | `claims.json` missing | FAIL — agent did not write Step 1 |
 | `fact` claim with empty `signal_ids` | FAIL — rewrite claims |
 | `signal_id` not found in signal files | FAIL — phantom citation |
-| All claims are `estimate` | FAIL — collection too thin, pipeline should not proceed |
+| All claims are `estimate` AND region is ESCALATED | FAIL — escalated regions require at least one grounded fact or assessment |
 
 **Max retries: 3** (consistent with existing jargon auditor pattern). On 3rd retry, force-approve with warning logged — same pattern as current auditors.
 
@@ -283,7 +296,9 @@ This plan (ships after master build)
   Phase 4 — collection quality gate
 ```
 
-Phase 1 is a prerequisite for all others. Phases 2–4 can run in parallel once Phase 1 is in.
+Phase 1 is a prerequisite for all others. Phase 2 must precede Phase 3 — the grounding validator cannot be written or tested until claims.json exists. Phase 4 (collection quality gate) is independent and can run in parallel with Phase 2 or 3.
+
+Correct order: 1 → 2 → 3, with 4 parallel to any phase after 1.
 
 ### Future alignment with master build plan
 
@@ -295,14 +310,15 @@ Phase 1 is a prerequisite for all others. Phases 2–4 can run in parallel once 
 
 | File | Change | Phase |
 |---|---|---|
-| `tools/research_collector.py` | signal_id generation + source_url per indicator | 1 |
-| `.claude/commands/run-crq.md` | collection quality gate wired before gatekeeper | 1 |
-| `server.py` | collection quality gate wired before gatekeeper | 1 |
+| `tools/research_collector.py` | signal_id generation + source_url per indicator + collection quality gate logic | 1 |
+| `tools/geo_collector.py` + `tools/cyber_collector.py` | signal_id generation from fixtures (mock mode compat) | 1 |
+| `.claude/commands/run-crq.md` | collection quality gate + `collection_quality.json` write wired before gatekeeper | 1 |
+| `server.py` | same as run-crq.md + orchestrator Admiralty cap enforcement after gatekeeper exits | 1 |
 | `.claude/agents/regional-analyst-agent.md` | two-step prompt (claims.json then report.md) | 2 |
 | `output/regional/{region}/claims.json` | new artifact (written by agent) | 2 |
-| `.claude/hooks/validators/grounding-validator.py` | new stop hook | 3 |
-| `.claude/agents/regional-analyst-agent.md` | wire grounding-validator as Stop hook | 3 |
-| `tools/research_collector.py` | collection quality gate logic | 4 |
+| `output/regional/{region}/collection_quality.json` | new artifact (written by collection gate code) | 1 |
+| `.claude/hooks/validators/grounding-validator.py` | new stop hook | 3 (after Phase 2) |
+| `.claude/agents/regional-analyst-agent.md` | wire grounding-validator as Stop hook | 3 (after Phase 2) |
 
 ---
 
