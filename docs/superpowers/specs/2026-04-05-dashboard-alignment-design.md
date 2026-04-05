@@ -68,7 +68,7 @@ The regional analyst agent adds a new **Step 8** to its output sequence, writing
 - `adversary_bullets`: 1–2 observed activity lines from the How paragraph — what adversaries are doing
 - `impact_bullets`: 1–2 AeroGrid-specific consequence sentences from the So What paragraph — no VaCR figure, no financial language
 - `watch_bullets`: 2–3 concrete watch indicators from the So What closing — the same watch items already written
-- `action_bullets`: 2–3 recommended actions mapped from the scenario (same logic as `_SCENARIO_ACTIONS` in report_builder.py)
+- `action_bullets`: 2–3 recommended actions for the matched scenario. The agent uses the same scenario-to-action mapping already in `report_builder.py`. That dict must be copied verbatim into the agent spec as a lookup table so the agent applies it directly — no code dependency at write time.
 - `threat_actor`: primary state actor or group named in the brief — empty string if none named
 - `signal_type_label`: mapped from `signal_type` field — "Confirmed Incident" / "Emerging Pattern" / "Confirmed Incident + Emerging Pattern"
 - `status_label`: "ESCALATED — GEO-LED" or "ESCALATED — CYBER-LED" based on `dominant_pillar`
@@ -121,7 +121,7 @@ Exit codes: 0 = pass/skip, 1 = fail (triggers agent retry, max 3 per grounding-v
 
 | File | Change |
 |---|---|
-| `.claude/agents/regional-analyst-agent.md` | Add Step 8 — write `sections.json`. Add to self-validation checklist. |
+| `.claude/agents/regional-analyst-agent.md` | Add Step 8 — write `sections.json`. Add to self-validation checklist: `- [ ] sections.json written with all 5 bullet arrays non-empty and threat_actor/signal_type_label populated`. Copy `_SCENARIO_ACTIONS` dict from `report_builder.py` into agent spec as lookup table for action_bullets. |
 
 ### New files
 
@@ -145,7 +145,7 @@ Exit codes: 0 = pass/skip, 1 = fail (triggers agent retry, max 3 per grounding-v
 
 | File | Change |
 |---|---|
-| `tools/report_builder.py` | Replace extraction function calls with `sections.json` file read. Remove `_intel_bullets`, `_adversary_bullets`, `_impact_bullets`, `_watch_bullets`, `_action_bullets`, `_extract_threat_actor`, `_signal_type_label` once sections.json is confirmed live. |
+| `tools/report_builder.py` | Replace extraction function calls with `sections.json` file read. Remove `_intel_bullets`, `_adversary_bullets`, `_impact_bullets`, `_watch_bullets`, `_action_bullets`, `_extract_threat_actor`, `_signal_type_label` in the same implementation — removal is gated on the "Mock pipeline run produces sections.json" done criterion passing. |
 
 ---
 
@@ -201,6 +201,8 @@ GLOBAL SYNTHESIS  |  [headline sentence from exec_summary HEADLINE part]
 
 Data source: `output/global_report.json` → `exec_summary` field (already fetched on load).
 Status counts: already computed in `state.regionData` — derive from status field per region.
+
+**Fallback (no global_report.json):** show status counts only + text: "Run pipeline to generate global synthesis." Do not show an empty headline slot.
 
 ---
 
