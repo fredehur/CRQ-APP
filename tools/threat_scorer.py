@@ -1,7 +1,7 @@
 import sys
 import json
 import os
-from config import MASTER_SCENARIOS_PATH, SEVERITY_MAP
+from tools.config import MASTER_SCENARIOS_PATH, SEVERITY_MAP
 
 def load_master_scenarios():
     if not os.path.exists(MASTER_SCENARIOS_PATH):

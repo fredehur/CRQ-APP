@@ -7,7 +7,7 @@ import sys
 import json
 import os
 from datetime import datetime, timezone
-from config import SEVERITY_MAP, MOCK_FEEDS_DIR
+from tools.config import SEVERITY_MAP, MOCK_FEEDS_DIR
 
 
 def write_data(region, status):
@@ -43,6 +43,21 @@ def write_data(region, status):
             rationale = gk.get("rationale", None)
         except (json.JSONDecodeError, OSError):
             pass
+
+    # For escalated regions, derive severity from Admiralty rating if mock feed
+    # returned LOW (the default fallback). This prevents live-mode escalations
+    # from being miscategorised because the mock feed hasn't been updated.
+    _ADMIRALTY_SEVERITY = {
+        "A1": "CRITICAL", "A2": "CRITICAL", "B1": "CRITICAL",
+        "B2": "HIGH", "C1": "HIGH", "C2": "HIGH",
+        "B3": "MEDIUM", "C3": "MEDIUM", "D1": "MEDIUM", "D2": "MEDIUM",
+        "C4": "LOW", "D3": "LOW", "D4": "LOW",
+    }
+    if status == "escalated" and severity == "LOW" and admiralty:
+        derived = _ADMIRALTY_SEVERITY.get(admiralty)
+        if derived and derived != "LOW":
+            severity = derived
+            severity_score = SEVERITY_MAP.get(severity, 1)
 
     report_path = f"regional/{region_lower}/report.md" if status == "escalated" else None
 

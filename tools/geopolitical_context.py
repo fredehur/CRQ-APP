@@ -1,7 +1,7 @@
 import sys
 import json
 import os
-from config import COMPANY_PROFILE_PATH, MASTER_SCENARIOS_PATH
+from tools.config import COMPANY_PROFILE_PATH, MASTER_SCENARIOS_PATH
 
 def load_company_profile():
     if not os.path.exists(COMPANY_PROFILE_PATH):
