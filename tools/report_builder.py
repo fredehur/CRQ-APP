@@ -26,22 +26,40 @@ class RegionStatus(StrEnum):
 
 @dataclass
 class RegionEntry:
+    # identity
     name: str
     status: RegionStatus
-    vacr: float | None
+
+    # existing metadata
     admiralty: str | None
     velocity: str | None
     severity: str | None
     scenario_match: str | None
+    dominant_pillar: str | None
+    signal_type: str | None
+    confidence_label: str | None
+    threat_characterisation: str | None
+    top_sources: list[str] | None
+
+    # raw pillar text
     why_text: str | None
     how_text: str | None
     so_what_text: str | None
-    dominant_pillar: str | None = None
-    signal_type: str | None = None
+
+    # pre-extracted intelligence sections
+    threat_actor: str | None
+    signal_type_label: str | None
+    intel_bullets: list[str]
+    adversary_bullets: list[str]
+    impact_bullets: list[str]
+    watch_bullets: list[str]
+    action_bullets: list[str]
+
+    # source quality (populated by enrich_region_data)
+    source_quality: dict | None
+
+    # DEPRECATED — kept for export_pptx.py / report.html.j2 compat. Task 3 removes.
     board_bullets: list[str] | None = None
-    confidence_label: str | None = None
-    threat_characterisation: str | None = None
-    top_sources: list[str] | None = None
 
 
 @dataclass
@@ -126,27 +144,30 @@ def _threat_characterisation(dominant_pillar: str | None) -> str:
     }.get(dominant_pillar or "", "Unknown")
 
 
-def _extract_board_bullets(
-    why: str | None,
-    how: str | None,
-    so_what: str | None,
-) -> list[str] | None:
-    """Derive [Driver, Exposure, Impact, Watch] from pillar text.
+# ── Signal type display labels ─────────────────────────────────────────────────
+_SIGNAL_TYPE_LABELS = {
+    "Event":   "Confirmed Incident",
+    "Trend":   "Emerging Pattern",
+    "Mixed":   "Confirmed Incident + Emerging Pattern",
+    "Unknown": "Under Assessment",
+}
 
-    Returns None if any source pillar is absent.
-    """
-    if not all([why, how, so_what]):
-        return None
-    driver   = _first_sentence(why)
-    exposure = _first_sentence(how)
-    impact   = _first_non_vacr_sentence(so_what)
-    watch    = _last_sentence(so_what)
-    # Duplicate guard: single-sentence so_what produces identical impact/watch
-    if impact is not None and impact == watch:
-        watch = None
-    if not all([driver, exposure, impact, watch]):
-        return None
-    return [driver, exposure, impact, watch]
+
+
+def _signal_type_label(signal_type: str | None) -> str:
+    return _SIGNAL_TYPE_LABELS.get(signal_type or "Unknown", signal_type or "Unknown")
+
+
+
+def _load_sections(base: Path, region: str) -> dict:
+    """Load pre-extracted sections from sections.json if present."""
+    path = base / "regional" / region.lower() / "sections.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
 
 
 def _header_matches(line: str, prefix: str) -> bool:
@@ -306,7 +327,6 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
 
         dominant_pillar = d.get("dominant_pillar")
         signal_type     = d.get("signal_type")
-        board_bullets   = _extract_board_bullets(why_text, how_text, so_what_text)
 
         top_sources = (
             _load_named_sources(base, region_name)
@@ -314,23 +334,50 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             else None
         )
 
+        if status == RegionStatus.ESCALATED:
+            sections       = _load_sections(base, region_name)
+            threat_actor   = sections.get("threat_actor") or ""
+            sig_type_label = sections.get("signal_type_label") or _signal_type_label(d.get("signal_type"))
+            intel_b        = sections.get("intel_bullets") or []
+            adversary_b    = sections.get("adversary_bullets") or []
+            impact_b       = sections.get("impact_bullets") or []
+            watch_b        = sections.get("watch_bullets") or []
+            action_b       = sections.get("action_bullets") or []
+        else:
+            threat_actor   = None
+            sig_type_label = _signal_type_label(d.get("signal_type"))
+            intel_b        = []
+            adversary_b    = []
+            impact_b       = []
+            watch_b        = []
+            action_b       = []
+
+        source_quality = d.get("source_quality")
+
         regions.append(RegionEntry(
             name=region_name,
             status=status,
-            vacr=float(d.get("vacr_exposure_usd", 0) or 0),
             admiralty=d.get("admiralty"),
             velocity=d.get("velocity"),
             severity=d.get("severity"),
             scenario_match=d.get("primary_scenario"),
-            why_text=why_text,
-            how_text=how_text,
-            so_what_text=so_what_text,
             dominant_pillar=dominant_pillar,
             signal_type=signal_type,
-            board_bullets=board_bullets,
             confidence_label=_confidence_label(d.get("admiralty")),
             threat_characterisation=_threat_characterisation(dominant_pillar),
             top_sources=top_sources,
+            why_text=why_text,
+            how_text=how_text,
+            so_what_text=so_what_text,
+            threat_actor=threat_actor,
+            signal_type_label=sig_type_label,
+            intel_bullets=intel_b,
+            adversary_bullets=adversary_b,
+            impact_bullets=impact_b,
+            watch_bullets=watch_b,
+            action_bullets=action_b,
+            source_quality=source_quality,
+            board_bullets=None,
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]

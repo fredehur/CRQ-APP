@@ -3,6 +3,7 @@
 import asyncio
 import json
 import logging
+import sqlite3
 import time
 from pathlib import Path
 from typing import Literal, Optional
@@ -15,6 +16,7 @@ from sse_starlette.sse import EventSourceResponse
 BASE = Path(__file__).resolve().parent
 OUTPUT = BASE / "output"
 REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+SOURCES_DB = "data/sources.db"
 TOOL_TIMEOUT = 60  # seconds per subprocess
 FULL_MODE_TIMEOUT = 600  # 10 min for claude CLI
 
@@ -384,6 +386,34 @@ async def get_region_clusters(region: str):
     return data
 
 
+@app.get("/api/region/{region}/sections")
+async def get_region_sections(region: str):
+    path = OUTPUT / "regional" / region.lower() / "sections.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+@app.get("/api/region/{region}/sources")
+async def get_region_sources(region: str):
+    """Aggregate sources from geo_signals.json and cyber_signals.json for a region."""
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
+    base = OUTPUT / "regional" / r.lower()
+    sources = []
+    for fname in ("geo_signals.json", "cyber_signals.json"):
+        data = _read_json(base / fname)
+        if data and isinstance(data.get("sources"), list):
+            for s in data["sources"]:
+                if isinstance(s, dict) and s.get("name"):
+                    sources.append({"name": s["name"], "url": s.get("url", "")})
+    return {"region": r, "sources": sources}
+
+
 @app.get("/api/outputs/global-md")
 async def get_global_md():
     path = OUTPUT / "global_report.md"
@@ -409,6 +439,43 @@ async def get_pptx():
         media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
         filename="board_report.pptx",
     )
+
+
+@app.get("/api/outputs/ciso-docx")
+async def get_ciso_docx():
+    """Generate (or serve cached) CISO weekly brief as a Word document."""
+    import subprocess
+    out_path = OUTPUT / "ciso_brief.docx"
+    result = subprocess.run(
+        ["uv", "run", "python", "tools/export_ciso_docx.py", str(out_path)],
+        capture_output=True, encoding="utf-8", errors="replace"
+    )
+    if result.returncode != 0 or not out_path.exists():
+        return JSONResponse({"error": result.stderr or "Export failed"}, status_code=500)
+    return FileResponse(
+        str(out_path),
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="ciso_brief.docx",
+    )
+
+
+@app.get("/api/outputs/status")
+async def get_outputs_status():
+    """Return existence + mtime for each deliverable."""
+    import datetime
+    files = {
+        "ciso_docx":    OUTPUT / "ciso_brief.docx",
+        "board_pdf":    OUTPUT / "board_report.pdf",
+        "board_pptx":   OUTPUT / "board_report.pptx",
+    }
+    result = {}
+    for key, path in files.items():
+        if path.exists():
+            ts = datetime.datetime.fromtimestamp(path.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+            result[key] = {"ready": True, "generated": ts}
+        else:
+            result[key] = {"ready": False, "generated": None}
+    return result
 
 
 # ── API: Config ───────────────────────────────────────────────────────
@@ -723,7 +790,39 @@ async def logs_stream():
 @app.get("/api/validation/flags")
 async def get_validation_flags():
     data = _read_json(OUTPUT / "validation_flags.json")
-    return data or {"status": "no_data", "scenarios": [], "summary": {}}
+    if not data:
+        return {"status": "no_data", "scenarios": [], "summary": {}}
+
+    # Build scenario → [escalated regions] from regional data.json files
+    regions = ["apac", "ame", "latam", "med", "nce"]
+    scenario_regions: dict[str, list[str]] = {}
+    for region in regions:
+        rd = _read_json(OUTPUT / "regional" / region / "data.json")
+        if rd and rd.get("gatekeeper_decision") == "ESCALATED" and rd.get("primary_scenario"):
+            scenario_regions.setdefault(rd["primary_scenario"], []).append(region.upper())
+
+    # Build scenario → velocity string from trend_analysis.json
+    trend = _read_json(OUTPUT / "trend_analysis.json")
+    scenario_velocity: dict[str, str] = {}
+    if trend and trend.get("run_count", 0) > 0:
+        run_count = trend["run_count"]
+        for _region_key, rdata in trend.get("regions", {}).items():
+            for sc_name, freq in rdata.get("scenario_frequency", {}).items():
+                if sc_name not in scenario_velocity:
+                    scenario_velocity[sc_name] = f"\u2191 {freq}/{run_count} runs" if freq > 0 else f"\u2014 0/{run_count} runs"
+                else:
+                    # Aggregate: pick highest frequency across regions
+                    existing_freq = int(scenario_velocity[sc_name].split()[1].split("/")[0])
+                    if freq > existing_freq:
+                        scenario_velocity[sc_name] = f"\u2191 {freq}/{run_count} runs"
+
+    # Enrich each scenario row
+    for row in data.get("scenarios", []):
+        name = row.get("scenario", "")
+        row["osint_signal"] = scenario_regions.get(name, [])
+        row["velocity"] = scenario_velocity.get(name, None)
+
+    return data
 
 
 @app.get("/api/validation/sources")
@@ -846,6 +945,11 @@ async def _run_validation():
         if rc != 0:
             await _emit("validation", {"status": "error", "step": "source_harvester"})
             return
+        # Count sources with non-empty raw_text
+        import glob as _glob, json as _json
+        _cache_files = _glob.glob("output/validation_cache/**/*.json", recursive=True)
+        _fetched = sum(1 for f in _cache_files if _json.load(open(f, encoding="utf-8")).get("raw_text", ""))
+        await _emit("validation", {"status": "step", "step": "source_harvester", "message": f"Fetched content for {_fetched}/{len(_cache_files)} sources"})
 
         await _emit("validation", {"status": "step", "step": "source_discoverer", "message": "Discovering new sources..."})
         rc = await _run("source_discoverer.py", timeout=120)
@@ -858,12 +962,20 @@ async def _run_validation():
         if rc != 0:
             await _emit("validation", {"status": "error", "step": "benchmark_extractor"})
             return
+        _bm_total = sum(len(_json.load(open(f, encoding="utf-8")).get("benchmarks", [])) for f in _cache_files)
+        await _emit("validation", {"status": "step", "step": "benchmark_extractor", "message": f"Extracted {_bm_total} benchmark figures"})
 
         await _emit("validation", {"status": "step", "step": "crq_comparator", "message": "Comparing VaCR figures..."})
         rc = await _run("crq_comparator.py", timeout=60)
         if rc != 0:
             await _emit("validation", {"status": "error", "step": "crq_comparator"})
             return
+        try:
+            _flags = _json.load(open("output/validation_flags.json", encoding="utf-8"))
+            _sm = _flags.get("summary", {})
+            await _emit("validation", {"status": "step", "step": "crq_comparator", "message": f"Results: {_sm.get('supported', 0)} supported · {_sm.get('challenged', 0)} challenged · {_sm.get('no_data', 0)} no data"})
+        except Exception:
+            pass
 
         await _emit("validation", {"status": "complete"})
     except Exception as exc:
@@ -886,6 +998,203 @@ async def run_validate():
 @app.get("/api/validation/status")
 async def get_validation_status():
     return validation_state
+
+
+# ── API: Source Registry ─────────────────────────────────────────────────
+@app.get("/api/sources")
+async def get_source_registry(
+    region: Optional[str] = None,
+    type: Optional[str] = None,
+    tier: Optional[str] = None,
+    cited_only: bool = False,
+    hide_junk: bool = True,
+    limit: int = 100,
+):
+    """Return sources from the registry with optional filters."""
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            clauses = []
+            params: list = []
+            if region:
+                # Join with appearances to filter by region
+                base_sql = (
+                    "SELECT DISTINCT s.* FROM sources_registry s "
+                    "JOIN source_appearances a ON a.source_id = s.id "
+                    "WHERE a.region = ?"
+                )
+                params.append(region.upper())
+            else:
+                base_sql = "SELECT * FROM sources_registry s WHERE 1=1"
+            if type:
+                clauses.append("s.source_type = ?")
+                params.append(type)
+            if tier:
+                clauses.append("s.credibility_tier = ?")
+                params.append(tier.upper())
+            if cited_only:
+                clauses.append("s.cited_count > 0")
+            if hide_junk:
+                clauses.append("s.junk = 0")
+            where = (" AND " + " AND ".join(clauses)) if clauses else ""
+            sql = f"{base_sql}{where} ORDER BY s.last_seen DESC LIMIT ?"
+            params.append(limit)
+            rows = conn.execute(sql, params).fetchall()
+            return [
+                {
+                    "id": r["id"],
+                    "name": r["name"],
+                    "domain": r["domain"],
+                    "source_type": r["source_type"],
+                    "credibility_tier": r["credibility_tier"],
+                    "collection_type": r["collection_type"] if "collection_type" in r.keys() else "osint",
+                    "appearance_count": r["appearance_count"],
+                    "cited_count": r["cited_count"],
+                    "last_seen": r["last_seen"],
+                    "junk": r["junk"],
+                }
+                for r in rows
+            ]
+    except Exception:
+        return []
+
+
+@app.get("/api/sources/stats")
+async def get_source_stats():
+    """Return aggregate counts across the source registry."""
+    zeroed = {
+        "total": 0,
+        "by_type": {"news": 0, "government": 0, "intelligence": 0, "academic": 0, "industry": 0, "social": 0, "youtube": 0},
+        "by_tier": {"A": 0, "B": 0, "C": 0},
+        "by_region": {"APAC": 0, "AME": 0, "MED": 0, "NCE": 0, "LATAM": 0},
+        "total_junk": 0,
+        "total_cited": 0,
+    }
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            result = dict(zeroed)
+            result["by_type"] = dict(zeroed["by_type"])
+            result["by_tier"] = dict(zeroed["by_tier"])
+            result["by_region"] = dict(zeroed["by_region"])
+
+            total_row = conn.execute("SELECT COUNT(*) as cnt FROM sources_registry").fetchone()
+            result["total"] = total_row["cnt"] if total_row else 0
+
+            for row in conn.execute("SELECT source_type, COUNT(*) as cnt FROM sources_registry GROUP BY source_type").fetchall():
+                key = row["source_type"]
+                if key in result["by_type"]:
+                    result["by_type"][key] = row["cnt"]
+
+            # NOTE: Milestone 4 — exclude collection_type='benchmark' from OSINT quality scoring
+            for row in conn.execute("SELECT credibility_tier, COUNT(*) as cnt FROM sources_registry GROUP BY credibility_tier").fetchall():
+                key = row["credibility_tier"]
+                if key in result["by_tier"]:
+                    result["by_tier"][key] = row["cnt"]
+
+            for row in conn.execute("SELECT region, COUNT(DISTINCT source_id) as cnt FROM source_appearances GROUP BY region").fetchall():
+                key = row["region"]
+                if key in result["by_region"]:
+                    result["by_region"][key] = row["cnt"]
+
+            junk_row = conn.execute("SELECT COUNT(*) as cnt FROM sources_registry WHERE junk = 1").fetchone()
+            result["total_junk"] = junk_row["cnt"] if junk_row else 0
+
+            cited_row = conn.execute("SELECT COUNT(*) as cnt FROM sources_registry WHERE cited_count > 0").fetchone()
+            result["total_cited"] = cited_row["cnt"] if cited_row else 0
+
+            return result
+    except Exception:
+        return zeroed
+
+
+from pydantic import BaseModel
+
+
+class SourceFlagBody(BaseModel):
+    junk: bool
+
+
+def _sync_blocked_urls_to_file() -> None:
+    """Sync blocked URLs from DB to data/blocked_urls.txt."""
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            rows = conn.execute("SELECT url FROM sources_registry WHERE blocked = 1 AND url IS NOT NULL").fetchall()
+        urls = [r[0] for r in rows if r[0]]
+        blocked_file = BASE / "data" / "blocked_urls.txt"
+        blocked_file.write_text("\n".join(urls) + ("\n" if urls else ""), encoding="utf-8")
+    except Exception as e:
+        print(f"[server] sync_blocked_urls failed: {e}", file=sys.stderr)
+
+
+@app.post("/api/sources/{source_id}/flag")
+async def flag_source(source_id: str, body: SourceFlagBody):
+    """Set or clear the junk flag on a source."""
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            row = conn.execute("SELECT id FROM sources_registry WHERE id = ?", (source_id,)).fetchone()
+            if row is None:
+                return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
+            blocked_val = 1 if body.junk else 0
+            conn.execute(
+                "UPDATE sources_registry SET junk = ?, blocked = ? WHERE id = ?",
+                (1 if body.junk else 0, blocked_val, source_id),
+            )
+            conn.commit()
+        # Sync blocked URLs flat file
+        _sync_blocked_urls_to_file()
+        return {"ok": True}
+    except Exception:
+        return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
+
+
+@app.get("/api/sources/attribution")
+async def get_source_attribution():
+    """Per-region source citation rates for the Validate tab."""
+    zeroed = {"regions": {r: {"total": 0, "cited": 0, "citation_rate": 0, "tiers": {"A": 0, "B": 0, "C": 0}} for r in ["APAC","AME","LATAM","MED","NCE"]}, "total": 0, "cited": 0, "citation_rate": 0}
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            result = {"regions": {}, "total": 0, "cited": 0, "citation_rate": 0}
+            for region in ["APAC", "AME", "LATAM", "MED", "NCE"]:
+                total = (conn.execute("SELECT COUNT(DISTINCT source_id) as c FROM source_appearances WHERE region = ?", (region,)).fetchone() or {"c": 0})["c"]
+                cited = (conn.execute("SELECT COUNT(DISTINCT sa.source_id) as c FROM source_appearances sa JOIN sources_registry sr ON sr.id = sa.source_id WHERE sa.region = ? AND sr.cited_count > 0", (region,)).fetchone() or {"c": 0})["c"]
+                tiers = {"A": 0, "B": 0, "C": 0}
+                for row in conn.execute("SELECT sr.credibility_tier, COUNT(DISTINCT sa.source_id) as c FROM source_appearances sa JOIN sources_registry sr ON sr.id = sa.source_id WHERE sa.region = ? GROUP BY sr.credibility_tier", (region,)).fetchall():
+                    if row["credibility_tier"] in tiers:
+                        tiers[row["credibility_tier"]] = row["c"]
+                result["regions"][region] = {"total": total, "cited": cited, "citation_rate": round(cited / total, 3) if total else 0, "tiers": tiers}
+            result["total"] = (conn.execute("SELECT COUNT(*) as c FROM sources_registry WHERE junk = 0").fetchone() or {"c": 0})["c"]
+            result["cited"] = (conn.execute("SELECT COUNT(*) as c FROM sources_registry WHERE cited_count > 0").fetchone() or {"c": 0})["c"]
+            result["citation_rate"] = round(result["cited"] / result["total"], 3) if result["total"] else 0
+            return result
+    except Exception:
+        return zeroed
+
+
+@app.get("/api/sources/velocity")
+async def get_source_velocity():
+    """Source velocity data (new vs recurring sources) for the Trends tab."""
+    zeroed = {"new_this_run": 0, "total": 0, "by_region": {}}
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            conn.row_factory = sqlite3.Row
+            new_count = (conn.execute("SELECT COUNT(*) as c FROM sources_registry WHERE appearance_count = 1 AND junk = 0").fetchone() or {"c": 0})["c"]
+            total_count = (conn.execute("SELECT COUNT(*) as c FROM sources_registry WHERE junk = 0").fetchone() or {"c": 0})["c"]
+            by_region = {}
+            for region in ["APAC", "AME", "LATAM", "MED", "NCE"]:
+                new_r = (conn.execute("SELECT COUNT(DISTINCT sa.source_id) as c FROM source_appearances sa JOIN sources_registry sr ON sr.id = sa.source_id WHERE sa.region = ? AND sr.appearance_count = 1 AND sr.junk = 0", (region,)).fetchone() or {"c": 0})["c"]
+                total_r = (conn.execute("SELECT COUNT(DISTINCT source_id) as c FROM source_appearances WHERE region = ?", (region,)).fetchone() or {"c": 0})["c"]
+                top_rows = conn.execute("SELECT sr.name, sr.appearance_count, sr.cited_count, sr.credibility_tier FROM sources_registry sr JOIN source_appearances sa ON sa.source_id = sr.id WHERE sa.region = ? AND sr.junk = 0 GROUP BY sr.id ORDER BY sr.appearance_count DESC, sr.cited_count DESC LIMIT 4", (region,)).fetchall()
+                by_region[region] = {
+                    "new": new_r,
+                    "total": total_r,
+                    "top_sources": [{"name": r["name"], "appearances": r["appearance_count"], "cited": r["cited_count"] > 0, "tier": r["credibility_tier"]} for r in top_rows]
+                }
+            return {"new_this_run": new_count, "total": total_count, "by_region": by_region}
+    except Exception:
+        return zeroed
 
 
 # ── Static Files ─────────────────────────────────────────────────────────

@@ -164,9 +164,22 @@ function renderLeftPanel() {
   const m = state.manifest;
   const gr = state.globalReport;
 
-  // Synthesis brief
-  const brief = gr?.synthesis_brief || (m?.status === 'no_data' ? 'No run data — click Run All to start.' : 'Run in progress...');
-  $('synthesis-brief').textContent = brief;
+  // Synthesis brief — headline + status counts
+  const _counts = { escalated: 0, monitor: 0, clear: 0 };
+  REGIONS.forEach(r => {
+    const _s = (state.regionData[r]?.status || 'clear').toLowerCase();
+    if (_s === 'escalated') _counts.escalated++;
+    else if (_s === 'monitor') _counts.monitor++;
+    else _counts.clear++;
+  });
+
+  const _countsHtml = `<span style="color:#ff7b72;font-size:10px;font-weight:600">${_counts.escalated} ESCALATED</span><span style="color:#6e7681;font-size:10px"> · </span><span style="color:#e3b341;font-size:10px">${_counts.monitor} WATCH</span><span style="color:#6e7681;font-size:10px"> · </span><span style="color:#3fb950;font-size:10px">${_counts.clear} CLEAR</span>`;
+
+  const _execSummary = gr?.synthesis_brief || '';
+  const _headlineMatch = _execSummary.match(/HEADLINE[:\s]+([^\.]+\.)/i);
+  const _headline = _headlineMatch ? _headlineMatch[1].trim() : (_execSummary ? _execSummary.split('.')[0].trim() + '.' : (m?.status === 'no_data' ? 'Run pipeline to generate global synthesis.' : 'Run in progress...'));
+
+  $('synthesis-brief').innerHTML = `<div style="font-size:11px;color:#c9d1d9;margin-bottom:4px">${esc(_headline)}</div><div style="display:flex;align-items:center;gap:6px">${_countsHtml}</div>`;
 
   // Priority region callout + velocity summary
   const priorityEl = $('global-priority');
@@ -246,15 +259,15 @@ function renderLeftPanel() {
 
     return `
 <div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')">
-  <div style="display:flex;align-items:center;justify-content:space-between">
-    <span style="font-size:12px;font-weight:500;color:${color}">${r}</span>
+  <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
+    <span style="font-size:12px;font-weight:500;color:${color};flex:1">${r}</span>
     <div style="display:flex;align-items:center;gap:4px">
-      ${isEscalated ? signalTypeBadge(signalType) : ''}
       ${isEscalated ? velocityArrow(velocity) : ''}
-      ${!isEscalated ? `<span style="font-size:9px;color:#3fb950;background:#0d1f0d;border:1px solid #238636;padding:1px 6px;border-radius:2px;letter-spacing:0.04em">CLEAR</span>` : ''}
+      ${!isEscalated ? `<span style="font-size:8px;color:#3fb950;background:#0d1f0d;border:1px solid #238636;padding:1px 6px;border-radius:0;letter-spacing:0.08em;font-weight:600">CLEAR</span>` : ''}
     </div>
   </div>
   ${isEscalated && scenario ? `<div style="font-size:10px;color:#6e7681;margin-top:2px">${esc(scenario)} · ${pillar || '—'}</div>` : ''}
+  ${d?.source_quality ? `<div style="font-size:9px;color:#848d97;margin-top:2px;font-family:monospace;letter-spacing:0.03em">src: ${d.source_quality.tier_a || 0}A · ${d.source_quality.tier_b || 0}B · ${d.source_quality.tier_c || 0}C</div>` : ''}
 </div>`;
   }).join('');
 }
@@ -301,6 +314,8 @@ function renderRightPanel() {
     ${pillarPillSm(d.dominant_pillar)}
     ${velocityArrow(d.velocity)}
     ${d.velocity ? `<span style="font-size:10px;color:#6e7681">${esc(d.velocity)}</span>` : ''}
+    ${d.threat_actor ? `<span style="font-size:10px;color:#ffa657">⚑ ${esc(d.threat_actor)}</span>` : ''}
+    ${d.status_label ? `<span style="font-size:9px;color:#ff7b72;letter-spacing:0.05em">${esc(d.status_label)}</span>` : ''}
   </div>
   ${d.rationale ? `<div class="rationale-text">${esc(cleanAgentText(d.rationale))}</div>` : ''}
 </div>`;
@@ -314,6 +329,7 @@ function renderRightPanel() {
     renderFeedbackUI(r);
     renderReviewBadge(r);
     renderAudienceCards(r);
+    _fetchBrief(r);
     return;
   }
 
@@ -322,6 +338,7 @@ function renderRightPanel() {
   renderFeedbackUI(r);
   renderReviewBadge(r);
   renderAudienceCards(r);
+  _fetchBrief(r);
 }
 
 function renderClusterCard(region, cl, i) {
@@ -376,40 +393,109 @@ function toggleCluster(id) {
 }
 
 function renderBriefSection(region, d) {
-  const isExpanded = state.expandedBriefs.has(region);
-  const signalType = d?.signal_type || '';
-  const label = signalType ? `${signalType.toUpperCase()} BRIEF` : 'ANALYST BRIEF';
-  const contentId = `brief-content-${region}`;
-
-  return `
-<div class="brief-section">
-  <button onclick="toggleBrief('${region}')" style="background:${isExpanded ? '#21262d' : 'transparent'};border:1px solid #30363d;color:#e6edf3;font-size:10px;font-family:inherit;letter-spacing:.5px;padding:4px 10px;border-radius:4px;cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:${isExpanded ? '8px' : '0'}">
-    <span>${isExpanded ? '▼' : '▶'}</span>
-    <span>${label}</span>
-  </button>
-  ${isExpanded ? `<div class="${contentId} brief-content" id="${contentId}">Loading...</div>` : ''}
-</div>`;
+  const contentId = `brief-sections-${region}`;
+  return `<div id="${contentId}">
+    <div style="color:#6e7681;font-size:11px;padding:4px 0">Loading...</div>
+  </div>
+  <div id="evidence-panel-${region}" style="margin-top:8px;border-top:1px solid #21262d;padding-top:8px">
+    <button class="evidence-toggle" id="evidence-toggle-${region}" onclick="toggleEvidence('${region}')" style="background:none;border:none;color:#6e7681;font-size:10px;cursor:pointer;padding:0;font-family:inherit">▶ Source Evidence</button>
+    <div class="evidence-list" id="evidence-list-${region}" style="display:none;margin-top:6px;padding-left:4px"></div>
+  </div>`;
 }
 
-function toggleBrief(region) {
-  if (state.expandedBriefs.has(region)) {
-    state.expandedBriefs.delete(region);
-    renderRightPanel();
-  } else {
-    state.expandedBriefs.add(region);
-    renderRightPanel();
-    // Fetch report.md after render
-    fetch(`/api/region/${region}/report`)
-      .then(r => r.json())
-      .then(data => {
-        const el = document.getElementById(`brief-content-${region}`);
-        if (el) el.textContent = data.report || 'Brief not available.';
-      })
-      .catch(() => {
-        const el = document.getElementById(`brief-content-${region}`);
-        if (el) el.textContent = 'Brief not available for this run.';
+function _fetchBrief(region) {
+  fetch(`/api/region/${region}/sections`)
+    .then(r => r.json())
+    .then(data => {
+      const el = document.getElementById(`brief-sections-${region}`);
+      if (!el) return;
+      if (!data || !data.intel_bullets) {
+        el.innerHTML = `<p style="color:#6e7681;font-size:11px">Brief not available for this run.</p>`;
+        return;
+      }
+      el.innerHTML = _renderSections(data);
+    })
+    .catch(() => {
+      const el = document.getElementById(`brief-sections-${region}`);
+      if (el) el.innerHTML = `<p style="color:#6e7681;font-size:11px">Brief not available.</p>`;
+    });
+  _fetchEvidence(region);
+}
+
+function _renderSections(s) {
+  const sections = [
+    { key: 'intel_bullets',     label: 'INTEL FINDINGS',              color: '#1f6feb' },
+    { key: 'adversary_bullets', label: 'OBSERVED ADVERSARY ACTIVITY', color: '#388bfd' },
+    { key: 'impact_bullets',    label: 'IMPACT FOR AEROGRID',         color: '#3fb950' },
+    { key: 'watch_bullets',     label: 'WATCH FOR',                   color: '#e3b341' },
+    { key: 'action_bullets',    label: 'RECOMMENDED ACTIONS',         color: '#ff7b72' },
+  ];
+  return sections.map(sec => {
+    const bullets = s[sec.key] || [];
+    if (!bullets.length) return '';
+    const items = bullets.map(b => `<div style="margin-bottom:4px;color:#c9d1d9;font-size:11px;line-height:1.5">${esc(b)}</div>`).join('');
+    return `<div style="border-left:2px solid ${sec.color};padding-left:8px;margin-bottom:10px">
+  <div style="font-size:9px;letter-spacing:0.08em;color:${sec.color};margin-bottom:4px">${sec.label}</div>
+  ${items}
+</div>`;
+  }).join('');
+}
+
+function _classifySourceTier(url) {
+  if (!url) return 'C';
+  const u = url.toLowerCase();
+  const tierA = ['.gov', 'enisa.europa.eu', 'nist.gov', 'cisa.gov', 'cert.org', 'ncsc.gov', 'bsi.bund.de'];
+  if (tierA.some(d => u.includes(d))) return 'A';
+  const tierC = ['youtube.com', 'twitter.com', 'reddit.com', 'x.com', 'facebook.com', 'tiktok.com'];
+  if (tierC.some(d => u.includes(d))) return 'C';
+  return 'B';
+}
+
+function _fetchEvidence(region) {
+  const panel = document.getElementById(`evidence-panel-${region}`);
+  if (!panel) return;
+  fetch(`/api/region/${region}/sources`)
+    .then(r => r.json())
+    .then(data => {
+      const sources = data.sources || [];
+      if (sources.length === 0) {
+        panel.style.display = 'none';
+        return;
+      }
+      // Classify and group by tier
+      const grouped = { A: [], B: [], C: [] };
+      sources.forEach(s => {
+        const tier = _classifySourceTier(s.url);
+        grouped[tier].push(s);
       });
-  }
+      const total = sources.length;
+      const toggleBtn = panel.querySelector('.evidence-toggle');
+      if (toggleBtn) toggleBtn.textContent = `▶ Source Evidence (${total} sources)`;
+      const listEl = panel.querySelector('.evidence-list');
+      if (!listEl) return;
+      let html = '';
+      ['A', 'B', 'C'].forEach(tier => {
+        grouped[tier].forEach(s => {
+          const link = s.url
+            ? `<a href="${esc(s.url)}" target="_blank" rel="noopener" style="color:#388bfd;text-decoration:none">${esc(s.url)}</a>`
+            : '<span style="color:#6e7681">no url</span>';
+          html += `<div style="font-size:10px;line-height:1.5;color:#8b949e;padding:2px 0"><span style="color:${tier === 'A' ? '#3fb950' : tier === 'B' ? '#848d97' : '#6e7681'};font-weight:600;font-family:monospace">[${tier}]</span> ${esc(s.name)} — ${link}</div>`;
+        });
+      });
+      listEl.innerHTML = html;
+    })
+    .catch(() => {
+      panel.style.display = 'none';
+    });
+}
+
+function toggleEvidence(region) {
+  const listEl = document.getElementById(`evidence-list-${region}`);
+  const toggleBtn = document.getElementById(`evidence-toggle-${region}`);
+  if (!listEl || !toggleBtn) return;
+  const hidden = listEl.style.display === 'none';
+  listEl.style.display = hidden ? 'block' : 'none';
+  toggleBtn.textContent = toggleBtn.textContent.replace(/^[▶▼]/, hidden ? '▼' : '▶');
 }
 
 function selectRegion(r) {
@@ -519,14 +605,128 @@ function doSubmitFeedback(region) {
 
 // ── Section 7: Render — Reports + History ─────────────────────────────
 async function renderReports() {
-  const md = await fetchJSON('/api/outputs/global-md');
-  if (md?.markdown) {
-    $('report-preview').innerHTML = marked.parse(md.markdown);
-  } else {
-    $('report-preview').textContent = 'No report available — run the pipeline first.';
+  // Load output file status for delivery cards
+  const status = await fetchJSON('/api/outputs/status');
+  if (status) {
+    const ciso = status.ciso_docx;
+    $('ciso-status').textContent = ciso?.ready
+      ? `Ready — generated ${ciso.generated}`
+      : 'Not yet generated — click Generate to build.';
+
+    const pdf  = status.board_pdf;
+    const pptx = status.board_pptx;
+    const boardTs = pdf?.generated || pptx?.generated;
+    $('board-status').textContent = (pdf?.ready || pptx?.ready)
+      ? `Ready — generated ${boardTs}`
+      : 'Not yet generated — run the pipeline first.';
   }
-  if (state.manifest?.run_timestamp) {
-    $('report-generated-ts').textContent = `Generated ${fmtTime(state.manifest.run_timestamp)}`;
+
+  // Auto-select CISO card on first load
+  selectCard('ciso');
+}
+
+async function selectCard(type) {
+  // Highlight selected card
+  ['ciso','board','rsm','regional'].forEach(t => {
+    const el = $(`card-${t}`);
+    if (el) el.classList.toggle('card-selected', t === type);
+  });
+
+  const preview = $('report-preview');
+  preview.innerHTML = '<span style="color:#6e7681">Loading preview...</span>';
+
+  if (type === 'ciso') {
+    const report = await fetchJSON('/api/global-report');
+    if (!report) { preview.textContent = 'No pipeline data — run the pipeline first.'; return; }
+
+    const regions = report.regional_threats || [];
+    const monitor = report.monitor_regions || [];
+
+    let html = `<div style="margin-bottom:12px">
+      <div style="font-size:11px;font-weight:600;color:#e6edf3;margin-bottom:6px">CISO Weekly Brief — Preview</div>
+      <div style="font-size:10px;color:#6e7681;margin-bottom:10px;line-height:1.6">${report.executive_summary || ''}</div>
+    </div>`;
+
+    regions.forEach(r => {
+      const sev = r.severity || '';
+      const sevCol = sev === 'Critical' ? '#dc2626' : sev === 'High' ? '#d97706' : sev === 'Medium' ? '#2563eb' : '#6e7681';
+      html += `<div style="border-top:1px solid #21262d;padding:8px 0">
+        <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:3px">
+          <span style="font-size:10px;font-weight:600;color:#e6edf3">${r.region}</span>
+          <span style="font-size:9px;color:${sevCol}">${sev}</span>
+          <span style="font-size:9px;color:#6e7681">${r.primary_scenario || ''}</span>
+          <span style="font-size:9px;color:#6e7681">${r.dominant_pillar || ''}</span>
+        </div>
+        <div style="font-size:9px;color:#8b949e;line-height:1.5">${r.strategic_assessment || ''}</div>
+      </div>`;
+    });
+
+    if (monitor.length) {
+      html += `<div style="border-top:1px solid #21262d;padding-top:8px;margin-top:4px">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">At Monitor</div>`;
+      monitor.forEach(m => {
+        html += `<div style="font-size:9px;color:#8b949e;margin-bottom:4px">
+          <span style="color:#d97706;font-weight:600">${m.region}:</span> ${m.rationale || ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    preview.innerHTML = html;
+
+  } else if (type === 'board') {
+    const md = await fetchJSON('/api/outputs/global-md');
+    if (md?.markdown) {
+      preview.innerHTML = `<div style="font-size:10px;line-height:1.6">${marked.parse(md.markdown)}</div>`;
+    } else {
+      preview.textContent = 'No board report available — run the pipeline first.';
+    }
+
+  } else if (type === 'rsm') {
+    preview.innerHTML = `<div style="font-size:10px;color:#6e7681;line-height:1.7">
+      <div style="color:#e6edf3;font-weight:600;margin-bottom:8px">RSM Briefs — Phase 2</div>
+      <div>FLASH alerts and INTSUM briefs for 5 Regional Security Managers.</div>
+      <div style="margin-top:6px">Available after Seerist API integration. Existing RSM briefs from mock runs can be viewed in the RSM tab.</div>
+    </div>`;
+
+  } else if (type === 'regional') {
+    preview.innerHTML = `<div style="font-size:10px;color:#6e7681;line-height:1.7">
+      <div style="color:#e6edf3;font-weight:600;margin-bottom:8px">Regional Brief — Future</div>
+      <div>A standalone per-region deep dive: full signal trace, source appendix, and complete Why / How / So What narrative.</div>
+      <div style="margin-top:6px">Select a region from the Overview tab to generate a targeted brief.</div>
+    </div>`;
+  }
+}
+
+async function generateCisoDocx() {
+  const btn = $('btn-gen-ciso');
+  const statusEl = $('ciso-status');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating...';
+  statusEl.textContent = 'Building CISO brief — this takes a few seconds...';
+  try {
+    const resp = await fetch('/api/outputs/ciso-docx');
+    if (resp.ok) {
+      // Trigger download
+      const blob = await resp.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'ciso_brief.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+      statusEl.textContent = 'Generated — downloading now.';
+      // Refresh status
+      renderReports();
+    } else {
+      const err = await resp.json().catch(() => ({}));
+      statusEl.textContent = `Error: ${err.error || resp.statusText}`;
+    }
+  } catch (e) {
+    statusEl.textContent = `Error: ${e.message}`;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '↺ Generate';
   }
 }
 
@@ -733,7 +933,7 @@ async function renderTrends() {
 
   container.innerHTML = `
     <div style="margin-bottom:20px">
-      <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:10px">CISO Talking Points</div>
+      <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:10px">Executive Talking Points</div>
       ${talkingPoints||'<div style="color:#484f58;font-size:11px">No talking points generated.</div>'}
     </div>
     ${heatmapHtml}
@@ -840,11 +1040,11 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview', 'reports', 'history', 'trends', 'config', 'rsm', 'validate'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'rsm', 'validate', 'sources'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' ? 'flex' : 'block') : '';
+    el.style.display = t === tab ? (t === 'config' || t === 'overview' ? 'flex' : 'block') : '';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
@@ -854,6 +1054,7 @@ function _doSwitchTab(tab) {
   if (tab === 'config')  loadConfigTab();
   if (tab === 'rsm')     renderRsmTab();
   if (tab === 'validate') renderValidateTab();
+  if (tab === 'sources')  renderSources();
 }
 
 // ── Run trigger ───────────────────────────────────────────────────────
@@ -1544,6 +1745,12 @@ async function renderValidateTab() {
   await Promise.all([loadValScenarios(), loadValSources(), loadValCandidates()]);
 }
 
+function applyRegionFilterAndSwitch(region) {
+  switchTab('sources');
+  const sel = document.getElementById('src-filter-region');
+  if (sel) { sel.value = region; applySourceFilters(); }
+}
+
 async function loadValScenarios() {
   const el = $('val-scenarios');
   try {
@@ -1562,11 +1769,19 @@ async function loadValScenarios() {
       if (s.verdict === 'supported') { verdict = '✓ SUPPORTED'; verdictColor = '#3fb950'; }
       else if (s.verdict === 'challenged' || s.flagged_for_review) { verdict = '⚠ REVIEW'; verdictColor = '#e3b341'; }
       else { verdict = `— ${s.verdict.toUpperCase().replace('_',' ')}`; verdictColor = '#6e7681'; }
+      const osintBadges = (s.osint_signal && s.osint_signal.length)
+        ? s.osint_signal.map(r => `<span class="badge-region">${r}</span>`).join(' ')
+        : '<span style="color:#6e7681;font-size:11px">—</span>';
+      const velLabel = s.velocity
+        ? `<span style="font-family:monospace;font-size:11px;color:#8b949e">${s.velocity}</span>`
+        : '<span style="color:#6e7681;font-size:11px">—</span>';
       return `<div style="display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #21262d;font-size:11px">
         <span style="color:#e6edf3;width:180px;flex-shrink:0">${s.scenario}</span>
         <span style="color:#8b949e;width:60px;flex-shrink:0;font-family:monospace">${vacr}</span>
         <span style="color:${verdictColor};width:120px;flex-shrink:0;font-weight:500">${verdict}</span>
         <span style="color:#6e7681;width:60px;flex-shrink:0">${dev}</span>
+        <span style="width:100px;flex-shrink:0">${osintBadges}</span>
+        <span style="width:80px;flex-shrink:0">${velLabel}</span>
         <span style="color:#484f58;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${srcLabel}</span>
       </div>`;
     }).join('');
@@ -1574,7 +1789,10 @@ async function loadValScenarios() {
     const summary = `<div style="padding:6px 12px;background:#161b22;font-size:10px;color:#6e7681;border-top:1px solid #21262d">
       ${sm.supported||0} supported · ${sm.challenged||0} challenged · ${sm.no_data||0} no data · ${sm.sources_used||0} sources
     </div>`;
-    el.innerHTML = rows + summary;
+    const headerEl = document.getElementById('val-scenarios-header');
+    if (headerEl) headerEl.style.display = 'block';
+    const bodyEl = document.getElementById('val-scenarios-body');
+    (bodyEl || el).innerHTML = rows + summary;
   } catch {
     el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load validation flags.</div>';
   }
@@ -1791,6 +2009,157 @@ function _listenValidationSSE(btn, prog) {
   });
   // Auto-close after 10 min safety
   setTimeout(() => { es.close(); btn.disabled = false; }, 600_000);
+}
+
+// ── Section: Sources Tab ──────────────────────────────────────────────
+
+async function renderSources() {
+  // Populate stats summary line
+  const stats = await fetchJSON('/api/sources/stats');
+  const statsEl = $('src-stats-line');
+  if (statsEl && stats) {
+    statsEl.textContent = `${stats.total} sources · ${stats.total_cited} cited · ${stats.total_junk} junk`;
+  }
+
+  // Fetch sources with current filter values
+  const region     = $('src-filter-region')?.value     || '';
+  const type       = $('src-filter-type')?.value       || '';
+  const tier       = $('src-filter-tier')?.value       || '';
+  const collection = $('src-filter-collection')?.value || '';
+  const cited      = $('src-filter-cited')?.checked    || false;
+  const hideJunk   = $('src-filter-hidejunk')?.checked ?? true;
+
+  const params = new URLSearchParams({ limit: 200 });
+  if (region)   params.set('region',     region);
+  if (type)     params.set('type',       type);
+  if (tier)     params.set('tier',       tier);
+  if (cited)    params.set('cited_only', 'true');
+  params.set('hide_junk', hideJunk ? 'true' : 'false');
+
+  const body = $('src-table-body');
+  if (!body) return;
+  body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">Loading sources...</div>';
+
+  const sources = await fetchJSON(`/api/sources?${params}`);
+  if (sources === null) {
+    body.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load sources.</div>';
+    return;
+  }
+  // Client-side collection_type filter (column may not exist on older DBs)
+  const filtered = collection
+    ? sources.filter(s => (s.collection_type || 'osint') === collection)
+    : sources;
+  if (!filtered.length) {
+    body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No sources found.</div>';
+    return;
+  }
+  renderSourceRegistryTable(filtered);
+}
+
+function _tierBadge(tier) {
+  if (tier === 'A') return `<span style="font-size:9px;padding:1px 5px;border-radius:2px;color:#3fb950;background:#0a1a0a;border:1px solid #238636">A</span>`;
+  if (tier === 'B') return `<span style="font-size:9px;padding:1px 5px;border-radius:2px;color:#e3b341;background:#2d2200;border:1px solid #d29922">B</span>`;
+  return `<span style="font-size:9px;padding:1px 5px;border-radius:2px;color:#6e7681;background:#161b22;border:1px solid #30363d">${esc(tier||'?')}</span>`;
+}
+
+function _typeBadge(type) {
+  return `<span style="font-size:9px;padding:1px 5px;border-radius:2px;color:#79c0ff;background:#061020;border:1px solid #1f4060">${esc(type||'—')}</span>`;
+}
+
+function _collectionBadge(collectionType) {
+  if (collectionType === 'benchmark') return `<span style="background:#5a3e0a;color:#e3b341;border:1px solid #7d6022;border-radius:4px;padding:1px 5px;font-size:10px">Benchmark</span>`;
+  return '';
+}
+
+function toggleSourceGroup(gid) {
+  const children = document.getElementById('src-group-' + gid);
+  const arrow    = document.getElementById('src-arrow-' + gid);
+  if (!children) return;
+  const open = children.style.display !== 'none';
+  children.style.display = open ? 'none' : 'block';
+  if (arrow) arrow.textContent = open ? '▶' : '▼';
+}
+
+function renderSourceRegistryTable(sources) {
+  const body = $('src-table-body');
+  if (!body) return;
+
+  // Group by publication name
+  const groups = {};
+  const order  = [];
+  for (const s of sources) {
+    const key = (s.name || s.domain || '—').trim();
+    if (!groups[key]) { groups[key] = []; order.push(key); }
+    groups[key].push(s);
+  }
+
+  const html = order.map((name, idx) => {
+    const members = groups[name];
+    const gid     = idx;
+    const rep     = members[0]; // representative for badges
+    const totalApp  = members.reduce((a, s) => a + (s.appearance_count ?? 0), 0);
+    const totalCite = members.reduce((a, s) => a + (s.cited_count ?? 0), 0);
+    const lastSeen  = members.map(s => s.last_seen || '').sort().at(-1)?.slice(0, 10) || '—';
+    const count     = members.length;
+
+    // Parent row
+    const parent = `<div onclick="toggleSourceGroup(${gid})"
+      style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #21262d;
+             font-size:11px;cursor:pointer;background:#0d1117;user-select:none"
+      onmouseover="this.style.background='#161b22'" onmouseout="this.style.background='#0d1117'">
+      <span id="src-arrow-${gid}" style="width:16px;flex-shrink:0;color:#484f58;font-size:9px">▶</span>
+      <span style="flex:2;min-width:160px;overflow:hidden">
+        <span style="color:#e6edf3;font-weight:600">${esc(name)}</span>
+        <span style="color:#484f58;font-size:10px;margin-left:6px">${count} source${count !== 1 ? 's' : ''}</span>
+      </span>
+      <span style="width:90px;flex-shrink:0">${_typeBadge(rep.source_type)} ${_collectionBadge(rep.collection_type)}</span>
+      <span style="width:50px;flex-shrink:0">${_tierBadge(rep.credibility_tier)}</span>
+      <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px;color:#8b949e">${totalApp}</span>
+      <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px;color:${totalCite ? '#3fb950' : '#484f58'}">${totalCite}</span>
+      <span style="width:90px;flex-shrink:0;color:#484f58">${lastSeen}</span>
+      <span style="width:80px;flex-shrink:0"></span>
+    </div>`;
+
+    // Child rows (hidden by default)
+    const childRows = members.map(s => {
+      const flagLabel = s.junk ? 'Unflag' : 'Flag junk';
+      const flagStyle = s.junk
+        ? 'font-size:9px;color:#f85149;background:#1a0a0a;border:1px solid #da3633;padding:2px 6px;border-radius:2px;cursor:pointer'
+        : 'font-size:9px;color:#6e7681;background:#161b22;border:1px solid #30363d;padding:2px 6px;border-radius:2px;cursor:pointer';
+      const blockedBadge = s.junk ? '<span style="color:#6e7681;font-size:9px;margin-left:6px" title="Blocked from future collection">blocked</span>' : '';
+      const url = s.url ? `<a href="${esc(s.url)}" target="_blank" style="color:#484f58;font-size:10px;text-decoration:none" title="${esc(s.url)}">${esc(s.domain || s.url)}</a>` : `<span style="color:#484f58;font-size:10px">${esc(s.domain||'—')}</span>`;
+      return `<div style="display:flex;align-items:center;padding:6px 12px 6px 36px;border-bottom:1px solid #161b22;font-size:11px;background:#080c10">
+        <span style="flex:2;min-width:160px;overflow:hidden">${url}</span>
+        <span style="width:90px;flex-shrink:0"></span>
+        <span style="width:50px;flex-shrink:0"></span>
+        <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px;color:#8b949e">${s.appearance_count ?? 0}</span>
+        <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px;color:${s.cited_count ? '#3fb950' : '#484f58'}">${s.cited_count ?? 0}</span>
+        <span style="width:90px;flex-shrink:0;color:#484f58">${s.last_seen?.slice(0,10)||'—'}</span>
+        <span style="width:80px;flex-shrink:0">
+          <button onclick="flagSource('${esc(s.id)}',${!s.junk})" style="${flagStyle}">${flagLabel}</button>${blockedBadge}
+        </span>
+      </div>`;
+    }).join('');
+
+    return parent + `<div id="src-group-${gid}" style="display:none">${childRows}</div>`;
+  }).join('');
+
+  body.innerHTML = html;
+}
+
+async function flagSource(id, junk) {
+  try {
+    await fetch(`/api/sources/${encodeURIComponent(id)}/flag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ junk }),
+    });
+  } catch { /* ignore */ }
+  renderSources();
+}
+
+function applySourceFilters() {
+  renderSources();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
