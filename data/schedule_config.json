@@ -27,6 +27,13 @@
       "regions": null,
       "cron": "0 5 * * 1",
       "description": "Generate and deliver weekly INTSUM every Monday 05:00 UTC"
+    },
+    {
+      "id": "crq_validate",
+      "command": "uv run python tools/source_harvester.py && uv run python tools/source_discoverer.py && uv run python tools/benchmark_extractor.py && uv run python tools/crq_comparator.py",
+      "regions": null,
+      "cron": "0 2 * * 0",
+      "description": "Weekly CRQ validation: harvest known sources, discover new ones, extract benchmarks, compare vs VaCR — every Sunday 02:00 UTC"
     }
   ]
 }

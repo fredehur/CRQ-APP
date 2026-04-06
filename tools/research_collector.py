@@ -330,6 +330,9 @@ For sources in both geo_signals and cyber_signals:
         if missing:
             raise ValueError(f"synthesize_signals: {section} missing keys: {missing}")
 
+    geo_src = len(result["geo_signals"].get("sources", []))
+    cyber_src = len(result["cyber_signals"].get("sources", []))
+    print(f"[synthesize_signals] {region}: {geo_src} geo sources, {cyber_src} cyber sources extracted")
     return result["geo_signals"], result["cyber_signals"], result["conclusion"]
 
 

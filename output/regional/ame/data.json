@@ -4,14 +4,20 @@
   "gatekeeper_decision": "ESCALATED",
   "severity": "CRITICAL",
   "severity_score": 3,
-  "primary_scenario": "Ransomware",
+  "primary_scenario": "System intrusion",
+  "financial_rank": 3,
+  "signal_type": "Trend",
   "vacr_exposure_usd": 22000000,
   "admiralty": "B2",
-  "rationale": "Corroborated ransomware campaign targeting North American wind energy OT systems with $22M demand; cyber signals confirm active double-extortion against turbine platforms; scenario_map financial_rank 3 breaches ESCALATE threshold.",
+  "rationale": "Three corroborated geopolitical indicators meet escalation threshold against HIGH-rated Houston Operations Center. China rare earth export controls directly threaten AME wind turbine supply chain and elevate state-actor IP collection incentives targeting wind farm telemetry (NA-01) and predictive maintenance IP. US Commerce Department national security investigation into wind turbine imports (tariff threat 11-50%) compounds procurement risk. Mexico energy sovereignty posture raises foreign-operator regulatory exposure. Top financial scenario (System intrusion, rank 3) aligns with state-actor IP-theft vector. Cyber gap is an evidentiary absence, not a clean signal.",
   "velocity": "stable",
   "dominant_pillar": "Geopolitical",
   "report_path": "regional/ame/report.md",
-  "timestamp": "2026-03-13T10:34:10Z",
-  "financial_rank": 1,
-  "signal_type": "Mixed"
+  "timestamp": "2026-04-06T09:35:00Z",
+  "source_quality": {
+    "tier_a": 0,
+    "tier_b": 0,
+    "tier_c": 0,
+    "total": 0
+  }
 }

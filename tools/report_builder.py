@@ -14,7 +14,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-OUTPUT_DIR = "output"
+OUTPUT_DIR = "output/pipeline"
 REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
 
 

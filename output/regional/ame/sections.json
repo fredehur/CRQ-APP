@@ -1,0 +1,30 @@
+{
+  "region": "AME",
+  "generated_at": "2026-04-06T09:35:00Z",
+  "threat_actor": "Chinese state-affiliated entities",
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "ESCALATED — GEO-LED",
+  "intel_bullets": [
+    "China has deployed export controls on rare earth permanent magnets as a direct instrument of economic statecraft, constraining wind turbine component availability and elevating the intelligence value of proprietary wind technology IP.",
+    "The US Commerce Department has opened a national security investigation into imported wind turbines with proposed tariffs of 11–50%, signalling Washington's intent to treat wind energy supply chains as a strategic vulnerability.",
+    "Mexico's AMLO-era energy sovereignty policy has introduced sustained regulatory uncertainty for foreign-owned wind farm operators, creating conditions for politically motivated interference with operational assets."
+  ],
+  "adversary_bullets": [
+    "No confirmed intrusion or named threat actor targeting AME wind farm operational systems was recovered in the current collection window — the cyber assessment is inferred from geopolitical conditions and cross-regional sector precedent.",
+    "State actors with rare earth leverage have a documented cross-regional history of pairing supply chain pressure with targeted collection against wind energy IP, consistent with an assessed pre-crisis intelligence collection posture."
+  ],
+  "impact_bullets": [
+    "AeroGrid's Houston Operations Center — primary hub for wind farm telemetry network NA-01 — sits at the centre of the state-actor collection incentive, with sustained low-visibility access representing the primary risk pathway over operational disruption.",
+    "Both the NextEra Energy three-year maintenance contract and the Ontario Wind Power service agreement depend on the integrity of the predictive maintenance IP held at the Toronto Engineering Hub, a secondary collection priority."
+  ],
+  "watch_bullets": [
+    "Reports from US-nexus wind energy operators disclosing supply chain component anomalies or unexplained access events in maintenance scheduling infrastructure.",
+    "Chinese government statements further restricting rare earth exports to US-headquartered renewable energy companies specifically, signalling a targeted rather than broad coercive posture.",
+    "US Commerce Department final ruling imposing tariffs above 25% on wind turbine imports, compressing procurement windows and increasing pressure to source components through less-vetted supply chains."
+  ],
+  "action_bullets": [
+    "Audit third-party and supply chain access credentials for privileged systems.",
+    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
+    "Conduct an access review of all remote authentication pathways into the Houston Operations Center wind farm telemetry network NA-01, prioritising credentials linked to component vendors operating under current US Commerce Department scrutiny."
+  ]
+}

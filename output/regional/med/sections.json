@@ -1,0 +1,30 @@
+{
+  "region": "MED",
+  "generated_at": "2026-04-06T09:32:02Z",
+  "threat_actor": "MuddyWater",
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "ESCALATED — GEO-LED",
+  "intel_bullets": [
+    "Iran enacted legislation in March 2026 imposing transit fees on Strait of Hormuz energy carriers, formalising a durable leverage mechanism over EU renewable energy supply chains.",
+    "Hormuz closure fears have already caused confirmed delays to large offshore wind component shipments destined for EU and UK projects, as corroborated by The Guardian.",
+    "CSIS and ODNI assessments confirm Iran's demonstrated intent to use energy infrastructure targeting as a geopolitical coercion instrument, establishing this as a sustained strategic posture."
+  ],
+  "adversary_bullets": [
+    "MuddyWater has pre-positioned persistent access via Dindoor and Fakeset backdoors inside critical infrastructure supply chain firms — confirmed in the CISA June 2025 joint advisory — employing patient pre-positioning tradecraft consistent with leverage-building ahead of potential activation.",
+    "CyberAv3ngers deployed IOCONTROL malware against internet-exposed industrial control and OT devices at scale, with Censys identifying 40,000–48,000 such exposed devices as an active attack surface."
+  ],
+  "impact_bullets": [
+    "Palermo's offshore blade assembly process and inbound component flows via the North African logistics corridor are directly exposed to Hormuz-linked supply disruption, with production schedule risk escalating as the maritime standoff continues.",
+    "The Iberdrola offshore maintenance and ENEL MED service contracts dependent on Malaga face service delivery risk if component mobilisation is interrupted by supply chain delays or if operational technology integrity is compromised."
+  ],
+  "watch_bullets": [
+    "Iran escalating from transit fee legislation to active vessel interdiction or enforced blockade actions in the Strait of Hormuz.",
+    "A confirmed intrusion or pre-positioning event at a European offshore wind component manufacturer or logistics provider serving the Mediterranean basin.",
+    "Disruption to the North African overland corridor serving Palermo's inbound component flows."
+  ],
+  "action_bullets": [
+    "Audit third-party and supply chain access credentials for privileged systems.",
+    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
+    "Assess Palermo's component inventory buffer and identify alternative sourcing routes for blade assembly inputs currently transiting the Mediterranean supply corridor, given confirmed Hormuz-linked shipping delays to EU wind projects."
+  ]
+}

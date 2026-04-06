@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cyber Risk Intelligence Brief — CISO Edition</title>
+<title>Cyber Risk Intelligence Brief</title>
 <style>
   :root {
     --navy:  #1e3a5f;
@@ -226,36 +226,47 @@
     margin-top: 3px;
   }
 
-  /* 2×2 board bullets grid */
-  .bullets-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 4mm;
-    margin-top: 5mm;
+  /* ── Region meta row ──────────────────────────────────────────────── */
+  .region-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 9px;
+    color: var(--grey);
+    margin-bottom: 4mm;
   }
+  .region-meta .meta-item strong { color: #333; }
 
-  .bullet-cell {
-    border-radius: 3px;
-    padding: 5mm;
-    background: #fafafa;
-    border: 1px solid var(--divider);
+  /* ── Intelligence sections ────────────────────────────────────────── */
+  .intel-section {
+    margin-bottom: 4mm;
+    padding-left: 3mm;
+    border-left: 2px solid var(--navy);
   }
+  .intel-section.impact  { border-left-color: var(--red); }
+  .intel-section.watch   { border-left-color: var(--amber); }
+  .intel-section.actions { border-left-color: #6b7280; }
 
-  .bullet-cell.driver  { border-left: 3px solid var(--navy); }
-  .bullet-cell.exposure { border-left: 3px solid var(--navy); }
-  .bullet-cell.impact  { border-left: 3px solid #dc2626; }
-  .bullet-cell.watch   { border-left: 3px solid #d97706; }
-
-  .bullet-cell .label {
-    display: block;
-    margin-bottom: 4px;
+  .section-heading {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--navy);
+    margin-bottom: 3px;
   }
+  .intel-section.impact  .section-heading { color: var(--red); }
+  .intel-section.watch   .section-heading { color: var(--amber); }
+  .intel-section.actions .section-heading { color: #6b7280; }
 
-  .bullet-cell p {
+  .intel-list {
+    margin: 0;
+    padding-left: 12px;
     font-size: 10px;
     line-height: 1.6;
     color: #333;
   }
+  .intel-list li { margin-bottom: 2px; }
 
   /* Unavailable notice */
   .unavailable-notice {
@@ -345,7 +356,6 @@
       <div class="cover-client">AeroGrid Wind Solutions</div>
       <div class="cover-title">
         <h1>Cyber Risk Intelligence Brief</h1>
-        <div class="cover-subtitle">CISO Edition</div>
       </div>
     </div>
 
@@ -471,36 +481,65 @@
 
     <hr class="divider">
 
-    {% if r.board_bullets is not none and r.board_bullets | length >= 4 %}
-      <div class="bullets-grid">
+    {# ── Region meta row ──────────────────────────────────────────────── #}
+    <div class="region-meta">
+      {% if r.threat_actor %}
+        <span class="meta-item"><strong>Threat Actor:</strong> {{ r.threat_actor }}</span>
+      {% endif %}
+      {% if r.signal_type_label %}
+        <span class="meta-item"><strong>Signal Type:</strong> {{ r.signal_type_label }}</span>
+      {% endif %}
+    </div>
 
-        <div class="bullet-cell driver">
-          <span class="label">DRIVER</span>
-          <p>{{ r.board_bullets[0] }}</p>
-        </div>
+    {# ── Intelligence sections ─────────────────────────────────────────── #}
+    {% if r.intel_bullets %}
+    <div class="intel-section">
+      <div class="section-heading">Intel Findings</div>
+      <ul class="intel-list">
+        {% for b in r.intel_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
-        <div class="bullet-cell exposure">
-          <span class="label">EXPOSURE</span>
-          <p>{{ r.board_bullets[1] }}</p>
-        </div>
+    {% if r.adversary_bullets %}
+    <div class="intel-section">
+      <div class="section-heading">Observed Adversary Activity</div>
+      <ul class="intel-list">
+        {% for b in r.adversary_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
-        <div class="bullet-cell impact">
-          <span class="label">IMPACT</span>
-          <p>{{ r.board_bullets[2] }}</p>
-        </div>
+    {% if r.impact_bullets %}
+    <div class="intel-section impact">
+      <div class="section-heading">Impact for AeroGrid</div>
+      <ul class="intel-list">
+        {% for b in r.impact_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
-        <div class="bullet-cell watch">
-          <span class="label">WATCH</span>
-          <p>{{ r.board_bullets[3] }}</p>
-        </div>
+    {% if r.watch_bullets %}
+    <div class="intel-section watch">
+      <div class="section-heading">Watch For — Adversary Tradecraft</div>
+      <ul class="intel-list">
+        {% for b in r.watch_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
 
-      </div>
-    {% else %}
+    {% if r.action_bullets %}
+    <div class="intel-section actions">
+      <div class="section-heading">Recommended Actions</div>
+      <ul class="intel-list">
+        {% for b in r.action_bullets %}<li>{{ b }}</li>{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {% if not r.intel_bullets and not r.adversary_bullets %}
       <div class="unavailable-notice">
-        Detailed intelligence analysis is unavailable for this region this cycle. Check pipeline logs for details.
-        {% if r.why_text %}
-          <div style="margin-top:6px;font-size:9px;color:#78350f;">{{ r.why_text }}</div>
-        {% endif %}
+        Detailed intelligence analysis is unavailable for this region this cycle.
       </div>
     {% endif %}
 
@@ -517,7 +556,11 @@
     {% if r.threat_characterisation %}
       <span>·&nbsp;{{ r.threat_characterisation }}</span>
     {% endif %}
-    {% if r.top_sources %}
+    {% if r.source_quality and r.source_quality.total > 0 %}
+      <span style="margin-left:auto;">
+        Sources: {{ r.source_quality.tier_a }}A · {{ r.source_quality.tier_b }}B · {{ r.source_quality.tier_c }}C
+      </span>
+    {% elif r.top_sources %}
       <span style="margin-left:auto;font-style:italic;">Sources: {{ r.top_sources | join(" · ") }}</span>
     {% endif %}
   </div>

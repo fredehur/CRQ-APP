@@ -248,6 +248,7 @@ def test_synthesize_signals_produces_valid_schema():
         },
         "cyber_signals": {
             "summary": "Ransomware trend targeting wind farm telemetry systems.",
+            "lead_indicators": ["Ransomware campaign targeting wind telemetry", "Supply chain vector in energy sector"],
             "threat_vector": "Ransomware via supply chain",
             "target_assets": ["Live telemetry", "Remote maintenance systems"],
             "dominant_pillar": "Cyber",
@@ -311,7 +312,7 @@ def test_run_live_mode_writes_all_output_files(tmp_path, monkeypatch):
     })
     monkeypatch.setattr(rc, "synthesize_signals", lambda *a, **kw: (
         {"summary": "geo", "lead_indicators": [], "dominant_pillar": "Geopolitical", "matched_topics": []},
-        {"summary": "cyber", "threat_vector": "test", "target_assets": [], "dominant_pillar": "Cyber", "matched_topics": []},
+        {"summary": "cyber", "lead_indicators": [], "threat_vector": "test", "target_assets": [], "dominant_pillar": "Cyber", "matched_topics": []},
         {"theory_confirmed": True, "confidence_rationale": "OK", "suggested_admiralty": "B2",
          "signal_type": "trend", "dominant_pillar": "Cyber"},
     ))

@@ -1,0 +1,30 @@
+{
+  "region": "NCE",
+  "generated_at": "2026-04-06T09:45:00Z",
+  "threat_actor": "UNC3886",
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "ESCALATED — CYBER-LED",
+  "intel_bullets": [
+    "IEA confirms clean energy manufacturing is structurally concentrated: less than 25% of global demand can be met at key supply chain steps without the dominant producer, creating asymmetric incentives for state actors to acquire wind technology IP rather than develop it independently.",
+    "The European Commission has launched legal proceedings against 26 member states for failing to implement renewable energy directives, exposing governance gaps that delay critical infrastructure protection across the EU.",
+    "The EU CER Directive missed its 2024 transposition deadline, leaving wind turbine manufacturers in NCE without formal critical entity designation — a regulatory gap that removes the state-level resilience obligations that designation would trigger."
+  ],
+  "adversary_bullets": [
+    "China-nexus groups UNC3886 and UNC5221 have been documented targeting edge devices and network appliances as initial access vectors into defense industrial base and aerospace manufacturing environments, per Google GTIG reporting for 2024–2025.",
+    "Russian state-aligned groups have been confirmed by federal agency warnings as actively targeting manufacturing organisations through insecure remote connection points, consistent with a dual-track strategy of IP exfiltration and pre-positioning for disruption."
+  ],
+  "impact_bullets": [
+    "A successful system intrusion at the Hamburg Manufacturing Hub or Gdansk Blade Plant could halt blade production and expose proprietary turbine aerodynamic designs and prototype specifications held on OT/SCADA networks EU-01 and EU-02, placing delivery schedules for the Ørsted and Vattenfall contracts at direct risk.",
+    "R&D roadmap and prototype designs concentrated at the Copenhagen Engineering Hub represent the asset class most directly aligned with documented state-actor acquisition priorities — a high-value target even in the absence of manufacturing disruption."
+  ],
+  "watch_bullets": [
+    "Public disclosure of a confirmed intrusion at a named European wind turbine manufacturer with state-level attribution.",
+    "Reports of anomalous access on edge devices or remote access infrastructure at Hamburg or Gdansk manufacturing facilities.",
+    "German or Polish federal transposition of NIS2 and CER advancing to enforcement stage — would signal both regulatory gap closure and potential disclosure of previously unreported incidents."
+  ],
+  "action_bullets": [
+    "Audit third-party and supply chain access credentials for all privileged systems connected to Hamburg and Gdansk manufacturing environments.",
+    "Review hardware integrity for recently sourced components across NCE manufacturing sites, focusing on network-facing devices.",
+    "Verify edge device and remote access configurations at the Hamburg Manufacturing Hub and Gdansk Blade Plant are hardened against the edge-device initial access tradecraft documented by Google GTIG against peer industrial environments."
+  ]
+}

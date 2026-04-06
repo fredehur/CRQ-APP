@@ -1,0 +1,59 @@
+{
+  "region": "MED",
+  "collected_at": "2026-04-06T09:28:11.886367+00:00",
+  "working_theory": {
+    "scenario_name": "Predictive Maintenance & Offshore IP Theft",
+    "vacr_usd": 4200000,
+    "hypothesis": "Given $4.2M in cyber risk exposure and the company's dual dependency on manufacturing OT/SCADA networks and real-time service telemetry, a coordinated IP theft scenario is materializing if state or state-proximate actors in the MED are simultaneously (1) targeting aerodynamic design IP and maintenance algorithms to compress indigenous wind energy development timelines, and (2) establishing persistent access to offshore telemetry feeds to map grid vulnerabilities or create supply-chain leverage. Evidence would include: detected lateral movement from OT networks to service cloud environments, exfiltration of blade design CAD or algorithm source code, state-sponsored reconnaissance of specific manufacturing plant SCADA architectures, or coordinated targeting aligned with EU Critical Infrastructure Directive compliance gaps. Denial would require: zero OT compromise indicators, absence of targeting by known MED-based threat groups, and verified isolation of predictive maintenance systems from manufacturing networks.",
+    "active_topics": [
+      {
+        "id": "supply-chain-wind-components",
+        "label": "Supply Chain Disruption — Wind Component Sourcing"
+      },
+      {
+        "id": "eu-critical-infrastructure-directive",
+        "label": "EU Critical Infrastructure Security Directive"
+      },
+      {
+        "id": "iran-strait-energy-routes",
+        "label": "Iran–Strait of Hormuz Energy Route Pressure"
+      }
+    ],
+    "geo_queries": [
+      "State-sponsored maritime energy infrastructure intelligence collection in Eastern Mediterranean targeting EU renewable energy operators",
+      "Iranian or Russian cyber proxy activity targeting EU critical infrastructure regulations (NIS2/CID) compliance gaps in renewable energy supply chains",
+      "Geopolitical pressure campaigns linking Strait of Hormuz energy leverage to European wind turbine manufacturer IP acquisition or sabotage intent",
+      "Mediterranean naval/cyber nexus: state actor coordination between maritime reconnaissance and targeting of offshore wind telemetry networks"
+    ],
+    "cyber_queries": [
+      "OT/SCADA network compromises or reconnaissance in Mediterranean-region wind turbine manufacturing plants targeting aerodynamic design data",
+      "Supply chain compromise or lateral movement from wind component suppliers into predictive maintenance algorithm environments",
+      "Exfiltration of proprietary wind turbine IP (blade designs, material specifications) attributed to state-sponsored threat actors operating in MED geographies",
+      "Persistent access or C2 infrastructure targeting offshore wind farm telemetry systems, SCADA historians, or predictive maintenance cloud backends in Mediterranean deployments"
+    ]
+  },
+  "collection": {
+    "pass_1_result_count": 57,
+    "gap_assessment": "The evidence collection is predominantly oriented toward EU energy transition policy, renewable energy conferences, and generic Iranian cyber threats to US infrastructure—but contains zero sector-specific wind energy IP targeting signals, zero indicators of OT/SCADA compromise in MED-based manufacturing, and zero evidence of coordinated lateral movement or blade design/algorithm exfiltration. The theory requires wind energy sector signals and MED-based state-actor reconnaissance; the corpus addresses neither.",
+    "gaps_identified": [
+      "No wind energy sector-specific targeting or IP theft indicators (blade design CAD, maintenance algorithms, aerodynamic IP)",
+      "No evidence of OT/SCADA compromise, lateral movement to cloud environments, or manufacturing plant reconnaissance in MED region",
+      "No attribution to known MED-based threat groups actively targeting renewable energy or critical infrastructure in Mediterranean countries (Turkey, Egypt, Israel, Lebanon, Greece, Cyprus)",
+      "No recent cyber incidents or threat advisories specific to Mediterranean wind turbine manufacturers or their supply chains"
+    ],
+    "pass_2_queries": [
+      "MED state-sponsored cyber targeting wind energy manufacturers blade design CAD IP theft 2024-2026",
+      "Turkey Egypt Israel Lebanon cyber attacks SCADA OT networks renewable energy infrastructure",
+      "APT threat group attribution wind turbine maintenance algorithm exfiltration Mediterranean region"
+    ],
+    "pass_2_result_count": 24,
+    "total_result_count": 81
+  },
+  "conclusion": {
+    "theory_confirmed": false,
+    "confidence_rationale": "The geopolitical pillar of the working theory is well-corroborated: multiple credible open sources (Guardian, CSIS, CISA, ODNI) confirm Iran's Hormuz leverage is materially disrupting wind energy supply chains and that Iranian state actors have demonstrated intent and capability against energy-sector critical infrastructure. However, the cyber pillar — specifically the hypothesis of coordinated IP theft targeting aerodynamic design CAD, predictive maintenance algorithms, or OT-to-cloud lateral movement in MED wind installations — is not confirmed by any specific incident in the collected evidence. Named threat actors (MuddyWater, CyberAv3ngers) are confirmed operating against critical infrastructure OT environments but in U.S.-centric contexts, with no MED-specific wind energy targeting documented. The EU Critical Infrastructure Directive compliance gap angle is structurally plausible but unsupported by direct evidence in this collection. Confidence is moderate on geopolitical framing, low on the specific IP theft mechanism. Overall, the theory is plausible but not yet evidenced — rated C2 (possibly true, corroborated by credible sources only at the strategic level, not the technical incident level).",
+    "suggested_admiralty": "C3",
+    "signal_type": "mixed",
+    "dominant_pillar": "Geo"
+  }
+}

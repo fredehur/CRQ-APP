@@ -7,11 +7,17 @@
   "primary_scenario": "System intrusion",
   "vacr_exposure_usd": 18500000,
   "admiralty": "B2",
-  "rationale": "Corroborated state-sponsored APT indicators across geo and cyber signals targeting manufacturing IP and SCADA networks; scenario_map financial_rank 3 breaches ESCALATE threshold.",
+  "rationale": "B2 — Both pillars independently cross the escalation threshold and are causally coupled. Geo signals confirm state-level economic incentive: Persian Gulf conflict accelerating APAC offshore wind deployment, China-Iran renewable energy MoU, and China's state-backed 50MW turbine development create strong motivation for wind IP acquisition. Cyber signals confirm the mechanism is active: 150% surge in China-nexus APT espionage across APAC energy and manufacturing sectors (FalconFeeds, ASPI), confirmed breach of 70+ critical infrastructure organisations in 37 countries, and SideWinder APT expansion into Indonesia and Thailand adjacent to wind manufacturing supply chains. Crown jewels at the PRIMARY Kaohsiung site — Series 7 production line, SCADA TW-01, OT predictive maintenance stack — match the documented targeting profile. The geo and cyber pillars are not independent; state-level competitive pressure in wind technology directly motivates the espionage surge. Scenario: System intrusion, high confidence, financial rank 3.",
   "velocity": "stable",
-  "dominant_pillar": "Geopolitical",
+  "dominant_pillar": "Cyber",
   "report_path": "regional/apac/report.md",
-  "timestamp": "2026-03-13T10:33:57Z",
+  "timestamp": "2026-04-06T09:32:00Z",
   "financial_rank": 3,
-  "signal_type": "Trend"
+  "signal_type": "Trend",
+  "source_quality": {
+    "tier_a": 0,
+    "tier_b": 0,
+    "tier_c": 0,
+    "total": 0
+  }
 }

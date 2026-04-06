@@ -1,22 +1,7 @@
 {
-  "summary": "IISS and Chatham House analysts assess that Strait of Hormuz tension dynamics are introducing latent risk to Mediterranean energy routing and offshore wind project financing. Expert commentary identifies a secondary concern around insider access risks at Mediterranean port facilities used for wind component logistics, driven by organised crime entanglement with port authority operations in two southern European countries.",
-  "lead_indicators": [
-    "IISS: Strait of Hormuz shipping disruption scenarios re-evaluated for European energy supply chain impact",
-    "Chatham House: Organised crime infiltration of southern European port logistics poses wind component delivery risk",
-    "Foreign Affairs: Mediterranean energy infrastructure investment confidence declining among institutional investors"
-  ],
+  "summary": "No YouTube signals identified for MED in the current collection window. No approved channels produced content matching tracked topics. Signal absence is logged — this does not indicate a low-risk environment.",
+  "lead_indicators": [],
   "dominant_pillar": "Geopolitical",
-  "matched_topics": [
-    "iran-strait-energy-routes",
-    "insider-threat-port-logistics"
-  ],
-  "source_videos": [
-    {
-      "title": "The Mediterranean Energy Corridor: Risks in 2026",
-      "channel": "IISS — International Institute for Strategic Studies",
-      "channel_id": "@IISS_org",
-      "url": "https://youtube.com/watch?v=mock_med_geo_001",
-      "published_at": "2026-03-11"
-    }
-  ]
+  "matched_topics": [],
+  "source_videos": []
 }

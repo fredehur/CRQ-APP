@@ -13,3 +13,16 @@
 [2026-04-06T09:36:06Z] [GROUNDING] NCE orphaned signal_ids (collected but uncited): ['nce-cyber-003']
 [2026-04-06T09:36:06Z] [GROUNDING] NCE grounding validation PASSED
 [2026-04-06T09:36:07Z] [SECTIONS] APAC sections validation PASSED
+[2026-04-06T09:37:09Z] [HOOK_PASS] APAC jargon audit passed
+[2026-04-06T09:37:09Z] [HOOK_FAIL] AME jargon audit failed — rewrite triggered
+[2026-04-06T09:37:10Z] [HOOK_FAIL] LATAM jargon audit failed — rewrite triggered
+[2026-04-06T09:37:10Z] [HOOK_PASS] MED jargon audit passed
+[2026-04-06T09:37:10Z] [HOOK_PASS] NCE jargon audit passed
+[2026-04-06T09:40:16Z] [HOOK_PASS] ame jargon audit passed
+[2026-04-06T09:40:16Z] [HOOK_PASS] latam jargon audit passed
+[2026-04-06T09:40:20Z] [PHASE_COMPLETE] Velocity analysis complete — trend_brief.json written
+[2026-04-06T09:44:42Z] [PHASE_COMPLETE] Trend synthesis complete — output/pipeline/trend_analysis.json written
+[2026-04-06T09:44:45Z] [PHASE_COMPLETE] Cross-regional diff complete
+[2026-04-06T09:49:21Z] [HOOK_PASS] Global report validated by devil's advocate
+[2026-04-06T09:49:21Z] [PHASE_COMPLETE] Global JSON report validated
+[2026-04-06T09:51:38Z] [PIPELINE_COMPLETE] AeroGrid CRQ Pipeline complete — all outputs generated

@@ -1,0 +1,96 @@
+{
+  "region": "APAC",
+  "generated_at": "2026-04-06T10:00:00Z",
+  "claims": [
+    {
+      "claim_id": "apac-001",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Persian Gulf conflict is driving APAC nations to accelerate offshore wind deployment as an alternative to LNG supply dependency, per Recharge News analysis of regional energy reorientation.",
+      "signal_ids": ["apac-geo-001"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "apac-002",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "China and Iran signed an MoU on renewable energy cooperation amid the Iran conflict, signalling state-level coordination on clean energy technology acquisition.",
+      "signal_ids": ["apac-geo-002"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "apac-003",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "China's MingYang is targeting a 50MW offshore wind turbine rollout by 2026, demonstrating state-backed industrial urgency to dominate global wind technology supply chains, per Energies Media.",
+      "signal_ids": ["apac-geo-003"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "apac-004",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "China-nexus APT campaigns showed a 150% surge in espionage activity in 2024, confirmed by FalconFeeds intelligence, targeting energy, finance, and manufacturing sectors across APAC with no sector exclusion for wind OEM infrastructure.",
+      "signal_ids": ["apac-cyber-001"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "apac-005",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "An unattributed Asian government APT — assessed by Palo Alto Networks Unit 42 as likely China-aligned — confirmed breach of 70+ critical infrastructure organisations across 37 countries including energy ministries, with reconnaissance conducted against 155 countries between November and December.",
+      "signal_ids": ["apac-cyber-002"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "apac-006",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "SideWinder APT group has documented expansion into Indonesia and Thailand, deploying government-audit-themed phishing and credential theft against maritime, logistics, and nuclear sectors — attack vectors directly transferable to wind manufacturing facility personnel.",
+      "signal_ids": ["apac-cyber-003"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "apac-007",
+      "claim_type": "assessment",
+      "pillar": "cyber",
+      "text": "The geopolitical and cyber pillars are causally coupled: China's state-level urgency to dominate wind technology — evidenced by the MingYang 50MW programme and the China-Iran renewable energy MoU — directly motivates the documented espionage surge against energy and manufacturing IP-rich targets across APAC.",
+      "signal_ids": ["apac-geo-002", "apac-geo-003", "apac-cyber-001"],
+      "confidence": "Assessed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "apac-008",
+      "claim_type": "assessment",
+      "pillar": "cyber",
+      "text": "No direct confirmed intrusion of a wind OEM has been identified in current signals — the threat is assessed from sector adjacency, targeting methodology, and the documented targeting profile of China-nexus APT groups against critical infrastructure.",
+      "signal_ids": ["apac-cyber-001", "apac-cyber-002"],
+      "confidence": "Assessed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "apac-009",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "AeroGrid's Kaohsiung hub produces 60% of global turbine output and hosts the Series 7 production line and SCADA TW-01 network, placing it at the intersection of Taiwan's strategic significance and documented APT targeting priorities for wind manufacturing IP.",
+      "signal_ids": ["apac-geo-003", "apac-cyber-002"],
+      "confidence": "Assessed",
+      "paragraph": "sowhat"
+    },
+    {
+      "claim_id": "apac-010",
+      "claim_type": "estimate",
+      "pillar": "cyber",
+      "text": "Current signals do not confirm direct intrusion attempts against wind OEM operational networks — this gap leaves open the possibility that pre-positioning activity is underway without observable external indicators in the current collection window.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "sowhat"
+    }
+  ]
+}

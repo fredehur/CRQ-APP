@@ -1,37 +1,111 @@
 {
   "region": "MED",
-  "timestamp": "2026-03-16T17:07:36Z",
+  "timestamp": "2026-04-06T09:32:02Z",
   "window_used": "7d",
-  "total_signals": 6,
-  "sources_queried": 6,
+  "total_signals": 7,
+  "sources_queried": 11,
   "clusters": [
     {
-      "name": "Southern European Economic Instability Pressure",
+      "name": "Iran Strait of Hormuz Supply Chain Leverage",
+      "pillar": "Geo",
+      "convergence": 4,
+      "topic_id": "iran-strait-energy-routes",
+      "sources": [
+        {
+          "name": "The Guardian",
+          "url": "https://www.theguardian.com/business/2026/mar/25/iran-war-strait-of-hormuz-shipping-delays-windfarm-projects-europe",
+          "credibility_tier": "B",
+          "headline": "Iran war: Strait of Hormuz shipping delays hit windfarm projects across Europe"
+        },
+        {
+          "name": "NEPM / NPR",
+          "url": "https://www.nepm.org/2026-04-02/with-the-u-s-absent-europe-leads-the-push-to-reopen-he-strait-of-hormuz",
+          "credibility_tier": "B",
+          "headline": "With the U.S. absent, Europe leads the push to reopen the Strait of Hormuz"
+        },
+        {
+          "name": "CSIS",
+          "url": "https://www.csis.org/analysis/chinas-expanding-interests-latin-america-development-leverage-coercion-and-crime",
+          "credibility_tier": "A",
+          "headline": "Iran conflict heightens cyber threats to U.S. and allied energy infrastructure"
+        },
+        {
+          "name": "TenBizT Military Analysis",
+          "url": "https://en.tenbizt.com/news/military/2026/04/04/iran-s-control-strait-hormuz-impact/",
+          "credibility_tier": "B",
+          "headline": "Iran's control of Strait of Hormuz — cascading industrial and energy supply chain impact"
+        }
+      ]
+    },
+    {
+      "name": "Wind Component Shipping Disruption — EU Corridor",
       "pillar": "Geo",
       "convergence": 2,
       "topic_id": "supply-chain-wind-components",
       "sources": [
-        { "name": "Geopolitical Feed", "headline": "Mediterranean geopolitical tensions affect energy infrastructure confidence" },
-        { "name": "Geopolitical Feed", "headline": "North Africa instability creates supply chain risk for MED wind operators" }
+        {
+          "name": "The Guardian",
+          "url": "https://www.theguardian.com/business/2026/mar/25/iran-war-strait-of-hormuz-shipping-delays-windfarm-projects-europe",
+          "credibility_tier": "B",
+          "headline": "Offshore wind component shipments to EU and UK projects directly delayed by Hormuz closure fears"
+        },
+        {
+          "name": "CLINTEL",
+          "url": "https://clintel.org/the-strait-of-hormuzs-bitter-lesson-for-the-european-union/",
+          "credibility_tier": "B",
+          "headline": "The Strait of Hormuz's bitter lesson for the European Union's energy dependency"
+        }
       ]
     },
     {
-      "name": "EU Regulatory Scrutiny of Wind Suppliers",
-      "pillar": "Geo",
-      "convergence": 1,
-      "topic_id": "eu-critical-infrastructure-directive",
+      "name": "Iranian Nation-State OT Pre-Positioning",
+      "pillar": "Cyber",
+      "convergence": 3,
+      "topic_id": "iran-strait-energy-routes",
       "sources": [
-        { "name": "Geopolitical Feed", "headline": "EU regulatory scrutiny of third-country wind component suppliers intensifies" }
+        {
+          "name": "CISA",
+          "url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-279a",
+          "credibility_tier": "A",
+          "headline": "CISA and partners urge critical infrastructure to stay vigilant — joint advisory confirms MuddyWater and CyberAv3ngers activity"
+        },
+        {
+          "name": "Industrial Cyber (ODNI Report)",
+          "url": "https://industrialcyber.co/reports/odni-report-us-critical-infrastructure-faces-escalating-cyber-risks-from-china-russia-iran-and-north-korea/",
+          "credibility_tier": "B",
+          "headline": "ODNI report: U.S. critical infrastructure faces escalating cyber risks from Iran and three other nation-states"
+        },
+        {
+          "name": "SC World",
+          "url": "https://www.scworld.com/perspective/4-steps-security-teams-can-take-to-mitigate-iranian-attacks-on-critical-infrastructure",
+          "credibility_tier": "B",
+          "headline": "Four steps to mitigate Iranian attacks on critical infrastructure — IRGC targeting patterns"
+        }
       ]
     },
     {
-      "name": "Insider Credential Misuse at Energy Operators",
+      "name": "IOCONTROL Malware — Industrial Control Targeting",
       "pillar": "Cyber",
       "convergence": 3,
       "sources": [
-        { "name": "Cyber Feed", "headline": "Insider misuse incident at Mediterranean energy operator — unauthorized telemetry access" },
-        { "name": "Cyber Feed", "headline": "Former maintenance contractor retained active credentials for six months post-departure" },
-        { "name": "Cyber Feed", "headline": "Third-party providers with privileged access present elevated insider misuse risk" }
+        {
+          "name": "CISA",
+          "url": "https://www.cisa.gov/news-events/cybersecurity-advisories/aa22-279a",
+          "credibility_tier": "A",
+          "headline": "CyberAv3ngers deploys IOCONTROL malware against internet-exposed ICS/OT devices at scale"
+        },
+        {
+          "name": "ICIT",
+          "url": "https://www.icitech.org/post/iran-and-the-cxpanding-cyber-front-what-government-leaders-need-to-know",
+          "credibility_tier": "B",
+          "headline": "Iran and the expanding cyber front — industrial control system targeting capability"
+        },
+        {
+          "name": "Inside Cybersecurity",
+          "url": "https://insidecybersecurity.com/daily-news/think-tank-highlights-increased-cyber-threats-energy-infrastructure-iran-war-continues",
+          "credibility_tier": "B",
+          "headline": "Think tank highlights increased cyber threats to energy infrastructure as Iran conflict continues"
+        }
       ]
     }
   ]

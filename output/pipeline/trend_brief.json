@@ -1,7 +1,7 @@
 {
   "APAC": {
     "direction": "stable",
-    "run_count": 11,
+    "run_count": 12,
     "last_3_runs": [
       "HIGH",
       "HIGH",
@@ -73,12 +73,18 @@
         "timestamp": "2026-04-05T13:00:36Z",
         "severity": "HIGH",
         "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T204532Z",
+        "timestamp": "2026-04-05T20:45:32Z",
+        "severity": "HIGH",
+        "status": "escalated"
       }
     ]
   },
   "AME": {
     "direction": "stable",
-    "run_count": 11,
+    "run_count": 12,
     "last_3_runs": [
       "CRITICAL",
       "CRITICAL",
@@ -150,16 +156,22 @@
         "timestamp": "2026-04-05T13:00:36Z",
         "severity": "CRITICAL",
         "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T204532Z",
+        "timestamp": "2026-04-05T20:45:32Z",
+        "severity": "CRITICAL",
+        "status": "monitor"
       }
     ]
   },
   "LATAM": {
     "direction": "accelerating",
-    "run_count": 11,
+    "run_count": 12,
     "last_3_runs": [
       "LOW",
-      "LOW",
-      "MEDIUM"
+      "MEDIUM",
+      "HIGH"
     ],
     "history": [
       {
@@ -226,13 +238,19 @@
         "run_id": "crq-2026-04-05T130036Z",
         "timestamp": "2026-04-05T13:00:36Z",
         "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T204532Z",
+        "timestamp": "2026-04-05T20:45:32Z",
+        "severity": "HIGH",
         "status": "escalated"
       }
     ]
   },
   "MED": {
     "direction": "stable",
-    "run_count": 11,
+    "run_count": 12,
     "last_3_runs": [
       "MEDIUM",
       "MEDIUM",
@@ -304,16 +322,22 @@
         "timestamp": "2026-04-05T13:00:36Z",
         "severity": "MEDIUM",
         "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T204532Z",
+        "timestamp": "2026-04-05T20:45:32Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
       }
     ]
   },
   "NCE": {
-    "direction": "improving",
-    "run_count": 11,
+    "direction": "accelerating",
+    "run_count": 12,
     "last_3_runs": [
-      "LOW",
       "HIGH",
-      "LOW"
+      "LOW",
+      "HIGH"
     ],
     "history": [
       {
@@ -381,6 +405,12 @@
         "timestamp": "2026-04-05T13:00:36Z",
         "severity": "LOW",
         "status": "monitor"
+      },
+      {
+        "run_id": "crq-2026-04-05T204532Z",
+        "timestamp": "2026-04-05T20:45:32Z",
+        "severity": "HIGH",
+        "status": "escalated"
       }
     ]
   }

@@ -1,0 +1,93 @@
+{
+  "region": "LATAM",
+  "timestamp": "2026-04-06T09:32:01Z",
+  "window_used": "7d",
+  "total_signals": 3,
+  "sources_queried": 10,
+  "clusters": [
+    {
+      "name": "US Trade Security Investigation Wind Imports",
+      "pillar": "Geo",
+      "convergence": 3,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Wind Turbine Technology London (wttlonline.com)",
+          "url": "https://www.wttlonline.com/stories/wind-turbines,14187",
+          "credibility_tier": "B",
+          "headline": "US Section 232 investigation into wind turbine imports raises supply chain security concerns"
+        },
+        {
+          "name": "Reuters",
+          "url": "https://www.reuters.com/article/business/chinas-sinovel-convicted-in-us-of-trade-secret-theft-idUSKBN1FD39O/",
+          "credibility_tier": "A",
+          "headline": "US opens national security probe into imported wind turbines and components"
+        },
+        {
+          "name": "KPMG Tax News Flash",
+          "url": "https://kpmg.com/us/en/taxnewsflash/news/2025/08/us-bis-requests-comments-section-232-investigation-imports-wind-turbines.html",
+          "credibility_tier": "B",
+          "headline": "US BIS requests comments on Section 232 investigation into wind turbine imports"
+        }
+      ]
+    },
+    {
+      "name": "Chinese SOE Expansion LATAM Energy Sectors",
+      "pillar": "Geo",
+      "convergence": 4,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Council on Foreign Relations",
+          "url": "https://www.cfr.org/articles/china-in-latin-america-february-2026",
+          "credibility_tier": "A",
+          "headline": "China deepens renewable energy and infrastructure footprint across Latin America in 2026"
+        },
+        {
+          "name": "Americas Quarterly",
+          "url": "https://www.americasquarterly.org/article/chinas-green-tech-push-in-latin-america-is-gaining-traction/",
+          "credibility_tier": "B",
+          "headline": "China's green tech push in Latin America gaining traction via state-owned enterprises"
+        },
+        {
+          "name": "CSIS",
+          "url": "https://www.csis.org/analysis/chinas-expanding-interests-latin-america-development-leverage-coercion-and-crime",
+          "credibility_tier": "A",
+          "headline": "China's expanding interests in Latin America: development, leverage, and coercion"
+        },
+        {
+          "name": "Baker Botts (ourtake.bakerbotts.com)",
+          "url": "https://ourtake.bakerbotts.com/post/102l0p1/new-tariffs-on-wind-turbine-products-could-be-coming",
+          "credibility_tier": "B",
+          "headline": "New tariffs on wind turbine products may follow Section 232 national security investigation"
+        }
+      ]
+    },
+    {
+      "name": "Regulatory Flux Argentina Brazil Chile 2026",
+      "pillar": "Geo",
+      "convergence": 3,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Wood Mackenzie (LinkedIn)",
+          "url": "https://www.linkedin.com/posts/wood-mackenzie_argentina-brazil-and-chile-face-unprecedented-activity-7432439548225421313-IHK0",
+          "credibility_tier": "C",
+          "headline": "Argentina, Brazil, and Chile face unprecedented regulatory changes affecting electricity and storage sectors"
+        },
+        {
+          "name": "PAGBAM Abogados",
+          "url": "https://pagbam.com/newsletters-en/whats-new-in-argentina-march-2026/",
+          "credibility_tier": "B",
+          "headline": "Argentina March 2026 regulatory changes affecting energy and mining investment"
+        },
+        {
+          "name": "Americas Market Intelligence",
+          "url": "https://americasmi.com/insights/2026-latin-america-supply-chain-opportunities/",
+          "credibility_tier": "B",
+          "headline": "2026 Latin America supply chain opportunities shaped by fluid regulatory environment"
+        }
+      ]
+    }
+  ]
+}

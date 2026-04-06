@@ -1,0 +1,96 @@
+{
+  "region": "MED",
+  "generated_at": "2026-04-06T09:32:02Z",
+  "claims": [
+    {
+      "claim_id": "med-001",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Iran has enacted legislation imposing transit fees on oil and gas carriers transiting the Strait of Hormuz, establishing a durable leverage mechanism over energy shipping routes that European nations depend on for renewable infrastructure buildout.",
+      "signal_ids": ["med-geo-001"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "med-002",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Hormuz closure fears have directly delayed large offshore wind component shipments to EU and UK projects, as corroborated by The Guardian reporting in March 2026.",
+      "signal_ids": ["med-geo-002"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "med-003",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "European nations are leading a diplomatic push to reopen the Strait of Hormuz specifically as an energy security concern, confirming that renewable infrastructure supply chains are now embedded in a contested maritime theatre.",
+      "signal_ids": ["med-geo-003"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "med-004",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "CSIS and ODNI assessments confirm Iran's demonstrated intent and capability to use energy infrastructure targeting as an instrument of geopolitical coercion.",
+      "signal_ids": ["med-geo-004"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "med-005",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "MuddyWater, aligned to Iran's Ministry of Intelligence and Security, has confirmed pre-positioned persistent access via Dindoor and Fakeset backdoors inside critical infrastructure supply chain firms, airports, and financial institutions, as reported in the CISA joint advisory of June 2025.",
+      "signal_ids": ["med-cyber-001"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "med-006",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "CyberAv3ngers, operating under IRGC Cyber Electronic Command, has developed and deployed IOCONTROL malware targeting internet-exposed industrial control and OT devices, with Censys identifying 40,000–48,000 such exposed devices on U.S. networks constituting an active attack surface.",
+      "signal_ids": ["med-cyber-002"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "med-007",
+      "claim_type": "assessment",
+      "pillar": "cyber",
+      "text": "Iran's confirmed OT pre-positioning in analogous critical infrastructure sectors — aligned with its escalating coercive posture — creates a plausible and assessed pathway for targeted system intrusion against energy operators with Mediterranean supply chain exposure.",
+      "signal_ids": ["med-cyber-001", "med-cyber-002", "med-geo-004"],
+      "confidence": "Assessed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "med-008",
+      "claim_type": "estimate",
+      "pillar": "cyber",
+      "text": "No confirmed incident of OT-to-cloud lateral movement or wind turbine IP exfiltration — including blade design data or predictive maintenance algorithms — has been identified in the current collection window. This gap limits confidence in assessing whether the intrusion pathway has been activated against wind sector targets specifically.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "med-009",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "AeroGrid's Mediterranean operations — Palermo manufacturing (HIGH criticality) and Malaga service hub — sit within the disrupted maritime theatre, with the North African logistics corridor directly exposed to Hormuz-linked supply delays affecting component delivery timelines.",
+      "signal_ids": ["med-geo-001", "med-geo-002"],
+      "confidence": "Assessed",
+      "paragraph": "sowhat"
+    },
+    {
+      "claim_id": "med-010",
+      "claim_type": "assessment",
+      "pillar": "cyber",
+      "text": "The system intrusion scenario ranks #3 globally by financial impact; the MED VaCR stands at $4,200,000 against the Predictive Maintenance and Offshore IP Theft scenario, with offshore blade assembly process and Mediterranean service network identified as the primary crown jewels at risk.",
+      "signal_ids": ["med-cyber-001", "med-cyber-002"],
+      "confidence": "Assessed",
+      "paragraph": "sowhat"
+    }
+  ]
+}

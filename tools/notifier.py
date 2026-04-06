@@ -4,10 +4,10 @@
 Usage:
     notifier.py ROUTING_DECISIONS_PATH [--mock]
 
-Mock mode: writes brief to output/mock_delivery/ instead of sending email.
+Mock mode: writes brief to output/delivery/rsm/ instead of sending email.
 Live mode: sends via SMTP (SMTP_HOST, SMTP_USER, SMTP_PASS in .env).
 
-Appends to: output/delivery_log.jsonl
+Appends to: output/delivery/delivery_log.jsonl
 """
 import json
 import shutil
@@ -25,8 +25,8 @@ import os
 load_dotenv()
 
 OUTPUT_ROOT = Path("output")
-DELIVERY_LOG_PATH = Path("output/delivery_log.jsonl")
-MOCK_DELIVERY_DIR = Path("output/mock_delivery")
+DELIVERY_LOG_PATH = Path("output/delivery/delivery_log.jsonl")
+MOCK_DELIVERY_DIR = Path("output/delivery/rsm")
 AUDIENCE_CONFIG_PATH = Path("data/audience_config.json")
 
 
@@ -56,7 +56,7 @@ def _send_email(recipients: list[str], subject: str, body: str) -> None:
 
 
 def _mock_deliver(decision: dict, brief_content: str, mock_dir: Path | None = None) -> None:
-    """Write brief to mock_delivery/ for testing. Accepts optional mock_dir for test isolation."""
+    """Write brief to output/delivery/rsm/ for testing. Accepts optional mock_dir for test isolation."""
     import tools.notifier as _self  # module-level reference so monkeypatch works
     dest_dir = mock_dir if mock_dir is not None else _self.MOCK_DELIVERY_DIR
     dest_dir.mkdir(parents=True, exist_ok=True)

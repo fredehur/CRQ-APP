@@ -27,6 +27,26 @@ FORBIDDEN_BUDGET = [
     'allocate budget', 'purchase', 'buy tools', 'hire a ', 'procure'
 ]
 
+# Generic source labels that are not named sources — must not appear in citation brackets
+FORBIDDEN_GENERIC_SOURCES = [
+    r'\[cyber signal',          # "Cyber Signal — AME Live Collection" etc.
+    r'\[geo signal',            # "Geo Signal — ..."
+    r'\[youtube signal',        # "YouTube Signal — ..."
+    r'\[research collection',   # "[research collection]"
+    r'evidenced by \[cyber signal',
+    r'evidenced by \[geo signal',
+]
+
+# Pipeline/collection mechanics language — implementation detail, not intelligence content
+FORBIDDEN_PIPELINE_LANGUAGE = [
+    'research collection cycle',
+    'noisy corpus',
+    'research collector',
+    '-source collection effort',
+    '-source collection',
+    'collection effort',
+]
+
 def audit_report(file_path, label):
     os.makedirs("output/.retries", exist_ok=True)
     retry_file = f"output/.retries/{label}.retries"
@@ -65,6 +85,18 @@ def audit_report(file_path, label):
     if not fail_msg:
         if any(w in content for w in FORBIDDEN_BUDGET):
             fail_msg = "AUDIT FAILED: Unsolicited budget or procurement advice detected. Remove it entirely."
+
+    if not fail_msg:
+        for pattern in FORBIDDEN_GENERIC_SOURCES:
+            if re.search(pattern, content):
+                fail_msg = "AUDIT FAILED: Generic source label used as citation (e.g. 'Cyber Signal', 'Geo Signal', 'research collection'). Replace with the actual named source from signal_clusters.json."
+                break
+
+    if not fail_msg:
+        for phrase in FORBIDDEN_PIPELINE_LANGUAGE:
+            if phrase in content:
+                fail_msg = f"AUDIT FAILED: Pipeline/collection mechanics language detected ('{phrase}'). Use intelligence language: 'current collection window', 'signals recovered', 'identified collection gaps'."
+                break
 
     if fail_msg:
         print(fail_msg, file=sys.stderr)

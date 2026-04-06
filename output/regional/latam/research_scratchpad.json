@@ -1,0 +1,48 @@
+{
+  "region": "LATAM",
+  "collected_at": "2026-04-06T09:28:00.151310+00:00",
+  "working_theory": {
+    "scenario_name": "Regional Manufacturing Operations",
+    "vacr_usd": 0,
+    "hypothesis": "Despite $0 stated cyber risk valuation, a Regional Manufacturing Operations compromise scenario is materializing in LATAM through supply chain disruption targeting wind component sourcing. Evidence would include: (1) documented compromise of LATAM-based turbine component suppliers or their OT/SCADA systems, (2) theft or exfiltration of proprietary aerodynamic designs from manufacturing facilities, (3) disruption of blade manufacturing plant operations via ICS attacks, or (4) validated intelligence of state/criminal actors conducting reconnaissance on LATAM wind farm telemetry infrastructure. Denial would require absence of supply chain incidents, no OT targeting in regional plants, and lack of threat actor interest in wind energy IP or operational data.",
+    "active_topics": [
+      {
+        "id": "supply-chain-wind-components",
+        "label": "Supply Chain Disruption — Wind Component Sourcing"
+      }
+    ],
+    "geo_queries": [
+      "LATAM port authority and customs disruptions affecting wind turbine component imports from Asia-Pacific suppliers in 2024",
+      "Argentine, Brazilian, and Chilean regulatory changes to renewable energy supply chain security and critical infrastructure protection",
+      "Chinese state-linked acquisition activity or technology transfer agreements targeting LATAM wind energy manufacturing IP"
+    ],
+    "cyber_queries": [
+      "OT/SCADA intrusions or ICS malware detections in LATAM wind turbine blade manufacturing plants (Brazil, Argentina, Mexico)",
+      "Threat actor reconnaissance or credential harvesting targeting LATAM renewable energy operators' predictive maintenance or telemetry platforms",
+      "Supply chain compromises of LATAM-based wind component manufacturers or their upstream suppliers via industrial espionage or ransomware"
+    ]
+  },
+  "collection": {
+    "pass_1_result_count": 29,
+    "gap_assessment": "Evidence shows macroeconomic wind energy tariff/trade policy signals (U.S. Section 232 investigations, tariff implementation) and regional regulatory shifts in Argentina/Brazil/Chile, but contains zero cyber-specific indicators. No documented OT/SCADA compromises, ICS attacks, IP theft, threat actor reconnaissance, or supply chain incidents targeting LATAM wind component suppliers are present. The collection is dominated by trade policy and regulatory analysis rather than operational security threats.",
+    "gaps_identified": [
+      "No cyber or OT-specific incidents: zero compromises of LATAM turbine suppliers, SCADA systems, or blade manufacturing plants",
+      "No IP theft or exfiltration events: no documented theft of aerodynamic designs or proprietary manufacturing data",
+      "No threat actor activity: absence of validated intelligence on state/criminal actor reconnaissance of wind farm telemetry, ICS targeting, or supply chain espionage in LATAM region"
+    ],
+    "pass_2_queries": [
+      "LATAM wind energy OT security incidents 2024-2026: turbine supplier breaches, SCADA compromises, ICS attacks on blade manufacturing or renewable plants",
+      "Threat actor reconnaissance activity targeting LATAM wind energy: state-sponsored or criminal APT activity against wind farm SCADA, telemetry systems, or component suppliers",
+      "Supply chain espionage LATAM wind sector: IP theft, design exfiltration from aerodynamic/manufacturing facilities, or validated counterintelligence reports on competing state actors"
+    ],
+    "pass_2_result_count": 15,
+    "total_result_count": 44
+  },
+  "conclusion": {
+    "theory_confirmed": false,
+    "confidence_rationale": "The geopolitical dimension of the working theory is well-supported: multiple credible, corroborating sources (Reuters, CSIS, CFR, Baker Botts, KPMG) confirm that LATAM wind component supply chains are materially exposed to foreign-dependency risks, U.S. national security scrutiny, and deepening PRC infrastructure entrenchment. However, the cyber vector — which is the operative condition for scenario confirmation — is entirely absent from the evidence. No source documents OT/SCADA compromise, ICS attacks, IP exfiltration, or threat actor reconnaissance against LATAM wind facilities. The evidence pool is structurally biased toward trade/regulatory reporting and contains no OSINT from threat intelligence, ISAC, CISA, or incident-response sources that would be required to substantiate cyber materialization. Confidence in geopolitical context is moderate-to-high (B2 on geo pillar alone); confidence in cyber scenario materialization is negligible. Theory remains plausible but unconfirmed — denial criteria are currently met on the cyber dimension.",
+    "suggested_admiralty": "F2",
+    "signal_type": "trend",
+    "dominant_pillar": "Geo"
+  }
+}

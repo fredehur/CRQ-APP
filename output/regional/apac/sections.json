@@ -1,0 +1,30 @@
+{
+  "region": "APAC",
+  "generated_at": "2026-04-06T10:00:00Z",
+  "threat_actor": "China-nexus APT",
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "ESCALATED — CYBER-LED",
+  "intel_bullets": [
+    "Persian Gulf conflict is driving structural acceleration of offshore wind deployment across APAC as governments hedge against LNG supply risk, corroborated by Recharge News.",
+    "China formalised renewable energy cooperation with Iran through a state-level MoU, signalling coordinated acquisition of clean energy technology and industrial capability.",
+    "MingYang's state-backed 50MW turbine programme targets 2026 rollout, demonstrating Beijing's urgency to dominate the global wind technology supply chain ahead of Western competitors."
+  ],
+  "adversary_bullets": [
+    "China-nexus APT campaigns showed a 150% surge in espionage activity across APAC energy and manufacturing in 2024, with a confirmed breach of 70+ critical infrastructure organisations across 37 countries including energy ministries, per FalconFeeds and Cybersecurity Dive.",
+    "SideWinder APT has expanded into Indonesia and Thailand deploying government-audit-themed phishing and credential theft against logistics and industrial sectors adjacent to wind manufacturing supply chains."
+  ],
+  "impact_bullets": [
+    "Kaohsiung's Series 7 production line and SCADA TW-01 network — responsible for 60% of AeroGrid's global turbine output — match the documented IP acquisition profile of China-nexus APT campaigns.",
+    "The Shanghai Service Hub's operating jurisdiction creates a secondary exposure pathway for credential access against privileged systems shared with Kaohsiung, with direct risk to TEPCO supply agreement delivery timelines."
+  ],
+  "watch_bullets": [
+    "Credential harvesting or phishing campaigns targeting Taiwanese semiconductor or precision manufacturing firms sharing supply chain personnel and technology profiles with wind blade production.",
+    "New confirmed APT breaches at energy ministry or clean energy manufacturer targets in Japan, South Korea, or Taiwan — geographic convergence toward AeroGrid's operating jurisdictions.",
+    "Expansion of the China-Iran renewable energy MoU to include turbine technology transfer, signalling reduced motivation for covert acquisition and a possible shift in adversary methodology."
+  ],
+  "action_bullets": [
+    "Audit third-party and supply chain access credentials for privileged systems.",
+    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
+    "Conduct a targeted review of privileged credential access at the Shanghai Service Hub for any shared pathways into Kaohsiung's Series 7 production systems and SCADA TW-01 network."
+  ]
+}

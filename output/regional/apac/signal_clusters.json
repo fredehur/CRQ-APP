@@ -1,30 +1,112 @@
 {
   "region": "APAC",
-  "timestamp": "2026-03-16T17:07:25Z",
+  "timestamp": "2026-04-06T10:00:00Z",
   "window_used": "7d",
   "total_signals": 6,
-  "sources_queried": 6,
+  "sources_queried": 9,
   "clusters": [
     {
-      "name": "State-Sponsored Manufacturing IP Acquisition",
+      "name": "Gulf Conflict Accelerates APAC Wind Technology Race",
       "pillar": "Geo",
-      "convergence": 3,
-      "topic_id": "state-actor-wind-ip-theft",
+      "convergence": 4,
+      "topic_id": "iran-strait-energy-routes",
       "sources": [
-        { "name": "Geopolitical Feed", "headline": "South China Sea tensions drive manufacturing supply chain restructuring" },
-        { "name": "Geopolitical Feed", "headline": "China-Taiwan strait risk assessment: industrial sector exposure" },
-        { "name": "Geopolitical Feed", "headline": "Australia tightens foreign investment screening for energy technology" }
+        {
+          "name": "Recharge News",
+          "url": "https://www.rechargenews.com/offshore-wind/watershed-moment-beckons-for-asian-renewables-amid-persian-gulf-turmoil/2-1-1963008",
+          "credibility_tier": "B",
+          "headline": "Persian Gulf conflict driving APAC nations to accelerate offshore wind deployment as LNG alternative"
+        },
+        {
+          "name": "Gulf Observer via LinkedIn",
+          "url": "https://www.linkedin.com/posts/thegulfobserver_iran-china-sign-agreement-to-cooperate-on-activity-7393995373595320320-Nb9u",
+          "credibility_tier": "C",
+          "headline": "China and Iran sign MoU on renewable energy cooperation amid broader Iran conflict"
+        },
+        {
+          "name": "City News Service — Trial by Fire Analysis",
+          "url": "https://www.citynewsservice.cn/articles/china-biz-buzz/in-perspective/trial-by-fire-iran-war-accelerates-maturity-of-chinas-green-industries-pk8v6wjn",
+          "credibility_tier": "B",
+          "headline": "Iran war accelerates maturity of China's green industries — state-backed industrial strategy"
+        },
+        {
+          "name": "Now Solar — Reuters via Now Solar",
+          "url": "https://now.solar/2026/03/28/investors-bet-iran-war-will-boost-chinese-renewables-demand-reuters-com/",
+          "credibility_tier": "B",
+          "headline": "Investors bet Iran war will boost Chinese renewables demand as clean energy markets reorient"
+        }
       ]
     },
     {
-      "name": "OT/SCADA Supply Chain Compromise Campaign",
+      "name": "China State-Backed Wind Technology Dominance Push",
+      "pillar": "Geo",
+      "convergence": 2,
+      "topic_id": "state-actor-wind-ip-theft",
+      "sources": [
+        {
+          "name": "Energies Media",
+          "url": "https://energiesmedia.com/china-plans-2026-rollout-of-50-mw-wind-turbines/",
+          "credibility_tier": "B",
+          "headline": "China plans 2026 rollout of 50MW wind turbines — MingYang state-backed programme targets global supply chain dominance"
+        },
+        {
+          "name": "Recharge News",
+          "url": "https://www.rechargenews.com/offshore-wind/watershed-moment-beckons-for-asian-renewables-amid-persian-gulf-turmoil/2-1-1963008",
+          "credibility_tier": "B",
+          "headline": "China's wind turbine ambitions reach 50MW — state urgency to lead global offshore wind OEM market"
+        }
+      ]
+    },
+    {
+      "name": "China-Nexus APT Surge Targeting Energy and Manufacturing",
       "pillar": "Cyber",
-      "convergence": 3,
+      "convergence": 4,
+      "topic_id": "state-actor-wind-ip-theft",
+      "sources": [
+        {
+          "name": "FalconFeeds — China Cyber Campaign Critical Infrastructure 2024–2025",
+          "url": "https://falconfeeds.io/blogs/china-cyber-campaign-critical-infrastructure-2024-2025",
+          "credibility_tier": "B",
+          "headline": "150% surge in China-nexus APT espionage confirmed across APAC energy, finance, and manufacturing in 2024"
+        },
+        {
+          "name": "Cybersecurity Dive — Asian Government Espionage Campaign",
+          "url": "https://www.cybersecuritydive.com/news/asian-governments-espionage-campaign-breached-critical-infrastructure-in-3/811472/",
+          "credibility_tier": "B",
+          "headline": "Asian government APT confirmed breach of 70+ critical infrastructure organisations in 37 countries including energy ministries"
+        },
+        {
+          "name": "ASPI — State-Sponsored Economic Cyber-Espionage Report",
+          "url": "https://www.aspi.org.au/report/state-sponsored-economic-cyber-espionage-commercial-purposes-assessing-preparedness-emerging/",
+          "credibility_tier": "B",
+          "headline": "State-sponsored economic cyber-espionage for commercial purposes — APAC preparedness assessment"
+        },
+        {
+          "name": "CyberProof — East Asia State-Backed Cyber Espionage 2025",
+          "url": "https://www.cyberproof.com/blog/cyber-espionage-and-ransomware-east-asias-2025-state-backed-attacks/",
+          "credibility_tier": "B",
+          "headline": "East Asia state-backed cyber espionage and ransomware campaigns targeting critical sectors in 2025"
+        }
+      ]
+    },
+    {
+      "name": "SideWinder APT Expansion Into Southeast Asia",
+      "pillar": "Cyber",
+      "convergence": 2,
       "topic_id": "ot-ics-cyber-attacks",
       "sources": [
-        { "name": "Cyber Feed", "headline": "Intrusion campaigns targeting OT networks in APAC manufacturing sector" },
-        { "name": "Cyber Feed", "headline": "Supply chain attack on industrial automation software in wind energy" },
-        { "name": "Cyber Feed", "headline": "Blade production line control systems compromised via software updates" }
+        {
+          "name": "Dark Reading — SideWinder Espionage Campaign Southeast Asia",
+          "url": "https://www.darkreading.com/threat-intelligence/sidewinder-espionage-campaign-expands-across-southeast-asia",
+          "credibility_tier": "B",
+          "headline": "SideWinder espionage campaign expands into Indonesia and Thailand — phishing targets logistics and nuclear sectors"
+        },
+        {
+          "name": "Telsy — 2024 State-Sponsored Campaigns Review",
+          "url": "https://www.telsy.com/en/the-2024-state-sponsored-campaigns/",
+          "credibility_tier": "B",
+          "headline": "2024 state-sponsored campaign review — credential theft and phishing tradecraft in Southeast Asia manufacturing adjacencies"
+        }
       ]
     }
   ]

@@ -1,0 +1,20 @@
+=== Company Context ===
+  Company: AeroGrid Wind Solutions (Anonymized)
+  Industry: Renewable Energy (75% Wind Turbine Manufacturing, 25% Global Service & Maintenance)
+  Crown Jewels:
+    - Proprietary turbine aerodynamic designs and material IP (Manufacturing)
+    - OT/SCADA networks in global blade manufacturing plants (Manufacturing)
+    - Real-time predictive maintenance algorithms (Service)
+    - Live telemetry data from offshore and onshore wind farms (Service)
+
+=== Geopolitical Risk Context: LATAM ===
+  Severity: LOW
+  Active Threats: False
+  Dominant Pillar: None
+  Context: Routine operations. No significant geopolitical anomalies or targeted cyber campaigns detected against the renewable energy sector in this region.
+
+=== Geopolitical Signals (The Why) ===
+  Stable regional political environment. No trade disputes, sanctions, or state-actor campaigns affecting the renewable energy sector. Regional government relations with energy operators remain constructive.
+
+=== Cyber Signals (The How) ===
+  No active threat campaigns detected targeting energy infrastructure in the region. Routine background scanning activity observed but consistent with baseline.

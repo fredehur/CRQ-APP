@@ -1,0 +1,30 @@
+{
+  "region": "LATAM",
+  "generated_at": "2026-04-06T09:32:01Z",
+  "threat_actor": "Chinese state-owned enterprises",
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "ESCALATED — GEO-LED",
+  "intel_bullets": [
+    "The U.S. Department of Commerce launched a Section 232 national security investigation into wind turbine and component imports in August 2025, citing foreign supply chain vulnerabilities and critical infrastructure exposure.",
+    "Chinese state-owned enterprises are deepening renewable energy and infrastructure investments across Argentina, Brazil, and Chile, including project awards and strategic asset acquisitions that extend PRC presence in wind component material flows.",
+    "Argentina, Brazil, and Chile are simultaneously undergoing unprecedented regulatory changes in 2026 affecting electricity markets, storage procurement, and mining law, creating compounding supply chain unpredictability."
+  ],
+  "adversary_bullets": [
+    "No confirmed cyber incident targeting LATAM wind energy operations was identified in this collection window — the cyber dimension is based on analytical inference, not confirmed evidence.",
+    "PRC state-owned enterprise depth in LATAM component supply chains creates a structural pathway for supply chain integrity risk that cannot be confirmed but also cannot be dismissed as a forward-looking concern."
+  ],
+  "impact_bullets": [
+    "AeroGrid's Enel Chile wind maintenance and Neoenergia turbine service contracts in Brazil both depend on component supply chains now exposed to U.S. trade security pressure and PRC-linked sourcing concentration.",
+    "With no manufacturing presence in LATAM, AeroGrid's São Paulo and Santiago service operations are direct consumers of the component flows under geopolitical pressure, with no internal buffer against sourcing disruptions."
+  ],
+  "watch_bullets": [
+    "U.S. Section 232 investigation issuing formal tariff recommendations on wind turbine components — the trigger that converts this trend into a confirmed sourcing cost event.",
+    "Chinese SOE project advances in Chile or Brazil entering wind maintenance or turbine service segments that compete with or complicate AeroGrid's supply lines under the Enel and Neoenergia agreements.",
+    "Major regulatory reversals in Brazil's electricity procurement framework or Chile's wind energy investment rules that alter contract terms or component sourcing conditions for either active service agreement."
+  ],
+  "action_bullets": [
+    "Audit third-party and supply chain access credentials for privileged systems.",
+    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
+    "Map single-source dependencies on PRC-linked components across the Enel Chile and Neoenergia Brazil supply chains — identify qualified substitute suppliers before U.S. tariff recommendations convert the current trend into a delivery disruption event."
+  ]
+}

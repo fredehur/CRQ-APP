@@ -1,0 +1,32 @@
+=== Company Context ===
+  Company: AeroGrid Wind Solutions (Anonymized)
+  Industry: Renewable Energy (75% Wind Turbine Manufacturing, 25% Global Service & Maintenance)
+  Crown Jewels:
+    - Proprietary turbine aerodynamic designs and material IP (Manufacturing)
+    - OT/SCADA networks in global blade manufacturing plants (Manufacturing)
+    - Real-time predictive maintenance algorithms (Service)
+    - Live telemetry data from offshore and onshore wind farms (Service)
+
+=== Geopolitical Risk Context: AME ===
+  Severity: CRITICAL
+  Active Threats: True
+  Dominant Pillar: Cyber
+  Context: Financially motivated syndicates are targeting energy sector service providers. High risk of Ransomware attacks aimed at paralyzing live wind farm telemetry and remote maintenance scheduling.
+
+=== Geopolitical Signals (The Why) ===
+  No significant state-actor involvement. Financially motivated criminal syndicates operating independently of geopolitical directives. General energy sector targeting driven by perceived ransom payment likelihood.
+  - Financially motivated criminal syndicate activity
+  - Energy sector targeting pattern
+  - No state-actor attribution
+
+=== Cyber Signals (The How) ===
+  Active ransomware campaign confirmed targeting energy sector service providers. Attack pattern focuses on encrypting live wind farm telemetry systems and remote maintenance scheduling platforms to maximise operational disruption and ransom leverage.
+  Threat Vector: Ransomware deployment via phishing and exposed remote access services
+  - Target Asset: Live wind farm telemetry
+  - Target Asset: Remote maintenance scheduling
+  - Target Asset: Service delivery systems
+
+=== Empirical Scenario Baseline: Ransomware ===
+  Financial Impact Rank: #1 (37.6% of all losses)
+  Event Frequency Rank: #2 (31.7% of all events)
+  Records Affected Rank: #3 (2.75% of all records)

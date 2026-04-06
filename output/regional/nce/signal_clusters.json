@@ -1,0 +1,81 @@
+{
+  "region": "NCE",
+  "timestamp": "2026-04-06T09:45:00Z",
+  "window_used": "7d",
+  "total_signals": 6,
+  "sources_queried": 8,
+  "clusters": [
+    {
+      "name": "EU critical infrastructure regulatory enforcement gap",
+      "pillar": "Geo",
+      "convergence": 4,
+      "topic_id": "eu-critical-infrastructure-directive",
+      "sources": [
+        {
+          "name": "IEA via Power Info Today",
+          "url": "https://www.powerinfotoday.com/news-press-releases/iea-flags-gaps-in-global-energy-supply-chains-structure/",
+          "credibility_tier": "B",
+          "headline": "IEA flags clean energy supply chain concentration risk — less than 25% demand met without dominant producer"
+        },
+        {
+          "name": "E&E News (POLITICO)",
+          "url": "https://www.eenews.net/articles/eu-launches-legal-action-as-26-countries-fail-to-enforce-renewables-rules/",
+          "credibility_tier": "B",
+          "headline": "EU launches legal action as 26 member states fail to enforce renewable energy directives"
+        },
+        {
+          "name": "Business.gov.nl",
+          "url": "https://business.gov.nl/amendments/cer-directive-protects-critical-infrastructure/",
+          "credibility_tier": "A",
+          "headline": "CER Directive transposition delayed beyond 2024 deadline — wind turbine manufacturers excluded from critical entity designation"
+        },
+        {
+          "name": "European Commission — Home Affairs",
+          "url": null,
+          "credibility_tier": "B",
+          "headline": "Critical infrastructure resilience at EU level — ongoing transposition and enforcement gaps documented"
+        }
+      ]
+    },
+    {
+      "name": "State-sponsored wind IP acquisition incentives",
+      "pillar": "Geo",
+      "convergence": 1,
+      "topic_id": "state-actor-wind-ip-theft",
+      "sources": [
+        {
+          "name": "IEA via Power Info Today",
+          "url": "https://www.powerinfotoday.com/news-press-releases/iea-flags-gaps-in-global-energy-supply-chains-structure/",
+          "credibility_tier": "B",
+          "headline": "Concentrated manufacturing supply chains create asymmetric strategic incentives for state-sponsored IP theft over organic development"
+        }
+      ]
+    },
+    {
+      "name": "China-nexus and Russian state-actor manufacturing intrusion",
+      "pillar": "Cyber",
+      "convergence": 3,
+      "topic_id": "ot-ics-cyber-attacks",
+      "sources": [
+        {
+          "name": "Industrial Cyber — Google GTIG Report",
+          "url": null,
+          "credibility_tier": "B",
+          "headline": "UNC3886 and UNC5221 targeting edge devices for initial access into defense industrial base and aerospace manufacturing environments"
+        },
+        {
+          "name": "Cybersecurity Review",
+          "url": "https://www.cybersecurity-review.com/china-remains-embedded-in-us-energy-networks-for-the-purpose-of-taking-it-down/",
+          "credibility_tier": "B",
+          "headline": "China-nexus actors confirmed embedded in energy networks — capability development for potential disruption operations"
+        },
+        {
+          "name": "Industrial Cyber — Google GTIG Report",
+          "url": null,
+          "credibility_tier": "B",
+          "headline": "Russian state-aligned groups confirmed targeting manufacturing sector via insecure remote connection points — federal agency warning corroborated"
+        }
+      ]
+    }
+  ]
+}

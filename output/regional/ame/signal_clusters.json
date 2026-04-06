@@ -1,37 +1,79 @@
 {
   "region": "AME",
-  "timestamp": "2026-03-16T17:07:35Z",
+  "timestamp": "2026-04-06T09:35:00Z",
   "window_used": "7d",
-  "total_signals": 6,
-  "sources_queried": 6,
+  "total_signals": 3,
+  "sources_queried": 8,
   "clusters": [
     {
-      "name": "Ransomware targeting energy service providers",
-      "pillar": "Cyber",
-      "convergence": 3,
-      "topic_id": "ransomware-energy-grid",
-      "sources": [
-        { "name": "Cyber Signal", "headline": "Ransomware group encrypts North American energy operator systems, demands $22M" },
-        { "name": "Cyber Signal", "headline": "Double-extortion campaign hits wind energy predictive maintenance platform" },
-        { "name": "Geo Signal", "headline": "Congressional hearing highlights ransomware threat to US energy grid operators" }
-      ]
-    },
-    {
-      "name": "Critical infrastructure regulatory escalation",
+      "name": "China Rare Earth Export Controls Wind Supply Chain",
       "pillar": "Geo",
-      "convergence": 2,
-      "sources": [
-        { "name": "Geo Signal", "headline": "US executive order expands critical infrastructure designation to offshore wind" },
-        { "name": "Geo Signal", "headline": "Canada-US energy policy divergence creates regulatory compliance burden" }
-      ]
-    },
-    {
-      "name": "Wind energy supply chain exposure",
-      "pillar": "Geo",
-      "convergence": 1,
+      "convergence": 4,
       "topic_id": "supply-chain-wind-components",
       "sources": [
-        { "name": "Cyber Signal", "headline": "Wind turbine operational platforms and OT networks in confirmed target profile" }
+        {
+          "name": "Interlude One — Wind Turbine Rare Earth Dependency",
+          "url": "https://interludeone.com/posts/2025-04-23-windturbines/wind-turbines",
+          "credibility_tier": "B",
+          "headline": "China's dominant control over rare earth permanent magnet supply chains weaponised via export controls"
+        },
+        {
+          "name": "Atlas Institute — Rare Earth Rivalries",
+          "url": "https://atlasinstitute.org/rare-earth-rivalries-the-geopolitical-rise-of-critical-minerals/",
+          "credibility_tier": "B",
+          "headline": "Geopolitical rise of critical minerals and state leverage over wind turbine components"
+        },
+        {
+          "name": "Goldman Sachs — Resource Realism Critical Minerals",
+          "url": "https://www.goldmansachs.com/insights/articles/resource-realism-the-geopolitics-of-critical-mineral-supply-chains",
+          "credibility_tier": "B",
+          "headline": "Resource realism: the geopolitics of critical mineral supply chains"
+        },
+        {
+          "name": "IRENA — Geopolitics of the Energy Transition Critical Materials",
+          "url": null,
+          "credibility_tier": "B",
+          "headline": "Geopolitics of the energy transition: critical materials dependencies and sovereign risk"
+        }
+      ]
+    },
+    {
+      "name": "US National Security Scrutiny Wind Turbine Imports",
+      "pillar": "Geo",
+      "convergence": 3,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Energetica India — US Wind Turbine Import Probe",
+          "url": "https://www.energetica-india.net/news/us-launches-probe-into-imported-wind-turbines-tariff-threat-looms",
+          "credibility_tier": "B",
+          "headline": "US launches national security probe into imported wind turbines with tariff threat of 11-50%"
+        },
+        {
+          "name": "American Action Forum — Trump Wind Turbine Tariffs",
+          "url": "https://www.americanactionforum.org/press-release/president-trump-gears-up-to-levy-tariffs-on-wind-turbine-imports/",
+          "credibility_tier": "B",
+          "headline": "President Trump gears up to levy tariffs on wind turbine imports"
+        },
+        {
+          "name": "Wind Power Monthly — US Tariffs Wind Industry",
+          "url": "https://www.windpowermonthly.com/article/1913594/us-tariffs-draw-ire-wind-industry-market-turmoil-continues",
+          "credibility_tier": "B",
+          "headline": "US tariffs draw ire of wind industry as market turmoil continues"
+        }
+      ]
+    },
+    {
+      "name": "Mexico Energy Sovereignty Foreign Operator Pressure",
+      "pillar": "Geo",
+      "convergence": 1,
+      "sources": [
+        {
+          "name": "SciELO Mexico — AMLO Energy Sovereignty",
+          "url": "https://www.scielo.org.mx/article_plus.php?pid=S0185-013X2025000300729&tlng=en&lng=en",
+          "credibility_tier": "B",
+          "headline": "Mexico AMLO-era energy sovereignty policies creating regulatory uncertainty for foreign wind operators"
+        }
       ]
     }
   ]

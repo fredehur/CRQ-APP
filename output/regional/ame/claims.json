@@ -1,0 +1,87 @@
+{
+  "region": "AME",
+  "generated_at": "2026-04-06T09:35:00Z",
+  "claims": [
+    {
+      "claim_id": "ame-001",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "China's dominant control over rare earth permanent magnet supply chains, now weaponized via export controls, directly threatens wind turbine component availability and elevates IP theft incentives for state actors seeking to close technological gaps.",
+      "signal_ids": ["ame-geo-001"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "ame-002",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "The US Commerce Department has launched a national security investigation into imported wind turbines, with tariff threats of 11–50% disrupting component procurement across AME wind operators and signalling escalating geopolitical scrutiny of energy supply chains.",
+      "signal_ids": ["ame-geo-002"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "ame-003",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Mexico's AMLO-era energy sovereignty policies have created regulatory uncertainty for foreign-owned wind farm operators, increasing exposure to politically motivated interference or nationalization pressure on operationally dependent assets.",
+      "signal_ids": ["ame-geo-003"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "ame-004",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "The convergence of China's rare earth weaponisation and US trade scrutiny structurally elevates the intelligence value of wind farm operational technology IP, making AME-region operators a priority target for state-sponsored collection activity.",
+      "signal_ids": ["ame-geo-001", "ame-geo-002"],
+      "confidence": "Assessed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "ame-005",
+      "claim_type": "estimate",
+      "pillar": "cyber",
+      "text": "No named threat actor, confirmed intrusion incident, or documented attack vector against wind farm OT environments in the AME region was recovered in the current collection window. The cyber threat assessment is inferred from geopolitical conditions and sector-level precedent, not from confirmed cyber indicators.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "ame-006",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "State actors with rare earth leverage — principally Chinese state-affiliated entities — have documented history of targeting wind energy IP in other regions as a parallel track to supply chain pressure, suggesting the geopolitical conditions are consistent with collection tradecraft even absent confirmed AME-specific indicators.",
+      "signal_ids": ["ame-geo-001"],
+      "confidence": "Assessed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "ame-007",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "AeroGrid's Houston Operations Center — rated HIGH criticality — sits at the intersection of the US national security investigation into wind turbine imports and state-actor incentives to acquire wind farm telemetry IP, making it the primary exposure point in this threat environment.",
+      "signal_ids": ["ame-geo-001", "ame-geo-002"],
+      "confidence": "Assessed",
+      "paragraph": "sowhat"
+    },
+    {
+      "claim_id": "ame-008",
+      "claim_type": "estimate",
+      "pillar": "geopolitical",
+      "text": "AeroGrid's Toronto Engineering Hub holds predictive maintenance IP that represents a secondary collection target, with reduced but non-negligible exposure given the hub's role in proprietary algorithm development.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "sowhat"
+    },
+    {
+      "claim_id": "ame-009",
+      "claim_type": "estimate",
+      "pillar": "geopolitical",
+      "text": "The absence of AME-specific cyber indicators constitutes an identified collection gap, not a clear environment. The threat vector remains plausible pending further signals recovery.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "sowhat"
+    }
+  ]
+}

@@ -43,7 +43,8 @@ def search(region, mock=True):
         print(f"\n=== Geopolitical Signals (The Why) ===")
         print(f"  {geo_signals.get('summary', '')}")
         for indicator in geo_signals.get("lead_indicators", []):
-            print(f"  • {indicator}")
+            text = indicator.get("text", "") if isinstance(indicator, dict) else str(indicator)
+            print(f"  • {text}")
 
     if cyber_signals:
         print(f"\n=== Cyber Signals (The How) ===")

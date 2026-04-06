@@ -4,6 +4,12 @@
 
 **Boundary:** Intelligence & Synthesis layer only. VaCR = immutable input from separate CRQ app. Never calculate — consume, contextualize, report.
 
+## Universal Principles (single source of truth)
+
+Agent design, boundary, and skill-contract principles live in the **agent-team-blueprint repo**:
+`C:/Users/frede/agent-team-blueprint/docs/` — do not maintain copies here.
+`/prime-dev` reads from that path directly.
+
 ## Engineering Protocol (MANDATORY — every session)
 
 1. **Teams first:** Non-trivial tasks → `TeamCreate` before touching code.
@@ -12,8 +18,34 @@
 4. **Parallel by default:** Independent tasks run with `run_in_background: true`.
 5. **Stop hooks:** Agents prove completion — they do not claim it.
 6. **Context discipline:** Delegate token-heavy work to sub-agents.
-7. **Clean up:** `TeamDelete` after task complete. Hard reset.
-8. **Run `/prime-dev` before build sessions.** Principles: `docs/superpowers/specs/agent-design-principles.md`
+7. **jcodemunch first:** All code navigation via index tools — see policy below.
+8. **Clean up:** `TeamDelete` after task complete. Hard reset.
+9. **Run `/prime-dev` before build sessions.** Principles: `C:/Users/frede/agent-team-blueprint/docs/agent-design-principles.md`
+
+## Code Exploration Policy
+
+Use jcodemunch-mcp for all code navigation. Do **not** fall back to Read, Grep, Glob, or Bash for code exploration.
+
+```
+Read / Grep / Glob / Bash  →  last resort only (markdown, JSON data files)
+jcodemunch-mcp             →  default for ALL code navigation
+```
+
+**Session startup:** `resolve_repo { "path": "." }` — confirm indexed before any navigation.
+**After editing any file:** `index_file { "path": "/abs/path/to/file" }`
+
+| Task | Tool |
+|---|---|
+| Symbol by name | `search_symbols` |
+| All functions/classes in a file | `get_file_outline` |
+| Jump to a function body | `get_symbol_source` |
+| Symbol + imports | `get_context_bundle` |
+| Text / comment / TODO search | `search_text` |
+| What imports a file | `find_importers` |
+| What breaks if I change X | `get_blast_radius` |
+| Dead / unreachable code | `find_dead_code` |
+
+Full reference: `C:/Users/frede/agent-team-blueprint/docs/tools/jcodemunch-mcp.md`
 
 ## Stack
 

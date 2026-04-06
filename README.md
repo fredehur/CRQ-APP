@@ -27,11 +27,35 @@ The audience is the **whole organization (~30,000 employees)** — not just the 
 | Audience | What they get |
 |----------|--------------|
 | Board of Directors | Global executive brief: total VaCR exposure, cross-regional patterns, compound risk |
-| CISO / C-Suite | Regional escalation status, Admiralty-rated intelligence, velocity trends |
+| CISO / C-Suite | Weekly intelligence brief (Word .docx) — scenario, threat actor, intel findings, adversary activity, impact, tradecraft, actions |
+| Regional Security Managers | Weekly INTSUM + flash alerts per region (Markdown + PDF) |
 | Regional Operations | Region-specific threat brief anchored to local crown jewels and service continuity |
 | Sales & Service Teams | Clear/monitor/escalated status for their region — actionable, not alarming |
 
 **Clear signals are as valuable as alerts.** Knowing your region is stable is actionable intelligence, not absence of information. The system routes quiet regions through a fast "clear" path so the org isn't flooded with noise.
+
+---
+
+## Web Application
+
+The pipeline includes a FastAPI web application (port **8001**) with 7 tabs:
+
+| Tab | Purpose |
+|-----|---------|
+| **Overview** | Synthesis bar (status counts + narrative), region list with status colours, detail panel with sections + signal clusters |
+| **Reports** | Audience Hub — config-driven card grid (CISO, Board, RSM, Sales), click-to-detail with preview and download |
+| **Trends** | Longitudinal trend analysis across archived runs |
+| **History** | Historical run log with per-region severity charts |
+| **Config** | Intelligence sources, regional footprint, agent prompts |
+| **Validate** | Benchmark validation — OSINT signal + velocity columns, scenario cross-check |
+| **Source Audit** | Source registry browser — grouped by publication, tier badges, filters, flag/block workflow |
+
+### Start the app
+
+```bash
+uv run python server.py
+# → http://localhost:8001
+```
 
 ---
 
@@ -90,13 +114,15 @@ run-crq  (Orchestrator — opus)
 ├── [PARALLEL × 5 regions]
 │   │
 │   ├── OSINT tool chain (per region)
-│   │     geo_collector.py → geo_signals.json
-│   │     cyber_collector.py → cyber_signals.json
+│   │     research_collector.py → geo_signals.json + cyber_signals.json  [live mode]
+│   │     geo_collector.py + cyber_collector.py → signals                [mock mode]
+│   │     youtube_collector.py → youtube_signals.json                    [always]
 │   │     scenario_mapper.py → scenario_map.json  (keyword hint, advisory only)
+│   │     collection_gate.py → collection_quality.json
 │   │
 │   ├── gatekeeper-agent  (Triage — haiku)
-│   │     Reads signal files. Assesses credibility. Assigns Admiralty rating.
-│   │     Routes: ESCALATE / MONITOR / CLEAR
+│   │     Reads signal files + collection quality. Assesses credibility.
+│   │     Assigns Admiralty rating. Routes: ESCALATE / MONITOR / CLEAR
 │   │     Writes gatekeeper_decision.json — does NOT determine final scenario.
 │   │
 │   └── regional-analyst-agent  (Analysis — sonnet)  [ESCALATE only]
@@ -104,37 +130,55 @@ run-crq  (Orchestrator — opus)
 │         Classifies signal as Event / Trend / Mixed
 │         Writes 3-paragraph executive brief (Why → How → So What)
 │         Writes signal_clusters.json (source clusters for dashboard + attribution)
+│         Writes sections.json (structured sections for dashboard rendering)
 │         Updates data.json with primary_scenario, financial_rank, signal_type
-│         └── Stop hook → regional-analyst-stop.py
+│         └── Stop hooks:
 │               ├── jargon-auditor.py (forbidden language gate)
-│               └── source-attribution-auditor.py (evidenced claims must cite named sources)
+│               ├── source-attribution-auditor.py (evidenced claims must cite named sources)
+│               └── sections-validator.py (sections.json schema + completeness)
 │
-├── trend_analyzer.py  [after fan-in]
+├── [Phase 1.5 — Deep Research, if --deep flag]
+│     deep_research.py geo + cyber per region (overwrites shallow signals)
+│
+├── trend_analyzer.py  [Phase 2 — after fan-in]
 │     Computes velocity per region, patches data.json, writes trend_brief.json
 │
-├── report_differ.py
+├── trends-synthesis-agent  [Phase 2.5]
+│     Longitudinal patterns across all archived runs → trend_analysis.json
+│
+├── report_differ.py  [Phase 3]
 │     Cross-regional keyword delta brief
 │
-├── global-builder-agent  (Synthesis — sonnet)
+├── global-builder-agent  (Synthesis — sonnet)  [Phase 4]
 │     Reads all approved regional briefs + trend_brief.json + data.json files
-│     Synthesizes executive_summary: cross-regional patterns, compound risk, velocity narrative
+│     Synthesizes executive_summary: cross-regional patterns, compound risk, velocity
 │     Writes global_report.json
 │     ├── Stop hook → json-auditor.py (schema validation)
 │     ├── Stop hook → validate_global_report.py (deterministic: VaCR arithmetic,
 │     │     Admiralty consistency, scenario cross-check, phantom region guard)
 │     └── Stop hook → jargon-auditor.py
 │
-└── global-validator-agent  (Devil's Advocate — haiku)
-      Read-only cross-check of global_report.json against regional source data
-      Returns APPROVED or REWRITE (max 2 cycles, then circuit breaker)
-
-RSM Dispatch (separate path, triggered by scheduler / rsm_dispatcher.py)
+├── global-validator-agent  (Devil's Advocate — haiku)  [Phase 4b]
+│     Read-only cross-check of global_report.json against regional source data
+│     Returns APPROVED or REWRITE (max 2 cycles, then circuit breaker)
 │
-└── rsm-formatter-agent  (sonnet)
-      Reads seerist_signals, region_delta, cyber_signals, audience_config
-      Writes weekly INTSUM brief and/or flash alert per region
-      └── Stop hook → rsm-formatter-stop.py
-            └── rsm-brief-auditor.py (structure, ADM format, WATCH LIST depth, jargon)
+├── [Phase 5 — Dashboard & Export]
+│     build_dashboard.py → dashboard.html + global_report.md
+│     export_pdf.py → board_report.pdf
+│     export_pptx.py → board_report.pptx
+│     export_ciso_docx.py → ciso_brief.docx
+│
+├── [Phase 6 — Finalize]
+│     write_manifest.py → run_manifest.json
+│     archive_run.py → output/runs/{timestamp}/
+│     update_source_registry.py → data/sources.db
+│     build_history.py → history.json
+│
+└── [Phase 7 — RSM Briefs, if --rsm flag]
+      rsm_dispatcher.py → weekly INTSUMs per region
+      └── rsm-formatter-agent  (sonnet)
+            Writes INTSUM + flash alerts per region
+            └── Stop hook → rsm-brief-auditor.py
 ```
 
 **Five operational regions:** APAC · AME (North America) · LATAM · MED (Mediterranean) · NCE (Northern & Central Europe)
@@ -170,13 +214,35 @@ This single command runs the complete pipeline:
 
 | Phase | Action |
 |-------|--------|
-| 0 | Validate CRQ database schema, initialize trace log |
-| 1 | OSINT collection → Gatekeeper triage → Regional analysis × 5 (parallel) |
+| 0 | Validate CRQ database schema, initialize trace log, load prior feedback |
+| 1 | OSINT collection → Gatekeeper triage → Regional analysis × 5 (parallel) → Jargon audit → Cluster enrichment |
+| 1.5 | Deep research pass (optional, `--deep` flag) |
 | 2 | Velocity analysis — trend computation across archived runs |
+| 2.5 | Trend synthesis — longitudinal pattern analysis |
 | 3 | Cross-regional delta brief |
 | 4 | Global JSON report + devil's advocate validation (max 2 rewrite cycles) |
-| 5 | HTML dashboard, PDF board report, PowerPoint board report |
-| 6 | Write run manifest, archive run to `output/runs/{timestamp}/`, finalize |
+| 5 | HTML dashboard, PDF + PPTX board reports, CISO Word brief |
+| 6 | Write run manifest, archive run, update source registry, build history |
+| 7 | RSM briefs (optional, `--rsm` flag) |
+
+### Pipeline flags
+
+| Flag | Effect |
+|------|--------|
+| `--window 30d` | OSINT collection window (default: `7d`) |
+| `--deep` | Enable Phase 1.5 deep research pass |
+| `--deep-scope=all` | Deep research for all regions, not just escalated |
+| `--depth=quick\|standard\|deep` | Research depth per region (default: `standard`) |
+| `--rsm` | Enable Phase 7 RSM brief generation |
+
+### OSINT modes
+
+| Mode | Trigger | Behaviour |
+|------|---------|-----------|
+| **Mock** (default) | No env vars | `geo_collector.py --mock` + `cyber_collector.py --mock` — reads from `data/mock_osint_fixtures/` |
+| **Live** | `OSINT_LIVE=true` in `.env` | `research_collector.py` — 3-pass LLM research loop with Tavily/DDG, writes real signals |
+
+YouTube collection runs in both modes.
 
 ### Rebuild from existing reports
 
@@ -208,36 +274,59 @@ Hot-loads the full architecture reference: agent hierarchy, file-passing contrac
 /prime-dev
 ```
 
-Required before any code-change session. Loads the agentic engineering principles from the `agent-team-blueprint` repo, declares the Opus/Sonnet team structure, and confirms the engineering protocol checklist — including `mode: "bypassPermissions"` on all background agent spawns, parallelism, stop hooks, and TeamDelete. Background agents silently block without `bypassPermissions`; this ritual enforces the requirement explicitly before work begins.
+Required before any code-change session. Loads the agentic engineering principles from the `agent-team-blueprint` repo, declares the Opus/Sonnet team structure, and confirms the engineering protocol checklist — including `mode: "bypassPermissions"` on all background agent spawns, parallelism, stop hooks, and TeamDelete.
 
 ---
 
 ## Output Files
 
-All outputs are written to `output/` and archived immutably per run:
+All outputs are written to `output/` subdirectories and archived immutably per run:
 
 ```
 output/
-  run_manifest.json              # Master state — pipeline ID, per-region status/severity/VaCR
-  global_report.json             # Structured JSON global report (primary machine-readable output)
-  global_report.md               # Markdown render of global report
-  dashboard.html                 # Tailwind CSS executive dashboard with audit trace
-  board_report.pdf               # PDF export for board distribution
-  board_report.pptx              # PowerPoint export for board presentation
-  system_trace.log               # Full pipeline observability log
-  trend_brief.json               # Cross-run velocity analysis
+  pipeline/
+    run_manifest.json              # Master state — pipeline ID, per-region status/severity/VaCR
+    global_report.json             # Structured JSON global report (primary machine-readable output)
+    global_report.md               # Markdown render of global report
+    dashboard.html                 # Tailwind CSS executive dashboard
+    history.json                   # Historical run data for History tab charts
+    trend_brief.json               # Cross-run velocity analysis
+    trend_analysis.json            # Longitudinal trend synthesis
+    feedback_trends.json           # Aggregated analyst feedback across runs
+    routing_decisions.json         # Audience routing decisions
+  deliverables/
+    board_report.pdf               # PDF export for board distribution
+    board_report.pptx              # PowerPoint export for board presentation
+    ciso_brief.docx                # CISO Weekly Brief (Word) — canonical intelligence output
+  delivery/
+    ciso/                          # CISO flash alerts
+    rsm/                           # RSM weekly INTSUMs + flash alerts
+    delivery_log.jsonl             # Delivery audit trail
   regional/
     {region}/
-      data.json                  # Always written — status, severity, VaCR, admiralty, velocity,
-                                 #   primary_scenario, financial_rank, signal_type, rationale
-      report.md                  # Only for escalated regions — finalized 3-paragraph executive brief
-      gatekeeper_decision.json   # Admiralty-rated triage decision + rationale
-      geo_signals.json           # Geopolitical lead indicators (OSINT)
-      cyber_signals.json         # Cyber threat signals (OSINT)
-      scenario_map.json          # Keyword mapper hint (advisory — analyst validates)
-  latest/                        # Symlink to most recent completed run
+      data.json                    # Always written — status, severity, VaCR, admiralty, velocity,
+                                   #   primary_scenario, financial_rank, signal_type, source_quality
+      report.md                    # Only for escalated regions — 3-paragraph executive brief
+      sections.json                # Structured sections for dashboard rendering (escalated only)
+      signal_clusters.json         # Source clusters with enriched URLs + credibility tiers
+      gatekeeper_decision.json     # Admiralty-rated triage decision + rationale
+      geo_signals.json             # Geopolitical lead indicators (OSINT)
+      cyber_signals.json           # Cyber threat signals (OSINT)
+      youtube_signals.json         # YouTube OSINT signals
+      scenario_map.json            # Keyword mapper hint (advisory — analyst validates)
+      collection_quality.json      # Collection quality gate assessment
+      context_block.txt            # Regional footprint context for gatekeeper
+      research_scratchpad.json     # Working theory + audit trail (live mode only)
+  validation/
+    flags.json                     # Validation flags (OSINT signal + velocity per scenario)
+    candidates.json                # Benchmark source candidates
+    cache/                         # Validation cache files
+  logs/
+    system_trace.log               # Full pipeline observability log
+    tool_trace.log                 # Tool-level telemetry
   runs/
-    {timestamp}/                 # Immutable archived runs
+    {timestamp}/                   # Immutable archived runs
+  latest/                          # Copy of most recent completed run
 ```
 
 ### data.json Contract
@@ -258,11 +347,28 @@ Every region produces a `data.json` after the gatekeeper decision. This is the c
   "velocity": "accelerating",
   "dominant_pillar": "Cyber",
   "signal_type": "Trend",
+  "source_quality": { "tier_a": 2, "tier_b": 5, "tier_c": 1, "total": 8 },
   "report_path": "regional/ame/report.md"
 }
 ```
 
 A UI can render escalated regions as threat cards and clear/monitor regions as status badges by reading `status` from `data.json`. Clear signals (`status: "clear"`) are first-class outputs — they confirm a region is stable, which is as operationally valuable as an escalation.
+
+---
+
+## Source Registry
+
+Sources are tracked in a persistent SQLite database (`data/sources.db`) with three tables:
+
+| Table | Purpose |
+|-------|---------|
+| `sources_registry` | Per unique source — domain, type, credibility tier (A/B/C), collection type, blocked flag |
+| `source_appearances` | Per run/region/pillar — tracks which sources appeared and whether they were cited |
+| `seerist_events` | Ready for Seerist API integration — structured signals, not URL-based citations |
+
+Source quality over time is measured by `cited_count / appearance_count` ratio. Tiers are auto-assigned by domain (A = government/intelligence, B = industry/news, C = social) with manual override preserved.
+
+The Source Audit tab in the web app provides a browsable view: grouped by publication, collapsible rows, tier badges, and filters by region/type/tier/cited/blocked.
 
 ---
 
@@ -272,10 +378,12 @@ A UI can render escalated regions as threat cards and clear/monitor regions as s
 |------|---------|----------------|
 | `jargon-auditor.py` | Stop on `regional-analyst-agent` | Forbidden language in `report.md` |
 | `source-attribution-auditor.py` | Stop on `regional-analyst-agent` | Every "evidenced" claim cites a named source from `signal_clusters.json` |
+| `sections-validator.py` | Stop on `regional-analyst-agent` | `sections.json` schema + all 5 bullet arrays populated |
 | `json-auditor.py` | Stop on `global-builder-agent` | JSON schema: required keys, types, regional threat entries |
 | `validate_global_report.py` | Stop on `global-builder-agent` | Deterministic: VaCR arithmetic, Admiralty consistency vs `gatekeeper_decision.json`, scenario cross-check vs `data.json`, phantom region guard |
 | `jargon-auditor.py` | Stop on `global-builder-agent` | Forbidden language in `global_report.json` |
-| `rsm-brief-auditor.py` | Stop on `rsm-formatter-agent` | INTSUM/FLASH structure, valid ADM field, WATCH LIST ≥3 items, correct reply line, jargon |
+| `rsm-brief-auditor.py` | Stop on `rsm-formatter-agent` | INTSUM/FLASH structure, valid ADM field, WATCH LIST depth, jargon |
+| `grounding-validator.py` | Pre-tool hook | Validates grounding of agent claims |
 | `crq-schema-validator.py` | Phase 0 | `data/mock_crq_database.json` schema before pipeline runs |
 
 **Jargon gate** enforces three categories of forbidden output:
@@ -283,10 +391,12 @@ A UI can render escalated regions as threat cards and clear/monitor regions as s
 - **Technical cyber jargon** — CVE identifiers, IP addresses, malware hashes
 - **SOC operational language** — TTPs, IoCs, MITRE ATT&CK, lateral movement, C2
 - **Unsolicited budget advice** — procurement, vendor recommendations, tool purchases
+- **Pipeline language** — "research collection cycle", "noisy corpus", "signal files"
+- **Generic source labels** — `[Cyber Signal — ...]`, `[Geo Signal — ...]`
 
-**Source attribution gate** closes the hallucination vector: any claim marked "evidenced" must cite a named source from `signal_clusters.json`. Generic labels (`"Cyber Signal"`, `"Geo Signal"`) do not satisfy the requirement.
+**Source attribution gate** closes the hallucination vector: any claim marked "evidenced" must cite a named source from `signal_clusters.json`. Generic labels do not satisfy the requirement.
 
-**Deterministic validation** (`validate_global_report.py`) replaces the previous LLM-based arithmetic check — Python does the math, not the model.
+**Deterministic validation** (`validate_global_report.py`) replaces LLM-based arithmetic — Python does the math, not the model.
 
 All audit failures return `exit(2)` and force agent rewrite with the full violation output passed inline. Circuit breaker at `output/.retries/{label}.retries` caps retries at 3.
 
@@ -299,6 +409,12 @@ data/
   company_profile.json              # AeroGrid Wind Solutions — crown jewels, industry footprint
   master_scenarios.json             # Empirical global baseline (9 scenario types, financial/frequency/records ranks)
   mock_crq_database.json            # Region-keyed CRQ scenarios (VaCR = immutable input from enterprise CRQ)
+  regional_footprint.json           # Per-region crown jewels, site locations, operational context
+  sources.db                        # Persistent source registry (SQLite)
+  blocked_urls.txt                  # URLs blocked from OSINT collection
+  youtube_sources.json              # YouTube channel seeds per region
+  validation_sources.json           # Benchmark sources for validation tab
+  schedule_config.json              # Scheduler configuration
   mock_osint_fixtures/
     {region}_geo.json               # Mock geopolitical signals per region
     {region}_cyber.json             # Mock cyber threat signals per region
@@ -308,59 +424,63 @@ data/
 
 All agents run in mock mode by default. No live API keys or external data sources are required.
 
-**Mock scenario (escalated regions):**
-- AME: CRITICAL, Ransomware, $22M VaCR
-- APAC: HIGH, System Intrusion, $18.5M VaCR
-- MED: MEDIUM, Insider Misuse, $4.2M VaCR
-
-**Mock scenario (quiet regions):**
-- LATAM: LOW — clear, no active threat
-- NCE: LOW — clear, no active threat
-
----
-
-## Architecture Notes
-
-- **Model assignment is fixed in YAML frontmatter** — haiku for triage/validation, sonnet for analysis and synthesis, opus for orchestration.
-- **Parallel fan-out** — all 5 regional pipelines run simultaneously via background Tasks, then fan-in for global synthesis.
-- **Filesystem as state** — every agent handoff is a file. No conversation state carries between agents.
-- **Scenario coupling is analytical, not mechanical** — the regional analyst reads `master_scenarios.json` directly and owns the scenario determination. The keyword mapper is a hint, not a verdict.
-- **Devil's advocate validation** — `global-validator-agent` cross-checks the global report against regional source data before the pipeline advances. Checks VaCR arithmetic, Admiralty consistency, scenario mapping, and phantom regions.
-- **Admiralty Scale propagation** — the gatekeeper's reliability rating flows from `gatekeeper_decision.json` → `data.json` → `global_report.json` → dashboard. Every intelligence claim carries its confidence level.
-- **Velocity tracking** — `trend_analyzer.py` reads archived runs and computes directional movement per region. The global summary synthesizes into a board-level velocity narrative.
-- **Dashboard uses Tailwind CSS via CDN** — dark-mode executive dashboard with Admiralty badges, velocity arrows, and a collapsible audit trace panel.
-- **Disler Behavioral Protocol** — all agents operate as Unix CLI pipes: zero preamble, zero sycophancy, filesystem as state, assume hostile auditing. Output goes to files, not conversation.
-
 ---
 
 ## Tools
 
 | Tool | Description |
 |------|-------------|
-| `geo_collector.py <REGION> [--mock]` | Collect geopolitical signals → `geo_signals.json` |
-| `cyber_collector.py <REGION> [--mock]` | Collect cyber threat signals → `cyber_signals.json` |
+| `research_collector.py <REGION> [--window]` | Live 3-pass LLM research loop → `geo_signals.json` + `cyber_signals.json` |
+| `geo_collector.py <REGION> [--mock] [--window]` | Mock geopolitical signals → `geo_signals.json` |
+| `cyber_collector.py <REGION> [--mock] [--window]` | Mock cyber threat signals → `cyber_signals.json` |
+| `youtube_collector.py <REGION> [--mock] [--window]` | YouTube OSINT signals → `youtube_signals.json` |
+| `deep_research.py <REGION> <geo\|cyber> [--depth]` | Deep research pass — overwrites shallow signals |
 | `scenario_mapper.py <REGION> [--mock]` | Keyword-match signals to scenario → `scenario_map.json` (hint only) |
+| `collection_gate.py <REGION>` | Collection quality assessment → `collection_quality.json` |
+| `build_context.py <REGION>` | Build regional footprint context block for gatekeeper |
 | `geopolitical_context.py <REGION>` | Company profile + regional context + empirical baseline |
 | `threat_scorer.py <REGION>` | Maps severity → score (1/2/3) + scenario composition |
+| `write_region_data.py <REGION> <status>` | Write regional `data.json` after gatekeeper decision |
+| `enrich_clusters.py <REGION>` | Add URL + credibility tier to signal cluster sources |
 | `report_differ.py` | Cross-regional keyword delta brief |
 | `trend_analyzer.py` | Velocity analysis across archived runs → `trend_brief.json` |
-| `write_region_data.py <REGION> <status>` | Write regional `data.json` after gatekeeper decision |
-| `write_gatekeeper_decision.py <REGION>` | Pipe JSON to write gatekeeper decision file |
-| `write_manifest.py` | Assemble `run_manifest.json` from all regional `data.json` files |
+| `write_manifest.py [--window]` | Assemble `run_manifest.json` from all regional `data.json` files |
 | `archive_run.py` | Archive current run to `output/runs/{timestamp}/` + update `output/latest/` |
 | `build_dashboard.py` | JSON + trace → HTML dashboard + MD export |
-| `export_pdf.py [out.pdf]` | Export board PDF (Playwright + Jinja2) — includes named source citations per region |
-| `export_pptx.py [out.pptx]` | Export board PPTX (python-pptx) — includes named source citations per region |
-| `audit_logger.py <EVENT> <MESSAGE>` | Append timestamped event to `system_trace.log` |
+| `build_history.py` | Build `history.json` from archived runs |
+| `export_pdf.py [out.pdf]` | Export board PDF (Playwright + Jinja2) |
+| `export_pptx.py [out.pptx]` | Export board PPTX (python-pptx) |
+| `export_ciso_docx.py` | Export CISO Weekly Brief (python-docx) → `ciso_brief.docx` |
+| `update_source_registry.py` | Upsert sources from signal files into `data/sources.db` |
+| `source_harvester.py` | Upsert benchmark sources (Tier A) into registry |
+| `feedback_writer.py [--summarize]` | Write/read analyst feedback per region per run |
+| `feedback_summary.py` | Aggregate feedback across runs → `feedback_trends.json` |
 | `seerist_collector.py <REGION> [--mock]` | Collect Seerist geopolitical signals → `seerist_signals.json` |
 | `delta_computer.py <REGION>` | Diff current vs previous Seerist signals → `region_delta.json` |
-| `threshold_evaluator.py [--force-weekly] [--check-flash]` | Evaluate audience routing → `routing_decisions.json` |
 | `rsm_dispatcher.py --weekly [--mock]` | Generate + deliver weekly INTSUM for all RSMs |
 | `rsm_dispatcher.py --check-flash [--mock]` | Evaluate + dispatch flash alerts |
-| `notifier.py <routing_decisions.json> [--mock]` | Deliver briefs per routing decisions → `delivery_log.jsonl` |
-| `scheduler.py --once` | Run all due scheduler jobs once |
+| `validate_env.py` | Validate environment variables for live mode |
+| `audit_logger.py <EVENT> <MESSAGE>` | Append timestamped event to `system_trace.log` |
+| `discover.py <REGION>` | Source discovery agent for new OSINT channels |
+| `suggest_config.py` | Suggest configuration improvements based on run history |
 
 All tools are invoked via `uv run python tools/<tool>`.
+
+---
+
+## Architecture Notes
+
+- **Model assignment is fixed in YAML frontmatter** — haiku for triage/validation, sonnet for analysis and synthesis, opus for orchestration.
+- **Parallel fan-out** — all 5 regional pipelines run simultaneously via background agents, then fan-in for global synthesis.
+- **Filesystem as state** — every agent handoff is a file. No conversation state carries between agents.
+- **Scenario coupling is analytical, not mechanical** — the regional analyst reads `master_scenarios.json` directly and owns the scenario determination. The keyword mapper is a hint, not a verdict.
+- **Devil's advocate validation** — `global-validator-agent` cross-checks the global report against regional source data before the pipeline advances. Checks VaCR arithmetic, Admiralty consistency, scenario mapping, and phantom regions.
+- **Admiralty Scale propagation** — the gatekeeper's reliability rating flows from `gatekeeper_decision.json` → `data.json` → `global_report.json` → dashboard. Every intelligence claim carries its confidence level.
+- **Velocity tracking** — `trend_analyzer.py` reads archived runs and computes directional movement per region. The global summary synthesizes into a board-level velocity narrative.
+- **sections.json contract** — regional analyst writes structured sections (scenario, threat actor, intel findings, adversary activity, impact, watch for, actions) that the dashboard fetches directly via `/api/region/{region}/sections`.
+- **Source attribution** — `research_collector.py` returns `sources: [{name, url}]` per signal file. The CISO brief, board reports, and dashboard all render real source citations, not generic labels.
+- **Audience Hub** — Reports tab uses `AUDIENCE_REGISTRY` (JS constant) to render config-driven cards. Live audiences (CISO, Board) are clickable with preview + download. Future audiences (RSM, Sales) show phase badges and tooltips.
+- **Disler Behavioral Protocol** — all agents operate as Unix CLI pipes: zero preamble, zero sycophancy, filesystem as state, assume hostile auditing. Output goes to files, not conversation.
 
 ---
 
@@ -370,11 +490,12 @@ Managed via `uv`. Defined in `pyproject.toml`.
 
 | Package | Purpose |
 |---------|---------|
-| `fastapi` | Web server for SSE dashboard |
-| `fpdf2` | PDF export |
+| `fastapi` | Web server + API |
+| `fpdf2` | PDF generation |
 | `jinja2` | HTML templating for PDF/dashboard |
 | `playwright` | Browser-based PDF rendering |
 | `python-dotenv` | Environment variable management |
 | `python-pptx` | PowerPoint export |
+| `python-docx` | CISO Word brief export |
 | `sse-starlette` | Server-Sent Events for live pipeline updates |
 | `uvicorn` | ASGI server |

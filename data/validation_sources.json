@@ -1,0 +1,128 @@
+{
+  "sources": [
+    {
+      "id": "verizon-dbir",
+      "name": "Verizon Data Breach Investigations Report",
+      "url": "https://www.verizon.com/business/resources/reports/dbir/",
+      "cadence": "annual",
+      "admiralty_reliability": "A",
+      "sector_tags": [
+        "all"
+      ],
+      "scenario_tags": [
+        "System intrusion",
+        "Ransomware",
+        "Insider misuse",
+        "Scam or fraud"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "ibm-cost-data-breach",
+      "name": "IBM Cost of a Data Breach Report",
+      "url": "https://www.ibm.com/reports/data-breach",
+      "cadence": "annual",
+      "admiralty_reliability": "A",
+      "sector_tags": [
+        "all",
+        "manufacturing",
+        "energy"
+      ],
+      "scenario_tags": [
+        "Ransomware",
+        "Accidental disclosure",
+        "Insider misuse"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "dragos-ics-ot",
+      "name": "Dragos ICS/OT Cybersecurity Year in Review",
+      "url": "https://www.dragos.com/year-in-review/",
+      "cadence": "annual",
+      "admiralty_reliability": "A",
+      "sector_tags": [
+        "ics_ot",
+        "energy",
+        "manufacturing"
+      ],
+      "scenario_tags": [
+        "System intrusion",
+        "Ransomware"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "mandiant-mtrends",
+      "name": "Mandiant M-Trends",
+      "url": "https://www.mandiant.com/m-trends",
+      "cadence": "annual",
+      "admiralty_reliability": "B",
+      "sector_tags": [
+        "all"
+      ],
+      "scenario_tags": [
+        "Ransomware",
+        "System intrusion",
+        "Accidental disclosure"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "claroty-xiot",
+      "name": "Claroty State of XIoT Security",
+      "url": "https://claroty.com/resources/reports",
+      "cadence": "biannual",
+      "admiralty_reliability": "B",
+      "sector_tags": [
+        "ics_ot",
+        "manufacturing"
+      ],
+      "scenario_tags": [
+        "System intrusion"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "marsh-cyber-insurance",
+      "name": "Marsh Cyber Insurance Market Report",
+      "url": "https://www.marsh.com/en/services/cyber-risk/insights.html",
+      "cadence": "annual",
+      "admiralty_reliability": "B",
+      "sector_tags": [
+        "all",
+        "energy"
+      ],
+      "scenario_tags": [
+        "Ransomware",
+        "Accidental disclosure",
+        "Scam or fraud"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    },
+    {
+      "id": "enisa-threat-landscape",
+      "name": "ENISA Threat Landscape",
+      "url": "https://www.enisa.europa.eu/topics/cyber-threats/enisa-threat-landscape",
+      "cadence": "annual",
+      "admiralty_reliability": "B",
+      "sector_tags": [
+        "all",
+        "energy"
+      ],
+      "scenario_tags": [
+        "Ransomware",
+        "System intrusion",
+        "DoS attack"
+      ],
+      "last_checked": "2026-03-28T16:09:31Z",
+      "last_new_content": null
+    }
+  ]
+}

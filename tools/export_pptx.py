@@ -380,7 +380,7 @@ def build_presentation(data: ReportData) -> Presentation:
     return prs
 
 
-def export(output_path: str = DEFAULT_OUT, output_dir: str = "output") -> None:
+def export(output_path: str = DEFAULT_OUT, output_dir: str = "output/pipeline") -> None:
     data = build(output_dir=output_dir)
     prs  = build_presentation(data)
     prs.save(output_path)

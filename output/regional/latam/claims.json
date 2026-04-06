@@ -1,0 +1,78 @@
+{
+  "region": "LATAM",
+  "generated_at": "2026-04-06T09:32:01Z",
+  "claims": [
+    {
+      "claim_id": "latam-001",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "The U.S. Department of Commerce opened a Section 232 national security investigation into wind turbine and component imports in August 2025, citing foreign supply chain vulnerabilities and potential exposure of critical infrastructure to foreign influence.",
+      "signal_ids": ["latam-geo-001"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "latam-002",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Chinese state-owned enterprises are deepening renewable energy and infrastructure investments across Argentina, Brazil, and Chile — including project awards in Chile and the Chalco-Rio Tinto acquisition of Brazilian aluminum assets — extending PRC presence across wind component material flows in the region.",
+      "signal_ids": ["latam-geo-002"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "latam-003",
+      "claim_type": "fact",
+      "pillar": "geopolitical",
+      "text": "Argentina, Brazil, and Chile are simultaneously undergoing unprecedented regulatory changes in 2026 affecting electricity market rules, battery storage procurement frameworks, and mining and glacier law — creating fluid, unpredictable policy environments for wind component sourcing and investment.",
+      "signal_ids": ["latam-geo-003"],
+      "confidence": "Confirmed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "latam-004",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "The convergence of a U.S. trade security investigation, expanding Chinese state investment across LATAM energy sectors, and simultaneous regulatory reform across three key markets creates compounding supply chain unpredictability for wind component sourcing and service delivery.",
+      "signal_ids": ["latam-geo-001", "latam-geo-002", "latam-geo-003"],
+      "confidence": "Assessed",
+      "paragraph": "why"
+    },
+    {
+      "claim_id": "latam-005",
+      "claim_type": "estimate",
+      "pillar": "cyber",
+      "text": "No named threat actor or confirmed cyber incident targeting LATAM wind energy operations, supply chain infrastructure, or service systems was identified in this collection window. The cyber dimension cannot be confirmed from available evidence.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "latam-006",
+      "claim_type": "estimate",
+      "pillar": "cyber",
+      "text": "The depth of PRC state-owned enterprise presence in LATAM wind component supply chains creates a structural pathway to supply chain integrity risk — specifically, the risk that components sourced through PRC-linked vendors could introduce unvalidated dependencies — but this cannot be confirmed from current evidence.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "latam-007",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "AeroGrid's service contracts with Enel Chile and Neoenergia Brazil depend on supply chain continuity for wind turbine components and parts, placing them directly in the exposure zone of the sourcing disruptions and regulatory unpredictability documented in the current geopolitical signal set.",
+      "signal_ids": ["latam-geo-001", "latam-geo-002", "latam-geo-003"],
+      "confidence": "Assessed",
+      "paragraph": "sowhat"
+    },
+    {
+      "claim_id": "latam-008",
+      "claim_type": "estimate",
+      "pillar": "geopolitical",
+      "text": "Watch indicators: U.S. Section 232 investigation issuing tariff recommendations on wind turbine components; Chinese SOE project awards advancing in Chile or Brazil that displace or complicate existing maintenance contract supply lines; or major regulatory reversals in Brazil or Chile altering wind energy procurement frameworks.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
+      "paragraph": "sowhat"
+    }
+  ]
+}

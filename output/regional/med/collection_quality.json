@@ -1,0 +1,7 @@
+{
+  "region": "MED",
+  "thin_collection": false,
+  "geo_grounded_count": 4,
+  "cyber_grounded_count": 3,
+  "threshold": 3
+}
