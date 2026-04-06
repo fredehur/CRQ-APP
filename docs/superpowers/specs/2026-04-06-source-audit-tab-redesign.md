@@ -20,6 +20,8 @@ A text input anchored left in the filter bar. Filters client-side across `name`,
 - Position: left side of filter bar, flex:1, max-width 260px
 - Stats summary (`108 sources · 34 cited · 6 junk`) moves to right side, separated by a 1px divider
 
+**Interaction with server filters:** The existing region/tier/type/cited/hide_junk filters still trigger a server fetch (`GET /api/sources?...`). Keyword search operates as a client-side post-filter on the fetched array — it does NOT re-fetch. `applySourceSearch(query, sources)` takes the already-loaded array and returns a filtered subset. Called inside `renderSourceRegistryTable()` after fetch completes.
+
 ### 2. Merged "Usage" column
 Replaces the separate `Appearances` and `Citation rate` columns with a single `Usage` column showing:
 ```
@@ -31,6 +33,8 @@ Replaces the separate `Appearances` and `Citation rate` columns with a single `U
 - Count: always `#8b949e`
 - Benchmark sources: show `— benchmark anchor` italic in this column (no bar, not applicable)
 - Freed column space goes to `flex:2` publication name column
+
+**Parent row aggregation:** `sum(cited_count) / sum(appearance_count)` across all child members. Not the first member's value.
 
 ### 3. Citation + freshness colour signals
 Applied on every parent row without expanding:
@@ -44,6 +48,7 @@ Applied on every parent row without expanding:
 - Green (`#3fb950`): within 14 days
 - Amber (`#e3b341`): 15–42 days
 - Red (`#f85149`) + `font-weight:600`: older than 42 days
+- Null/missing `last_seen`: render `—` in `#484f58`, no colour signal
 
 ### 4. Tier override (click badge → dropdown)
 The tier badge (`A ▾`, `B ▾`, `C ▾`) is clickable. Click opens an inline dropdown below the badge showing A / B / C options coloured by tier. Selecting a tier:
@@ -62,10 +67,11 @@ Dropdown styling:
 
 ### 5. Prominent links with pill-action buttons
 In child rows (expanded), each URL gets:
-- Domain + path as a blue link (`#79c0ff`), `target="_blank"`
+- Domain + path as a blue link (`#79c0ff`), `target="_blank"`, `title="{full url}"`
+- URL text truncated: `overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 280px`
 - Favicon via `https://www.google.com/s2/favicons?domain={domain}&sz=16`, 12×12px, `onerror="this.style.display='none'"`
 - `↗` pill button: opens URL in new tab (bordered, 9px, `#484f58`)
-- `copy` pill button: copies full URL to clipboard via `navigator.clipboard.writeText(url)`
+- `copy` pill button: copies full URL to clipboard via `navigator.clipboard.writeText(url)`. On success: button text changes to `✓` for 1000ms then reverts to `copy`. No feedback on failure (silent).
 
 Pill button style: `border: 1px solid #21262d; border-radius: 2px; padding: 0 4px; font-size: 9px; line-height: 16px; cursor: pointer`
 
@@ -80,9 +86,11 @@ Favicons also shown on parent rows for publication recognition at a glance.
 - Left border: `2px solid #e3b341`
 - Background: `#161b22`
 - Shows: `N selected` (amber) + `Flag as junk` button (red) + `Clear` button (grey)
-- Flagging calls `POST /api/sources/{id}/flag` with `{ junk: true }` for each selected ID in sequence
+- Flagging uses `Promise.all()` — parallel calls to `POST /api/sources/{id}/flag` with `{ junk: true }` for all selected IDs. Re-renders table after all resolve.
 
-**"Flag all" on parent rows:** A `Flag all` button at the end of each parent row flags all child URLs from that publication in one click (calls flag API for each child source ID).
+**Checkbox state:** Tracked in `state.selectedSourceIds = new Set()`. Parent checkbox checked = all child IDs added to set. Individual child checkbox toggles that ID only. Select-all header checkbox adds/removes all currently visible source IDs.
+
+**No "Flag all" button on parent rows** — removed. The bulk flag via action bar (check parent row → flag) covers this case with one extra click and is less confusing.
 
 ---
 
@@ -119,7 +127,7 @@ Updates `credibility_tier` in `sources_registry`. Returns 400 if tier not in A/B
 | File | Change |
 |---|---|
 | `static/app.js` | `renderSourceRegistryTable()` — new columns, citation bar, freshness, checkboxes, bulk bar, tier dropdown, pill buttons. `renderSources()` — keyword search filter. New: `flagAllSources()`, `overrideTier()`, `copyUrl()`, `applySourceSearch()` |
-| `static/index.html` | Column header checkbox width, no structural changes needed |
+| `static/index.html` | Add `<input id="src-search">` to filter bar HTML (filter controls are HTML, not JS-rendered). Remove separate cited/hide-junk checkboxes from layout if they move inline. |
 | `server.py` | Add `POST /api/sources/{id}/tier` endpoint |
 
 ---
