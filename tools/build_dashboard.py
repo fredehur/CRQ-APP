@@ -3,7 +3,7 @@ import sys
 import os
 from pathlib import Path
 from datetime import datetime, timezone
-from config import REGIONS, GLOBAL_REPORT_PATH, MANIFEST_PATH, TRACE_LOG_PATH
+from tools.config import REGIONS, GLOBAL_REPORT_JSON as GLOBAL_REPORT_PATH, MANIFEST_PATH, TRACE_LOG_PATH, VALIDATION_FLAGS_JSON, VALIDATION_CANDIDATES_JSON, DASHBOARD_PATH, GLOBAL_REPORT_MD
 
 # Static Tailwind class mapping — dynamic interpolation breaks Tailwind CDN purging
 SEVERITY_STYLES = {
@@ -112,6 +112,24 @@ def build():
         if os.path.exists(data_path):
             with open(data_path, encoding='utf-8') as f:
                 region_data[region] = json.load(f)
+
+    validation_flags = {}
+    validation_flags_path = VALIDATION_FLAGS_JSON
+    if validation_flags_path.exists():
+        with open(validation_flags_path, encoding="utf-8") as f:
+            validation_flags = json.load(f)
+
+    validation_candidates = {}
+    validation_candidates_path = VALIDATION_CANDIDATES_JSON
+    if validation_candidates_path.exists():
+        with open(validation_candidates_path, encoding="utf-8") as f:
+            validation_candidates = json.load(f)
+
+    validation_sources = {}
+    validation_sources_path = Path("data/validation_sources.json")
+    if validation_sources_path.exists():
+        with open(validation_sources_path, encoding="utf-8") as f:
+            validation_sources = json.load(f)
 
     total_vacr = report.get("total_vacr_exposure", 0)
     summary = report.get("executive_summary", "")
@@ -224,6 +242,132 @@ def build():
     if not trace_rows:
         trace_rows = '<div class="text-gray-400 text-xs italic">No trace events recorded.</div>'
 
+    # Build CRQ Validation panel
+    validation_generated_at = "—"
+    if validation_flags:
+        raw_ts = validation_flags.get("generated_at", "")
+        validation_generated_at = raw_ts[:10] if raw_ts else "—"
+
+    if not validation_flags:
+        validation_rows = '<p class="text-gray-500 text-sm italic">No validation data — run crq_comparator.py</p>'
+    else:
+        validation_rows = ""
+        for s in validation_flags.get("scenarios", []):
+            verdict = s.get("verdict", "no_data")
+            vacr = f"${s['our_vacr_usd'] / 1_000_000:.1f}M" if s.get("our_vacr_usd") else "—"
+            dev = f"+{s['deviation_pct']:.0f}%" if s.get("deviation_pct") is not None else "—"
+            src = s["supporting_sources"][0] if s.get("supporting_sources") else None
+            src_label = f"{src['source_id'].split('-')[0].upper()} {src['admiralty']}" if src else "—"
+            if verdict == "supported":
+                verdict_html = '<span class="text-green-600 font-medium">&#10003; SUPPORTED</span>'
+            elif verdict in ("challenged",) or s.get("flagged_for_review"):
+                verdict_html = '<span class="text-amber-500 font-medium">&#9888; REVIEW</span>'
+            else:
+                verdict_html = f'<span class="text-gray-500">— {verdict.upper().replace("_", " ")}</span>'
+            validation_rows += f"""
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">{s['scenario']}</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">{vacr}</span>
+                    <span class="text-sm w-32">{verdict_html}</span>
+                    <span class="text-xs text-gray-500 w-16">{dev}</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">{src_label}</span>
+                </div>"""
+
+    sm = validation_flags.get("summary", {})
+    if sm:
+        validation_summary = (
+            f'<div class="mt-3 text-xs text-gray-500">'
+            f'{sm.get("supported", 0)} supported &middot; {sm.get("challenged", 0)} challenged &middot; '
+            f'{sm.get("no_data", 0)} no data &middot; {sm.get("sources_used", 0)} sources'
+            f'</div>'
+        )
+    else:
+        validation_summary = ""
+
+    pending_candidates = len([
+        c for c in validation_candidates.get("candidates", [])
+        if c.get("status") == "pending_review"
+    ])
+    candidate_notice = ""
+    if pending_candidates > 0:
+        candidate_notice = (
+            f'<div class="mt-3 pt-3 border-t border-gray-200 text-xs text-amber-600">'
+            f'&#9889; {pending_candidates} candidate sources discovered — review output/validation/candidates.json'
+            f'</div>'
+        )
+
+    # Build Intelligence Sources panel
+    registered_rows = ""
+    for src in validation_sources.get("sources", []):
+        last_checked = src.get("last_checked", "")[:10] or "Never"
+        last_content = src.get("last_new_content") or "—"
+        admiralty = src.get("admiralty_reliability", "?")
+        cadence = src.get("cadence", "—").capitalize()
+        scenario_tags = ", ".join(src.get("scenario_tags", []))
+        if admiralty == "A":
+            adm_badge = '<span class="inline-block bg-green-100 text-green-800 text-xs font-mono font-bold px-2 py-0.5 rounded">A</span>'
+        elif admiralty == "B":
+            adm_badge = '<span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded">B</span>'
+        else:
+            adm_badge = f'<span class="inline-block bg-gray-100 text-gray-700 text-xs font-mono font-bold px-2 py-0.5 rounded">{admiralty}</span>'
+        registered_rows += f"""
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">{src.get('name', '')}</td>
+                    <td class="py-2 pr-4 text-center">{adm_badge}</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">{cadence}</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">{last_checked}</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">{last_content}</td>
+                    <td class="py-2 text-xs text-gray-400">{scenario_tags}</td>
+                </tr>"""
+
+    if not registered_rows:
+        registered_rows = '<tr><td colspan="6" class="py-3 text-gray-400 text-sm italic">No sources registered</td></tr>'
+
+    candidate_rows = ""
+    for c in validation_candidates.get("candidates", []):
+        status = c.get("status", "pending_review")
+        year = c.get("estimated_year") or "—"
+        has_dollar = "&#9989;" if c.get("has_dollar_figure") else "&#10060;"
+        scenarios = ", ".join(c.get("scenario_tags", []))
+        sectors = ", ".join(c.get("sector_tags", []))
+        url = c.get("url", "")
+        title = c.get("title", url)[:60]
+        snippet = c.get("snippet", "")[:120]
+        candidate_rows += f"""
+                <tr class="border-b border-gray-100 hover:bg-amber-50">
+                    <td class="py-2 pr-4 text-sm">
+                        <div class="text-gray-800 font-medium">{title}</div>
+                        <div class="text-gray-400 text-xs truncate max-w-xs">{url}</div>
+                        <div class="text-gray-500 text-xs mt-0.5">{snippet}</div>
+                    </td>
+                    <td class="py-2 pr-3 text-xs text-gray-500 whitespace-nowrap">{year}</td>
+                    <td class="py-2 pr-3 text-center text-sm">{has_dollar}</td>
+                    <td class="py-2 pr-3 text-xs text-gray-500">{scenarios}</td>
+                    <td class="py-2 text-xs text-gray-500">{sectors}</td>
+                </tr>"""
+
+    candidates_section = ""
+    if candidate_rows:
+        candidates_section = f"""
+            <div class="mt-6 pt-6 border-t border-gray-200">
+                <h3 class="text-sm font-semibold text-amber-700 mb-3">&#9889; Discovered Candidates — Pending Review</h3>
+                <p class="text-xs text-gray-500 mb-3">These sources were found by the discovery search. Promote to <code>data/validation_sources.json</code> to include in future validation runs.</p>
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-200">
+                            <th class="pb-2 text-left pr-4">Source</th>
+                            <th class="pb-2 text-left pr-3">Year</th>
+                            <th class="pb-2 text-center pr-3">$</th>
+                            <th class="pb-2 text-left pr-3">Scenarios</th>
+                            <th class="pb-2 text-left">Sectors</th>
+                        </tr>
+                    </thead>
+                    <tbody>{candidate_rows}</tbody>
+                </table>
+            </div>"""
+    elif validation_candidates:
+        candidates_section = '<div class="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-400 italic">No new candidate sources discovered in last run.</div>'
+
     # Monitor section HTML — only render if there are monitor regions
     monitor_section = ""
     if monitor_cards:
@@ -308,6 +452,39 @@ def build():
             {clear_cards}
         </div>
 
+        <!-- CRQ Validation Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">CRQ Validation</h2>
+                <span class="text-xs text-gray-400">Last run: {validation_generated_at}</span>
+            </div>
+            {validation_rows}
+            {validation_summary}
+            {candidate_notice}
+        </div>
+
+        <!-- Intelligence Sources Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">Intelligence Sources</h2>
+                <span class="text-xs text-gray-400">{len(validation_sources.get('sources', []))} registered &middot; {len(validation_candidates.get('candidates', []))} candidates</span>
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-200">
+                        <th class="pb-2 text-left pr-4">Source</th>
+                        <th class="pb-2 text-center pr-4">Adm.</th>
+                        <th class="pb-2 text-left pr-4">Cadence</th>
+                        <th class="pb-2 text-left pr-4">Last Checked</th>
+                        <th class="pb-2 text-left pr-4">New Content</th>
+                        <th class="pb-2 text-left">Scenarios</th>
+                    </tr>
+                </thead>
+                <tbody>{registered_rows}</tbody>
+            </table>
+            {candidates_section}
+        </div>
+
         <!-- Audit Trace (Collapsible) -->
         <details class="bg-white rounded-lg shadow-md mb-8">
             <summary class="cursor-pointer p-6 text-lg font-bold text-gray-900 hover:bg-gray-50 rounded-lg">
@@ -325,9 +502,10 @@ def build():
 </body>
 </html>"""
 
-    with open("output/dashboard.html", "w", encoding="utf-8") as f:
+    DASHBOARD_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(DASHBOARD_PATH), "w", encoding="utf-8") as f:
         f.write(html)
-    print(f"Dashboard written to output/dashboard.html ({escalated_count} escalated, {monitor_count} watch, {clear_count} clear, {len(trace_lines)} trace events)")
+    print(f"Dashboard written to {DASHBOARD_PATH} ({escalated_count} escalated, {monitor_count} watch, {clear_count} clear, {len(trace_lines)} trace events)")
 
     # Markdown export
     md_lines = [
@@ -376,9 +554,10 @@ def build():
     md_lines.append("---\n")
     md_lines.append(f"*Escalated: {escalated_count} | Watch: {monitor_count} | Clear: {clear_count} | Source: Enterprise CRQ Application*\n")
 
-    with open("output/global_report.md", "w", encoding="utf-8") as f:
+    GLOBAL_REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(GLOBAL_REPORT_MD), "w", encoding="utf-8") as f:
         f.write("\n".join(md_lines))
-    print("Markdown export written to output/global_report.md")
+    print(f"Markdown export written to {GLOBAL_REPORT_MD}")
 
 
 if __name__ == "__main__":

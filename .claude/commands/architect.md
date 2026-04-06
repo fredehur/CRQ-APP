@@ -56,9 +56,9 @@ Test: Run `/run-crq` and verify all outputs.
 
 **Phase 4**
 - All 5 `output/regional/*_draft.md` files exist
-- `output/global_report.md` contains aggregated dollar exposure figure
-- `output/dashboard.html` opens in browser without broken layout
-- `output/board_report.pdf` and `output/board_report.pptx` are non-zero bytes
+- `output/pipeline/global_report.md` contains aggregated dollar exposure figure
+- `output/pipeline/dashboard.html` opens in browser without broken layout
+- `output/deliverables/board_report.pdf` and `output/deliverables/board_report.pptx` are non-zero bytes
 - `report_differ.py` shows systemic themes across 2+ regions
 
 ---
@@ -709,7 +709,7 @@ model: opus
 hooks:
   Stop:
     - type: command
-      command: "uv run python .claude/hooks/validators/jargon-auditor.py output/global_report.md global"
+      command: "uv run python .claude/hooks/validators/jargon-auditor.py output/pipeline/global_report.md global"
 
 Body:
 You are the Chief Strategic Risk Analyst. You synthesize five regional intelligence briefs into a single global executive narrative.
@@ -725,8 +725,8 @@ RULES — NON-NEGOTIABLE:
 WORKFLOW:
 1. Read all files in output/regional/ using the Read tool
 2. Use the delta brief passed to you to identify systemic vs. region-unique themes
-3. Write a cohesive Global Executive Board Report to output/global_report.md
-4. Write a styled static dashboard to output/dashboard.html using inline CSS only — no external dependencies, no frameworks. Make it visually clean and executive-ready.
+3. Write a cohesive Global Executive Board Report to output/pipeline/global_report.md
+4. Write a styled static dashboard to output/pipeline/dashboard.html using inline CSS only — no external dependencies, no frameworks. Make it visually clean and executive-ready.
 5. The Stop hook will audit global_report.md. If it fails, rewrite and save again.
 
 ### 5d. Write to `.claude/commands/run-crq.md`
@@ -763,8 +763,8 @@ PHASE 3 — GLOBAL REPORT:
 Delegate to global-analyst-agent. Provide all approved regional briefs and the delta brief.
 
 PHASE 4 — EXPORT:
-Run: uv run python tools/export_pdf.py output/global_report.md output/board_report.pdf
-Run: uv run python tools/export_pptx.py output/global_report.md output/board_report.pptx
+Run: uv run python tools/export_pdf.py output/pipeline/global_report.md output/deliverables/board_report.pdf
+Run: uv run python tools/export_pptx.py output/pipeline/global_report.md output/deliverables/board_report.pptx
 
 PHASE 5 — REPORT SUCCESS:
 List all files generated in the output/ directory and confirm the pipeline is complete.

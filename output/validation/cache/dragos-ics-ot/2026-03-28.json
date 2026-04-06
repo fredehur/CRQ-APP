@@ -1,0 +1,13 @@
+{
+  "source_id": "dragos-ics-ot",
+  "fetched_date": "2026-03-28",
+  "publication_year": null,
+  "admiralty": {
+    "reliability": "A",
+    "credibility": "2",
+    "rating": "A2"
+  },
+  "mock": true,
+  "raw_text": "",
+  "benchmarks": []
+}

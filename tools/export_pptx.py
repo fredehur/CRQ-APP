@@ -20,11 +20,13 @@ from pptx.enum.text import PP_ALIGN
 from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
 
 sys.path.insert(0, os.path.dirname(__file__))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from report_builder import build, ReportData, RegionEntry, RegionStatus
+from tools.config import BOARD_PPTX_PATH
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 BASE_PPTX     = TEMPLATES_DIR / "base.pptx"
-DEFAULT_OUT   = "output/board_report.pptx"
+DEFAULT_OUT   = str(BOARD_PPTX_PATH)
 
 # Brand colours
 BRAND   = RGBColor(0x10, 0x42, 0x77)
@@ -94,6 +96,16 @@ def _add_text(slide, text: str, left, top, width, height,
     run.font.color.rgb = color
 
 
+def _status_label(status: RegionStatus, dominant_pillar: str | None = None) -> str:
+    if status == RegionStatus.ESCALATED:
+        if dominant_pillar == "Geopolitical": return "ESCALATED — GEO-LED"
+        if dominant_pillar == "Cyber":        return "ESCALATED — CYBER-LED"
+        return "ESCALATED"
+    if status == RegionStatus.MONITOR: return "MONITOR"
+    if status == RegionStatus.CLEAR:   return "CLEAR"
+    return "UNKNOWN"
+
+
 def _vel_label(velocity: str | None) -> str:
     mapping = {"accelerating": "↑ Accelerating", "improving": "↓ Improving",
                "stable": "→ Stable", "unknown": "—"}
@@ -114,9 +126,6 @@ def build_cover(prs: Presentation, data: ReportData) -> None:
     _add_text(slide, "Global Cyber Risk\nIntelligence Brief",
               Inches(0.6), Inches(1.1), Inches(8.8), Inches(2.0),
               font_size=28, bold=True, color=WHITE)
-    _add_text(slide, "CISO Edition",
-              Inches(0.6), Inches(3.0), Inches(8.8), Inches(0.35),
-              font_size=14, color=RGBColor(0xBF,0xDB,0xFF))
 
     # Status strip — ESCALATED / MONITOR / CLEAR counts
     strip_data = [
@@ -218,55 +227,81 @@ def build_region(prs: Presentation, region: RegionEntry) -> None:
               Inches(1.3), Inches(0.3), font_size=8, bold=True,
               color=WHITE, align=PP_ALIGN.CENTER)
 
-    # Sub-header line
-    sub_parts = [
-        region.scenario_match or "—",
-        region.signal_type or "—",
-        f"Confidence: {region.confidence_label or '—'}",
-    ]
-    _add_text(slide, "  ·  ".join(sub_parts),
+    # Status label + meta row
+    status_label = _status_label(region.status, region.dominant_pillar)
+    meta_parts = [status_label]
+    if region.threat_actor:
+        meta_parts.append(f"Threat Actor: {region.threat_actor}")
+    if region.signal_type_label:
+        meta_parts.append(region.signal_type_label)
+    if region.confidence_label:
+        meta_parts.append(f"Confidence: {region.confidence_label}")
+    _add_text(slide, "  ·  ".join(meta_parts),
               Inches(0.3), Inches(0.75), Inches(9), Inches(0.28),
               font_size=9, color=SLATE)
 
-    # 2×2 grid of board_bullets
-    if region.board_bullets and len(region.board_bullets) >= 4:
-        cell_w = Inches(4.5)
-        cell_h = Inches(2.6)
-        cells = [
-            (Inches(0.3),             Inches(1.0),  "DRIVER",   BRAND),
-            (Inches(0.3)+Inches(4.7), Inches(1.0),  "EXPOSURE", BRAND),
-            (Inches(0.3),             Inches(3.7),  "IMPACT",   RED),
-            (Inches(0.3)+Inches(4.7), Inches(3.7),  "WATCH",    AMBER),
-        ]
-        for idx, (cx, cy, cell_label, border_color) in enumerate(cells):
-            # 3px left border
-            _add_rect(slide, cx, cy, Inches(0.05), cell_h, border_color)
-            # Label
-            _add_text(slide, cell_label,
-                      cx + Inches(0.1), cy, cell_w - Inches(0.1), Inches(0.28),
-                      font_size=7, bold=True, color=SLATE)
-            # Body text
-            _add_text(slide, region.board_bullets[idx],
-                      cx + Inches(0.1), cy + Inches(0.28),
-                      cell_w - Inches(0.1), cell_h - Inches(0.28),
-                      font_size=9, color=DARK, wrap=True)
+    # 5 intelligence rows (vertical list)
+    rows = [
+        ("INTEL FINDINGS",       region.intel_bullets[0]     if region.intel_bullets     else None, BRAND),
+        ("ADVERSARY ACTIVITY",   region.adversary_bullets[0] if region.adversary_bullets else None, BRAND),
+        ("IMPACT FOR AEROGRID",  region.impact_bullets[0]    if region.impact_bullets    else None, RED),
+        ("WATCH FOR",            region.watch_bullets[0]     if region.watch_bullets     else None, AMBER),
+        ("RECOMMENDED ACTION",   region.action_bullets[0]    if region.action_bullets    else None, SLATE),
+    ]
 
-        # Footer
-        _add_text(slide, _vel_label(region.velocity),
-                  Inches(0.3), Inches(6.4), Inches(2.5), Inches(0.3),
-                  font_size=8, color=SLATE)
-        _add_text(slide, region.threat_characterisation or "",
-                  Inches(3.0), Inches(6.4), Inches(6.5), Inches(0.3),
-                  font_size=8, color=SLATE)
-        if region.top_sources:
-            sources_line = "Sources: " + " · ".join(region.top_sources)
-            _add_text(slide, sources_line,
-                      Inches(0.3), Inches(6.8), Inches(9.4), Inches(0.28),
-                      font_size=7, color=SLATE)
+    y = Inches(1.1)
+    row_h = Inches(1.0)
+    for label, text, color in rows:
+        if not text:
+            y += row_h
+            continue
+        # Left border stripe
+        _add_rect(slide, Inches(0.3), y, Inches(0.05), row_h - Inches(0.1), color)
+        # Label
+        _add_text(slide, label,
+                  Inches(0.45), y, Inches(9), Inches(0.22),
+                  font_size=7, bold=True, color=SLATE)
+        # Content
+        _add_text(slide, text,
+                  Inches(0.45), y + Inches(0.22), Inches(9.1), row_h - Inches(0.32),
+                  font_size=9, color=DARK, wrap=True)
+        y += row_h
+
+    # Footer
+    _add_text(slide, _vel_label(region.velocity),
+              Inches(0.3), Inches(6.4), Inches(2.5), Inches(0.3),
+              font_size=8, color=SLATE)
+    _add_text(slide, region.threat_characterisation or "",
+              Inches(3.0), Inches(6.4), Inches(4.0), Inches(0.3),
+              font_size=8, color=SLATE)
+
+    # Source quality badge
+    sq = region.source_quality
+    if sq and sq.get("total", 0) > 0:
+        sq_text = f"Sources: {sq['tier_a']}A · {sq['tier_b']}B · {sq['tier_c']}C"
+    elif region.top_sources:
+        sq_text = "Sources: " + " · ".join(region.top_sources[:3])
     else:
-        _add_text(slide, "Regional intelligence report unavailable for this run.",
-                  Inches(0.3), Inches(1.0), Inches(9.4), Inches(0.5),
-                  font_size=10, color=AMBER)
+        sq_text = ""
+    if sq_text:
+        _add_text(slide, sq_text,
+                  Inches(0.3), Inches(6.8), Inches(9.4), Inches(0.28),
+                  font_size=7, color=SLATE)
+
+    # Speaker notes — full depth
+    notes_parts = []
+    if region.intel_bullets:
+        notes_parts.append("INTEL FINDINGS:\n" + "\n".join(f"• {b}" for b in region.intel_bullets))
+    if region.adversary_bullets:
+        notes_parts.append("ADVERSARY ACTIVITY:\n" + "\n".join(f"• {b}" for b in region.adversary_bullets))
+    if region.impact_bullets:
+        notes_parts.append("IMPACT FOR AEROGRID:\n" + "\n".join(f"• {b}" for b in region.impact_bullets))
+    if region.watch_bullets:
+        notes_parts.append("WATCH FOR:\n" + "\n".join(f"• {b}" for b in region.watch_bullets))
+    if region.action_bullets:
+        notes_parts.append("RECOMMENDED ACTIONS:\n" + "\n".join(f"• {b}" for b in region.action_bullets))
+    if notes_parts:
+        slide.notes_slide.notes_text_frame.text = "\n\n".join(notes_parts)
 
 
 def build_appendix(prs: Presentation, data: ReportData) -> None:

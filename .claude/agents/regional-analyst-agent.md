@@ -256,7 +256,7 @@ Schema:
 {
   "region": "{REGION uppercase}",
   "generated_at": "<ISO 8601 UTC — same timestamp as data.json>",
-  "threat_actor": "<primary state actor or group named in brief, or empty string if none>",
+  "threat_actor": "<primary state actor or group named in brief, or empty string if none — clean name only, no parenthetical qualifiers>",
   "signal_type_label": "<see mapping below>",
   "status_label": "<see mapping below>",
   "intel_bullets": ["<2–3 key factual findings from Why paragraph>"],
@@ -291,6 +291,8 @@ Schema:
   - "Verify data classification controls are applied to sensitive IP repositories."
   - "Review cloud sharing permissions for engineering and R&D assets."
 - (no match): derive 2 generic actions from the scenario description in master_scenarios.json
+
+**Region-specific augmentation (mandatory):** After applying the lookup baseline, add 1 additional action bullet derived from the region's `impact_bullets` — naming the specific AeroGrid facility, contract, or asset identified as most exposed. This bullet must reference the region's operational context (site names, contracts, technology). Do not repeat or paraphrase the lookup bullets.
 
 Write the file to `output/regional/{region_lower}/sections.json`.
 

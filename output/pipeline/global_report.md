@@ -1,0 +1,59 @@
+# Global Executive Board Report — Cyber Risk Posture
+
+**Date:** 2026-04-05 | **Classification:** Board Confidential | **Total Global VaCR:** $44,700,000 | **Trend vs Prior:** —
+
+---
+
+## Executive Summary
+
+CURRENT-CYCLE HEADLINE: Four of five AeroGrid regions are simultaneously escalated — the broadest global exposure posture recorded in this pipeline — driven by a common root cause: Iranian kinetic strikes on Gulf energy infrastructure in March 2026 have raised the strategic value of renewable energy assets globally, while Chinese state-aligned actors continue documented campaigns targeting wind sector intellectual property, creating compound geopolitical pressure on AeroGrid manufacturing IP and service delivery across every major operating theater. CROSS-REGIONAL PATTERN: Three of four escalated regions (APAC, LATAM, NCE) share System intrusion as the primary scenario, indicating that targeted access to manufacturing networks and design repositories is the dominant threat modality this cycle; MED also carries System intrusion, reinforcing the cross-regional convergence on IP acquisition and OT disruption as the dominant adversary objective. Board calibration note: APAC carries the highest-confidence escalation at B3 (usually reliable sources, probably true), while LATAM, MED, and NCE are all assessed at B2 (usually reliable sources, probably true); the board should treat all four escalated regions as well-grounded assessments resting on corroborated indicators. AME, currently in monitor status, is assessed at C3 (fairly reliable sources, possibly true) and did not breach the escalation threshold this cycle. VELOCITY/HISTORICAL CONTEXT: LATAM carries an accelerating velocity flag, indicating growing momentum in adversary capability and positioning. MED is stable; NCE is improving. APAC has returned System intrusion as its primary scenario for 10 consecutive runs — representing sustained structural exposure rooted in China's documented wind IP acquisition programs, not cyclical variance. AME, in monitor status, is stable and warrants continued observation given the documented DHS advisory on Iranian retaliation risk against energy operators. CORRECTIONS/CAVEATS: LATAM carries a VaCR of zero, as escalation rests on demonstrated adversary capability and geopolitical positioning rather than a confirmed event. NCE similarly carries a VaCR of zero, with escalation grounded in structural regulatory gaps and sector-level targeting precedent rather than a confirmed incident at an AeroGrid site. No region this cycle returned a verified intrusion or extortion incident against an AeroGrid facility.
+
+---
+
+## Escalated Regions
+
+### APAC — $18,500,000 at Risk | Severity: High
+
+**Intelligence Assessment:** B3 (Usually reliable source — Possibly true) | **Trend:** → Stable | **Dominant Pillar:** Geopolitical
+
+**Primary Scenario:** System intrusion
+
+Iranian strikes on Gulf energy infrastructure are accelerating global renewable energy investment and raising the intelligence value of proprietary wind turbine designs, at the same time that China's documented state-organized IP acquisition programs — anchored by the Sinovel criminal conviction for wind technology theft — provide an established operational pathway to acquire them. AeroGrid's Kaohsiung manufacturing hub, which produces 60% of global turbine output and houses the Series 7 production line, SCADA network TW-01, and the OT predictive maintenance stack, is the primary exposure point; the Shanghai service hub's proximity to Chinese state collection programs creates a secondary vector for design files and maintenance algorithms transiting between sites. Any intrusion affecting Kaohsiung production continuity would directly threaten the TEPCO five-year supply agreement and the Vestas APAC logistics joint venture. Assessed B3 — corroborated state-sponsored IP theft precedent established, but no confirmed active OT/SCADA lateral movement at APAC blade facilities identified this window.
+
+### MED — $4,200,000 at Risk | Severity: Medium
+
+**Intelligence Assessment:** B2 (Usually reliable source — Probably true) | **Trend:** → Stable | **Dominant Pillar:** Cyber
+
+**Primary Scenario:** System intrusion
+
+Iranian kinetic strikes on Ras Tanura and Ras Laffan, combined with explicit IRGC threats to close the Strait of Hormuz, confirm state-level willingness to use energy disruption as a coercive instrument against Western-aligned interests at precisely the moment NIS2 compliance failures across EU renewable energy operators leave the Mediterranean operating environment structurally exposed. IRGC-aligned actors — CyberAv3ngers and Pioneer Kitten — have demonstrated confirmed OT/SCADA compromise capability with 75+ Unitronics PLC compromises and escalated post-February 2026 operations expanding toward EU energy targets. AeroGrid's Palermo offshore manufacturing facility (high criticality) and the Malaga service hub both sit within this governance gap, supporting active contracts with Iberdrola and ENEL MED. Chinese state-linked manufacturers under EU probe introduce a parallel supply-chain espionage vector. No confirmed cyber intrusion against an AeroGrid site was identified this window, but the assessed threat rests on confirmed adversary motivation and a documented structural attack surface.
+
+### LATAM — $0 at Risk | Severity: High
+
+**Intelligence Assessment:** B2 (Usually reliable source — Probably true) | **Trend:** ↑ Accelerating | **Dominant Pillar:** Geopolitical
+
+**Primary Scenario:** System intrusion
+
+China's operational control or pervasive influence over 37 major Latin American ports creates a physical supply chain interdiction vector for wind components flowing to AeroGrid's São Paulo and Santiago operations, while Chinese state-aligned groups including Mustang Panda and Volt Typhoon have demonstrated active intelligence collection and OT pre-positioning in the region without yet directing confirmed activity at wind sector targets. The Sinovel case remains the sole confirmed precedent of Chinese state-linked entities stealing wind turbine IP, and Volt Typhoon's documented pre-positioning doctrine in critical infrastructure networks indicates that capability exists and is being positioned even where confirmed targeting is absent. AeroGrid's 680-person service presence across the region and active Enel Chile and Neoenergia contracts represent the operational exposure that would be affected if the documented capability were directed at LATAM wind infrastructure; the zero VaCR reflects the absence of confirmed targeting, not the absence of risk. Velocity is assessed as accelerating.
+
+### NCE — $0 at Risk | Severity: High
+
+**Intelligence Assessment:** B2 (Usually reliable source — Probably true) | **Trend:** ↓ Improving | **Dominant Pillar:** Geopolitical
+
+**Primary Scenario:** System intrusion
+
+Germany's failure to transpose NIS2 and the CER Directive before the federal elections has left critical infrastructure operators — including wind energy companies now formally in scope — without the legal baseline those directives were designed to enforce, a gap confirmed as structural and ongoing across multiple EU member states. CERT Polska documented coordinated cyber attacks against 30 renewable energy sites in Poland in early 2026, establishing that wind and solar infrastructure within the broader NCE geography has been subjected to disruptive external action with probable state attribution. No named threat actor conducting confirmed operations against NCE wind manufacturing networks was identified this window, but the regulatory enforcement gap and concentrated IP value at Hamburg and Gdansk (both HIGH criticality) represent the structural opening that precedes operational exploitation in comparable prior incidents. AeroGrid's Copenhagen Engineering Hub holds core aerodynamic IP most directly sought by state actors competing for clean energy technology advantage. VaCR for this scenario is $0, reflecting the absence of a confirmed incident against an AeroGrid facility rather than the absence of structural risk.
+
+## Watch Regions
+
+### AME — Watch
+
+**Intelligence Assessment:** C3 (Fairly reliable source — Possibly true)
+
+The U.S. Department of Homeland Security issued a formal advisory in March 2026 warning energy companies of elevated Iranian retaliation risk following U.S. and Israeli military strikes, encompassing both cyberattack and physical sabotage vectors. Documented ransomware deployment patterns against energy service operators — including confirmed attacks against wind, solar, and heat facilities in Poland via compromised FortiGate devices — establish that the threat modality is active at the sector level. However, no named threat actor conducting confirmed operations against North American wind farm SCADA, telemetry, or maintenance scheduling systems was identified this window, and the scenario_map financial_rank for Physical threat (rank 6) does not breach the top-4 escalation threshold. AME remains in monitor status: adversary intent and sector-level capability are documented, but no wind-specific operational incident, CISA advisory targeting wind OT, or confirmed reconnaissance against North American wind service environments was recovered this cycle.
+
+## Clear Regions
+
+---
+
+*Escalated: 4 | Watch: 1 | Clear: 0 | Source: Enterprise CRQ Application*

@@ -14,7 +14,11 @@ from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
 
 BASE = Path(__file__).resolve().parent
-OUTPUT = BASE / "output"
+OUTPUT        = BASE / "output"
+DELIVERABLES  = OUTPUT / "deliverables"
+PIPELINE      = OUTPUT / "pipeline"
+VALIDATION    = OUTPUT / "validation"
+LOGS          = OUTPUT / "logs"
 REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
 SOURCES_DB = "data/sources.db"
 TOOL_TIMEOUT = 60  # seconds per subprocess
@@ -71,7 +75,7 @@ async def _run(tool: str, *args, timeout: int = TOOL_TIMEOUT) -> int:
 # ── API: Data ────────────────────────────────────────────────────────────
 @app.get("/api/manifest")
 async def get_manifest():
-    data = _read_json(OUTPUT / "run_manifest.json")
+    data = _read_json(PIPELINE / "run_manifest.json")
     return data or {"status": "no_data"}
 
 
@@ -209,7 +213,7 @@ async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(
 
 @app.get("/api/global-report")
 async def get_global_report():
-    data = _read_json(OUTPUT / "global_report.json")
+    data = _read_json(PIPELINE / "global_report.json")
     return data or {"status": "no_data"}
 
 
@@ -237,7 +241,7 @@ async def list_runs():
 @app.get("/api/history")
 async def get_history():
     """Return history.json for the History tab charts."""
-    path = OUTPUT / "history.json"
+    path = PIPELINE / "history.json"
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {"regions": {r: [] for r in REGIONS}, "drift": {}, "generated_at": None}
@@ -290,7 +294,7 @@ async def update_footprint(region: str, body: dict):
 
 @app.get("/api/trends")
 async def get_trends():
-    path = OUTPUT / "trend_analysis.json"
+    path = PIPELINE / "trend_analysis.json"
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {"status": "no_data"}
@@ -357,7 +361,7 @@ async def get_audience(region: str):
 
 @app.get("/api/trace")
 async def get_trace():
-    path = OUTPUT / "system_trace.log"
+    path = LOGS / "system_trace.log"
     if path.exists():
         return {"log": path.read_text(encoding="utf-8", errors="replace")}
     return {"log": ""}
@@ -416,13 +420,13 @@ async def get_region_sources(region: str):
 
 @app.get("/api/outputs/global-md")
 async def get_global_md():
-    path = OUTPUT / "global_report.md"
+    path = PIPELINE / "global_report.md"
     return {"markdown": path.read_text(encoding="utf-8", errors="replace") if path.exists() else ""}
 
 
 @app.get("/api/outputs/pdf")
 async def get_pdf():
-    path = OUTPUT / "board_report.pdf"
+    path = DELIVERABLES / "board_report.pdf"
     if not path.exists():
         return JSONResponse({"error": "PDF not found"}, status_code=404)
     return FileResponse(str(path), media_type="application/pdf",
@@ -431,7 +435,7 @@ async def get_pdf():
 
 @app.get("/api/outputs/pptx")
 async def get_pptx():
-    path = OUTPUT / "board_report.pptx"
+    path = DELIVERABLES / "board_report.pptx"
     if not path.exists():
         return JSONResponse({"error": "PPTX not found"}, status_code=404)
     return FileResponse(
@@ -445,7 +449,7 @@ async def get_pptx():
 async def get_ciso_docx():
     """Generate (or serve cached) CISO weekly brief as a Word document."""
     import subprocess
-    out_path = OUTPUT / "ciso_brief.docx"
+    out_path = DELIVERABLES / "ciso_brief.docx"
     result = subprocess.run(
         ["uv", "run", "python", "tools/export_ciso_docx.py", str(out_path)],
         capture_output=True, encoding="utf-8", errors="replace"
@@ -464,9 +468,9 @@ async def get_outputs_status():
     """Return existence + mtime for each deliverable."""
     import datetime
     files = {
-        "ciso_docx":    OUTPUT / "ciso_brief.docx",
-        "board_pdf":    OUTPUT / "board_report.pdf",
-        "board_pptx":   OUTPUT / "board_report.pptx",
+        "ciso_docx":    DELIVERABLES / "ciso_brief.docx",
+        "board_pdf":    DELIVERABLES / "board_report.pdf",
+        "board_pptx":   DELIVERABLES / "board_report.pptx",
     }
     result = {}
     for key, path in files.items():
@@ -789,7 +793,7 @@ async def logs_stream():
 # ── API: Validation ──────────────────────────────────────────────────────
 @app.get("/api/validation/flags")
 async def get_validation_flags():
-    data = _read_json(OUTPUT / "validation_flags.json")
+    data = _read_json(VALIDATION / "flags.json")
     if not data:
         return {"status": "no_data", "scenarios": [], "summary": {}}
 
@@ -802,7 +806,7 @@ async def get_validation_flags():
             scenario_regions.setdefault(rd["primary_scenario"], []).append(region.upper())
 
     # Build scenario → velocity string from trend_analysis.json
-    trend = _read_json(OUTPUT / "trend_analysis.json")
+    trend = _read_json(PIPELINE / "trend_analysis.json")
     scenario_velocity: dict[str, str] = {}
     if trend and trend.get("run_count", 0) > 0:
         run_count = trend["run_count"]
@@ -834,7 +838,7 @@ async def get_validation_sources():
 
 @app.get("/api/validation/candidates")
 async def get_validation_candidates():
-    data = _read_json(OUTPUT / "validation_candidates.json")
+    data = _read_json(VALIDATION / "candidates.json")
     return data or {"candidates": [], "generated_at": None}
 
 
@@ -893,7 +897,7 @@ async def promote_candidate(body: dict):
         return JSONResponse({"error": "url required"}, status_code=400)
 
     # Load candidates, mark as promoted
-    cands_path = OUTPUT / "validation_candidates.json"
+    cands_path = VALIDATION / "candidates.json"
     if not cands_path.exists():
         return JSONResponse({"error": "No candidates file"}, status_code=404)
     cands_data = json.loads(cands_path.read_text(encoding="utf-8"))
@@ -947,7 +951,7 @@ async def _run_validation():
             return
         # Count sources with non-empty raw_text
         import glob as _glob, json as _json
-        _cache_files = _glob.glob("output/validation_cache/**/*.json", recursive=True)
+        _cache_files = _glob.glob("output/validation/cache/**/*.json", recursive=True)
         _fetched = sum(1 for f in _cache_files if _json.load(open(f, encoding="utf-8")).get("raw_text", ""))
         await _emit("validation", {"status": "step", "step": "source_harvester", "message": f"Fetched content for {_fetched}/{len(_cache_files)} sources"})
 
@@ -971,7 +975,7 @@ async def _run_validation():
             await _emit("validation", {"status": "error", "step": "crq_comparator"})
             return
         try:
-            _flags = _json.load(open("output/validation_flags.json", encoding="utf-8"))
+            _flags = _json.load(open("output/validation/flags.json", encoding="utf-8"))
             _sm = _flags.get("summary", {})
             await _emit("validation", {"status": "step", "step": "crq_comparator", "message": f"Results: {_sm.get('supported', 0)} supported · {_sm.get('challenged', 0)} challenged · {_sm.get('no_data', 0)} no data"})
         except Exception:

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRQ Executive Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <header class="bg-gray-900 text-white py-6 px-8">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold tracking-tight">Cyber Risk Quantification Dashboard</h1>
+                <p class="text-gray-400 text-sm mt-1">Global Executive Board Report &mdash; 2026-04-05</p>
+            </div>
+            <div class="text-right">
+                <p class="text-xs text-gray-400 uppercase tracking-wider">Classification</p>
+                <p class="text-sm font-semibold text-amber-400">Board Confidential</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-8 py-8">
+        <!-- KPI Strip -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-red-600">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Total VaCR</p>
+                <p class="text-3xl font-black text-red-600">$44,700,000</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-gray-400">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Trend vs Prior</p>
+                <p class="text-3xl font-black text-gray-400">—</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-red-500">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Escalated</p>
+                <p class="text-3xl font-black text-red-500">4</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-amber-400">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Watch</p>
+                <p class="text-3xl font-black text-amber-400">1</p>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-5 text-center border-t-4 border-green-600">
+                <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Clear</p>
+                <p class="text-3xl font-black text-green-600">0</p>
+            </div>
+        </div>
+
+        <!-- Admiralty Legend -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 text-xs text-blue-800">
+            <span class="font-bold">Admiralty Scale:</span>
+            Reliability A (confirmed) → F (unknown) &nbsp;|&nbsp;
+            Credibility 1 (confirmed) → 6 (unverifiable) &nbsp;|&nbsp;
+            e.g. <span class="font-mono font-bold">B2</span> = Usually reliable source, probably true
+        </div>
+
+        <!-- Executive Summary -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-lg font-bold text-gray-900 mb-3">Executive Summary</h2>
+            <p class="text-gray-700 leading-relaxed">CURRENT-CYCLE HEADLINE: Four of five AeroGrid regions are simultaneously escalated — the broadest global exposure posture recorded in this pipeline — driven by a common root cause: Iranian kinetic strikes on Gulf energy infrastructure in March 2026 have raised the strategic value of renewable energy assets globally, while Chinese state-aligned actors continue documented campaigns targeting wind sector intellectual property, creating compound geopolitical pressure on AeroGrid manufacturing IP and service delivery across every major operating theater. CROSS-REGIONAL PATTERN: Three of four escalated regions (APAC, LATAM, NCE) share System intrusion as the primary scenario, indicating that targeted access to manufacturing networks and design repositories is the dominant threat modality this cycle; MED also carries System intrusion, reinforcing the cross-regional convergence on IP acquisition and OT disruption as the dominant adversary objective. Board calibration note: APAC carries the highest-confidence escalation at B3 (usually reliable sources, probably true), while LATAM, MED, and NCE are all assessed at B2 (usually reliable sources, probably true); the board should treat all four escalated regions as well-grounded assessments resting on corroborated indicators. AME, currently in monitor status, is assessed at C3 (fairly reliable sources, possibly true) and did not breach the escalation threshold this cycle. VELOCITY/HISTORICAL CONTEXT: LATAM carries an accelerating velocity flag, indicating growing momentum in adversary capability and positioning. MED is stable; NCE is improving. APAC has returned System intrusion as its primary scenario for 10 consecutive runs — representing sustained structural exposure rooted in China's documented wind IP acquisition programs, not cyclical variance. AME, in monitor status, is stable and warrants continued observation given the documented DHS advisory on Iranian retaliation risk against energy operators. CORRECTIONS/CAVEATS: LATAM carries a VaCR of zero, as escalation rests on demonstrated adversary capability and geopolitical positioning rather than a confirmed event. NCE similarly carries a VaCR of zero, with escalation grounded in structural regulatory gaps and sector-level targeting precedent rather than a confirmed incident at an AeroGrid site. No region this cycle returned a verified intrusion or extortion incident against an AeroGrid facility.</p>
+        </div>
+
+        <!-- Escalated Regional Threat Cards -->
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Escalated Regions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">APAC</h3>
+                <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">High</span>
+            </div>
+            <p class="text-3xl font-bold text-red-500 mb-3">$18,500,000</p>
+            <div class="flex flex-wrap gap-2 items-center mb-3">
+                <span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="Usually reliable source — Possibly true">B3</span><span class="inline-block bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">Geopolitical</span>
+            </div>
+            <div class="mb-3"><span class="text-amber-500 text-sm font-bold" title="Trend: Stable">→ Stable</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">Iranian strikes on Gulf energy infrastructure are accelerating global renewable energy investment and raising the intelligence value of proprietary wind turbine designs, at the same time that China's documented state-organized IP acquisition programs — anchored by the Sinovel criminal conviction for wind technology theft — provide an established operational pathway to acquire them. AeroGrid's Kaohsiung manufacturing hub, which produces 60% of global turbine output and houses the Series 7 production line, SCADA network TW-01, and the OT predictive maintenance stack, is the primary exposure point; the Shanghai service hub's proximity to Chinese state collection programs creates a secondary vector for design files and maintenance algorithms transiting between sites. Any intrusion affecting Kaohsiung production continuity would directly threaten the TEPCO five-year supply agreement and the Vestas APAC logistics joint venture. Assessed B3 — corroborated state-sponsored IP theft precedent established, but no confirmed active OT/SCADA lateral movement at APAC blade facilities identified this window.</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">MED</h3>
+                <span class="bg-amber-500 text-white text-xs font-bold px-3 py-1 rounded-full">Medium</span>
+            </div>
+            <p class="text-3xl font-bold text-amber-500 mb-3">$4,200,000</p>
+            <div class="flex flex-wrap gap-2 items-center mb-3">
+                <span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="Usually reliable source — Probably true">B2</span><span class="inline-block bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">Cyber</span>
+            </div>
+            <div class="mb-3"><span class="text-amber-500 text-sm font-bold" title="Trend: Stable">→ Stable</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">Iranian kinetic strikes on Ras Tanura and Ras Laffan, combined with explicit IRGC threats to close the Strait of Hormuz, confirm state-level willingness to use energy disruption as a coercive instrument against Western-aligned interests at precisely the moment NIS2 compliance failures across EU renewable energy operators leave the Mediterranean operating environment structurally exposed. IRGC-aligned actors — CyberAv3ngers and Pioneer Kitten — have demonstrated confirmed OT/SCADA compromise capability with 75+ Unitronics PLC compromises and escalated post-February 2026 operations expanding toward EU energy targets. AeroGrid's Palermo offshore manufacturing facility (high criticality) and the Malaga service hub both sit within this governance gap, supporting active contracts with Iberdrola and ENEL MED. Chinese state-linked manufacturers under EU probe introduce a parallel supply-chain espionage vector. No confirmed cyber intrusion against an AeroGrid site was identified this window, but the assessed threat rests on confirmed adversary motivation and a documented structural attack surface.</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">LATAM</h3>
+                <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">High</span>
+            </div>
+            <p class="text-3xl font-bold text-red-500 mb-3">$0</p>
+            <div class="flex flex-wrap gap-2 items-center mb-3">
+                <span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="Usually reliable source — Probably true">B2</span><span class="inline-block bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">Geopolitical</span>
+            </div>
+            <div class="mb-3"><span class="text-red-500 text-sm font-bold" title="Trend: Accelerating">↑ Accelerating</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">China's operational control or pervasive influence over 37 major Latin American ports creates a physical supply chain interdiction vector for wind components flowing to AeroGrid's São Paulo and Santiago operations, while Chinese state-aligned groups including Mustang Panda and Volt Typhoon have demonstrated active intelligence collection and OT pre-positioning in the region without yet directing confirmed activity at wind sector targets. The Sinovel case remains the sole confirmed precedent of Chinese state-linked entities stealing wind turbine IP, and Volt Typhoon's documented pre-positioning doctrine in critical infrastructure networks indicates that capability exists and is being positioned even where confirmed targeting is absent. AeroGrid's 680-person service presence across the region and active Enel Chile and Neoenergia contracts represent the operational exposure that would be affected if the documented capability were directed at LATAM wind infrastructure; the zero VaCR reflects the absence of confirmed targeting, not the absence of risk. Velocity is assessed as accelerating.</p>
+        </div>
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">NCE</h3>
+                <span class="bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full">High</span>
+            </div>
+            <p class="text-3xl font-bold text-red-500 mb-3">$0</p>
+            <div class="flex flex-wrap gap-2 items-center mb-3">
+                <span class="inline-block bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded mr-1 mb-1">System intrusion</span><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="Usually reliable source — Probably true">B2</span><span class="inline-block bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded">Geopolitical</span>
+            </div>
+            <div class="mb-3"><span class="text-green-500 text-sm font-bold" title="Trend: Improving">↓ Improving</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">Germany's failure to transpose NIS2 and the CER Directive before the federal elections has left critical infrastructure operators — including wind energy companies now formally in scope — without the legal baseline those directives were designed to enforce, a gap confirmed as structural and ongoing across multiple EU member states. CERT Polska documented coordinated cyber attacks against 30 renewable energy sites in Poland in early 2026, establishing that wind and solar infrastructure within the broader NCE geography has been subjected to disruptive external action with probable state attribution. No named threat actor conducting confirmed operations against NCE wind manufacturing networks was identified this window, but the regulatory enforcement gap and concentrated IP value at Hamburg and Gdansk (both HIGH criticality) represent the structural opening that precedes operational exploitation in comparable prior incidents. AeroGrid's Copenhagen Engineering Hub holds core aerodynamic IP most directly sought by state actors competing for clean energy technology advantage. VaCR for this scenario is $0, reflecting the absence of a confirmed incident against an AeroGrid facility rather than the absence of structural risk.</p>
+        </div>
+        </div>
+
+        
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Watch Regions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-amber-400">
+            <div class="flex justify-between items-start mb-3">
+                <h3 class="text-lg font-bold text-gray-900">AME</h3>
+                <span class="bg-amber-400 text-white text-xs font-bold px-3 py-1 rounded-full">Watch</span>
+            </div>
+            <div class="mb-2"><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded" title="Fairly reliable source — Possibly true">C3</span></div>
+            <p class="text-sm text-gray-600 leading-relaxed">The U.S. Department of Homeland Security issued a formal advisory in March 2026 warning energy companies of elevated Iranian retaliation risk following U.S. and Israeli military strikes, encompassing both cyberattack and physical sabotage vectors. Documented ransomware deployment patterns against energy service operators — including confirmed attacks against wind, solar, and heat facilities in Poland via compromised FortiGate devices — establish that the threat modality is active at the sector level. However, no named threat actor conducting confirmed operations against North American wind farm SCADA, telemetry, or maintenance scheduling systems was identified this window, and the scenario_map financial_rank for Physical threat (rank 6) does not breach the top-4 escalation threshold. AME remains in monitor status: adversary intent and sector-level capability are documented, but no wind-specific operational incident, CISA advisory targeting wind OT, or confirmed reconnaissance against North American wind service environments was recovered this cycle.</p>
+        </div>
+        </div>
+
+        <!-- Clear Region Cards -->
+        <h2 class="text-lg font-bold text-gray-900 mb-4">Clear Regions</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            
+        </div>
+
+        <!-- CRQ Validation Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">CRQ Validation</h2>
+                <span class="text-xs text-gray-400">Last run: 2026-03-28</span>
+            </div>
+            
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">System intrusion</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">$22.0M</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Ransomware</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Accidental disclosure</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Physical threat</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Insider misuse</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">DoS attack</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Scam or fraud</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">Defacement</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <span class="text-sm text-gray-800 w-44">System failure</span>
+                    <span class="text-sm font-mono text-gray-700 w-16">—</span>
+                    <span class="text-sm w-32"><span class="text-gray-500">— NO DATA</span></span>
+                    <span class="text-xs text-gray-500 w-16">—</span>
+                    <span class="text-xs text-gray-400 flex-1 truncate">—</span>
+                </div>
+            <div class="mt-3 text-xs text-gray-500">0 supported &middot; 0 challenged &middot; 9 no data &middot; 0 sources</div>
+            
+        </div>
+
+        <!-- Intelligence Sources Panel -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-900">Intelligence Sources</h2>
+                <span class="text-xs text-gray-400">7 registered &middot; 0 candidates</span>
+            </div>
+            <table class="w-full">
+                <thead>
+                    <tr class="text-xs text-gray-400 uppercase tracking-wide border-b border-gray-200">
+                        <th class="pb-2 text-left pr-4">Source</th>
+                        <th class="pb-2 text-center pr-4">Adm.</th>
+                        <th class="pb-2 text-left pr-4">Cadence</th>
+                        <th class="pb-2 text-left pr-4">Last Checked</th>
+                        <th class="pb-2 text-left pr-4">New Content</th>
+                        <th class="pb-2 text-left">Scenarios</th>
+                    </tr>
+                </thead>
+                <tbody>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">Verizon Data Breach Investigations Report</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-green-100 text-green-800 text-xs font-mono font-bold px-2 py-0.5 rounded">A</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">System intrusion, Ransomware, Insider misuse, Scam or fraud</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">IBM Cost of a Data Breach Report</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-green-100 text-green-800 text-xs font-mono font-bold px-2 py-0.5 rounded">A</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">Ransomware, Accidental disclosure, Insider misuse</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">Dragos ICS/OT Cybersecurity Year in Review</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-green-100 text-green-800 text-xs font-mono font-bold px-2 py-0.5 rounded">A</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">System intrusion, Ransomware</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">Mandiant M-Trends</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded">B</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">Ransomware, System intrusion, Accidental disclosure</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">Claroty State of XIoT Security</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded">B</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Biannual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">System intrusion</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">Marsh Cyber Insurance Market Report</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded">B</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">Ransomware, Accidental disclosure, Scam or fraud</td>
+                </tr>
+                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 pr-4 text-sm text-gray-800 font-medium">ENISA Threat Landscape</td>
+                    <td class="py-2 pr-4 text-center"><span class="inline-block bg-blue-100 text-blue-800 text-xs font-mono font-bold px-2 py-0.5 rounded">B</span></td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">Annual</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">2026-03-28</td>
+                    <td class="py-2 pr-4 text-xs text-gray-500">—</td>
+                    <td class="py-2 text-xs text-gray-400">Ransomware, System intrusion, DoS attack</td>
+                </tr></tbody>
+            </table>
+            <div class="mt-4 pt-4 border-t border-gray-200 text-xs text-gray-400 italic">No new candidate sources discovered in last run.</div>
+        </div>
+
+        <!-- Audit Trace (Collapsible) -->
+        <details class="bg-white rounded-lg shadow-md mb-8">
+            <summary class="cursor-pointer p-6 text-lg font-bold text-gray-900 hover:bg-gray-50 rounded-lg">
+                System Audit Trace &mdash; 37 events
+            </summary>
+            <div class="px-6 pb-6 max-h-96 overflow-y-auto">
+                <div class="text-blue-600 font-bold text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:02:56Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — LIVE OSINT mode — processing 5 regions</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:07:47Z] [COLLECTION_QUALITY] APAC: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:07:58Z] [COLLECTION_QUALITY] AME: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:08:08Z] [COLLECTION_QUALITY] MED: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:08:15Z] [COLLECTION_QUALITY] APAC: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:08:19Z] [COLLECTION_QUALITY] AME: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:08:29Z] [COLLECTION_QUALITY] MED: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:08:45Z] [COLLECTION_QUALITY] LATAM: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:09:04Z] [COLLECTION_QUALITY] LATAM: geo=3 cyber=3 thin=False threshold=3</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:09:28Z] [GATEKEEPER_YES] APAC — escalated, proceeding to analysis</div>
+<div class="text-green-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:09:57Z] [GATEKEEPER_NO] AME — monitor, elevated indicators below escalation threshold</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:10:08Z] [GATEKEEPER_YES] MED — escalated, proceeding to analysis</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:10:58Z] [GATEKEEPER_YES] LATAM — escalated, proceeding to analysis</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:11:46Z] [COLLECTION_QUALITY] NCE: geo=5 cyber=4 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:11:52Z] [GROUNDING] APAC claim distribution: {'fact': 5, 'assessment': 2, 'estimate': 1} | grounding_score=0.62</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:11:52Z] [GROUNDING] APAC orphaned signal_ids (collected but uncited): ['apac-cyber-003']</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:11:52Z] [GROUNDING] APAC grounding validation PASSED</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:11:57Z] [SECTIONS] APAC sections validation PASSED</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:13:21Z] [COLLECTION_QUALITY] NCE: geo=4 cyber=3 thin=False threshold=3</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:13:36Z] [GROUNDING] LATAM claim distribution: {'fact': 6, 'assessment': 1, 'estimate': 1} | grounding_score=0.75</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:13:36Z] [GROUNDING] LATAM grounding validation PASSED</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:13:40Z] [SECTIONS] LATAM sections validation PASSED</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:13:50Z] [COLLECTION_QUALITY] NCE: geo=4 cyber=3 thin=False threshold=3</div>
+<div class="text-red-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T19:58:51Z] [GATEKEEPER_YES] NCE — escalated, proceeding to analysis</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:02:28Z] [GROUNDING] NCE claim distribution: {'fact': 5, 'assessment': 2, 'estimate': 1} | grounding_score=0.62</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:02:28Z] [GROUNDING] NCE grounding validation PASSED</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:02:29Z] [SECTIONS] NCE sections validation PASSED</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:27:46Z] [HOOK_PASS] apac jargon audit passed</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:27:46Z] [HOOK_PASS] latam jargon audit passed</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:27:47Z] [HOOK_PASS] med jargon audit passed</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:27:47Z] [HOOK_PASS] nce jargon audit passed</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:29:38Z] [PHASE_COMPLETE] Velocity analysis complete — trend_brief.json written</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:34:35Z] [PHASE_COMPLETE] Trend synthesis complete — output/trend_analysis.json written</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:34:47Z] [PHASE_COMPLETE] Cross-regional diff complete</div>
+<div class="text-amber-600 font-medium text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:38:17Z] [HOOK_FAIL] Global validation failed — rewrite cycle 1</div>
+<div class="text-green-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:42:18Z] [HOOK_PASS] Global report validated by devil's advocate</div>
+<div class="text-gray-600 text-xs font-mono py-1 border-b border-gray-100">[2026-04-05T20:42:19Z] [PHASE_COMPLETE] Global JSON report validated</div>
+
+            </div>
+        </details>
+
+        <footer class="text-center text-xs text-gray-400 py-4">
+            Generated by CRQ Agentic Pipeline &mdash; 2026-04-05 &mdash; All financial figures from enterprise CRQ application (immutable source of truth)
+        </footer>
+    </main>
+</body>
+</html>

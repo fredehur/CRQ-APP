@@ -58,7 +58,7 @@ def log_trace(msg: str):
     ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     line = f"[{ts}] [SECTIONS] {msg}"
     try:
-        with open("output/system_trace.log", "a", encoding="utf-8") as f:
+        with open("output/logs/system_trace.log", "a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass

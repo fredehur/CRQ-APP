@@ -2,7 +2,7 @@
 """
 PreToolUse telemetry hook.
 
-Logs filesystem-mutating tool invocations to output/tool_trace.log.
+Logs filesystem-mutating tool invocations to output/logs/tool_trace.log.
 Only tracks Write and Edit tool calls — ignores Read, Bash, and all others
 to avoid flooding the log with noise.
 
@@ -17,7 +17,7 @@ from pathlib import Path
 WATCHED_TOOLS = {"Write", "Edit", "NotebookEdit"}
 
 BASE = Path(__file__).resolve().parents[3]
-LOG = BASE / "output" / "tool_trace.log"
+LOG = BASE / "output" / "logs" / "tool_trace.log"
 
 
 def main():

@@ -10,6 +10,9 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from tools.config import FEEDBACK_TRENDS_PATH
+
 REPO_ROOT = Path(__file__).parent.parent
 
 VALID_RATINGS = ("accurate", "overstated", "understated", "false_positive")
@@ -126,7 +129,7 @@ def build_summary() -> dict:
 def main() -> None:
     summary = build_summary()
 
-    out_path = REPO_ROOT / "output" / "feedback_trends.json"
+    out_path = REPO_ROOT / FEEDBACK_TRENDS_PATH
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     tmp = out_path.with_suffix(".tmp")
@@ -136,7 +139,7 @@ def main() -> None:
     if summary["total_runs_with_feedback"] == 0:
         print("No feedback found — empty summary written")
     else:
-        print("Feedback summary written to output/feedback_trends.json")
+        print(f"Feedback summary written to {FEEDBACK_TRENDS_PATH}")
 
 
 if __name__ == "__main__":

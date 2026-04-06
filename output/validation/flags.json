@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-03-28T16:09:48Z",
+  "crq_db_hash": "ad433ed2",
+  "scenarios": [
+    {
+      "scenario": "System intrusion",
+      "our_vacr_usd": 22000000.0,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Ransomware",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Accidental disclosure",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Physical threat",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Insider misuse",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "DoS attack",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Scam or fraud",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "Defacement",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    },
+    {
+      "scenario": "System failure",
+      "our_vacr_usd": null,
+      "verdict": "no_data",
+      "benchmark_range_usd": null,
+      "benchmark_median_usd": null,
+      "deviation_pct": null,
+      "flagged_for_review": false,
+      "review_reason": null,
+      "supporting_sources": [],
+      "last_validated": "2026-03-28"
+    }
+  ],
+  "summary": {
+    "total_scenarios": 9,
+    "supported": 0,
+    "challenged": 0,
+    "no_data": 9,
+    "stale": 0,
+    "flagged_for_review": 0,
+    "sources_used": 0
+  }
+}

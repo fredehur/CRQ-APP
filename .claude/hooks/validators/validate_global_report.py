@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Deterministic validator for output/global_report.json.
+Deterministic validator for output/pipeline/global_report.json.
 
 Replaces Haiku agent for all arithmetic and string-matching checks.
 These checks must be 100% deterministic — no LLM reasoning in the loop.
@@ -15,6 +15,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[3]  # crq-agent-workspace root
 OUTPUT = BASE / "output"
+PIPELINE = OUTPUT / "pipeline"
 REGIONAL = OUTPUT / "regional"
 REGIONS = ["apac", "ame", "latam", "med", "nce"]
 
@@ -56,11 +57,11 @@ def main():
         clear_retries()
         sys.exit(0)
 
-    report_path = OUTPUT / "global_report.json"
+    report_path = PIPELINE / "global_report.json"
     report = load_json(report_path, "global_report")
 
     if report is None:
-        print("VALIDATE FAIL: output/global_report.json not found.", file=sys.stderr)
+        print("VALIDATE FAIL: output/pipeline/global_report.json not found.", file=sys.stderr)
         increment_retries(retries)
         sys.exit(2)
 

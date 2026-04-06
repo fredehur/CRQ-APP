@@ -1,0 +1,191 @@
+{
+  "generated_at": "2026-04-05T20:34:03Z",
+  "run_count": 11,
+  "regions": {
+    "APAC": {
+      "severity_trajectory": [
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH",
+        "HIGH"
+      ],
+      "scenario_frequency": {
+        "System intrusion": 11
+      },
+      "escalation_count": 11,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": [
+        "Geopolitical",
+        "Geopolitical",
+        "Cyber",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical"
+      ],
+      "velocity_trend": "stable",
+      "assessment": "APAC has maintained an elevated risk posture across all eleven pipeline runs, sustaining HIGH severity without a single improvement interval. State-linked intrusion activity targeting industrial control systems in East Asia poses a persistent threat to AeroGrid turbine manufacturing facilities in the region. The unbroken escalation record indicates that the underlying geopolitical conditions \u2014 including contested territorial claims and export-control disputes \u2014 have not materially improved, and service delivery continuity for maintenance teams operating across Southeast Asia remains exposed to disruption at short notice."
+    },
+    "AME": {
+      "severity_trajectory": [
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL",
+        "CRITICAL"
+      ],
+      "scenario_frequency": {
+        "Ransomware": 10,
+        "System intrusion": 1
+      },
+      "escalation_count": 11,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": [
+        "Geopolitical",
+        "Geopolitical",
+        "Cyber",
+        "Cyber",
+        "Cyber",
+        "Cyber",
+        "Geopolitical",
+        "Cyber",
+        "Geopolitical"
+      ],
+      "velocity_trend": "stable",
+      "assessment": "AME is the highest-risk region in the portfolio and has held CRITICAL severity for every one of the eleven runs on record, with ransomware the dominant scenario in nine of those cycles. North American energy infrastructure has been the subject of sustained and well-resourced criminal campaigns, and AeroGrid turbine production lines and after-sales service contracts in the region carry the greatest single concentration of financial exposure in the portfolio, with VaCR figures consistently at $22 million per event. The unbroken trajectory and absence of any monitoring or clear intervals signals that the threat environment has not relaxed; production planning and contractual commitments in this region should account for elevated disruption probability."
+    },
+    "LATAM": {
+      "severity_trajectory": [
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "MEDIUM"
+      ],
+      "scenario_frequency": {
+        "Physical threat": 1,
+        "System intrusion": 3
+      },
+      "escalation_count": 1,
+      "escalation_rate": 0.09,
+      "dominant_pillar_history": [
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical"
+      ],
+      "velocity_trend": "accelerating",
+      "assessment": "LATAM was consistently clear across the first eight runs but has since transitioned through monitor status to a first escalation in the most recent cycle, driven by infrastructure-targeting activity linked to broader regional instability. This upward movement from a long-stable baseline is a meaningful shift: the region has moved from background noise to active watch in under four weeks. For AeroGrid, this affects wind farm service operations in Brazil and Chile where ground-level disruption could affect scheduled maintenance windows. The trajectory warrants active monitoring and pre-positioning of contingency service capacity before the pattern consolidates further."
+    },
+    "MED": {
+      "severity_trajectory": [
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM",
+        "MEDIUM"
+      ],
+      "scenario_frequency": {
+        "Insider misuse": 9,
+        "System intrusion": 2
+      },
+      "escalation_count": 11,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": [
+        "Geopolitical",
+        "Geopolitical",
+        "Cyber",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Cyber",
+        "Geopolitical"
+      ],
+      "velocity_trend": "stable",
+      "assessment": "MED has sustained escalated status at MEDIUM severity across all eleven runs, most recently shifting its primary scenario from insider misuse to broader system intrusion patterns. The eastern Mediterranean and North African sub-regions face compounding pressures from geopolitical realignment and digitally connected port and logistics infrastructure, both of which intersect with AeroGrid service delivery routes for offshore and near-shore wind assets. The sustained but contained severity profile suggests a risk environment that has not materially worsened but equally has found no path to resolution, making it a reliable medium-term drag on operational predictability across the region."
+    },
+    "NCE": {
+      "severity_trajectory": [
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "LOW",
+        "HIGH",
+        "LOW"
+      ],
+      "scenario_frequency": {
+        "System intrusion": 3,
+        "Physical threat": 1
+      },
+      "escalation_count": 2,
+      "escalation_rate": 0.18,
+      "dominant_pillar_history": [
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Geopolitical",
+        "Cyber",
+        "Geopolitical"
+      ],
+      "velocity_trend": "improving",
+      "assessment": "NCE presented a clear risk profile for the majority of the observation window before spiking to HIGH severity in late March, driven by intrusion-focused activity across Northern and Central European energy networks. The most recent run returned to LOW with monitor status, suggesting the acute phase may have passed, consistent with the improving velocity signal from trend analysis. However, the spike demonstrates that the region is not structurally insulated from high-impact events, and AeroGrid turbine operations in Germany, Scandinavia, and the Baltics remain exposed to rapid escalation given the geopolitical pressures affecting European energy security policy."
+    }
+  },
+  "cross_regional": {
+    "patterns": [
+      "System intrusion is the most frequently recurring scenario across APAC, AME, MED, NCE, and LATAM, appearing in all five regions in the most recent run \u2014 the broadest simultaneous footprint observed to date.",
+      "AME and APAC have co-escalated in every single pipeline run, indicating a structural rather than episodic dual-region risk that compounds aggregate exposure for AeroGrid.",
+      "LATAM and NCE have each moved from prolonged clear periods into escalation within the same four-week window, suggesting a global uplift in the threat environment that is reaching previously quiescent regions.",
+      "Geopolitical pillar dominance has increased across the portfolio in the most recent two runs, with Cyber-led escalations receding as the primary driver \u2014 pointing to state-actor activity and policy risk rather than opportunistic criminal campaigns as the primary force."
+    ],
+    "compound_risk": "AME and APAC have been simultaneously escalated across the entire eleven-run record, representing a persistent dual-region compound risk that accounts for the two highest VaCR exposure figures in the portfolio. The addition of LATAM escalation in the most recent cycle means that three of five regions are now in escalated status simultaneously for the first time, materially increasing the probability that a coordinated or cascading disruption event could affect turbine production and service continuity across multiple continents in the same operational window. MED has co-escalated with AME and APAC in ten of eleven runs, reinforcing the compound risk picture and reducing the practical value of geographic diversification as a risk buffer."
+  },
+  "ciso_talking_points": [
+    "AME has returned CRITICAL severity in all eleven pipeline runs on record, with VaCR exposure consistently modelled at $22 million per event \u2014 this is the single largest concentration of quantified risk in the AeroGrid portfolio and has shown no signs of abating.",
+    "For the first time in the observation period, three of five regions \u2014 AME, APAC, and LATAM \u2014 are simultaneously escalated, which means that our geographic diversification provides less operational insulation against concurrent disruption than it has in any prior cycle.",
+    "LATAM has escalated from a consistently clear baseline to its first active escalation in under four weeks, a velocity that warrants immediate review of service continuity plans for wind farm operations in Brazil and Chile before the pattern hardens into a structural risk.",
+    "NCE spiked to HIGH severity in the 1 April cycle before returning to LOW in the most recent run \u2014 this oscillation demonstrates that Northern European operations cannot be treated as structurally low-risk, and contingency readiness should be maintained even during clear intervals.",
+    "Geopolitical risk is now the dominant pillar across four of five regions in the most recent cycle, shifting the primary risk driver from opportunistic cyber campaigns to state-actor activity and policy uncertainty \u2014 a category where the lead time for operational impact is typically shorter and the ability to predict onset is lower."
+  ]
+}

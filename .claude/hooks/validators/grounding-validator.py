@@ -19,7 +19,7 @@ Checks:
 5. If ALL claims are estimate AND gatekeeper decision == ESCALATE -> FAIL.
    This means the analyst has no grounded analysis for an escalated region.
 
-Emits to output/system_trace.log:
+Emits to output/logs/system_trace.log:
 - Claim type distribution {fact: N, assessment: N, estimate: N}
 - fact_claims / total_claims ratio (grounding score)
 - Orphaned signal_ids (collected but not cited in claims)
@@ -71,7 +71,7 @@ def log_trace(msg: str):
     ts = datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
     line = f"[{ts}] [GROUNDING] {msg}"
     try:
-        with open("output/system_trace.log", "a", encoding="utf-8") as f:
+        with open("output/logs/system_trace.log", "a", encoding="utf-8") as f:
             f.write(line + "\n")
     except Exception:
         pass

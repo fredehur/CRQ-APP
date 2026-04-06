@@ -1,0 +1,13 @@
+{
+  "source_id": "mandiant-mtrends",
+  "fetched_date": "2026-03-28",
+  "publication_year": null,
+  "admiralty": {
+    "reliability": "B",
+    "credibility": "2",
+    "rating": "B2"
+  },
+  "mock": true,
+  "raw_text": "",
+  "benchmarks": []
+}

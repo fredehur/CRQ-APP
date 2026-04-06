@@ -12,7 +12,7 @@ You are the Chief Risk Orchestrator for AeroGrid Wind Solutions (Anonymized).
 1. **Act as a Unix CLI Tool, not a Chatbot.** Output ONLY status lines and final results.
 2. **Zero Preamble & Zero Sycophancy.** No filler. No commentary beyond what is specified below.
 3. **Filesystem as State.** Read from files. Write to files. Do not hallucinate state.
-4. **Assume Hostile Auditing.** Every gatekeeper decision and hook result is logged to `output/system_trace.log`.
+4. **Assume Hostile Auditing.** Every gatekeeper decision and hook result is logged to `output/logs/system_trace.log`.
 
 ## REBUILD MODE
 
@@ -41,7 +41,7 @@ Parse `--window` from the invocation arguments (e.g., `/run-crq --window 30d`).
 - If `--window` is omitted or not provided: default to `WINDOW=7d`.
 Store `WINDOW` for use in Phase 1 and Phase 6.
 
-Clear stale log: `rm -f output/system_trace.log`
+Clear stale log: `rm -f output/logs/system_trace.log`
 
 **Load prior run feedback (if any):**
 Run: `uv run python tools/feedback_writer.py --summarize`
@@ -187,15 +187,15 @@ If `--deep` is not present, skip this phase entirely.
 ## PHASE 2 — VELOCITY ANALYSIS
 
 Run: `uv run python tools/trend_analyzer.py`
-This reads archived runs from `output/runs/`, computes velocity per region, writes `output/trend_brief.json`, and patches velocity into each `output/regional/{region}/data.json`.
+This reads archived runs from `output/runs/`, computes velocity per region, writes `output/pipeline/trend_brief.json`, and patches velocity into each `output/regional/{region}/data.json`.
 Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Velocity analysis complete — trend_brief.json written"`
 
 ## PHASE 2.5 — TREND SYNTHESIS
 
 Delegate to `trends-synthesis-agent` with this task description:
-"Read output/trend_brief.json and all output/runs/*/regional/*/data.json files. Synthesize longitudinal patterns across all archived runs. Write output/trend_analysis.json per your agent instructions. Region: ALL"
+"Read output/pipeline/trend_brief.json and all output/runs/*/regional/*/data.json files. Synthesize longitudinal patterns across all archived runs. Write output/pipeline/trend_analysis.json per your agent instructions. Region: ALL"
 
-On completion: `uv run python tools/audit_logger.py PHASE_COMPLETE "Trend synthesis complete — output/trend_analysis.json written"`
+On completion: `uv run python tools/audit_logger.py PHASE_COMPLETE "Trend synthesis complete — output/pipeline/trend_analysis.json written"`
 If the agent fails or errors: `uv run python tools/audit_logger.py TREND_WARN "Trend synthesis failed — dashboard will show no trend data"` — then continue. This phase is **non-fatal**.
 
 ## PHASE 3 — CROSS-REGIONAL DIFF
@@ -206,13 +206,13 @@ Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Cross-regional diff co
 
 ## PHASE 4 — GLOBAL REPORT
 
-Delegate to `global-builder-agent`. Provide all approved regional briefs, the delta brief, and the path to `output/trend_brief.json`.
-Agent reads regional reports, data.json files, and trend brief, then writes `output/global_report.json`.
+Delegate to `global-builder-agent`. Provide all approved regional briefs, the delta brief, and the path to `output/pipeline/trend_brief.json`.
+Agent reads regional reports, data.json files, and trend brief, then writes `output/pipeline/global_report.json`.
 Stop hooks validate JSON schema (including Admiralty and velocity fields), then jargon.
 
 ### Phase 4b — Global Validation (Devil's Advocate)
 
-Delegate to `global-validator-agent`. It reads `output/global_report.json` and cross-references all regional data files for consistency.
+Delegate to `global-validator-agent`. It reads `output/pipeline/global_report.json` and cross-references all regional data files for consistency.
 
 - If agent returns `APPROVED`:
   - Run: `uv run python tools/audit_logger.py HOOK_PASS "Global report validated by devil's advocate"`
@@ -228,21 +228,21 @@ Run: `uv run python tools/audit_logger.py PHASE_COMPLETE "Global JSON report val
 ## PHASE 5 — DASHBOARD & EXPORT
 
 Run: `uv run python tools/build_dashboard.py`
-Generates `output/dashboard.html` (Tailwind executive dashboard with Admiralty badges and velocity arrows) and `output/global_report.md`.
+Generates `output/pipeline/dashboard.html` (Tailwind executive dashboard with Admiralty badges and velocity arrows) and `output/pipeline/global_report.md`.
 
-Run: `uv run python tools/export_pdf.py output/board_report.pdf`
-Run: `uv run python tools/export_pptx.py output/board_report.pptx`
+Run: `uv run python tools/export_pdf.py output/deliverables/board_report.pdf`
+Run: `uv run python tools/export_pptx.py output/deliverables/board_report.pptx`
 Run: `uv run python tools/export_ciso_docx.py`
 
 ## PHASE 6 — FINALIZE
 
-Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/run_manifest.json` from all regional `data.json` files.
+Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/pipeline/run_manifest.json` from all regional `data.json` files.
 
 Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
 
 Run: `uv run python tools/update_source_registry.py`
 
-**Enrich region data** — runs immediately after source_appearances is populated. Read `pipeline_id` from `output/run_manifest.json` and call `enrich_region_data` for each region that has a `data.json`:
+**Enrich region data** — runs immediately after source_appearances is populated. Read `pipeline_id` from `output/pipeline/run_manifest.json` and call `enrich_region_data` for each region that has a `data.json`:
 
 ```
 for REGION in apac ame med latam nce:
@@ -250,14 +250,14 @@ for REGION in apac ame med latam nce:
     uv run python -c "
 import sys, json; sys.path.insert(0, 'tools')
 from pathlib import Path
-manifest = json.loads(Path('output/run_manifest.json').read_text(encoding='utf-8')) if Path('output/run_manifest.json').exists() else {}
+manifest = json.loads(Path('output/pipeline/run_manifest.json').read_text(encoding='utf-8')) if Path('output/pipeline/run_manifest.json').exists() else {}
 run_id = manifest.get('pipeline_id', 'unknown')
 from update_source_registry import enrich_region_data
 enrich_region_data('{REGION}', run_id)
 "
 ```
 
-Run: `uv run python tools/feedback_summary.py` to aggregate analyst feedback across all archived runs into `output/feedback_trends.json`.
+Run: `uv run python tools/feedback_summary.py` to aggregate analyst feedback across all archived runs into `output/pipeline/feedback_trends.json`.
 
 Run: `uv run python tools/build_history.py`
 

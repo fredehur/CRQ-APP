@@ -5,11 +5,11 @@ Writes output/trend_brief.json and patches velocity into each regional data.json
 import json
 import os
 import sys
-from config import REGIONS
+from tools.config import REGIONS, TREND_BRIEF_PATH
 
 SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "UNKNOWN": 0}
 RUNS_DIR = "output/runs"
-TREND_OUTPUT = "output/trend_brief.json"
+TREND_OUTPUT = str(TREND_BRIEF_PATH)
 
 
 def load_historical_runs():
@@ -72,7 +72,7 @@ def analyze():
             "history": history,
         }
 
-    os.makedirs("output", exist_ok=True)
+    os.makedirs(str(TREND_BRIEF_PATH.parent), exist_ok=True)
     with open(TREND_OUTPUT, "w", encoding="utf-8") as f:
         json.dump(trend, f, indent=2)
 

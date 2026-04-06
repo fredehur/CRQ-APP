@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-04-05T20:47:09.446685+00:00",
+  "total_runs_with_feedback": 3,
+  "total_ratings": 4,
+  "by_region": {
+    "AME": {
+      "accurate": 1,
+      "overstated": 1,
+      "understated": 0,
+      "false_positive": 0,
+      "total": 2,
+      "accuracy_rate": 0.5
+    },
+    "APAC": {
+      "accurate": 1,
+      "overstated": 1,
+      "understated": 0,
+      "false_positive": 0,
+      "total": 2,
+      "accuracy_rate": 0.5
+    }
+  },
+  "by_rating": {
+    "accurate": 2,
+    "overstated": 2,
+    "understated": 0,
+    "false_positive": 0
+  },
+  "recent_notes": [
+    {
+      "run_id": "crq-2026-03-16T171249Z",
+      "region": "AME",
+      "rating": "accurate",
+      "note": "Pipeline ran clean",
+      "analyst": "anonymous",
+      "submitted_at": "2026-03-17T07:55:14.215618+00:00"
+    }
+  ]
+}

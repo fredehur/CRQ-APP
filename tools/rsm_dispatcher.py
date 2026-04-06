@@ -19,9 +19,10 @@ from pathlib import Path
 from datetime import datetime, timezone
 
 sys.path.insert(0, ".")
+from tools.config import ROUTING_PATH as ROUTING_FILE_PATH
 
 OUTPUT_ROOT = Path("output")
-ROUTING_PATH = Path("output/routing_decisions.json")
+ROUTING_PATH = ROUTING_FILE_PATH
 
 
 def _invoke_formatter(decision: dict, mock: bool) -> None:

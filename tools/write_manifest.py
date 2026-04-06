@@ -1,10 +1,10 @@
-"""Assembles output/run_manifest.json from all regional data.json files."""
+"""Assembles output/pipeline/run_manifest.json from all regional data.json files."""
 import argparse
 import json
 import os
 import sys
 from datetime import datetime, timezone
-from config import REGIONS
+from tools.config import REGIONS, MANIFEST_PATH
 
 
 def build_manifest(window_used=None):
@@ -58,8 +58,9 @@ def build_manifest(window_used=None):
         },
     }
 
-    out_path = "output/run_manifest.json"
-    with open(out_path, "w", encoding="utf-8") as f:
+    out_path = MANIFEST_PATH
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(str(out_path), "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
 
     print(f"Wrote {out_path} — {len(REGIONS)} regions, total VaCR: ${total_vacr:,.0f}")

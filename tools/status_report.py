@@ -6,7 +6,7 @@ Usage: uv run python tools/status_report.py
 """
 import json
 import os
-from config import REGIONS
+from tools.config import REGIONS, MANIFEST_PATH, TREND_BRIEF_PATH
 
 STATUS_ICON = {
     "escalated": "[!] ESCALATED",
@@ -34,8 +34,8 @@ def load(path):
 
 
 def run():
-    manifest  = load("output/run_manifest.json")
-    trend     = load("output/trend_brief.json")
+    manifest  = load(str(MANIFEST_PATH))
+    trend     = load(str(TREND_BRIEF_PATH))
 
     print()
     print("=" * 70)

@@ -21,7 +21,7 @@ This is a **risk awareness platform**, not a security report tool.
 ## Agent Hierarchy
 
 ```
-run-crq (Orchestrator slash command, opus) — logs all events to output/system_trace.log
+run-crq (Orchestrator slash command, opus) — logs all events to output/logs/system_trace.log
 ├── [PARALLEL via Task fan-out] 5x regional pipelines spawned simultaneously
 │   ├── OSINT tool chain: geo_collector → cyber_collector → scenario_mapper
 │   ├── gatekeeper-agent (haiku) — triage, Admiralty rating, ESCALATE/MONITOR/CLEAR
@@ -51,9 +51,9 @@ write_region_data.py    → output/regional/{region}/data.json  (propagates admi
 regional-analyst-agent  → output/regional/{region}/report.md
                         → output/regional/{region}/signal_clusters.json  (dashboard UI artifact)
                         → output/regional/{region}/data.json  (adds primary_scenario, financial_rank, signal_type)
-global-builder-agent    → output/global_report.json
-write_manifest.py       → output/run_manifest.json
-build_dashboard.py      → output/dashboard.html + output/global_report.md
+global-builder-agent    → output/pipeline/global_report.json
+write_manifest.py       → output/pipeline/run_manifest.json
+build_dashboard.py      → output/pipeline/dashboard.html + output/pipeline/global_report.md
 archive_run.py          → output/runs/{timestamp}/ + output/latest/
 rsm-formatter-agent     → output/regional/{region}/rsm_brief_{region}_{date}.md
                         → output/regional/{region}/rsm_flash_{region}_{datetime}z.md
@@ -155,7 +155,7 @@ uv run python tools/delta_computer.py <REGION>
 uv run python tools/threshold_evaluator.py [--force-weekly] [--check-flash]
 uv run python tools/rsm_dispatcher.py --weekly --mock
 uv run python tools/rsm_dispatcher.py --check-flash --mock
-uv run python tools/notifier.py output/routing_decisions.json [--mock]
+uv run python tools/notifier.py output/pipeline/routing_decisions.json [--mock]
 uv run python tools/scheduler.py --once
 
 # Validators (manual)
@@ -182,6 +182,6 @@ Every run produces a deterministic structure a frontend can ingest:
 
 ## Observability
 
-`tools/audit_logger.py` → `output/system_trace.log`. Events: PIPELINE_START, GATEKEEPER_YES/NO, HOOK_PASS/FAIL, PHASE_COMPLETE, PIPELINE_COMPLETE.
+`tools/audit_logger.py` → `output/logs/system_trace.log`. Events: PIPELINE_START, GATEKEEPER_YES/NO, HOOK_PASS/FAIL, PHASE_COMPLETE, PIPELINE_COMPLETE.
 
-`output/tool_trace.log` — Pre/PostToolUse hook telemetry: Write/Edit completions + Bash failures.
+`output/logs/tool_trace.log` — Pre/PostToolUse hook telemetry: Write/Edit completions + Bash failures.

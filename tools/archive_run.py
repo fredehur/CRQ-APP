@@ -4,6 +4,7 @@ import sys
 import json
 import shutil
 from datetime import datetime, timezone
+from tools.config import MANIFEST_PATH
 
 # Files and directories to archive from output/
 ARCHIVE_FILES = [
@@ -22,7 +23,7 @@ ARCHIVE_DIRS = [
 
 def archive():
     # Derive timestamp from run_manifest if available, else use current time
-    manifest_path = "output/run_manifest.json"
+    manifest_path = str(MANIFEST_PATH)
     if os.path.exists(manifest_path):
         with open(manifest_path, encoding="utf-8") as f:
             manifest = json.load(f)

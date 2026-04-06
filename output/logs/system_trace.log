@@ -1,0 +1,15 @@
+[2026-04-06T09:25:09Z] [PIPELINE_START] AeroGrid CRQ Pipeline initiated — LIVE OSINT mode — processing 5 regions
+[2026-04-06T09:29:22Z] [GATEKEEPER_YES] NCE — escalated, proceeding to analysis
+[2026-04-06T09:32:00Z] [GATEKEEPER_YES] APAC — escalated, proceeding to analysis
+[2026-04-06T09:32:00Z] [GATEKEEPER_YES] AME — escalated, proceeding to analysis
+[2026-04-06T09:32:01Z] [GATEKEEPER_YES] LATAM — escalated, proceeding to analysis
+[2026-04-06T09:32:02Z] [GATEKEEPER_YES] MED — escalated, proceeding to analysis
+[2026-04-06T09:32:02Z] [GATEKEEPER_YES] NCE — escalated, proceeding to analysis
+[2026-04-06T09:32:26Z] [GROUNDING] NCE claim distribution: {'fact': 5, 'assessment': 2, 'estimate': 1} | grounding_score=0.62
+[2026-04-06T09:32:26Z] [GROUNDING] NCE orphaned signal_ids (collected but uncited): ['nce-cyber-003']
+[2026-04-06T09:32:26Z] [GROUNDING] NCE grounding validation PASSED
+[2026-04-06T09:32:33Z] [SECTIONS] NCE sections validation PASSED
+[2026-04-06T09:36:06Z] [GROUNDING] NCE claim distribution: {'fact': 5, 'assessment': 2, 'estimate': 1} | grounding_score=0.62
+[2026-04-06T09:36:06Z] [GROUNDING] NCE orphaned signal_ids (collected but uncited): ['nce-cyber-003']
+[2026-04-06T09:36:06Z] [GROUNDING] NCE grounding validation PASSED
+[2026-04-06T09:36:07Z] [SECTIONS] APAC sections validation PASSED

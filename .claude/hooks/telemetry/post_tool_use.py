@@ -2,7 +2,7 @@
 """
 PostToolUse telemetry hook.
 
-Logs two categories of events to output/tool_trace.log:
+Logs two categories of events to output/logs/tool_trace.log:
   1. Bash tool calls that exit with a non-zero code (failures)
   2. Write/Edit completions (confirming the file was written)
 
@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parents[3]
-LOG = BASE / "output" / "tool_trace.log"
+LOG = BASE / "output" / "logs" / "tool_trace.log"
 
 EXIT_CODE_RE = re.compile(r"exit code[:\s]+(\d+)", re.IGNORECASE)
 

@@ -11,12 +11,16 @@ Writes: output/history.json  (atomic)
 
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from tools.config import HISTORY_PATH
+
 REPO_ROOT = Path(__file__).parent.parent
 RUNS_DIR = REPO_ROOT / "output" / "runs"
-HISTORY_FILE = REPO_ROOT / "output" / "history.json"
+HISTORY_FILE = REPO_ROOT / HISTORY_PATH
 
 KNOWN_REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
 

@@ -1,0 +1,387 @@
+{
+  "APAC": {
+    "direction": "stable",
+    "run_count": 11,
+    "last_3_runs": [
+      "HIGH",
+      "HIGH",
+      "HIGH"
+    ],
+    "history": [
+      {
+        "run_id": "crq-2026-03-09T125038Z",
+        "timestamp": "2026-03-09T12:50:38Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-09T151024Z",
+        "timestamp": "2026-03-09T15:10:24Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-13T120453Z",
+        "timestamp": "2026-03-13T12:04:53Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-14T094130Z",
+        "timestamp": "2026-03-14T09:41:30Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-15T191048Z",
+        "timestamp": "2026-03-15T19:10:48Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-16T171249Z",
+        "timestamp": "2026-03-16T17:12:49Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-20T071612Z",
+        "timestamp": "2026-03-20T07:16:12Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-26T164449Z",
+        "timestamp": "2026-03-26T16:44:49Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-28T160552Z",
+        "timestamp": "2026-03-28T16:05:52Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-01T112747Z",
+        "timestamp": "2026-04-01T11:27:47Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T130036Z",
+        "timestamp": "2026-04-05T13:00:36Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      }
+    ]
+  },
+  "AME": {
+    "direction": "stable",
+    "run_count": 11,
+    "last_3_runs": [
+      "CRITICAL",
+      "CRITICAL",
+      "CRITICAL"
+    ],
+    "history": [
+      {
+        "run_id": "crq-2026-03-09T125038Z",
+        "timestamp": "2026-03-09T12:50:38Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-09T151024Z",
+        "timestamp": "2026-03-09T15:10:24Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-13T120453Z",
+        "timestamp": "2026-03-13T12:04:53Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-14T094130Z",
+        "timestamp": "2026-03-14T09:41:30Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-15T191048Z",
+        "timestamp": "2026-03-15T19:10:48Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-16T171249Z",
+        "timestamp": "2026-03-16T17:12:49Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-20T071612Z",
+        "timestamp": "2026-03-20T07:16:12Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-26T164449Z",
+        "timestamp": "2026-03-26T16:44:49Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-28T160552Z",
+        "timestamp": "2026-03-28T16:05:52Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-01T112747Z",
+        "timestamp": "2026-04-01T11:27:47Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T130036Z",
+        "timestamp": "2026-04-05T13:00:36Z",
+        "severity": "CRITICAL",
+        "status": "escalated"
+      }
+    ]
+  },
+  "LATAM": {
+    "direction": "accelerating",
+    "run_count": 11,
+    "last_3_runs": [
+      "LOW",
+      "LOW",
+      "MEDIUM"
+    ],
+    "history": [
+      {
+        "run_id": "crq-2026-03-09T125038Z",
+        "timestamp": "2026-03-09T12:50:38Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-09T151024Z",
+        "timestamp": "2026-03-09T15:10:24Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-13T120453Z",
+        "timestamp": "2026-03-13T12:04:53Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-14T094130Z",
+        "timestamp": "2026-03-14T09:41:30Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-15T191048Z",
+        "timestamp": "2026-03-15T19:10:48Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-16T171249Z",
+        "timestamp": "2026-03-16T17:12:49Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-20T071612Z",
+        "timestamp": "2026-03-20T07:16:12Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-26T164449Z",
+        "timestamp": "2026-03-26T16:44:49Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-28T160552Z",
+        "timestamp": "2026-03-28T16:05:52Z",
+        "severity": "LOW",
+        "status": "monitor"
+      },
+      {
+        "run_id": "crq-2026-04-01T112747Z",
+        "timestamp": "2026-04-01T11:27:47Z",
+        "severity": "LOW",
+        "status": "monitor"
+      },
+      {
+        "run_id": "crq-2026-04-05T130036Z",
+        "timestamp": "2026-04-05T13:00:36Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      }
+    ]
+  },
+  "MED": {
+    "direction": "stable",
+    "run_count": 11,
+    "last_3_runs": [
+      "MEDIUM",
+      "MEDIUM",
+      "MEDIUM"
+    ],
+    "history": [
+      {
+        "run_id": "crq-2026-03-09T125038Z",
+        "timestamp": "2026-03-09T12:50:38Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-09T151024Z",
+        "timestamp": "2026-03-09T15:10:24Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-13T120453Z",
+        "timestamp": "2026-03-13T12:04:53Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-14T094130Z",
+        "timestamp": "2026-03-14T09:41:30Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-15T191048Z",
+        "timestamp": "2026-03-15T19:10:48Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-16T171249Z",
+        "timestamp": "2026-03-16T17:12:49Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-20T071612Z",
+        "timestamp": "2026-03-20T07:16:12Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-26T164449Z",
+        "timestamp": "2026-03-26T16:44:49Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-03-28T160552Z",
+        "timestamp": "2026-03-28T16:05:52Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-01T112747Z",
+        "timestamp": "2026-04-01T11:27:47Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T130036Z",
+        "timestamp": "2026-04-05T13:00:36Z",
+        "severity": "MEDIUM",
+        "status": "escalated"
+      }
+    ]
+  },
+  "NCE": {
+    "direction": "improving",
+    "run_count": 11,
+    "last_3_runs": [
+      "LOW",
+      "HIGH",
+      "LOW"
+    ],
+    "history": [
+      {
+        "run_id": "crq-2026-03-09T125038Z",
+        "timestamp": "2026-03-09T12:50:38Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-09T151024Z",
+        "timestamp": "2026-03-09T15:10:24Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-13T120453Z",
+        "timestamp": "2026-03-13T12:04:53Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-14T094130Z",
+        "timestamp": "2026-03-14T09:41:30Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-15T191048Z",
+        "timestamp": "2026-03-15T19:10:48Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-16T171249Z",
+        "timestamp": "2026-03-16T17:12:49Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-20T071612Z",
+        "timestamp": "2026-03-20T07:16:12Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-26T164449Z",
+        "timestamp": "2026-03-26T16:44:49Z",
+        "severity": "LOW",
+        "status": "clear"
+      },
+      {
+        "run_id": "crq-2026-03-28T160552Z",
+        "timestamp": "2026-03-28T16:05:52Z",
+        "severity": "LOW",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-01T112747Z",
+        "timestamp": "2026-04-01T11:27:47Z",
+        "severity": "HIGH",
+        "status": "escalated"
+      },
+      {
+        "run_id": "crq-2026-04-05T130036Z",
+        "timestamp": "2026-04-05T13:00:36Z",
+        "severity": "LOW",
+        "status": "monitor"
+      }
+    ]
+  }
+}

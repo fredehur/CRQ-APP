@@ -17,6 +17,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, ".")
+from tools.config import ROUTING_PATH as _ROUTING_PATH
 
 OUTPUT_ROOT = Path("output")
 AUDIENCE_CONFIG_PATH = Path("data/audience_config.json")
@@ -153,7 +154,7 @@ def evaluate(force_weekly: bool = False, check_flash: bool = True) -> dict:
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decisions": decisions,
     }
-    out_path = OUTPUT_ROOT / "routing_decisions.json"
+    out_path = _ROUTING_PATH
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(output, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[threshold_evaluator] wrote {out_path} — {len(decisions)} decisions", file=sys.stderr)
