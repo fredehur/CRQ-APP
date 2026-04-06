@@ -685,7 +685,7 @@ def _compute_source_quality(conn, region: str, run_id: str) -> dict:
         JOIN sources_registry sr ON sa.source_id = sr.id
         WHERE sa.region = ? AND sa.run_id = ?
         GROUP BY sr.credibility_tier
-    """, (region, run_id))
+    """, (region.upper(), run_id))
     counts = {row[0]: row[1] for row in cur.fetchall()}
     return {
         "tier_a": counts.get("A", 0),
