@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CRQ Analyst</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/diff@5.2.0/dist/diff.min.js"></script>
@@ -34,6 +34,18 @@
     * { font-family: 'IBM Plex Mono', monospace; }
     body { background: #070a0e; color: #c9d1d9; padding-top: 36px; }
 
+    /* Prose elements — IBM Plex Sans for readability */
+    .brief-content,
+    #synthesis-brief,
+    .rationale-text,
+    .cluster-card-header span[style*="color:#e6edf3"],
+    .brief-section p {
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .brief-content  { font-size: 12px; line-height: 1.7; }
+    #synthesis-brief { font-size: 12px; line-height: 1.65; }
+    .rationale-text  { font-size: 11px; line-height: 1.6; }
+
     /* Header */
     #app-header {
       position: fixed; top: 0; left: 0; right: 0; z-index: 40;
@@ -52,44 +64,20 @@
     #progress-fill { height: 100%; background: #3fb950; transition: width 300ms ease-in-out; }
 
     /* Overview tab — flex column so synthesis bar + split pane stack */
-    #tab-overview { display: flex; flex-direction: column; height: calc(100vh - 36px); }
+    #tab-overview { flex-direction: column; height: calc(100vh - 36px); }
 
-    /* Global synthesis — two-group command strip */
+    /* Global synthesis */
     #global-synthesis {
       flex-shrink: 0;
-      display: flex; align-items: stretch; gap: 0;
       border-bottom: 1px solid #21262d;
       background: #080c10;
     }
-    .gs-left {
-      display: flex; align-items: stretch; gap: 0;
-      flex: 1; min-width: 0;
-      border-right: 1px solid #21262d;
-    }
-    .gs-label {
-      font-size: 8px; letter-spacing: 0.14em; text-transform: uppercase;
-      color: #3fb950; background: #060d06; border-right: 1px solid #1a4731;
-      padding: 0 14px; white-space: nowrap; flex-shrink: 0;
-      display: flex; align-items: center;
-    }
     #synthesis-brief {
-      font-size: 11px; color: #8b949e; line-height: 1.65;
-      margin: 0; padding: 22px 24px; flex: 1; min-width: 0;
-      overflow: hidden;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+      font-size: 12px; color: #8b949e; line-height: 1.65;
+      margin: 0;
     }
-    .gs-right {
-      display: flex; align-items: stretch; gap: 0;
-      flex-shrink: 0;
-    }
-    .gs-cell {
-      padding: 22px 20px; display: flex; align-items: center;
-      border-right: 1px solid #21262d;
-    }
-    #global-priority  { font-size: 10px; color: #c9d1d9; white-space: nowrap; margin: 0; letter-spacing: 0.02em; }
-    #global-velocity  { font-size: 10px; color: #6e7681; white-space: nowrap; margin: 0; }
     #status-counts    { display: flex; gap: 8px; align-items: center; }
-    #run-meta         { font-size: 9px; color: #484f58; white-space: nowrap; padding: 22px 18px; display: flex; align-items: center; }
+    #run-meta         { font-size: 9px; color: #484f58; white-space: nowrap; }
 
     /* Split pane — only visible on Overview tab */
     #split-pane {
@@ -116,13 +104,13 @@
 
     /* Region rows */
     .region-row {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: center;
       padding: 5px 10px; border-bottom: 1px solid #0d1117;
       cursor: pointer; transition: background 0.1s;
       min-height: 34px;
     }
     .region-row:hover { background: #0d1117; }
-    .region-row.active { background: #111820; border-left: 2px solid #3fb950; padding-left: 8px; }
+    .region-row.active { background: #111820; border-left: 2px solid; padding-left: 8px; }
 
     /* Cluster cards */
     .cluster-card {
@@ -155,6 +143,7 @@
     }
     .nav-tab:hover { color: #c9d1d9; }
     .nav-tab.active { color: #3fb950; border-bottom-color: #3fb950; }
+    #nav-history { border-right: 1px solid #21262d; margin-right: 4px; }
 
     /* Sev badges */
     .sev { font-size: 9px; padding: 1px 5px; border-radius: 2px; letter-spacing: 0.06em; }
@@ -175,13 +164,13 @@
     .conv-none   { background: #30363d; }
 
     /* Signal type badges */
-    .badge-event { background:#b45309;color:#fef3c7;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;letter-spacing:.5px; }
-    .badge-trend { background:#1d4ed8;color:#dbeafe;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;letter-spacing:.5px; }
-    .badge-mixed { background:#6d28d9;color:#ede9fe;font-size:9px;padding:1px 5px;border-radius:3px;font-weight:600;letter-spacing:.5px; }
+    .badge-event { background:#1a0e00;color:#ffa657;font-size:8px;padding:1px 6px;border-radius:0;font-weight:600;letter-spacing:.08em;border:1px solid #9e6a03;text-transform:uppercase; }
+    .badge-trend { background:#06102a;color:#79c0ff;font-size:8px;padding:1px 6px;border-radius:0;font-weight:600;letter-spacing:.08em;border:1px solid #1f6feb;text-transform:uppercase; }
+    .badge-mixed { background:#140d2a;color:#d2a8ff;font-size:8px;padding:1px 6px;border-radius:0;font-weight:600;letter-spacing:.08em;border:1px solid #6e40c9;text-transform:uppercase; }
 
     /* Dominant pillar pills (inline) */
-    .pill-geo-sm { background:#0d2b1a;color:#3fb950;font-size:9px;padding:1px 5px;border-radius:3px;border:1px solid #1a4731; }
-    .pill-cyber-sm { background:#0d1f3c;color:#388bfd;font-size:9px;padding:1px 5px;border-radius:3px;border:1px solid #1a3a6b; }
+    .pill-geo-sm   { background:#0d2b1a;color:#3fb950;font-size:8px;padding:1px 5px;border-radius:0;border:1px solid #1a4731;letter-spacing:.04em; }
+    .pill-cyber-sm { background:#0d1f3c;color:#388bfd;font-size:8px;padding:1px 5px;border-radius:0;border:1px solid #1a3a6b;letter-spacing:.04em; }
 
     /* Velocity arrows */
     .vel-up { color:#ff7b72; }
@@ -192,78 +181,37 @@
     .brief-section { border-top:1px solid #21262d;margin-top:10px;padding-top:8px; }
     .brief-header { display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0;font-size:10px;color:#6e7681;letter-spacing:.5px; }
     .brief-header:hover { color:#8b949e; }
-    .brief-content { font-size:11px;color:#8b949e;line-height:1.6;white-space:pre-wrap;margin-top:8px;max-height:300px;overflow-y:auto; }
+    .brief-content { font-size:11px;color:#8b949e;line-height:1.6;white-space:pre-wrap;margin-top:8px; }
 
     /* Context strip under escalated header */
     .context-strip { padding:6px 0 8px;border-bottom:1px solid #21262d;margin-bottom:8px; }
-    .rationale-text { font-size:10px;color:#6e7681;line-height:1.5;margin-top:4px; }
+    .rationale-text { font-family:'IBM Plex Sans',sans-serif; font-size:11px;color:#6e7681;line-height:1.6;margin-top:4px; }
 
-    /* Feedback rating */
-    .feedback-section {
-      padding: 12px 0 4px;
-      border-top: 1px solid #21262d;
-      margin-top: 12px;
+    /* Feedback rate bar */
+    .feedback-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-top: 1px solid #21262d;
+      background: #080c10; flex-shrink: 0;
     }
-    .feedback-btns {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-    .feedback-btn {
-      background: #0d1117;
-      border: 1px solid #21262d;
-      color: #8b949e;
-      font-size: 10px;
-      font-family: 'IBM Plex Mono', monospace;
-      padding: 3px 10px;
-      border-radius: 12px;
-      cursor: pointer;
+    .feedback-pill {
+      font-size: 9px; background: #0d1117; border: 1px solid #21262d;
+      color: #8b949e; padding: 1px 8px; border-radius: 10px; cursor: pointer;
       transition: background 0.1s, border-color 0.1s;
     }
-    .feedback-btn:hover {
-      border-color: #30363d;
-      color: #c9d1d9;
-    }
-    .feedback-btn.selected {
-      background: #1a3a1a;
-      border-color: #238636;
-      color: #3fb950;
-    }
-    .feedback-note {
-      width: 100%;
-      background: #080c10;
-      border: 1px solid #21262d;
-      color: #c9d1d9;
-      font-size: 10px;
-      font-family: 'IBM Plex Mono', monospace;
-      padding: 6px 8px;
-      border-radius: 2px;
-      resize: vertical;
-      margin-top: 8px;
-      min-height: 36px;
-      max-height: 80px;
-      box-sizing: border-box;
-    }
-    .feedback-submit {
-      margin-top: 6px;
-      background: #1a3a1a;
-      border: 1px solid #238636;
-      color: #3fb950;
-      font-size: 10px;
-      font-family: 'IBM Plex Mono', monospace;
-      padding: 3px 14px;
-      border-radius: 2px;
-      cursor: pointer;
-    }
-    .feedback-submit:hover { background: #1f4d1f; }
-    .feedback-status {
-      font-size: 9px;
-      color: #6e7681;
-      margin-top: 6px;
+    .feedback-pill:hover { border-color: #30363d; color: #c9d1d9; }
+    .feedback-pill.selected { background: #1a3a1a; border-color: #238636; color: #3fb950; }
+    .feedback-note-inline {
+      flex-grow: 1; max-width: 240px;
+      background: #080c10; border: 1px solid #21262d; color: #c9d1d9;
+      font-size: 9px; font-family: 'IBM Plex Mono', monospace;
+      padding: 1px 6px; border-radius: 2px; display: none;
     }
 
     /* Reports tab */
     #tab-reports { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
+    .deliverable-card { transition: border-color 0.15s; }
+    .deliverable-card:hover { border-color: #30363d !important; }
+    .deliverable-card.card-selected { border-color: #3fb950 !important; }
     #report-preview { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7; color: #c9d1d9; }
     #report-preview h1, #report-preview h2, #report-preview h3 { color: #e6edf3; margin: 1em 0 0.5em; }
     #report-preview p { margin-bottom: 0.75em; }
@@ -364,11 +312,11 @@
     <nav style="display:flex;height:36px">
       <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
       <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
-      <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
       <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
+      <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
       <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
-      <div class="nav-tab" id="nav-rsm"      onclick="switchTab('rsm')"><span id="nav-rsm-label">RSM</span></div>
       <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Validate</div>
+      <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Audit</div>
     </nav>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -396,17 +344,23 @@
 <!-- ── OVERVIEW TAB — synthesis bar + split pane ─────────────────── -->
 <div id="tab-overview">
 
-  <!-- Global synthesis — command strip -->
+  <!-- Global synthesis — two-row structure -->
   <div id="global-synthesis">
-    <div class="gs-left">
-      <span class="gs-label">Global Synthesis</span>
-      <p id="synthesis-brief">No run data — click Run All to start.</p>
+    <!-- Empty state -->
+    <div id="synthesis-empty" style="padding:10px 16px;font-size:11px;color:#6e7681">
+      No run data — click Run All to start.
     </div>
-    <div class="gs-right">
-      <div class="gs-cell"><p id="global-priority"></p></div>
-      <div class="gs-cell"><p id="global-velocity"></p></div>
-      <div class="gs-cell"><div id="status-counts"></div></div>
-      <div id="run-meta"></div>
+    <!-- Populated state -->
+    <div id="synthesis-populated" class="hidden">
+      <!-- Row 1: counts + metadata -->
+      <div id="synthesis-row1" style="display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid #21262d">
+        <div id="status-counts"></div>
+        <div id="run-meta" style="margin-left:auto"></div>
+      </div>
+      <!-- Row 2: narrative -->
+      <div id="synthesis-row2" style="padding:10px 16px">
+        <p id="synthesis-brief"></p>
+      </div>
     </div>
   </div>
 
@@ -437,14 +391,8 @@
 
 <!-- ── REPORTS TAB ──────────────────────────────────────────────── -->
 <div id="tab-reports" class="hidden">
-  <div style="margin-bottom:16px;display:flex;gap:10px">
-    <a id="btn-dl-pdf"  href="/api/outputs/pdf"  target="_blank"
-       style="background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:4px 14px;border-radius:2px;font-size:10px;text-decoration:none">&#8595; PDF</a>
-    <a id="btn-dl-pptx" href="/api/outputs/pptx" target="_blank"
-       style="background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:4px 14px;border-radius:2px;font-size:10px;text-decoration:none">&#8595; PPTX</a>
-    <span id="report-generated-ts" style="font-size:10px;color:#6e7681;align-self:center"></span>
-  </div>
-  <div id="report-preview">Loading report...</div>
+  <div id="reports-hub"></div>
+  <div id="reports-detail" class="hidden" style="opacity:0;transition:opacity 150ms ease"></div>
 </div>
 
 <!-- ── TRENDS TAB ──────────────────────────────────────────────── -->
@@ -608,7 +556,20 @@
   <div style="margin-bottom:20px">
     <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Scenario Validation</div>
     <div id="val-scenarios" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div style="color:#6e7681;font-size:11px;padding:12px">No validation data — click Run Validation.</div>
+      <div id="val-scenarios-header" style="display:none;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
+        <div style="display:flex">
+          <span style="width:180px;flex-shrink:0">Scenario</span>
+          <span style="width:60px;flex-shrink:0">VaCR</span>
+          <span style="width:120px;flex-shrink:0">Verdict</span>
+          <span style="width:60px;flex-shrink:0">Dev.</span>
+          <span style="width:100px;flex-shrink:0" title="Regions escalated with this scenario this run">OSINT Signal</span>
+          <span style="width:80px;flex-shrink:0" title="Run-over-run frequency from trend analysis">Velocity</span>
+          <span style="flex:1">Source</span>
+        </div>
+      </div>
+      <div id="val-scenarios-body">
+        <div style="color:#6e7681;font-size:11px;padding:12px">No validation data — click Run Validation.</div>
+      </div>
     </div>
   </div>
 
@@ -625,6 +586,76 @@
     <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Discovered Candidates <span id="val-candidate-count" style="color:#e3b341"></span></div>
     <div id="val-candidates" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
       <div style="color:#6e7681;font-size:11px;padding:12px">No candidates — run validation to discover new sources.</div>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ── SOURCES TAB ─────────────────────────────────────────────── -->
+<div id="tab-sources" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 36px)">
+
+  <!-- Header -->
+  <div style="margin-bottom:14px">
+    <div style="font-size:11px;color:#e6edf3;font-weight:600;letter-spacing:0.05em;margin-bottom:4px">SOURCE REGISTRY</div>
+    <div style="font-size:10px;color:#6e7681">Full source registry across pipeline runs. Audit quality, flag junk, and block sources from future collection.</div>
+  </div>
+
+  <!-- Filter bar -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:#0d1117;border:1px solid #21262d;border-radius:2px">
+    <select id="src-filter-region" onchange="applySourceFilters()" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;padding:3px 6px;border-radius:2px">
+      <option value="">All regions</option>
+      <option value="APAC">APAC</option>
+      <option value="AME">AME</option>
+      <option value="MED">MED</option>
+      <option value="NCE">NCE</option>
+      <option value="LATAM">LATAM</option>
+    </select>
+    <select id="src-filter-type" onchange="applySourceFilters()" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;padding:3px 6px;border-radius:2px">
+      <option value="">All types</option>
+      <option value="news">news</option>
+      <option value="government">government</option>
+      <option value="intelligence">intelligence</option>
+      <option value="academic">academic</option>
+      <option value="industry">industry</option>
+      <option value="social">social</option>
+      <option value="youtube">youtube</option>
+    </select>
+    <select id="src-filter-tier" onchange="applySourceFilters()" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;padding:3px 6px;border-radius:2px">
+      <option value="">All tiers</option>
+      <option value="A">A</option>
+      <option value="B">B</option>
+      <option value="C">C</option>
+    </select>
+    <select id="src-filter-collection" onchange="applySourceFilters()" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;padding:3px 6px;border-radius:2px">
+      <option value="">All collections</option>
+      <option value="osint">OSINT</option>
+      <option value="benchmark">Benchmark</option>
+    </select>
+    <label style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#8b949e;cursor:pointer">
+      <input type="checkbox" id="src-filter-cited" onchange="applySourceFilters()" style="accent-color:#3fb950"> Cited only
+    </label>
+    <label style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#8b949e;cursor:pointer">
+      <input type="checkbox" id="src-filter-hidejunk" onchange="applySourceFilters()" checked style="accent-color:#3fb950"> Hide junk
+    </label>
+    <span id="src-stats-line" style="font-size:9px;color:#484f58;margin-left:auto"></span>
+  </div>
+
+  <!-- Table -->
+  <div style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
+    <!-- Column headers -->
+    <div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58;background:#080c10">
+      <span style="flex:2;min-width:160px">Name / Domain</span>
+      <span style="width:90px;flex-shrink:0">Type</span>
+      <span style="width:50px;flex-shrink:0">Tier</span>
+      <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px">Appearances</span>
+      <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px">Cited</span>
+      <span style="width:90px;flex-shrink:0">Last Seen</span>
+      <span style="width:80px;flex-shrink:0">Actions</span>
+    </div>
+    <!-- Body -->
+    <div id="src-table-body">
+      <div style="color:#6e7681;font-size:11px;padding:12px">Loading sources...</div>
     </div>
   </div>
 

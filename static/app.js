@@ -164,66 +164,15 @@ function renderLeftPanel() {
   const m = state.manifest;
   const gr = state.globalReport;
 
-  // Synthesis brief — headline + status counts
-  const _counts = { escalated: 0, monitor: 0, clear: 0 };
-  REGIONS.forEach(r => {
-    const _s = (state.regionData[r]?.status || 'clear').toLowerCase();
-    if (_s === 'escalated') _counts.escalated++;
-    else if (_s === 'monitor') _counts.monitor++;
-    else _counts.clear++;
-  });
+  // Synthesis bar — empty vs populated
+  const hasData = m && m.status !== 'no_data' && m.regions;
+  const emptyEl = $('synthesis-empty');
+  const popEl = $('synthesis-populated');
+  if (emptyEl) emptyEl.classList.toggle('hidden', !!hasData);
+  if (popEl) popEl.classList.toggle('hidden', !hasData);
 
-  const _countsHtml = `<span style="color:#ff7b72;font-size:10px;font-weight:600">${_counts.escalated} ESCALATED</span><span style="color:#6e7681;font-size:10px"> · </span><span style="color:#e3b341;font-size:10px">${_counts.monitor} WATCH</span><span style="color:#6e7681;font-size:10px"> · </span><span style="color:#3fb950;font-size:10px">${_counts.clear} CLEAR</span>`;
-
-  const _execSummary = gr?.synthesis_brief || '';
-  const _headlineMatch = _execSummary.match(/HEADLINE[:\s]+([^\.]+\.)/i);
-  const _headline = _headlineMatch ? _headlineMatch[1].trim() : (_execSummary ? _execSummary.split('.')[0].trim() + '.' : (m?.status === 'no_data' ? 'Run pipeline to generate global synthesis.' : 'Run in progress...'));
-
-  $('synthesis-brief').innerHTML = `<div style="font-size:11px;color:#c9d1d9;margin-bottom:4px">${esc(_headline)}</div><div style="display:flex;align-items:center;gap:6px">${_countsHtml}</div>`;
-
-  // Priority region callout + velocity summary
-  const priorityEl = $('global-priority');
-  const velocityEl = $('global-velocity');
-  if (priorityEl && velocityEl && m?.regions) {
-    const escalated = Object.entries(m.regions)
-      .filter(([, v]) => v.status === 'escalated')
-      .sort((a, b) => {
-        const sevA = SEV_ORDER.indexOf((a[1].severity||'').toUpperCase());
-        const sevB = SEV_ORDER.indexOf((b[1].severity||'').toUpperCase());
-        return (sevA === -1 ? 99 : sevA) - (sevB === -1 ? 99 : sevB);
-      });
-
-    if (escalated.length > 0) {
-      const [topRegion, topData] = escalated[0];
-      const rd = state.regionData[topRegion] || {};
-      const parts = [
-        topRegion,
-        topData.severity,
-        rd.primary_scenario,
-        rd.signal_type,
-        rd.velocity ? (rd.velocity === 'accelerating' ? '↑' : rd.velocity === 'improving' ? '↓' : '→') : ''
-      ].filter(Boolean);
-      priorityEl.textContent = `Priority: ${parts.join(' · ')}`;
-
-      const velCounts = { accelerating: 0, stable: 0, improving: 0, unknown: 0 };
-      escalated.forEach(([rKey]) => {
-        const rd2 = state.regionData[rKey];
-        const vel = (rd2?.velocity || 'unknown').toLowerCase();
-        velCounts[vel in velCounts ? vel : 'unknown']++;
-      });
-      const parts2 = [];
-      if (velCounts.accelerating) parts2.push(`${velCounts.accelerating} accelerating`);
-      if (velCounts.stable) parts2.push(`${velCounts.stable} stable`);
-      if (velCounts.improving) parts2.push(`${velCounts.improving} improving`);
-      velocityEl.textContent = parts2.length ? `Velocity: ${parts2.join(', ')}` : '';
-    } else {
-      priorityEl.textContent = '';
-      velocityEl.textContent = '';
-    }
-  }
-
-  // Status counts
-  if (m && m.status !== 'no_data' && m.regions) {
+  if (hasData) {
+    // Row 1: status counts
     const vals = Object.values(m.regions);
     const nEsc = vals.filter(r => r.status === 'escalated').length;
     const nMon = vals.filter(r => r.status === 'monitor').length;
@@ -233,41 +182,33 @@ function renderLeftPanel() {
       nMon ? `<span class="sev sev-mon">${nMon} MONITOR</span>` : '',
       nClr ? `<span class="sev sev-ok">${nClr} CLEAR</span>` : '',
     ].filter(Boolean).join('');
-  } else {
-    $('status-counts').innerHTML = '';
-  }
 
-  // Run meta
-  if (m?.run_timestamp) {
+    // Row 1: run meta
     const windowVal = m.window_used ? ` — ${m.window_used} window` : '';
-    $('run-meta').textContent = `${fmtTime(m.run_timestamp)} (${relTime(m.run_timestamp)})${windowVal}`;
-  } else {
-    $('run-meta').textContent = '';
+    $('run-meta').textContent = m.run_timestamp
+      ? `${fmtTime(m.run_timestamp)} (${relTime(m.run_timestamp)})${windowVal}`
+      : '';
+
+    // Row 2: narrative
+    const _execSummary = gr?.synthesis_brief || '';
+    const _headlineMatch = _execSummary.match(/HEADLINE[:\s]+([^\.]+\.)/i);
+    const _narrative = _headlineMatch
+      ? _headlineMatch[1].trim()
+      : (_execSummary ? _execSummary.split('.')[0].trim() + '.' : 'Run in progress...');
+    $('synthesis-brief').textContent = _narrative;
   }
 
-  // Region rows
+  // Region rows — name + status colour only
   $('region-list').innerHTML = REGIONS.map(r => {
     const d = state.regionData[r];
     const sev = (d?.severity || d?.status || 'UNKNOWN').toUpperCase();
     const isActive = r === state.selectedRegion;
     const color = SEV_COLOR[sev] || '#6e7681';
-    const scenario = d?.primary_scenario || '';
-    const signalType = d?.signal_type || '';
-    const velocity = d?.velocity || '';
-    const pillar = d?.dominant_pillar || '';
-    const isEscalated = d?.status === 'escalated';
+    const borderStyle = isActive ? `border-left-color:${color}` : '';
 
     return `
-<div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')">
-  <div style="display:flex;align-items:center;justify-content:space-between;width:100%">
-    <span style="font-size:12px;font-weight:500;color:${color};flex:1">${r}</span>
-    <div style="display:flex;align-items:center;gap:4px">
-      ${isEscalated ? velocityArrow(velocity) : ''}
-      ${!isEscalated ? `<span style="font-size:8px;color:#3fb950;background:#0d1f0d;border:1px solid #238636;padding:1px 6px;border-radius:0;letter-spacing:0.08em;font-weight:600">CLEAR</span>` : ''}
-    </div>
-  </div>
-  ${isEscalated && scenario ? `<div style="font-size:10px;color:#6e7681;margin-top:2px">${esc(scenario)} · ${pillar || '—'}</div>` : ''}
-  ${d?.source_quality ? `<div style="font-size:9px;color:#848d97;margin-top:2px;font-family:monospace;letter-spacing:0.03em">src: ${d.source_quality.tier_a || 0}A · ${d.source_quality.tier_b || 0}B · ${d.source_quality.tier_c || 0}C</div>` : ''}
+<div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')" style="${borderStyle}">
+  <span style="font-size:11px;font-weight:500;color:${color}">${r}</span>
 </div>`;
   }).join('');
 }
@@ -557,99 +498,233 @@ function renderFeedbackUI(region) {
   const existing = state.feedbackByRegion[region];
   const selectedRating = existing?.rating || null;
 
-  const ratings = [
-    { value: 'accurate',       label: 'Accurate',       icon: '&#10003;' },
-    { value: 'overstated',     label: 'Overstated',     icon: '&#8593;' },
-    { value: 'understated',    label: 'Understated',     icon: '&#8595;' },
-    { value: 'false_positive', label: 'False positive',  icon: '&#10007;' },
+  const pills = [
+    { value: 'accurate',    label: 'Accurate' },
+    { value: 'incomplete',  label: 'Incomplete' },
+    { value: 'off_target',  label: 'Off-target' },
   ];
 
-  const btnsHtml = ratings.map(r =>
-    `<button class="feedback-btn${selectedRating === r.value ? ' selected' : ''}"
-       onclick="selectFeedbackRating('${region}','${r.value}')"
-       data-rating="${r.value}">${r.icon} ${r.label}</button>`
+  const pillsHtml = pills.map(p =>
+    `<button class="feedback-pill${selectedRating === p.value ? ' selected' : ''}"
+       onclick="_onFeedbackPill('${region}','${p.value}',this)"
+       data-rating="${p.value}">${p.label}</button>`
   ).join('');
 
-  const noteVal = existing?.note || '';
-  const statusHtml = existing?.submitted_at
-    ? `<div class="feedback-status">Last submitted: ${esc(existing.rating)} ${existing.submitted_at ? relTime(existing.submitted_at) : ''}</div>`
+  container.innerHTML = `<div class="feedback-bar">${pillsHtml}<input class="feedback-note-inline" id="feedback-note-${region}" placeholder="Add note... (Enter to save)"></div>`;
+
+  const noteEl = $(`feedback-note-${region}`);
+  if (noteEl) {
+    if (existing?.note) noteEl.value = existing.note;
+    noteEl.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        _patchFeedbackNote(region, noteEl.value.trim());
+        noteEl.style.display = 'none';
+        showToast('Saved');
+      }
+    });
+  }
+}
+
+function _onFeedbackPill(region, rating, btn) {
+  // Update pill selected state
+  const bar = btn.closest('.feedback-bar');
+  if (bar) bar.querySelectorAll('.feedback-pill').forEach(p => p.classList.toggle('selected', p === btn));
+  // Auto-submit
+  submitFeedback(region, rating, '');
+  // Show inline note
+  const noteEl = $(`feedback-note-${region}`);
+  if (noteEl) { noteEl.style.display = 'block'; noteEl.focus(); }
+}
+
+async function _patchFeedbackNote(region, note) {
+  const runId = state.manifest?.pipeline_id;
+  if (!runId) return;
+  const existing = state.feedbackByRegion[region];
+  if (!existing?.rating) return;
+  try {
+    await fetch(`/api/feedback/${encodeURIComponent(runId)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ region, rating: existing.rating, note }),
+    });
+    if (state.feedbackByRegion[region]) state.feedbackByRegion[region].note = note;
+  } catch (_) {}
+}
+
+// ── Section 7: Render — Reports (Audience Hub) + History ──────────────
+const AUDIENCE_REGISTRY = [
+  {
+    id: 'ciso',
+    name: 'CISO Weekly Brief',
+    format: 'Word (.docx)',
+    phase: 'live',
+    generate: '/api/outputs/ciso-docx',
+    downloads: [{ label: '&#8595; Download', endpoint: '/api/outputs/ciso-docx' }],
+    renderer: 'single-doc',
+    sections: ['Scenario','Threat Actor','Intel Findings','Adversary Activity','Impact','Watch For','Actions'],
+  },
+  {
+    id: 'board',
+    name: 'Board Report',
+    format: 'PDF + PowerPoint',
+    phase: 'live',
+    generate: null,
+    downloads: [
+      { label: '&#8595; PDF',  endpoint: '/api/outputs/pdf' },
+      { label: '&#8595; PPTX', endpoint: '/api/outputs/pptx' },
+    ],
+    renderer: 'single-doc',
+  },
+  {
+    id: 'rsm',
+    name: 'RSM Briefs',
+    format: 'Markdown + PDF · 5 regions',
+    phase: 'phase-2',
+    phaseLabel: 'Requires Seerist integration',
+    generate: null,
+    downloads: [],
+    renderer: 'region-list',
+  },
+  {
+    id: 'sales',
+    name: 'Regional Sales',
+    format: 'TBD',
+    phase: 'future',
+    phaseLabel: 'Planned',
+    generate: null,
+    downloads: [],
+    renderer: 'single-doc',
+  },
+];
+
+async function renderReports() {
+  renderReportsHub();
+}
+
+function renderReportsHub() {
+  const hub = $('reports-hub');
+  if (!hub) return;
+  const cardsHtml = AUDIENCE_REGISTRY.map(a => {
+    const isLive = a.phase === 'live';
+    const isPhase2 = a.phase === 'phase-2';
+    const opacity = isLive ? '1' : isPhase2 ? '0.55' : '0.35';
+    const cursor  = isLive ? 'cursor:pointer' : 'cursor:default';
+    const onclick = isLive ? `onclick="openAudienceDetail('${a.id}')"` : '';
+    const tooltip = !isLive && a.phaseLabel ? `title="${a.phaseLabel}"` : '';
+
+    const phaseBadge = isLive
+      ? `<span style="font-size:9px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:2px 7px;border-radius:10px">Live</span>`
+      : isPhase2
+        ? `<span style="font-size:9px;background:#2d2208;border:1px solid #9e6a03;color:#e3b341;padding:2px 7px;border-radius:10px">${a.phaseLabel}</span>`
+        : `<span style="font-size:9px;background:#161b22;border:1px solid #30363d;color:#6e7681;padding:2px 7px;border-radius:10px">Planned</span>`;
+
+    const dlHtml = a.downloads.length
+      ? a.downloads.map(d => `<a href="${d.endpoint}" target="_blank"
+          style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:3px 10px;border-radius:2px;text-decoration:none;pointer-events:${isLive?'auto':'none'}">${d.label}</a>`).join('')
+      : '';
+    const genHtml = a.generate
+      ? `<button onclick="event.stopPropagation();_hubGenerate('${a.id}')"
+           style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:3px 10px;border-radius:2px;cursor:pointer">
+           &#8635; Generate</button>`
+      : '';
+
+    return `
+<div ${onclick} ${tooltip}
+  style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 16px;
+         opacity:${opacity};${cursor};transition:border-color 0.15s"
+  onmouseover="${isLive?"this.style.borderColor='#30363d'":''}"
+  onmouseout="${isLive?"this.style.borderColor='#21262d'":""}">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+    <div>
+      <div style="font-size:11px;font-weight:600;color:#e6edf3">${a.name}</div>
+      <div style="font-size:10px;color:#6e7681;margin-top:2px">${a.format}</div>
+    </div>
+    ${phaseBadge}
+  </div>
+  ${a.sections ? `<div style="font-size:10px;color:#484f58;margin-bottom:8px">${a.sections.join(' · ')}</div>` : '<div style="margin-bottom:8px"></div>'}
+  <div style="display:flex;gap:6px;flex-wrap:wrap">${genHtml}${dlHtml}</div>
+</div>`;
+  }).join('');
+
+  hub.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">${cardsHtml}</div>`;
+}
+
+async function _hubGenerate(audienceId) {
+  if (audienceId === 'ciso') await generateCisoDocx();
+}
+
+function openAudienceDetail(id) {
+  const audience = AUDIENCE_REGISTRY.find(a => a.id === id);
+  if (!audience) return;
+
+  const hub    = $('reports-hub');
+  const detail = $('reports-detail');
+  if (!hub || !detail) return;
+
+  hub.classList.add('hidden');
+  detail.classList.remove('hidden');
+  detail.style.opacity = '0';
+  requestAnimationFrame(() => { detail.style.opacity = '1'; });
+
+  const dlHtml = audience.downloads.map(d =>
+    `<a href="${d.endpoint}" target="_blank"
+       style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:3px 10px;border-radius:2px;text-decoration:none">${d.label}</a>`
+  ).join('');
+  const genHtml = audience.generate
+    ? `<button onclick="_hubGenerate('${audience.id}')"
+         style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:3px 10px;border-radius:2px;cursor:pointer">
+         &#8635; Generate</button>`
     : '';
 
-  container.innerHTML = `
-    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Rate this assessment</div>
-    <div class="feedback-btns">${btnsHtml}</div>
-    <textarea class="feedback-note" id="feedback-note-${region}" placeholder="Optional note...">${esc(noteVal)}</textarea>
-    <button class="feedback-submit" onclick="doSubmitFeedback('${region}')">Submit</button>
-    ${statusHtml}`;
-}
+  detail.innerHTML = `
+<div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <button onclick="closeAudienceDetail()"
+    style="font-size:10px;color:#6e7681;background:none;border:none;cursor:pointer;padding:0">
+    &#8592; All reports
+  </button>
+  <span style="font-size:11px;font-weight:600;color:#e6edf3">${audience.name}</span>
+  <span style="font-size:10px;color:#6e7681">${audience.format}</span>
+  <div style="margin-left:auto;display:flex;gap:6px">${genHtml}${dlHtml}</div>
+</div>
+<div id="audience-detail-body"></div>`;
 
-function selectFeedbackRating(region, rating) {
-  // Toggle selection in UI
-  const container = $(`feedback-section-${region}`);
-  if (!container) return;
-  container.querySelectorAll('.feedback-btn').forEach(btn => {
-    btn.classList.toggle('selected', btn.dataset.rating === rating);
-  });
-  container.dataset.selectedRating = rating;
-}
-
-function doSubmitFeedback(region) {
-  const container = $(`feedback-section-${region}`);
-  if (!container) return;
-  const rating = container.dataset.selectedRating || state.feedbackByRegion[region]?.rating;
-  if (!rating) { showToast('Select a rating first'); return; }
-  const noteEl = $(`feedback-note-${region}`);
-  const note = noteEl ? noteEl.value.trim() : '';
-  submitFeedback(region, rating, note);
-}
-
-// ── Section 7: Render — Reports + History ─────────────────────────────
-async function renderReports() {
-  // Load output file status for delivery cards
-  const status = await fetchJSON('/api/outputs/status');
-  if (status) {
-    const ciso = status.ciso_docx;
-    $('ciso-status').textContent = ciso?.ready
-      ? `Ready — generated ${ciso.generated}`
-      : 'Not yet generated — click Generate to build.';
-
-    const pdf  = status.board_pdf;
-    const pptx = status.board_pptx;
-    const boardTs = pdf?.generated || pptx?.generated;
-    $('board-status').textContent = (pdf?.ready || pptx?.ready)
-      ? `Ready — generated ${boardTs}`
-      : 'Not yet generated — run the pipeline first.';
+  if (audience.renderer === 'region-list') {
+    renderRegionListView(audience);
+  } else {
+    renderSingleDocView(audience);
   }
-
-  // Auto-select CISO card on first load
-  selectCard('ciso');
 }
 
-async function selectCard(type) {
-  // Highlight selected card
-  ['ciso','board','rsm','regional'].forEach(t => {
-    const el = $(`card-${t}`);
-    if (el) el.classList.toggle('card-selected', t === type);
-  });
+function closeAudienceDetail() {
+  const hub    = $('reports-hub');
+  const detail = $('reports-detail');
+  if (!hub || !detail) return;
+  detail.style.opacity = '0';
+  setTimeout(() => {
+    detail.classList.add('hidden');
+    hub.classList.remove('hidden');
+  }, 150);
+}
 
-  const preview = $('report-preview');
-  preview.innerHTML = '<span style="color:#6e7681">Loading preview...</span>';
+async function renderSingleDocView(audience) {
+  const body = $('audience-detail-body');
+  if (!body) return;
 
-  if (type === 'ciso') {
+  if (audience.id === 'ciso') {
+    body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading CISO brief preview...</p>';
     const report = await fetchJSON('/api/global-report');
-    if (!report) { preview.textContent = 'No pipeline data — run the pipeline first.'; return; }
+    if (!report) { body.innerHTML = '<p style="color:#6e7681;font-size:11px">No pipeline data — run the pipeline first.</p>'; return; }
 
     const regions = report.regional_threats || [];
     const monitor = report.monitor_regions || [];
 
     let html = `<div style="margin-bottom:12px">
-      <div style="font-size:11px;font-weight:600;color:#e6edf3;margin-bottom:6px">CISO Weekly Brief — Preview</div>
       <div style="font-size:10px;color:#6e7681;margin-bottom:10px;line-height:1.6">${report.executive_summary || ''}</div>
     </div>`;
-
     regions.forEach(r => {
       const sev = r.severity || '';
-      const sevCol = sev === 'Critical' ? '#dc2626' : sev === 'High' ? '#d97706' : sev === 'Medium' ? '#2563eb' : '#6e7681';
+      const sevCol = sev === 'Critical' ? '#dc2626' : sev === 'High' ? '#d97706' : '#6e7681';
       html += `<div style="border-top:1px solid #21262d;padding:8px 0">
         <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:3px">
           <span style="font-size:10px;font-weight:600;color:#e6edf3">${r.region}</span>
@@ -660,54 +735,56 @@ async function selectCard(type) {
         <div style="font-size:9px;color:#8b949e;line-height:1.5">${r.strategic_assessment || ''}</div>
       </div>`;
     });
-
     if (monitor.length) {
       html += `<div style="border-top:1px solid #21262d;padding-top:8px;margin-top:4px">
         <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">At Monitor</div>`;
       monitor.forEach(m => {
         html += `<div style="font-size:9px;color:#8b949e;margin-bottom:4px">
-          <span style="color:#d97706;font-weight:600">${m.region}:</span> ${m.rationale || ''}
-        </div>`;
+          <span style="color:#d97706;font-weight:600">${m.region}:</span> ${m.rationale || ''}</div>`;
       });
-      html += `</div>`;
+      html += '</div>';
     }
+    body.innerHTML = html;
 
-    preview.innerHTML = html;
-
-  } else if (type === 'board') {
+  } else if (audience.id === 'board') {
+    body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading board report preview...</p>';
     const md = await fetchJSON('/api/outputs/global-md');
     if (md?.markdown) {
-      preview.innerHTML = `<div style="font-size:10px;line-height:1.6">${marked.parse(md.markdown)}</div>`;
+      body.innerHTML = `<div style="font-size:11px;line-height:1.6">${marked.parse(md.markdown)}</div>`;
     } else {
-      preview.textContent = 'No board report available — run the pipeline first.';
+      body.innerHTML = '<p style="color:#6e7681;font-size:11px">No board report available — run the pipeline first.</p>';
     }
-
-  } else if (type === 'rsm') {
-    preview.innerHTML = `<div style="font-size:10px;color:#6e7681;line-height:1.7">
-      <div style="color:#e6edf3;font-weight:600;margin-bottom:8px">RSM Briefs — Phase 2</div>
-      <div>FLASH alerts and INTSUM briefs for 5 Regional Security Managers.</div>
-      <div style="margin-top:6px">Available after Seerist API integration. Existing RSM briefs from mock runs can be viewed in the RSM tab.</div>
-    </div>`;
-
-  } else if (type === 'regional') {
-    preview.innerHTML = `<div style="font-size:10px;color:#6e7681;line-height:1.7">
-      <div style="color:#e6edf3;font-weight:600;margin-bottom:8px">Regional Brief — Future</div>
-      <div>A standalone per-region deep dive: full signal trace, source appendix, and complete Why / How / So What narrative.</div>
-      <div style="margin-top:6px">Select a region from the Overview tab to generate a targeted brief.</div>
-    </div>`;
+  } else {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px">${audience.phaseLabel || 'Coming soon.'}</p>`;
   }
 }
 
+function renderRegionListView(audience) {
+  const body = $('audience-detail-body');
+  if (!body) return;
+  // RSM region-list view — reuses existing RSM tab DOM and functions
+  body.innerHTML = `
+<div style="display:grid;grid-template-columns:200px 1fr;height:calc(100vh - 140px);overflow:hidden;border:1px solid #21262d;border-radius:2px">
+  <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
+    <div style="padding:8px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">REGIONS</div>
+    <div id="rsm-region-list"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:8px 16px;border-bottom:1px solid #21262d;flex-shrink:0">
+      <span id="rsm-region-label" style="font-size:12px;color:#e6edf3"></span>
+    </div>
+    <div id="rsm-panel-body" style="flex:1;overflow:hidden;display:flex"></div>
+  </div>
+</div>`;
+  renderRsmSidebar();
+  renderRsmContent(state.selectedRsmRegion || REGIONS[0]);
+}
+
 async function generateCisoDocx() {
-  const btn = $('btn-gen-ciso');
-  const statusEl = $('ciso-status');
-  btn.disabled = true;
-  btn.textContent = '⏳ Generating...';
-  statusEl.textContent = 'Building CISO brief — this takes a few seconds...';
+  showToast('Generating CISO brief...');
   try {
     const resp = await fetch('/api/outputs/ciso-docx');
     if (resp.ok) {
-      // Trigger download
       const blob = await resp.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
@@ -715,18 +792,13 @@ async function generateCisoDocx() {
       a.download = 'ciso_brief.docx';
       a.click();
       URL.revokeObjectURL(url);
-      statusEl.textContent = 'Generated — downloading now.';
-      // Refresh status
-      renderReports();
+      showToast('Downloaded: ciso_brief.docx');
     } else {
       const err = await resp.json().catch(() => ({}));
-      statusEl.textContent = `Error: ${err.error || resp.statusText}`;
+      showToast(`Error: ${err.error || resp.statusText}`);
     }
   } catch (e) {
-    statusEl.textContent = `Error: ${e.message}`;
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '↺ Generate';
+    showToast(`Error: ${e.message}`);
   }
 }
 
@@ -1040,7 +1112,7 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview', 'reports', 'history', 'trends', 'config', 'rsm', 'validate', 'sources'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
@@ -1052,7 +1124,6 @@ function _doSwitchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
-  if (tab === 'rsm')     renderRsmTab();
   if (tab === 'validate') renderValidateTab();
   if (tab === 'sources')  renderSources();
 }
