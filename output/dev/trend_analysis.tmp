@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-03-26T00:00:00Z",
+  "run_count": 7,
+  "regions": {
+    "APAC": {
+      "severity_trajectory": ["HIGH", "HIGH", "HIGH", "HIGH", "HIGH", "HIGH", "HIGH"],
+      "scenario_frequency": {"System intrusion": 7},
+      "escalation_count": 7,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical"],
+      "velocity_trend": "stable",
+      "assessment": "APAC has sustained a HIGH severity alert across every one of the seven archived pipeline runs — a 100% escalation rate — making it the most persistently elevated region in the portfolio. The consistent driver is state-aligned targeting of AeroGrid's manufacturing intellectual property and the operational technology that governs turbine assembly and control systems. This is not a transient incident pattern; signals classify predominantly as a sustained trend, indicating that adversarial interest in the region's manufacturing capacity is structural rather than opportunistic. With a validated exposure of $18.5 million per the enterprise CRQ register, the risk to turbine production continuity is material and ongoing. Regional service and maintenance teams operating in APAC should treat supply chain integrity and digital access to turbine control platforms as persistently at risk until geopolitical conditions in the region meaningfully de-escalate."
+    },
+    "AME": {
+      "severity_trajectory": ["CRITICAL", "CRITICAL", "CRITICAL", "CRITICAL", "CRITICAL", "CRITICAL", "CRITICAL"],
+      "scenario_frequency": {"Ransomware": 7},
+      "escalation_count": 7,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Cyber"],
+      "velocity_trend": "stable",
+      "assessment": "AME is the single highest-severity region across the entire longitudinal dataset — CRITICAL in every run without exception, driven by the same ransomware scenario each time. The financial exposure of $22 million per the enterprise CRQ register is the largest single-region figure in the portfolio, and the scenario holds the top financial impact ranking globally. The dominant pillar has shifted between Geopolitical and Cyber drivers across runs, indicating that both the external threat environment and internal digital access points remain under sustained pressure. Signal classifications include both event-type and mixed-type readings, confirming the threat has materialized beyond theoretical risk into active operational disruption. For AeroGrid's North American turbine manufacturing and wind farm service operations, an unbroken seven-run CRITICAL designation represents a business continuity concern that extends well beyond security posture into delivery schedule reliability and customer contract exposure."
+    },
+    "LATAM": {
+      "severity_trajectory": ["LOW", "LOW", "LOW", "LOW", "LOW", "LOW", "LOW"],
+      "scenario_frequency": {"Physical threat": 1},
+      "escalation_count": 0,
+      "escalation_rate": 0.0,
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical"],
+      "velocity_trend": "stable",
+      "assessment": "LATAM has returned a CLEAR status in every pipeline run across the full seven-run archive, with no scenario meeting the escalation threshold at any point in the observation window. A single run flagged a Physical threat signal, but it remained below the top-four financial impact threshold required for escalation. The geopolitical environment is consistently characterized as stable, with no state-aligned activity targeting renewable energy infrastructure. This is a positive signal of genuine operational continuity: AeroGrid's LATAM turbine delivery and service operations face no identified systemic cyber or geopolitical threat at this time. While vigilance should be maintained given the region's growing renewable energy footprint, the current risk picture supports confidence in uninterrupted production and service delivery across the region."
+    },
+    "MED": {
+      "severity_trajectory": ["MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM", "MEDIUM"],
+      "scenario_frequency": {"Insider misuse": 7},
+      "escalation_count": 7,
+      "escalation_rate": 1.0,
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical"],
+      "velocity_trend": "stable",
+      "assessment": "MED has maintained a steady MEDIUM severity escalation across all seven runs, consistently anchored to the same insider misuse scenario — a pattern that points to a structural access control vulnerability rather than an external threat campaign. The $4.2 million exposure in the enterprise CRQ register, at financial rank four, reflects risk concentrated around predictive maintenance platforms and privileged credential management rather than turbine production lines directly. Signal types have ranged from specific events to mixed patterns, suggesting that while the underlying access risk is persistent, it periodically materializes into discrete, identifiable incidents. The stability of this signal — neither improving nor worsening across three months of observation — indicates that the conditions driving insider access risk in the Mediterranean region have not been fully resolved and continue to pose an exposure to AeroGrid's service delivery operations in the region."
+    },
+    "NCE": {
+      "severity_trajectory": ["LOW", "LOW", "LOW", "LOW", "LOW", "LOW", "LOW"],
+      "scenario_frequency": {"System intrusion": 1},
+      "escalation_count": 0,
+      "escalation_rate": 0.0,
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical"],
+      "velocity_trend": "stable",
+      "assessment": "NCE has returned a CLEAR status in every pipeline run, establishing it as the most consistently secure region for AeroGrid operations. The NATO-aligned geopolitical environment and strong EU regulatory governance framework have kept threat indicators below the escalation threshold throughout the observation window. One run identified a System intrusion scenario hint, but it did not breach the top-four financial impact threshold. For a region that hosts significant turbine manufacturing and offshore wind service capacity, this sustained clear reading is strategically important: it confirms that NCE operations can continue to serve as a reliable production and delivery anchor for the global portfolio. Continued monitoring is warranted given the broader geopolitical context in Europe, but the current longitudinal signal supports operational confidence."
+    }
+  },
+  "cross_regional": {
+    "patterns": [
+      "Three of five regions — APAC, AME, and MED — have been escalated in every single pipeline run across the full seven-run archive, indicating that AeroGrid's global threat posture is structurally elevated rather than episodically reactive.",
+      "AME and APAC together represent $40.5 million in combined VaCR exposure per the enterprise CRQ register, both sustaining maximum escalation rates across all seven runs — the two highest-severity and highest-financial-impact regions are simultaneously active with no improving trajectory.",
+      "The dominant threat scenario across active regions has remained unchanged for the entire observation window: Ransomware in AME, System intrusion in APAC, and Insider misuse in MED — no scenario rotation or diversification observed, suggesting persistent, specialized adversarial focus rather than opportunistic campaign drift.",
+      "LATAM and NCE have maintained clear status across all seven runs, establishing a structural divide between high-risk manufacturing and supply-chain-exposed regions (APAC, AME) and geopolitically stable service delivery regions (LATAM, NCE).",
+      "Dominant pillar attribution has shifted between Geopolitical and Cyber labels across runs in both AME and APAC, reflecting a threat environment where state-level strategic motivation and direct operational digital targeting are co-present and reinforcing rather than distinct."
+    ],
+    "compound_risk": "AeroGrid faces a compounding risk condition across its three persistently escalated regions — APAC ($18.5M), AME ($22M), and MED ($4.2M) — representing a combined enterprise VaCR exposure of $44.7 million that has remained continuously active for the full duration of the observation window. The compound nature of this exposure is strategically significant: AME's ransomware scenario threatens North American turbine manufacturing and wind farm operational continuity at the highest financial rank; APAC's state-sponsored intrusion trend puts manufacturing intellectual property and turbine control systems at sustained risk; and MED's persistent insider misuse pattern compromises the integrity of service delivery platforms that support both regions. Were these scenarios to materialize simultaneously — a plausible condition given their structural rather than episodic nature — the aggregate business impact would exceed any single regional VaCR figure and could disrupt AeroGrid's global production and delivery capacity across its two highest-volume operating theaters."
+  },
+  "ciso_talking_points": [
+    "Across seven consecutive pipeline runs spanning March 9 to March 20, AME has held a CRITICAL severity designation with a $22 million VaCR exposure every single time — this is not a spike, it is a sustained condition, and it represents the single largest financial risk in our global portfolio.",
+    "Three of our five operating regions — APAC at $18.5M, AME at $22M, and MED at $4.2M — have been escalated in every run without exception, placing $44.7 million in combined enterprise VaCR exposure under continuous active alert across the full observation window.",
+    "LATAM and NCE have returned clear status across all seven runs, confirming that our Southern Hemisphere and NATO-aligned European operations are not under active threat — this gives us a stable operational base from which to absorb and respond to the elevated risk conditions in APAC and AME.",
+    "The scenario profile across our three escalated regions has been entirely static for over ten weeks: Ransomware in AME, System intrusion in APAC, Insider misuse in MED — the absence of scenario drift tells us these are structural exposures requiring structural responses, not temporary threat campaigns that will self-resolve.",
+    "The shift in AME's dominant pillar attribution between Geopolitical and Cyber across different runs reflects a threat environment that is simultaneously state-motivated and operationally active against our digital infrastructure — board-level awareness of this dual-vector pressure on our North American manufacturing operations is warranted."
+  ]
+}

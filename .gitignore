@@ -36,3 +36,6 @@ output/regional/*/gatekeeper_decision.json
 
 # Local Claude Code permission overrides (machine-specific)
 .claude/settings.local.json
+
+# Nested repos (managed separately)
+agent-skills/
