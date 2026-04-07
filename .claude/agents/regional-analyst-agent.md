@@ -239,14 +239,14 @@ with open(path, encoding='utf-8') as f:
 d['primary_scenario'] = '{your_scenario_match}'
 d['financial_rank'] = {your_financial_rank}
 d['signal_type'] = '{Event|Trend|Mixed}'
-d['threat_actor'] = '{your_threat_actor_or_null}'
+d['threat_actor'] = None  # replace None with 'Actor Name' if a specific actor was identified
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(d, f, indent=2)
 print(f'Updated {path}')
 "
 ```
 
-Replace `{your_scenario_match}`, `{your_financial_rank}`, `{Event|Trend|Mixed}`, and `{your_threat_actor_or_null}` with your actual analytical determinations. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
+Replace `{your_scenario_match}`, `{your_financial_rank}`, and `{Event|Trend|Mixed}` with your actual analytical determinations. For `threat_actor`: replace `None` with the actor name string if identified, or leave as `None` if no actor was identified. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
 
 ## STEP 8 — WRITE SECTIONS.JSON
 
@@ -259,7 +259,7 @@ Schema:
 {
   "region": "{REGION uppercase}",
   "generated_at": "<ISO 8601 UTC — same timestamp as data.json>",
-  "threat_actor": "<primary state actor or group named in brief, or empty string if none — clean name only, no parenthetical qualifiers>",
+  "threat_actor": "<primary state actor or group named in brief, or null if none — clean name only, no parenthetical qualifiers>",
   "signal_type_label": "<see mapping below>",
   "status_label": "<see mapping below>",
   "intel_bullets": ["<2–3 key factual findings from Why paragraph>"],
