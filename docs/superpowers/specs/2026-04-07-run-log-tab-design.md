@@ -70,16 +70,23 @@ Five accordions in fixed order: APAC, AME, LATAM, MED, NCE.
 **Accordion header (always visible when region has data):**
 - Region name
 - Decision badge: `ESCALATE` (red) / `MONITOR` (blue) / `CLEAR` (green)
-- Signal count: e.g., `7 signals`
+- Signal count: e.g., `7 signals` — populated after analyst phase completes (sourced from `data.json`); omitted from header during live run until available
 
 **Inside each accordion — two sections:**
 
 #### Summary (always open)
-Sourced from `data.json` fields — no new agent output required:
+Content differs by decision:
+
+**ESCALATED regions** — sourced from `data.json` (written by analyst agent):
 - Scenario: e.g., `Supply Chain Disruption`
 - Dominant pillar: `GEO-LED` / `CYBER-LED`
 - Admiralty rating: e.g., `B2`
 - Strategic assessment: `strategic_assessment` field verbatim (1–2 sentences)
+
+**MONITOR / CLEAR regions** — analyst agent does not run; show gatekeeper rationale only:
+- Decision: `MONITOR` / `CLEAR`
+- Admiralty rating from gatekeeper decision
+- Rationale: gatekeeper reason string from SSE `gatekeeper` event
 
 #### Event Timeline (expandable)
 - Open by default for ESCALATED regions
@@ -146,6 +153,7 @@ On tab load, `GET /api/run/log` returns this file. New run start overwrites the 
 
 - New endpoint: `GET /api/run/log` — returns `last_run_log.json` or `{"status": "no_run"}`
 - SSE handler in `server.py` writes to `last_run_log.json` as events are emitted
+- `output/pipeline/` directory must exist before write; server should `mkdir -p` on startup or at run start
 - No changes to existing SSE event schema — frontend filters which events to display
 
 ---
