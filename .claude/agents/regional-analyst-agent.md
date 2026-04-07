@@ -228,6 +228,8 @@ Use the Write tool with path `output/regional/ame/signal_clusters.json` and the 
 
 After writing the brief, update `output/regional/{region_lower}/data.json` with your analytical determinations. Read the existing file, update only these fields, write it back:
 
+**`threat_actor`**: The primary state actor or threat group identified in your analysis. Use a clean name only — no parenthetical qualifiers. Set to `null` if no specific actor is identified — do not omit the field. This value must match what you write to `sections.json` in Step 8.
+
 ```bash
 python3 -c "
 import json, sys
@@ -237,13 +239,14 @@ with open(path, encoding='utf-8') as f:
 d['primary_scenario'] = '{your_scenario_match}'
 d['financial_rank'] = {your_financial_rank}
 d['signal_type'] = '{Event|Trend|Mixed}'
+d['threat_actor'] = '{your_threat_actor_or_null}'
 with open(path, 'w', encoding='utf-8') as f:
     json.dump(d, f, indent=2)
 print(f'Updated {path}')
 "
 ```
 
-Replace `{your_scenario_match}`, `{your_financial_rank}`, and `{Event|Trend|Mixed}` with your actual analytical determinations. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
+Replace `{your_scenario_match}`, `{your_financial_rank}`, `{Event|Trend|Mixed}`, and `{your_threat_actor_or_null}` with your actual analytical determinations. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
 
 ## STEP 8 — WRITE SECTIONS.JSON
 
@@ -300,7 +303,7 @@ Write the file to `output/regional/{region_lower}/sections.json`.
 
 Before exiting, verify:
 - [ ] `report.md` written and passes jargon audit (zero SOC/pipeline language)
-- [ ] `data.json` updated with `primary_scenario`, `financial_rank`, `signal_type`
+- [ ] `data.json` updated with `primary_scenario`, `financial_rank`, `signal_type`, `threat_actor`
 - [ ] `signal_clusters.json` written with at least one cluster per escalated scenario
 - [ ] All source citations in prose use real named publications — no generic labels
 - [ ] `claims.json` written before `report.md`
