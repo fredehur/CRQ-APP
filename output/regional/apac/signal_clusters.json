@@ -65,25 +65,25 @@
       "sources": [
         {
           "name": "FalconFeeds — China Cyber Campaign Critical Infrastructure 2024–2025",
-          "url": "https://falconfeeds.io/blogs/china-cyber-campaign-critical-infrastructure-2024-2025",
+          "url": null,
           "credibility_tier": "B",
           "headline": "150% surge in China-nexus APT espionage confirmed across APAC energy, finance, and manufacturing in 2024"
         },
         {
           "name": "Cybersecurity Dive — Asian Government Espionage Campaign",
-          "url": "https://www.cybersecuritydive.com/news/asian-governments-espionage-campaign-breached-critical-infrastructure-in-3/811472/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "Asian government APT confirmed breach of 70+ critical infrastructure organisations in 37 countries including energy ministries"
         },
         {
           "name": "ASPI — State-Sponsored Economic Cyber-Espionage Report",
-          "url": "https://www.aspi.org.au/report/state-sponsored-economic-cyber-espionage-commercial-purposes-assessing-preparedness-emerging/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "State-sponsored economic cyber-espionage for commercial purposes — APAC preparedness assessment"
         },
         {
           "name": "CyberProof — East Asia State-Backed Cyber Espionage 2025",
-          "url": "https://www.cyberproof.com/blog/cyber-espionage-and-ransomware-east-asias-2025-state-backed-attacks/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "East Asia state-backed cyber espionage and ransomware campaigns targeting critical sectors in 2025"
         }
@@ -97,13 +97,13 @@
       "sources": [
         {
           "name": "Dark Reading — SideWinder Espionage Campaign Southeast Asia",
-          "url": "https://www.darkreading.com/threat-intelligence/sidewinder-espionage-campaign-expands-across-southeast-asia",
+          "url": null,
           "credibility_tier": "B",
           "headline": "SideWinder espionage campaign expands into Indonesia and Thailand — phishing targets logistics and nuclear sectors"
         },
         {
           "name": "Telsy — 2024 State-Sponsored Campaigns Review",
-          "url": "https://www.telsy.com/en/the-2024-state-sponsored-campaigns/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "2024 state-sponsored campaign review — credential theft and phishing tradecraft in Southeast Asia manufacturing adjacencies"
         }

@@ -1,7 +1,7 @@
 ---
 name: threat-landscape-agent
 description: Synthesizes all archived pipeline runs into a structured threat landscape analysis — adversary patterns, scenario lifecycles, compound risks, and intelligence gaps.
-tools: Bash, Write, Read
+tools: Write, Read
 model: sonnet
 hooks:
   Stop:

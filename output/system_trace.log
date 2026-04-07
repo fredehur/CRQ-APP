@@ -1,0 +1,13 @@
+[2026-04-07T09:18:19Z] [COLLECTION_QUALITY] APAC: geo=5 cyber=3 thin=False threshold=3
+[2026-04-07T09:18:44Z] [COLLECTION_QUALITY] NCE: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:18:57Z] [COLLECTION_QUALITY] APAC: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:19:00Z] [COLLECTION_QUALITY] NCE: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:20:19Z] [COLLECTION_QUALITY] AME: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:21:33Z] [COLLECTION_QUALITY] LATAM: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:24:46Z] [COLLECTION_QUALITY] MED: geo=4 cyber=4 thin=False threshold=3
+[2026-04-07T09:27:33Z] [COLLECTION_QUALITY] NCE: geo=4 cyber=4 thin=False threshold=3
+[2026-04-07T09:32:29Z] [COLLECTION_QUALITY] APAC: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:32:29Z] [COLLECTION_QUALITY] AME: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:32:29Z] [COLLECTION_QUALITY] LATAM: geo=3 cyber=3 thin=False threshold=3
+[2026-04-07T09:32:29Z] [COLLECTION_QUALITY] MED: geo=4 cyber=4 thin=False threshold=3
+[2026-04-07T09:32:30Z] [COLLECTION_QUALITY] NCE: geo=4 cyber=4 thin=False threshold=3

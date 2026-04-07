@@ -1,12 +1,12 @@
 {
   "region": "AME",
-  "generated_at": "2026-04-06T09:35:00Z",
+  "generated_at": "2026-04-07T09:45:00Z",
   "claims": [
     {
       "claim_id": "ame-001",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "China's dominant control over rare earth permanent magnet supply chains, now weaponized via export controls, directly threatens wind turbine component availability and elevates IP theft incentives for state actors seeking to close technological gaps.",
+      "text": "In March 2026, confirmed strikes hit the Ras Laffan LNG terminal (Qatar), Shaybah oil field (Saudi Arabia), and Shah gas field (UAE) during the U.S.-Iran conflict, demonstrating adversary willingness and capability to target energy infrastructure directly.",
       "signal_ids": ["ame-geo-001"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -15,7 +15,7 @@
       "claim_id": "ame-002",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "The US Commerce Department has launched a national security investigation into imported wind turbines, with tariff threats of 11–50% disrupting component procurement across AME wind operators and signalling escalating geopolitical scrutiny of energy supply chains.",
+      "text": "The U.S. Department of Commerce opened a Section 232 national security investigation on August 13, 2025 into imported wind turbines and components, formally identifying foreign supply chain dependence — approximately two-thirds of U.S. wind turbine value is imported — as a national security risk vector.",
       "signal_ids": ["ame-geo-002"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -24,7 +24,7 @@
       "claim_id": "ame-003",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "Mexico's AMLO-era energy sovereignty policies have created regulatory uncertainty for foreign-owned wind farm operators, increasing exposure to politically motivated interference or nationalization pressure on operationally dependent assets.",
+      "text": "CSIS confirmed that Iran has demonstrated long-standing intent and capability to conduct cyber operations against U.S. critical infrastructure, with heightened threat to the energy sector assessed during active conflict.",
       "signal_ids": ["ame-geo-003"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -33,54 +33,63 @@
       "claim_id": "ame-004",
       "claim_type": "assessment",
       "pillar": "geopolitical",
-      "text": "The convergence of China's rare earth weaponisation and US trade scrutiny structurally elevates the intelligence value of wind farm operational technology IP, making AME-region operators a priority target for state-sponsored collection activity.",
-      "signal_ids": ["ame-geo-001", "ame-geo-002"],
+      "text": "The convergence of direct strikes on Gulf energy terminals and the U.S. national security investigation into wind turbine imports creates a dual-pressure environment: state-aligned actors have both the demonstrated intent to disrupt Western energy operators and the geopolitical cover to pursue cyber operations against U.S.-based renewable infrastructure.",
+      "signal_ids": ["ame-geo-001", "ame-geo-002", "ame-geo-003"],
       "confidence": "Assessed",
-      "paragraph": "how"
+      "paragraph": "why"
     },
     {
       "claim_id": "ame-005",
-      "claim_type": "estimate",
+      "claim_type": "fact",
       "pillar": "cyber",
-      "text": "No named threat actor, confirmed intrusion incident, or documented attack vector against wind farm OT environments in the AME region was recovered in the current collection window. The cyber threat assessment is inferred from geopolitical conditions and sector-level precedent, not from confirmed cyber indicators.",
-      "signal_ids": [],
-      "confidence": "Analyst judgment",
+      "text": "Vestas Wind Energy suffered a confirmed ransomware attack resulting in data exfiltration and operational disruption across manufacturing pipeline systems, establishing direct precedent for ransomware deployment against wind energy OT environments.",
+      "signal_ids": ["ame-cyber-001"],
+      "confidence": "Confirmed",
       "paragraph": "how"
     },
     {
       "claim_id": "ame-006",
-      "claim_type": "assessment",
-      "pillar": "geopolitical",
-      "text": "State actors with rare earth leverage — principally Chinese state-affiliated entities — have documented history of targeting wind energy IP in other regions as a parallel track to supply chain pressure, suggesting the geopolitical conditions are consistent with collection tradecraft even absent confirmed AME-specific indicators.",
-      "signal_ids": ["ame-geo-001"],
-      "confidence": "Assessed",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "On March 14, 2026, a ransomware intrusion at the Minot Water Treatment Plant compromised ICS/SCADA systems and forced manual operational fallback for 16 hours, confirming that adversaries possess active capability to disrupt OT environments with critical infrastructure dependencies in North America.",
+      "signal_ids": ["ame-cyber-002"],
+      "confidence": "Confirmed",
       "paragraph": "how"
     },
     {
       "claim_id": "ame-007",
       "claim_type": "assessment",
-      "pillar": "geopolitical",
-      "text": "AeroGrid's Houston Operations Center — rated HIGH criticality — sits at the intersection of the US national security investigation into wind turbine imports and state-actor incentives to acquire wind farm telemetry IP, making it the primary exposure point in this threat environment.",
-      "signal_ids": ["ame-geo-001", "ame-geo-002"],
+      "pillar": "cyber",
+      "text": "The combination of the Vestas precedent and the Minot SCADA intrusion establishes a pattern of ransomware actors successfully targeting energy-sector OT environments — consistent with the geopolitical motivation provided by the Iran conflict escalation.",
+      "signal_ids": ["ame-cyber-001", "ame-cyber-002", "ame-geo-003"],
       "confidence": "Assessed",
-      "paragraph": "sowhat"
+      "paragraph": "how"
     },
     {
       "claim_id": "ame-008",
-      "claim_type": "estimate",
-      "pillar": "geopolitical",
-      "text": "AeroGrid's Toronto Engineering Hub holds predictive maintenance IP that represents a secondary collection target, with reduced but non-negligible exposure given the hub's role in proprietary algorithm development.",
-      "signal_ids": [],
-      "confidence": "Analyst judgment",
-      "paragraph": "sowhat"
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "No named threat actor specifically attributed to AME wind farm telemetry or predictive maintenance targeting was identified in collected evidence, representing a confirmed intelligence gap that limits confidence in the cyber pillar.",
+      "signal_ids": ["ame-cyber-003"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
     },
     {
       "claim_id": "ame-009",
       "claim_type": "estimate",
-      "pillar": "geopolitical",
-      "text": "The absence of AME-specific cyber indicators constitutes an identified collection gap, not a clear environment. The threat vector remains plausible pending further signals recovery.",
+      "pillar": "cyber",
+      "text": "No evidence of active reconnaissance, credential harvesting targeting service technicians, or cloud/edge compute node probing aligned with wind-energy targeting patterns in AME was recovered in the current collection window — confirmation criteria from the working theory remain unmet.",
       "signal_ids": [],
       "confidence": "Analyst judgment",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "ame-010",
+      "claim_type": "assessment",
+      "pillar": "geopolitical",
+      "text": "The Rice University Baker Institute assessed the Iran conflict as a long-term systemic shock to global energy trade, with cascading effects on Western renewable operators who depend on imported components and cross-border supply chains.",
+      "signal_ids": ["ame-geo-001"],
+      "confidence": "Assessed",
       "paragraph": "sowhat"
     }
   ]

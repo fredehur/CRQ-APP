@@ -1,12 +1,12 @@
 {
   "region": "LATAM",
-  "generated_at": "2026-04-06T09:32:01Z",
+  "generated_at": "2026-04-07T09:45:00Z",
   "claims": [
     {
       "claim_id": "latam-001",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "The U.S. Department of Commerce opened a Section 232 national security investigation into wind turbine and component imports in August 2025, citing foreign supply chain vulnerabilities and potential exposure of critical infrastructure to foreign influence.",
+      "text": "China operates a systematic state-sponsored industrial espionage programme targeting renewable energy sectors, including wind turbine manufacturers, as an instrument of national industrial policy to dominate energy technology markets globally.",
       "signal_ids": ["latam-geo-001"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -15,7 +15,7 @@
       "claim_id": "latam-002",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "Chinese state-owned enterprises are deepening renewable energy and infrastructure investments across Argentina, Brazil, and Chile — including project awards in Chile and the Chalco-Rio Tinto acquisition of Brazilian aluminum assets — extending PRC presence across wind component material flows in the region.",
+      "text": "Russia has used strategic supply agreements and large-scale infrastructure projects across LATAM as deliberate tools of political and economic dependency, documented by the Center for the Study of Democracy as an active influence mechanism in the region.",
       "signal_ids": ["latam-geo-002"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -24,7 +24,7 @@
       "claim_id": "latam-003",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "Argentina, Brazil, and Chile are simultaneously undergoing unprecedented regulatory changes in 2026 affecting electricity market rules, battery storage procurement frameworks, and mining and glacier law — creating fluid, unpredictable policy environments for wind component sourcing and investment.",
+      "text": "The U.S.-China rivalry over critical mineral supply chains in LATAM — particularly copper and lithium underpinning wind turbine components — is intensifying, with Chinese multinationals facing Western market exclusion and redirecting investment pressure toward Latin American sourcing networks.",
       "signal_ids": ["latam-geo-003"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -33,43 +33,61 @@
       "claim_id": "latam-004",
       "claim_type": "assessment",
       "pillar": "geopolitical",
-      "text": "The convergence of a U.S. trade security investigation, expanding Chinese state investment across LATAM energy sectors, and simultaneous regulatory reform across three key markets creates compounding supply chain unpredictability for wind component sourcing and service delivery.",
-      "signal_ids": ["latam-geo-001", "latam-geo-002", "latam-geo-003"],
+      "text": "LATAM holds approximately 40% of global copper production critical to wind turbine manufacturing, making the region a structural focal point for great-power competition over renewable energy supply chains and a heightened risk environment for operators dependent on regional sourcing.",
+      "signal_ids": ["latam-geo-003"],
       "confidence": "Assessed",
       "paragraph": "why"
     },
     {
       "claim_id": "latam-005",
-      "claim_type": "estimate",
+      "claim_type": "fact",
       "pillar": "cyber",
-      "text": "No named threat actor or confirmed cyber incident targeting LATAM wind energy operations, supply chain infrastructure, or service systems was identified in this collection window. The cyber dimension cannot be confirmed from available evidence.",
-      "signal_ids": [],
-      "confidence": "Analyst judgment",
+      "text": "Sinovel Wind Group, a Chinese state-linked manufacturer, was convicted in U.S. federal court for the theft of AMSC wind turbine control software source code via a corrupted insider — establishing confirmed actor capability and documented intent to compromise wind sector intellectual property through supply chain access.",
+      "signal_ids": ["latam-cyber-001"],
+      "confidence": "Confirmed",
       "paragraph": "how"
     },
     {
       "claim_id": "latam-006",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "No named threat actor or confirmed operational technology intrusion attributed to LATAM-based wind plants or their component suppliers has been identified in the current collection window — this constitutes a denial indicator against the hypothesis of an active, ongoing LATAM cyber campaign.",
+      "signal_ids": ["latam-cyber-002"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "latam-007",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "No documented supply chain disruption in LATAM wind component sourcing attributable to a cyber or state actor has been identified — corroboration for a current, region-specific cyber scenario remains absent from the collection window.",
+      "signal_ids": ["latam-cyber-003"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "latam-008",
       "claim_type": "estimate",
       "pillar": "cyber",
-      "text": "The depth of PRC state-owned enterprise presence in LATAM wind component supply chains creates a structural pathway to supply chain integrity risk — specifically, the risk that components sourced through PRC-linked vendors could introduce unvalidated dependencies — but this cannot be confirmed from current evidence.",
+      "text": "Given Sinovel's established role as a turbine exporter to emerging markets including LATAM, analogous supply-chain-enabled IP theft targeting regional manufacturers is plausible — but no LATAM-specific operational intelligence has been recovered to confirm this inference as a current campaign.",
       "signal_ids": [],
       "confidence": "Analyst judgment",
       "paragraph": "how"
     },
     {
-      "claim_id": "latam-007",
+      "claim_id": "latam-009",
       "claim_type": "assessment",
       "pillar": "geopolitical",
-      "text": "AeroGrid's service contracts with Enel Chile and Neoenergia Brazil depend on supply chain continuity for wind turbine components and parts, placing them directly in the exposure zone of the sourcing disruptions and regulatory unpredictability documented in the current geopolitical signal set.",
-      "signal_ids": ["latam-geo-001", "latam-geo-002", "latam-geo-003"],
+      "text": "Escalating great-power competition over LATAM critical mineral supply chains, combined with China's documented pattern of IP theft in wind manufacturing, creates structural conditions that elevate supply chain integrity risk for wind energy service operators active in Brazil and Chile.",
+      "signal_ids": ["latam-geo-001", "latam-geo-003"],
       "confidence": "Assessed",
       "paragraph": "sowhat"
     },
     {
-      "claim_id": "latam-008",
+      "claim_id": "latam-010",
       "claim_type": "estimate",
-      "pillar": "geopolitical",
-      "text": "Watch indicators: U.S. Section 232 investigation issuing tariff recommendations on wind turbine components; Chinese SOE project awards advancing in Chile or Brazil that displace or complicate existing maintenance contract supply lines; or major regulatory reversals in Brazil or Chile altering wind energy procurement frameworks.",
+      "pillar": "cyber",
+      "text": "The absence of confirmed cyber indicators for LATAM represents a gap in collection coverage, not a confirmed low-risk assessment — LATAM-specific operational technology intrusion data and current supply chain attribution intelligence remain outstanding gaps that would materially change the confidence level if recovered.",
       "signal_ids": [],
       "confidence": "Analyst judgment",
       "paragraph": "sowhat"

@@ -1,78 +1,104 @@
 {
   "region": "AME",
-  "timestamp": "2026-04-06T09:35:00Z",
+  "timestamp": "2026-04-07T09:45:00Z",
   "window_used": "7d",
-  "total_signals": 3,
-  "sources_queried": 8,
+  "total_signals": 6,
+  "sources_queried": 11,
   "clusters": [
     {
-      "name": "China Rare Earth Export Controls Wind Supply Chain",
+      "name": "Iran Conflict Energy Infrastructure Targeting",
       "pillar": "Geo",
       "convergence": 4,
-      "topic_id": "supply-chain-wind-components",
       "sources": [
         {
-          "name": "Interlude One — Wind Turbine Rare Earth Dependency",
-          "url": "https://interludeone.com/posts/2025-04-23-windturbines/wind-turbines",
+          "name": "The Conversation via OurMidland",
+          "url": "https://www.ourmidland.com/news/article/targeting-of-energy-facilities-turned-iran-war-22085907.php",
           "credibility_tier": "B",
-          "headline": "China's dominant control over rare earth permanent magnet supply chains weaponised via export controls"
+          "headline": "Targeting of energy facilities turned Iran war: confirmed strikes on LNG and oil field infrastructure"
         },
         {
-          "name": "Atlas Institute — Rare Earth Rivalries",
-          "url": "https://atlasinstitute.org/rare-earth-rivalries-the-geopolitical-rise-of-critical-minerals/",
-          "credibility_tier": "B",
-          "headline": "Geopolitical rise of critical minerals and state leverage over wind turbine components"
+          "name": "CSIS — Iran Conflict Heightens Cyber Threats to U.S. Energy Infrastructure",
+          "url": "https://www.csis.org/analysis/iran-conflict-heightens-cyber-threats-us-energy-infrastructure",
+          "credibility_tier": "A",
+          "headline": "Iran holds demonstrated capability to conduct cyber operations against U.S. critical infrastructure during conflict"
         },
         {
-          "name": "Goldman Sachs — Resource Realism Critical Minerals",
-          "url": "https://www.goldmansachs.com/insights/articles/resource-realism-the-geopolitics-of-critical-mineral-supply-chains",
+          "name": "Good Morning America — Attacks on Middle East Energy Sites",
+          "url": "https://www.goodmorningamerica.com/news/story/attacks-middle-east-energy-sites-deepen-threat-us-131213656",
           "credibility_tier": "B",
-          "headline": "Resource realism: the geopolitics of critical mineral supply chains"
+          "headline": "Attacks on Middle East energy sites deepen threat to U.S. energy sector"
         },
         {
-          "name": "IRENA — Geopolitics of the Energy Transition Critical Materials",
-          "url": null,
+          "name": "Rice University Baker Institute — Iran Conflict as Long-Term Systemic Shock",
+          "url": "https://news.rice.edu/news/2026/geopolitics-experts-see-iran-conflict-long-term-systemic-shock-global-energy-trade",
           "credibility_tier": "B",
-          "headline": "Geopolitics of the energy transition: critical materials dependencies and sovereign risk"
+          "headline": "Geopolitics experts assess Iran conflict as long-term systemic shock to global energy trade"
         }
       ]
     },
     {
-      "name": "US National Security Scrutiny Wind Turbine Imports",
+      "name": "U.S. Wind Turbine Import National Security Scrutiny",
       "pillar": "Geo",
       "convergence": 3,
       "topic_id": "supply-chain-wind-components",
       "sources": [
         {
-          "name": "Energetica India — US Wind Turbine Import Probe",
-          "url": "https://www.energetica-india.net/news/us-launches-probe-into-imported-wind-turbines-tariff-threat-looms",
+          "name": "Reuters — National Security Probe into Wind Turbine Imports",
+          "url": "https://www.reuters.com/business/energy/us-opens-national-security-probe-into-imported-wind-turbines-components-2025-08-21/",
           "credibility_tier": "B",
-          "headline": "US launches national security probe into imported wind turbines with tariff threat of 11-50%"
+          "headline": "U.S. opens national security probe into imported wind turbines and components"
         },
         {
-          "name": "American Action Forum — Trump Wind Turbine Tariffs",
-          "url": "https://www.americanactionforum.org/press-release/president-trump-gears-up-to-levy-tariffs-on-wind-turbine-imports/",
+          "name": "CNBC — U.S. Opens National Security Probe into Imported Wind Turbines",
+          "url": "https://www.cnbc.com/2025/08/21/us-opens-national-security-probe-into-imported-wind-turbines-components.html",
           "credibility_tier": "B",
-          "headline": "President Trump gears up to levy tariffs on wind turbine imports"
+          "headline": "Section 232 investigation: two-thirds of U.S. wind turbine value is imported"
         },
         {
-          "name": "Wind Power Monthly — US Tariffs Wind Industry",
-          "url": "https://www.windpowermonthly.com/article/1913594/us-tariffs-draw-ire-wind-industry-market-turmoil-continues",
+          "name": "WTT London — National Security Investigation into Wind Turbine Imports",
+          "url": "https://www.wttlonline.com/stories/wind-turbines,14187",
           "credibility_tier": "B",
-          "headline": "US tariffs draw ire of wind industry as market turmoil continues"
+          "headline": "National security investigation into wind turbine imports signals strategic supply chain vulnerability"
         }
       ]
     },
     {
-      "name": "Mexico Energy Sovereignty Foreign Operator Pressure",
-      "pillar": "Geo",
-      "convergence": 1,
+      "name": "Ransomware Against Wind Energy and OT Infrastructure",
+      "pillar": "Cyber",
+      "convergence": 2,
+      "topic_id": "ransomware-energy-grid",
       "sources": [
         {
-          "name": "SciELO Mexico — AMLO Energy Sovereignty",
-          "url": "https://www.scielo.org.mx/article_plus.php?pid=S0185-013X2025000300729&tlng=en&lng=en",
+          "name": "IT Solutions 247 — Hackers Hit Wind Energy Provider With Ransomware",
+          "url": "https://www.itsolutions247.com/uncategorized/hackers-hit-wind-energy-provider-with-ransomware/",
           "credibility_tier": "B",
-          "headline": "Mexico AMLO-era energy sovereignty policies creating regulatory uncertainty for foreign wind operators"
+          "headline": "Vestas Wind Energy hit by ransomware: data exfiltration and manufacturing system disruption confirmed"
+        },
+        {
+          "name": "SC World — Ransomware Intrusion Compromises North Dakota Water Treatment Facility",
+          "url": "https://www.scworld.com/brief/ransomware-intrusion-compromises-north-dakota-water-treatment-facility",
+          "credibility_tier": "B",
+          "headline": "Minot Water Treatment Plant SCADA ransomware forces 16-hour manual operations fallback (March 2026)"
+        }
+      ]
+    },
+    {
+      "name": "OT/ICS Reporting Gap and Intelligence Absence",
+      "pillar": "Cyber",
+      "convergence": 2,
+      "topic_id": "ot-ics-cyber-attacks",
+      "sources": [
+        {
+          "name": "SCADAS.EC — Issues Identifying Control System Cyber Incidents",
+          "url": "http://scadamag.infracritical.com/index.php/2024/07/",
+          "credibility_tier": "B",
+          "headline": "Systemic under-reporting of ICS/OT cyber incidents limits sector-wide visibility"
+        },
+        {
+          "name": "Contingency Training — Rising Threats to U.S. Critical Infrastructure in 2026",
+          "url": "https://www.contingencytraining.com/post/rising-threats-to-u-s-critical-infrastructure-why-oil-gas-electric-and-transportation-facilitie",
+          "credibility_tier": "B",
+          "headline": "Critical infrastructure facing escalating cyber threats across oil, gas, electric, and transportation sectors"
         }
       ]
     }

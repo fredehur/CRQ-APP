@@ -1,7 +1,7 @@
 ---
 name: gatekeeper-agent
 description: Fast triage agent — determines if a credible geopolitical or cyber threat exists for a given region and asset. Returns structured Admiralty-rated decision.
-tools: Bash
+tools: Write, Read
 model: haiku
 ---
 
@@ -90,8 +90,9 @@ Write the decision file using the dedicated tool. Construct the JSON and pipe it
 
 ### ESCALATE example
 
-```bash
-echo '{
+Use the Write tool to write `output/regional/{region_lower}/gatekeeper_decision.json` with content:
+```json
+{
   "region": "APAC",
   "decision": "ESCALATE",
   "admiralty": {
@@ -102,13 +103,14 @@ echo '{
   "scenario_match": "System intrusion",
   "dominant_pillar": "Geopolitical",
   "rationale": "Corroborated state-sponsored APT indicators across geo and cyber signals; scenario_map financial_rank 3 breaches ESCALATE threshold."
-}' | uv run python tools/write_gatekeeper_decision.py {region_lower}
+}
 ```
 
 ### MONITOR example
 
-```bash
-echo '{
+Use the Write tool to write `output/regional/{region_lower}/gatekeeper_decision.json` with content:
+```json
+{
   "region": "AME",
   "decision": "MONITOR",
   "admiralty": {
@@ -119,13 +121,14 @@ echo '{
   "scenario_match": "Accidental disclosure",
   "dominant_pillar": "Cyber",
   "rationale": "Elevated insider threat indicators present but scenario financial_rank 5 does not breach ESCALATE threshold; continued monitoring warranted."
-}' | uv run python tools/write_gatekeeper_decision.py {region_lower}
+}
 ```
 
 ### CLEAR example
 
-```bash
-echo '{
+Use the Write tool to write `output/regional/{region_lower}/gatekeeper_decision.json` with content:
+```json
+{
   "region": "LATAM",
   "decision": "CLEAR",
   "admiralty": {
@@ -136,7 +139,7 @@ echo '{
   "scenario_match": null,
   "dominant_pillar": "Geopolitical",
   "rationale": "No active state-aligned cyber campaigns detected; geo signals indicate stable trade environment with no top-4 financial impact scenario present."
-}' | uv run python tools/write_gatekeeper_decision.py {region_lower}
+}
 ```
 
 Replace all placeholder values with your actual assessment. The `rationale` field must be a single sentence with no line breaks.

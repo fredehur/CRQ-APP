@@ -1,7 +1,7 @@
 {
-  "pipeline_id": "crq-2026-04-06T094950Z",
+  "pipeline_id": "crq-2026-04-07T100018Z",
   "client": "AeroGrid Wind Solutions",
-  "run_timestamp": "2026-04-06T09:49:50Z",
+  "run_timestamp": "2026-04-07T10:00:18Z",
   "status": "complete",
   "window_used": "7d",
   "total_vacr_exposure_usd": 44700000,
@@ -12,7 +12,7 @@
       "vacr_usd": 18500000,
       "admiralty": "B2",
       "velocity": "stable",
-      "dominant_pillar": "Cyber"
+      "dominant_pillar": "Geopolitical"
     },
     "AME": {
       "status": "escalated",
@@ -26,7 +26,7 @@
       "status": "escalated",
       "severity": "LOW",
       "vacr_usd": 0,
-      "admiralty": "B2",
+      "admiralty": null,
       "velocity": "accelerating",
       "dominant_pillar": "Geopolitical"
     },

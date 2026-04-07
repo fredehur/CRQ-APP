@@ -1,7 +1,7 @@
 ---
 name: regional-analyst-agent
 description: Translates regional geopolitical and cyber threat intelligence into a strategic business risk brief structured around the three intelligence pillars.
-tools: Bash, Write, Read
+tools: Write, Read
 model: sonnet
 hooks:
   Stop:
@@ -230,23 +230,14 @@ After writing the brief, update `output/regional/{region_lower}/data.json` with 
 
 **`threat_actor`**: The primary state actor or threat group identified in your analysis. Use a clean name only — no parenthetical qualifiers. Set to `null` if no specific actor is identified — do not omit the field. This value must match what you write to `sections.json` in Step 8.
 
-```bash
-python3 -c "
-import json, sys
-path = 'output/regional/{region_lower}/data.json'
-with open(path, encoding='utf-8') as f:
-    d = json.load(f)
-d['primary_scenario'] = '{your_scenario_match}'
-d['financial_rank'] = {your_financial_rank}
-d['signal_type'] = '{Event|Trend|Mixed}'
-d['threat_actor'] = None  # replace None with 'Actor Name' if a specific actor was identified
-with open(path, 'w', encoding='utf-8') as f:
-    json.dump(d, f, indent=2)
-print(f'Updated {path}')
-"
-```
+Use the Read tool to read `output/regional/{region_lower}/data.json`, then use the Write tool to write it back with these fields updated:
 
-Replace `{your_scenario_match}`, `{your_financial_rank}`, and `{Event|Trend|Mixed}` with your actual analytical determinations. For `threat_actor`: replace `None` with the actor name string if identified, or leave as `None` if no actor was identified. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
+- `primary_scenario`: your scenario match (string)
+- `financial_rank`: your financial rank (integer)
+- `signal_type`: `"Event"`, `"Trend"`, or `"Mixed"`
+- `threat_actor`: actor name string, or `null` if no specific actor identified
+
+Preserve all other existing fields in the file. These fields make your analysis the source of truth for downstream consumers — the global builder and dashboard both read them.
 
 ## STEP 8 — WRITE SECTIONS.JSON
 

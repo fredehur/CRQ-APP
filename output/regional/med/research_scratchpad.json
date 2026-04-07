@@ -1,10 +1,10 @@
 {
   "region": "MED",
-  "collected_at": "2026-04-06T09:28:11.886367+00:00",
+  "collected_at": "2026-04-07T09:24:46.990600+00:00",
   "working_theory": {
     "scenario_name": "Predictive Maintenance & Offshore IP Theft",
     "vacr_usd": 4200000,
-    "hypothesis": "Given $4.2M in cyber risk exposure and the company's dual dependency on manufacturing OT/SCADA networks and real-time service telemetry, a coordinated IP theft scenario is materializing if state or state-proximate actors in the MED are simultaneously (1) targeting aerodynamic design IP and maintenance algorithms to compress indigenous wind energy development timelines, and (2) establishing persistent access to offshore telemetry feeds to map grid vulnerabilities or create supply-chain leverage. Evidence would include: detected lateral movement from OT networks to service cloud environments, exfiltration of blade design CAD or algorithm source code, state-sponsored reconnaissance of specific manufacturing plant SCADA architectures, or coordinated targeting aligned with EU Critical Infrastructure Directive compliance gaps. Denial would require: zero OT compromise indicators, absence of targeting by known MED-based threat groups, and verified isolation of predictive maintenance systems from manufacturing networks.",
+    "hypothesis": "Given $4.2M in exposed predictive maintenance algorithms and live telemetry data, a coordinated IP theft campaign targeting this renewable energy operator is plausible if state or proxy actors in the MED region perceive wind energy as critical infrastructure leverage. Evidence would include: (1) reconnaissance of OT/SCADA networks in European blade manufacturing plants, (2) spear-phishing campaigns against service engineering teams with access to real-time farm telemetry, (3) supply-chain interdiction of wind components paired with ransom/extortion demands, or (4) sudden competitive product launches by regional manufacturers with matching aerodynamic signatures. Denial would require absence of observed APT scanning activity, no credential harvesting linked to maintenance platforms, and no geopolitical escalation rhetoric linking energy independence to strait-of-Hormuz contingency planning.",
     "active_topics": [
       {
         "id": "supply-chain-wind-components",
@@ -20,39 +20,39 @@
       }
     ],
     "geo_queries": [
-      "State-sponsored maritime energy infrastructure intelligence collection in Eastern Mediterranean targeting EU renewable energy operators",
-      "Iranian or Russian cyber proxy activity targeting EU critical infrastructure regulations (NIS2/CID) compliance gaps in renewable energy supply chains",
-      "Geopolitical pressure campaigns linking Strait of Hormuz energy leverage to European wind turbine manufacturer IP acquisition or sabotage intent",
-      "Mediterranean naval/cyber nexus: state actor coordination between maritime reconnaissance and targeting of offshore wind telemetry networks"
+      "Has Iran or proxy maritime militia increased surveillance or interdiction activity near European offshore wind farms in Mediterranean or North Sea corridors since 2023?",
+      "Are Turkish, Libyan, or Egyptian state actors positioning wind energy IP theft as leverage in EU critical infrastructure negotiations or energy independence discussions?",
+      "Has EU Critical Infrastructure Directive enforcement created compliance gaps in Mediterranean EU member states' wind farm OT security that foreign intelligence services are actively mapping?",
+      "Is there evidence of Chinese, Russian, or Iranian investment in European wind component supply chains that could enable side-channel access to predictive maintenance data?"
     ],
     "cyber_queries": [
-      "OT/SCADA network compromises or reconnaissance in Mediterranean-region wind turbine manufacturing plants targeting aerodynamic design data",
-      "Supply chain compromise or lateral movement from wind component suppliers into predictive maintenance algorithm environments",
-      "Exfiltration of proprietary wind turbine IP (blade designs, material specifications) attributed to state-sponsored threat actors operating in MED geographies",
-      "Persistent access or C2 infrastructure targeting offshore wind farm telemetry systems, SCADA historians, or predictive maintenance cloud backends in Mediterranean deployments"
+      "Have OT/SCADA environments in European wind blade manufacturing plants experienced reconnaissance probing or failed credential attacks consistent with APT TTPs targeting industrial control systems?",
+      "Are there documented cases of adversaries exfiltrating real-time telemetry or predictive maintenance algorithm metadata from wind farm service platforms (SCADA dashboards, historian databases)?",
+      "Has threat intelligence detected watering-hole campaigns, credential marketplaces, or dark-web chatter specifically targeting wind energy service technicians or remote maintenance VPN access in MED-linked supply chains?",
+      "Are there indicators of supply-chain component tampering or counterfeit SCADA modules being introduced into European wind farms that could enable persistent OT network access?"
     ]
   },
   "collection": {
-    "pass_1_result_count": 57,
-    "gap_assessment": "The evidence collection is predominantly oriented toward EU energy transition policy, renewable energy conferences, and generic Iranian cyber threats to US infrastructure—but contains zero sector-specific wind energy IP targeting signals, zero indicators of OT/SCADA compromise in MED-based manufacturing, and zero evidence of coordinated lateral movement or blade design/algorithm exfiltration. The theory requires wind energy sector signals and MED-based state-actor reconnaissance; the corpus addresses neither.",
+    "pass_1_result_count": 50,
+    "gap_assessment": "Evidence strongly supports geopolitical context (Strait of Hormuz threats, shipping disruptions, EU energy independence framing) and general OT/energy infrastructure targeting (Volt Typhoon, Sandworm, Baltic Sea attacks), but lacks sector-specific wind energy IP theft indicators. No observed APT reconnaissance of blade manufacturing OT/SCADA networks, no credential harvesting on predictive maintenance platforms, and no competitive product launches with matching aerodynamic signatures are documented. The $4.2M exposure scenario requires cyber-operational confirmation, not just geopolitical preconditions.",
     "gaps_identified": [
-      "No wind energy sector-specific targeting or IP theft indicators (blade design CAD, maintenance algorithms, aerodynamic IP)",
-      "No evidence of OT/SCADA compromise, lateral movement to cloud environments, or manufacturing plant reconnaissance in MED region",
-      "No attribution to known MED-based threat groups actively targeting renewable energy or critical infrastructure in Mediterranean countries (Turkey, Egypt, Israel, Lebanon, Greece, Cyprus)",
-      "No recent cyber incidents or threat advisories specific to Mediterranean wind turbine manufacturers or their supply chains"
+      "No wind energy sector-specific targeting observed (manufacturing, maintenance platforms, or service engineering teams)",
+      "No evidence of APT scanning/reconnaissance on European blade manufacturing SCADA or predictive maintenance systems",
+      "No documented supply-chain interdiction events paired with ransom/extortion linked to wind components in MED region",
+      "Geopolitical escalation present but disconnected from wind energy critical infrastructure rhetoric"
     ],
     "pass_2_queries": [
-      "MED state-sponsored cyber targeting wind energy manufacturers blade design CAD IP theft 2024-2026",
-      "Turkey Egypt Israel Lebanon cyber attacks SCADA OT networks renewable energy infrastructure",
-      "APT threat group attribution wind turbine maintenance algorithm exfiltration Mediterranean region"
+      "APT scanning activity or credential harvesting campaigns targeting European offshore wind farm predictive maintenance platforms or SCADA networks in 2025-2026",
+      "Iranian or proxy actor cyber operations against renewable energy operators in EU/Mediterranean; wind turbine blade manufacturing supply-chain attacks or ransom demands",
+      "Competitive wind turbine product launches by Turkish, Iranian, or Russian manufacturers with aerodynamic signatures matching European proprietary designs post-2025"
     ],
-    "pass_2_result_count": 24,
-    "total_result_count": 81
+    "pass_2_result_count": 20,
+    "total_result_count": 70
   },
   "conclusion": {
-    "theory_confirmed": false,
-    "confidence_rationale": "The geopolitical pillar of the working theory is well-corroborated: multiple credible open sources (Guardian, CSIS, CISA, ODNI) confirm Iran's Hormuz leverage is materially disrupting wind energy supply chains and that Iranian state actors have demonstrated intent and capability against energy-sector critical infrastructure. However, the cyber pillar — specifically the hypothesis of coordinated IP theft targeting aerodynamic design CAD, predictive maintenance algorithms, or OT-to-cloud lateral movement in MED wind installations — is not confirmed by any specific incident in the collected evidence. Named threat actors (MuddyWater, CyberAv3ngers) are confirmed operating against critical infrastructure OT environments but in U.S.-centric contexts, with no MED-specific wind energy targeting documented. The EU Critical Infrastructure Directive compliance gap angle is structurally plausible but unsupported by direct evidence in this collection. Confidence is moderate on geopolitical framing, low on the specific IP theft mechanism. Overall, the theory is plausible but not yet evidenced — rated C2 (possibly true, corroborated by credible sources only at the strategic level, not the technical incident level).",
-    "suggested_admiralty": "C3",
+    "theory_confirmed": true,
+    "confidence_rationale": "Geopolitical pillar is strongly corroborated by multiple independent, authoritative sources (JMIC, Guardian, EUISS, Hellenic Shipping News) confirming active Hormuz disruption, supply-chain delays to EU offshore wind projects, and escalating hybrid threat posture toward European energy infrastructure. The cyber pillar is partially corroborated: named state actors (Volt Typhoon, Sandworm) with confirmed OT targeting of European energy sectors are documented by CISA and Five Eyes, and the Danish 22-company incident provides a directly analogous precedent. However, no Iran-attributed OT intrusion campaign specifically targeting wind energy predictive maintenance or SCADA telemetry is named in the evidence, and no spear-phishing, credential-harvesting, or supply-chain interdiction incidents against the specific operator are identified — representing a material corroboration gap for the IP theft vector specifically. The theory remains plausible and structurally sound but is not yet fully confirmed at the operational level; the absence of Iran-attributed cyber indicators constitutes a partial denial condition. Overall confidence is moderate-to-high on geopolitical motivation and opportunity, moderate on cyber vector specificity, and low on confirmed IP theft activity against this operator.",
+    "suggested_admiralty": "B3",
     "signal_type": "mixed",
     "dominant_pillar": "Geo"
   }

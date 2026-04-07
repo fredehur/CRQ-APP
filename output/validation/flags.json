@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-03-28T16:09:48Z",
+  "generated_at": "2026-04-07T10:33:07Z",
   "crq_db_hash": "ad433ed2",
   "scenarios": [
     {
@@ -12,7 +12,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Ransomware",
@@ -24,7 +24,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Accidental disclosure",
@@ -36,7 +36,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Physical threat",
@@ -48,7 +48,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Insider misuse",
@@ -60,7 +60,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "DoS attack",
@@ -72,7 +72,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Scam or fraud",
@@ -84,7 +84,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "Defacement",
@@ -96,7 +96,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     },
     {
       "scenario": "System failure",
@@ -108,7 +108,7 @@
       "flagged_for_review": false,
       "review_reason": null,
       "supporting_sources": [],
-      "last_validated": "2026-03-28"
+      "last_validated": "2026-04-07"
     }
   ],
   "summary": {

@@ -71,13 +71,13 @@
         },
         {
           "name": "Industrial Cyber (ODNI Report)",
-          "url": "https://industrialcyber.co/reports/odni-report-us-critical-infrastructure-faces-escalating-cyber-risks-from-china-russia-iran-and-north-korea/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "ODNI report: U.S. critical infrastructure faces escalating cyber risks from Iran and three other nation-states"
         },
         {
           "name": "SC World",
-          "url": "https://www.scworld.com/perspective/4-steps-security-teams-can-take-to-mitigate-iranian-attacks-on-critical-infrastructure",
+          "url": null,
           "credibility_tier": "B",
           "headline": "Four steps to mitigate Iranian attacks on critical infrastructure — IRGC targeting patterns"
         }
@@ -96,13 +96,13 @@
         },
         {
           "name": "ICIT",
-          "url": "https://www.icitech.org/post/iran-and-the-cxpanding-cyber-front-what-government-leaders-need-to-know",
+          "url": null,
           "credibility_tier": "B",
           "headline": "Iran and the expanding cyber front — industrial control system targeting capability"
         },
         {
           "name": "Inside Cybersecurity",
-          "url": "https://insidecybersecurity.com/daily-news/think-tank-highlights-increased-cyber-threats-energy-infrastructure-iran-war-continues",
+          "url": null,
           "credibility_tier": "B",
           "headline": "Think tank highlights increased cyber threats to energy infrastructure as Iran conflict continues"
         }

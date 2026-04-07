@@ -15,8 +15,8 @@
         "Insider misuse",
         "Scam or fraud"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "ibm-cost-data-breach",
@@ -34,8 +34,8 @@
         "Accidental disclosure",
         "Insider misuse"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "dragos-ics-ot",
@@ -52,8 +52,8 @@
         "System intrusion",
         "Ransomware"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "mandiant-mtrends",
@@ -69,8 +69,8 @@
         "System intrusion",
         "Accidental disclosure"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "claroty-xiot",
@@ -85,8 +85,8 @@
       "scenario_tags": [
         "System intrusion"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "marsh-cyber-insurance",
@@ -103,8 +103,8 @@
         "Accidental disclosure",
         "Scam or fraud"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
-      "last_new_content": null
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
     },
     {
       "id": "enisa-threat-landscape",
@@ -121,7 +121,22 @@
         "System intrusion",
         "DoS attack"
       ],
-      "last_checked": "2026-03-28T16:09:31Z",
+      "last_checked": "2026-04-07T10:32:30Z",
+      "last_new_content": "2026-04-07"
+    },
+    {
+      "id": "2026-insider-threat-cyber-security-stati",
+      "name": "2026 Insider Threat Cyber Security Statistics - Swif",
+      "url": "https://www.swif.ai/blog/insider-threat-cyber-security-statistics",
+      "cadence": "unknown",
+      "admiralty_reliability": "C",
+      "sector_tags": [
+        "energy"
+      ],
+      "scenario_tags": [
+        "Insider misuse"
+      ],
+      "last_checked": null,
       "last_new_content": null
     }
   ]

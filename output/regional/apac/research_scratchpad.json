@@ -1,10 +1,10 @@
 {
   "region": "APAC",
-  "collected_at": "2026-04-06T09:29:44.189547+00:00",
+  "collected_at": "2026-04-07T09:18:57.879471+00:00",
   "working_theory": {
     "scenario_name": "Manufacturing IP & SCADA Compromise",
     "vacr_usd": 18500000,
-    "hypothesis": "Given the $18.5M cyber risk exposure and the convergence of state-sponsored IP theft targeting wind technology with OT/ICS attack capabilities in APAC, we hypothesize that advanced persistent threat actors—likely state-aligned groups operating in or targeting the region—are actively conducting reconnaissance and initial compromise operations against this company's manufacturing SCADA networks and proprietary aerodynamic design repositories. This hypothesis would be confirmed by evidence of: (1) credential harvesting or phishing campaigns targeting manufacturing facility personnel or service engineers in APAC locations; (2) network traffic anomalies or command-and-control beaconing from OT/SCADA segments in blade manufacturing plants; (3) exfiltration of CAD files, materials specifications, or maintenance algorithm code; or (4) public reporting of similar wind IP theft or OT compromises affecting competitors in the region. Denial would require: absence of indicators of compromise in manufacturing networks, no third-party or law enforcement notification of breach activity, and no detected lateral movement from IT to OT environments.",
+    "hypothesis": "Given the $18.5M asset exposure and APAC's strategic importance in renewable energy supply chains, we assess that state-sponsored threat actors are actively targeting this company's manufacturing IP and OT/SCADA networks to achieve dual objectives: (1) accelerate domestic wind turbine R&D capabilities and reduce technology gaps, and (2) establish persistent access to critical energy infrastructure for future disruption leverage. Evidence confirming this hypothesis would include: detection of APT-attributed reconnaissance against blade manufacturing facilities in APAC, discovery of credential harvesting or lateral movement in OT environments, exfiltration of aerodynamic design files or firmware, or public indicators of state actor interest in wind IP theft from APAC-based energy manufacturers. Disconfirming evidence would be absence of OT-targeted malware, no state actor TTPs in incident logs, and competing explanations (e.g., industrial espionage from private competitors only).",
     "active_topics": [
       {
         "id": "ot-ics-cyber-attacks",
@@ -20,38 +20,39 @@
       }
     ],
     "geo_queries": [
-      "State-sponsored cyber espionage campaigns targeting renewable energy IP in Southeast Asia, India, and China 2023–2024",
-      "Chinese and Iranian strategic interest in advanced wind turbine aerodynamic and materials technology acquisition",
-      "APAC regulatory compliance gaps and critical infrastructure protection standards for offshore and onshore wind farms",
-      "Geopolitical energy competition and technology sovereignty policies affecting wind manufacturing in APAC supply chains"
+      "State-sponsored IP theft campaigns targeting wind turbine technology in Southeast Asia, India, and East Asia 2023–2024",
+      "Chinese and Iranian strategic interest in renewable energy technology acquisition and OT/SCADA infrastructure access in APAC",
+      "APAC regulatory changes, export controls, or sanctions affecting wind energy manufacturing and cross-border IP protection in manufacturing hubs",
+      "Geopolitical tensions between APAC energy-dependent nations and established wind technology providers; foreign policy drivers for indigenous turbine capability"
     ],
     "cyber_queries": [
-      "OT/SCADA malware and intrusion activity targeting wind turbine manufacturing facilities in APAC",
-      "APT groups conducting IP theft from renewable energy companies in Southeast Asia and China—attribution and TTPs",
-      "Compromised credentials and lateral movement campaigns from corporate networks to operational technology environments in energy sector",
-      "Command-and-control infrastructure and data exfiltration patterns associated with wind technology IP theft in APAC"
+      "APT activity targeting OT/SCADA networks in APAC wind turbine manufacturing plants; ICS malware variants deployed against blade production facilities",
+      "Credential harvesting, phishing, and supply chain compromise incidents affecting renewable energy manufacturers in APAC; threat actor TTPs consistent with state-sponsored groups",
+      "Exfiltration of proprietary aerodynamic design files, CAD models, or material composition data from energy companies in APAC; data leaks linked to wind turbine IP",
+      "Persistent access and lateral movement in OT environments of APAC-based energy infrastructure; dwell time and objective indicators in manufacturing and service networks"
     ]
   },
   "collection": {
-    "pass_1_result_count": 58,
-    "gap_assessment": "Evidence collection demonstrates strong macro-level context for state-sponsored cyber-espionage in APAC and China's strategic wind energy dominance, but lacks sector-specific operational indicators directly tied to the $18.5M manufacturing/SCADA compromise scenario. Generic APT activity (SideWinder, China-nexus espionage) and renewable energy market trends are present, but no evidence of wind-sector IP theft, OT/SCADA compromise attempts, or targeting of this company's specific facilities or personnel.",
+    "pass_1_result_count": 34,
+    "gap_assessment": "Evidence collected contains generic state-sponsored cyber-espionage trends and historical wind IP theft (Sinovel case from ~2015), but lacks sector-specific APAC signals, recent targeting indicators, or OT/SCADA compromise evidence. The SideWinder APT reference covers South/Southeast Asia but shows no wind energy targeting. Critical gaps include: no recent wind manufacturing incidents in APAC, no detection of wind turbine firmware/aerodynamic design exfiltration, and no mapping of state actor TTPs to this specific asset exposure.",
     "gaps_identified": [
-      "No cyber-specific indicators of compromise (IOCs, phishing campaigns, malware, C2 beaconing) against wind manufacturing OT/ICS environments in APAC",
-      "No sector-specific reporting linking wind turbine blade design or aerodynamic IP theft to state-sponsored actors; renewable energy articles focus on market share and geopolitical cooperation, not theft",
-      "No evidence of lateral movement from IT to OT, credential harvesting of facility personnel, or CAD/materials exfiltration; SideWinder and China-nexus campaigns cited are generic to multiple sectors"
+      "No wind energy sector-specific cyber incidents reported in APAC (2024-2026)",
+      "No OT/SCADA or ICS-focused malware detections in evidence; SideWinder TTPs focus on credential theft but lack manufacturing/critical infrastructure detail",
+      "No recent public indicators of state actor interest in APAC wind turbine IP; Sinovel case is decade-old precedent without current threat actor correlation",
+      "No blade manufacturing facility reconnaissance, lateral movement in OT, or firmware exfiltration events documented in collected evidence"
     ],
     "pass_2_queries": [
-      "State-sponsored APT targeting wind turbine SCADA systems blade manufacturing APAC 2024 2025",
-      "Chinese threat actors aerodynamic design IP theft renewable energy sector Southeast Asia Indonesia Thailand Vietnam",
-      "OT/ICS compromise wind energy facilities APAC phishing service engineers manufacturing plants indicators"
+      "APAC wind turbine manufacturers SCADA/OT compromise incidents 2024-2026 OR APT targeting renewable energy manufacturing in Southeast Asia",
+      "SideWinder APT aerodynamic design IP theft OR critical infrastructure targeting beyond government/military in APAC regions",
+      "Chinese state-sponsored wind energy R&D cyber operations APAC OR recent wind blade manufacturing trade secret theft Southeast Asia"
     ],
-    "pass_2_result_count": 12,
-    "total_result_count": 70
+    "pass_2_result_count": 15,
+    "total_result_count": 49
   },
   "conclusion": {
-    "theory_confirmed": true,
-    "confidence_rationale": "The working theory is directionally confirmed at moderate-to-high confidence but with an important gap: the geopolitical motive chain is strongly evidenced (Persian Gulf instability → APAC wind acceleration → Chinese state industrial urgency → economic cyber-espionage doctrine), and the regional cyber threat environment is well-corroborated by multiple independent sources (ASPI, Palo Alto Networks/Unit 42, FalconFeeds, Kaspersky/Dark Reading). However, no collected evidence directly names this specific company, its SCADA networks, or its blade design repositories as confirmed targets. The four confirmation criteria in the working theory — phishing of manufacturing personnel, OT beaconing, CAD exfiltration, and competitor incident reporting — are partially addressed: phishing campaigns targeting adjacent sectors (maritime, logistics, energy) in Indonesia and Thailand are confirmed, and energy ministry breaches by the same actor profile are documented, providing strong analogical corroboration. Denial criteria are not met by the evidence pool. The primary weakness is absence of direct victim-specific or wind-OEM-specific OT/SCADA incident reporting, preventing escalation to A1 (fully confirmed). Admiralty B2 reflects reliable source quality with probable but not directly confirmed application to this specific target.",
-    "suggested_admiralty": "B2",
+    "theory_confirmed": false,
+    "confidence_rationale": "The working theory is plausible and structurally well-supported by trend-level evidence: state-sponsored wind IP theft is a confirmed historical pattern (Sinovel/AMSC), sector-wide losses are documented at $5.2B, and APT activity is expanding across APAC (SideWinder). However, the collected evidence does not confirm the specific hypothesis elements — no APT-attributed reconnaissance against blade manufacturing OT/SCADA networks, no evidence of credential harvesting or lateral movement in OT environments, no exfiltration of aerodynamic design files or firmware in the current reporting period, and no direct indicators tying a named state actor to this specific $18.5M asset exposure. The Sinovel precedent is the strongest corroborating signal but is historical (2018 conviction) rather than current. SideWinder targeting is geographically relevant but sector-adjacent rather than directly on-point. Evidence is trend-level and analogical, not incident-specific. Admiralty B2 reflects reliable sources with well-corroborated trend signals, but downgraded from confirmed due to absence of direct incident evidence meeting the hypothesis criteria.",
+    "suggested_admiralty": "B3",
     "signal_type": "trend",
     "dominant_pillar": "Geo"
   }

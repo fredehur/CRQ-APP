@@ -1,6 +1,37 @@
 {
-  "generated_at": "2026-03-28T16:09:47Z",
+  "generated_at": "2026-04-07T10:32:51Z",
   "mock": false,
-  "total_searched": 69,
-  "candidates": []
+  "total_searched": 80,
+  "candidates": [
+    {
+      "title": "2026 Insider Threat Cyber Security Statistics - Swif",
+      "url": "https://www.swif.ai/blog/insider-threat-cyber-security-statistics",
+      "snippet": "The Ponemon Institute reports that the average annual cost of insider-related incidents reached $16.2 million per organization, up from $11.45 million in 2020 — a 40% increase in three years.",
+      "estimated_year": 2026,
+      "has_dollar_figure": true,
+      "scenario_tags": [
+        "Insider misuse"
+      ],
+      "sector_tags": [
+        "energy"
+      ],
+      "suggested_admiralty_reliability": "C",
+      "status": "promoted"
+    },
+    {
+      "title": "Insider threat mitigation: Systematic literature review",
+      "url": "https://www.sciencedirect.com/science/article/pii/S209044792400443X",
+      "snippet": "den 1. dec. 2024 · According to the 2023 Cost of Insider Threats Global Report, the total average cost of insider threat incidents rose from $8.3 million in 2018 to $16.2 million in 2023 [14].",
+      "estimated_year": 2023,
+      "has_dollar_figure": true,
+      "scenario_tags": [
+        "Insider misuse"
+      ],
+      "sector_tags": [
+        "energy"
+      ],
+      "suggested_admiralty_reliability": "C",
+      "status": "pending_review"
+    }
+  ]
 }

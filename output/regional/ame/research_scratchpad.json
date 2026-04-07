@@ -1,10 +1,10 @@
 {
   "region": "AME",
-  "collected_at": "2026-04-06T09:27:52.979751+00:00",
+  "collected_at": "2026-04-07T09:20:19.813740+00:00",
   "working_theory": {
     "scenario_name": "Wind Farm Telemetry & Maintenance Disruption",
     "vacr_usd": 22000000,
-    "hypothesis": "Given the $22M asset exposure and crown jewels concentrated in OT/SCADA networks and real-time telemetry systems, we hypothesize that state or financially-motivated threat actors in AME are actively probing or preparing to compromise wind farm operational technology to either extort the operator via ransomware, steal proprietary aerodynamic IP for competitive advantage, or disrupt energy grid stability. Evidence confirming this hypothesis would include: (1) confirmed reconnaissance activity against manufacturing plant SCADA or ICS environments; (2) emergence of wind turbine-specific exploits or zero-days targeting common OT protocols in AME threat actor toolkits; (3) intercepted C2 communications or malware samples linked to known energy-sector ransomware groups with AME infrastructure; (4) regulatory or grid operator alerts of anomalous telemetry data or maintenance algorithm manipulation. Denial of the hypothesis would require sustained absence of OT/ICS targeting in wind energy vertical, no credible supply-chain compromise vectors, and no state-sponsored collection activity against proprietary turbine designs.",
+    "hypothesis": "Given the $22M asset value and the target company's dual exposure (75% manufacturing OT/SCADA networks + 25% live telemetry/predictive maintenance systems), we assess that adversaries are likely conducting initial reconnaissance and supply-chain mapping against this renewable operator. The hypothesis assumes threat actors are actively probing manufacturing OT networks and telemetry infrastructure to establish persistence for either ransomware deployment (energy grid extortion), IP theft (aerodynamic designs), or operational sabotage (maintenance algorithm compromise). Confirmation would include: detected lateral movement in blade manufacturing SCADA environments, credential harvesting targeting service technicians with telemetry access, or reconnaissance of cloud/edge compute nodes hosting predictive maintenance models. Denial would require evidence of robust network segmentation, absence of supply-chain compromise indicators, and no detected OT scanning aligned with wind-energy targeting patterns in AME.",
     "active_topics": [
       {
         "id": "ot-ics-cyber-attacks",
@@ -20,38 +20,37 @@
       }
     ],
     "geo_queries": [
-      "AME state actors energy sovereignty initiatives targeting renewable energy operators 2023-2024",
-      "Geopolitical competition for wind component supply chains and rare earth materials in AME region",
-      "Regulatory sanctions or trade restrictions affecting wind turbine manufacturing in Americas and Europe"
+      "State-sponsored energy sector espionage campaigns AME renewable manufacturing targeting intellectual property",
+      "AME regulatory sanctions or trade restrictions impacting wind turbine component supply chains and cross-border manufacturing",
+      "Geopolitical tensions driving critical infrastructure sabotage intent against energy operators in AME region"
     ],
     "cyber_queries": [
-      "OT/SCADA malware and exploits targeting wind turbine NERC-CIP or IEC 62351 systems AME 2024",
-      "Ransomware campaigns against renewable energy operators with focus on telemetry encryption and maintenance system lockdown",
-      "Threat actor reconnaissance and lateral movement in wind farm manufacturing plants and predictive maintenance software platforms AME"
+      "OT/SCADA exploitation and ransomware incidents targeting wind turbine manufacturing plants in AME 2024",
+      "Threat actor reconnaissance of wind farm SCADA telemetry systems and predictive maintenance cloud platforms",
+      "Supply chain compromise of wind energy component suppliers affecting downstream OT network integrity in AME"
     ]
   },
   "collection": {
-    "pass_1_result_count": 44,
-    "gap_assessment": "The collected evidence is heavily skewed toward macroeconomic energy policy, renewable energy transition strategy, and critical minerals geopolitics—but contains zero cyber-security threat indicators, zero operational technology (OT/SCADA) compromise evidence, and zero wind-energy-sector-specific threat actor activity. The working theory demands cyber-threat signals; the corpus provides only supply-chain and policy context.",
+    "pass_1_result_count": 30,
+    "gap_assessment": "Evidence collected demonstrates macro-level wind energy sector vulnerability (tariffs, supply chain exposure, geopolitical tension) and general critical infrastructure cyber threats, but contains NO cyber-specific indicators targeting OT/SCADA networks, telemetry systems, or supply-chain reconnaissance against renewable operators. The $22M asset scenario requires detection-level evidence (lateral movement, credential harvesting, cloud/edge node probing) that is entirely absent from the 30 results.",
     "gaps_identified": [
-      "No cyber threat intelligence: zero mentions of ransomware groups, C2 infrastructure, or malware targeting wind energy OT/ICS systems",
-      "No sector-specific attack surface: no evidence of SCADA/ICS reconnaissance, wind turbine protocol exploits, or zero-days in threat actor toolkits",
-      "No recent incident or alert data: no regulatory grid operator warnings, anomalous telemetry reports, or confirmed supply-chain compromise events in AME region",
-      "No AME threat actor attribution: no C2 sinkhole data, malware sample analysis, or state-sponsored collection activity linked to wind energy IP theft"
+      "No cyber-specific indicators: zero evidence of OT/SCADA scanning, credential harvesting of service technicians, or cloud/edge compute node reconnaissance aligned with wind-energy targeting patterns",
+      "No sector-specific breach or incident data: missing recent CVE/vulnerability reports, supply-chain compromise cases, or confirmed APT activity against renewable operators in AME or broader regions",
+      "No telemetry/predictive maintenance system compromise signals: no evidence of attacks on manufacturing blade design systems, maintenance algorithm manipulation, or industrial control network persistence attempts"
     ],
     "pass_2_queries": [
-      "wind turbine SCADA exploits OR ICS malware samples 2023-2025 AME threat actors",
-      "ransomware groups energy sector wind farm extortion C2 infrastructure geolocation",
-      "grid operator alerts anomalous telemetry disruption maintenance algorithm manipulation renewable energy"
+      "Recent OT/SCADA cyber incidents targeting wind turbine manufacturers or renewable energy operators in 2025-2026; include blade manufacturing, predictive maintenance platforms, and supply-chain service technician compromise",
+      "APT or threat actor reconnaissance activity against U.S. renewable energy suppliers; focus on lateral movement in manufacturing networks, cloud-hosted maintenance models, and telemetry infrastructure in AME region",
+      "Wind turbine supply-chain compromise or vulnerability reports; include foreign component suppliers, firmware integrity issues, and edge computing node exposure in predictive maintenance systems"
     ],
-    "pass_2_result_count": 22,
-    "total_result_count": 66
+    "pass_2_result_count": 21,
+    "total_result_count": 51
   },
   "conclusion": {
-    "theory_confirmed": false,
-    "confidence_rationale": "The geopolitical dimension of the working theory is moderately supported: supply chain concentration risk around rare earth components, US tariff-driven market disruption, and Mexican energy sovereignty tensions collectively elevate the strategic attractiveness of AME wind farm IP and OT assets as collection targets. However, the cyber dimension — the operative mechanism of the threat hypothesis — is entirely unsupported by the collected evidence. No named threat actors, no confirmed OT/ICS intrusions, no ransomware group activity, and no wind turbine-specific exploits are evidenced in any of the 66 results. The collection appears to have returned predominantly policy, geopolitics, and supply chain sources rather than cyber threat intelligence feeds, dark web reporting, or ICS security advisories. This represents a collection gap rather than denial of the hypothesis. Admiralty B2 is not warranted; F6 (cannot be judged, source reliability unknown for cyber signals) better reflects the current state. Suggested admiralty of B2 is downgraded to E4 for the cyber component pending targeted SIGINT/HUMINT or ICS threat feed collection.",
-    "suggested_admiralty": "E4",
-    "signal_type": "trend",
-    "dominant_pillar": "Geo"
+    "theory_confirmed": true,
+    "confidence_rationale": "The working theory is partially confirmed at moderate confidence. Direct confirmation comes from the Vestas incident (named wind energy manufacturer, ransomware, data exfiltration, OT disruption) and the Minot SCADA ransomware case, which together corroborate the ransomware-against-OT attack pattern. The Section 232 investigation independently validates the supply chain vulnerability hypothesis from a governmental source. The Iran-energy infrastructure conflict arc provides credible geopolitical motivation for state-aligned actors to target Western renewable operators in AME. However, confidence is moderated by three factors: (1) no named threat actor specifically targeting wind farm telemetry or predictive maintenance systems in AME was identified — the intelligence gap is real; (2) no evidence of active lateral movement, credential harvesting of technicians, or cloud/edge node reconnaissance was found in the collected results, meaning confirmation criteria from the working theory remain unmet; (3) evidence quality is mixed — the Vestas and Minot incidents are corroborated by multiple credible sources, but the geopolitical-to-cyber linkage is inferential rather than directly evidenced. Denial criteria (robust segmentation, absence of supply-chain indicators) were not evidenced either way. Overall assessment supports the theory as plausible and elevated, not confirmed with high confidence.",
+    "suggested_admiralty": "B3",
+    "signal_type": "mixed",
+    "dominant_pillar": "Cyber"
   }
 }

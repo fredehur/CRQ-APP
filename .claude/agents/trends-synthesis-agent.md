@@ -1,7 +1,7 @@
 ---
 name: trends-synthesis-agent
 description: Synthesizes longitudinal trend data from archived pipeline runs into a structured trend analysis JSON for the CISO dashboard.
-tools: Bash, Write, Read
+tools: Write, Read
 model: sonnet
 hooks:
   Stop:

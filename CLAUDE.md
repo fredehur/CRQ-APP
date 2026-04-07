@@ -16,11 +16,12 @@ Agent design, boundary, and skill-contract principles live in the **agent-team-b
 2. **Roles:** Opus orchestrates (never implements). Sonnet builds. Sonnet validates. Haiku triages.
 3. **Builder/Validator pairing:** Every output verified by separate validator before acceptance.
 4. **Parallel by default:** Independent tasks run with `run_in_background: true`.
-5. **Stop hooks:** Agents prove completion — they do not claim it.
-6. **Context discipline:** Delegate token-heavy work to sub-agents.
-7. **jcodemunch first:** All code navigation via index tools — see policy below.
-8. **Clean up:** `TeamDelete` after task complete. Hard reset.
-9. **Run `/prime-dev` before build sessions.** Principles: `C:/Users/frede/agent-team-blueprint/docs/agent-design-principles.md`
+5. **No Bash in background agents:** Builders get Read/Edit/Write/Glob/Grep only. Validators get Read/Glob/Grep only. Orchestrator owns all Bash execution. See `agent-team-blueprint/docs/agent-boundary-principles.md` → Tool Permission Model.
+6. **Stop hooks:** Agents prove completion — they do not claim it.
+7. **Context discipline:** Delegate token-heavy work to sub-agents.
+8. **jcodemunch first:** All code navigation via index tools — see policy below.
+9. **Clean up:** `TeamDelete` after task complete. Hard reset.
+10. **Run `/prime-dev` before build sessions.** Principles: `C:/Users/frede/agent-team-blueprint/docs/agent-design-principles.md`
 
 ## Code Exploration Policy
 

@@ -1,91 +1,111 @@
 {
   "region": "LATAM",
-  "timestamp": "2026-04-06T09:32:01Z",
+  "timestamp": "2026-04-07T09:45:00Z",
   "window_used": "7d",
-  "total_signals": 3,
-  "sources_queried": 10,
+  "total_signals": 6,
+  "sources_queried": 12,
   "clusters": [
     {
-      "name": "US Trade Security Investigation Wind Imports",
+      "name": "China State IP Theft Wind Technology",
       "pillar": "Geo",
       "convergence": 3,
       "topic_id": "supply-chain-wind-components",
       "sources": [
         {
-          "name": "Wind Turbine Technology London (wttlonline.com)",
-          "url": "https://www.wttlonline.com/stories/wind-turbines,14187",
+          "name": "Marketplace",
+          "url": "https://www.marketplace.org/story/2021/12/09/chinas-state-sponsored-industrial-espionage-is-part-of-a-larger-system",
           "credibility_tier": "B",
-          "headline": "US Section 232 investigation into wind turbine imports raises supply chain security concerns"
+          "headline": "China's state-sponsored industrial espionage is part of a larger system targeting renewable energy sectors"
         },
         {
-          "name": "Reuters",
-          "url": "https://www.reuters.com/article/business/chinas-sinovel-convicted-in-us-of-trade-secret-theft-idUSKBN1FD39O/",
-          "credibility_tier": "A",
-          "headline": "US opens national security probe into imported wind turbines and components"
-        },
-        {
-          "name": "KPMG Tax News Flash",
-          "url": "https://kpmg.com/us/en/taxnewsflash/news/2025/08/us-bis-requests-comments-section-232-investigation-imports-wind-turbines.html",
+          "name": "BBC News",
+          "url": "https://www.bbc.com/news/world-asia-china-64206950",
           "credibility_tier": "B",
-          "headline": "US BIS requests comments on Section 232 investigation into wind turbine imports"
-        }
-      ]
-    },
-    {
-      "name": "Chinese SOE Expansion LATAM Energy Sectors",
-      "pillar": "Geo",
-      "convergence": 4,
-      "topic_id": "supply-chain-wind-components",
-      "sources": [
-        {
-          "name": "Council on Foreign Relations",
-          "url": "https://www.cfr.org/articles/china-in-latin-america-february-2026",
-          "credibility_tier": "A",
-          "headline": "China deepens renewable energy and infrastructure footprint across Latin America in 2026"
-        },
-        {
-          "name": "Americas Quarterly",
-          "url": "https://www.americasquarterly.org/article/chinas-green-tech-push-in-latin-america-is-gaining-traction/",
-          "credibility_tier": "B",
-          "headline": "China's green tech push in Latin America gaining traction via state-owned enterprises"
+          "headline": "China's strategic industrial policy and espionage campaigns against Western technology firms"
         },
         {
           "name": "CSIS",
           "url": "https://www.csis.org/analysis/chinas-expanding-interests-latin-america-development-leverage-coercion-and-crime",
           "credibility_tier": "A",
-          "headline": "China's expanding interests in Latin America: development, leverage, and coercion"
-        },
-        {
-          "name": "Baker Botts (ourtake.bakerbotts.com)",
-          "url": "https://ourtake.bakerbotts.com/post/102l0p1/new-tariffs-on-wind-turbine-products-could-be-coming",
-          "credibility_tier": "B",
-          "headline": "New tariffs on wind turbine products may follow Section 232 national security investigation"
+          "headline": "De-risking critical mineral supply chains: the role of Latin America"
         }
       ]
     },
     {
-      "name": "Regulatory Flux Argentina Brazil Chile 2026",
+      "name": "Russia Energy Leverage LATAM Influence",
+      "pillar": "Geo",
+      "convergence": 2,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Center for the Study of Democracy (CSD)",
+          "url": "https://csd.eu/fileadmin/user_upload/publications_library/files/2024_12/BRIEF_153_ENG_WEB.pdf",
+          "credibility_tier": "B",
+          "headline": "Russia's strategic use of infrastructure and supply agreements as geopolitical leverage in Latin America"
+        },
+        {
+          "name": "AIB Insights",
+          "url": "https://insights.aib.world/article/146203-geopolitics-host-country-policy-and-critical-mineral-investment-in-latin-america",
+          "credibility_tier": "B",
+          "headline": "Geopolitics, host country policy, and critical mineral investment in Latin America"
+        }
+      ]
+    },
+    {
+      "name": "US-China Critical Minerals Competition LATAM",
       "pillar": "Geo",
       "convergence": 3,
       "topic_id": "supply-chain-wind-components",
       "sources": [
         {
-          "name": "Wood Mackenzie (LinkedIn)",
-          "url": "https://www.linkedin.com/posts/wood-mackenzie_argentina-brazil-and-chile-face-unprecedented-activity-7432439548225421313-IHK0",
-          "credibility_tier": "C",
-          "headline": "Argentina, Brazil, and Chile face unprecedented regulatory changes affecting electricity and storage sectors"
+          "name": "JP Morgan Private Bank",
+          "url": "https://privatebank.jpmorgan.com/latam/en/insights/markets-and-investing/global-race-for-critical-minerals-a-unique-opportunity-for-latin-america",
+          "credibility_tier": "B",
+          "headline": "Global race for critical minerals: a unique opportunity for Latin America amid great-power competition"
         },
         {
-          "name": "PAGBAM Abogados",
-          "url": "https://pagbam.com/newsletters-en/whats-new-in-argentina-march-2026/",
-          "credibility_tier": "B",
-          "headline": "Argentina March 2026 regulatory changes affecting energy and mining investment"
+          "name": "CSIS",
+          "url": "https://www.csis.org/analysis/chinas-expanding-interests-latin-america-development-leverage-coercion-and-crime",
+          "credibility_tier": "A",
+          "headline": "De-risking critical mineral supply chains: the role of Latin America in the energy transition"
         },
         {
-          "name": "Americas Market Intelligence",
-          "url": "https://americasmi.com/insights/2026-latin-america-supply-chain-opportunities/",
+          "name": "AIB Insights",
+          "url": "https://insights.aib.world/article/146203-geopolitics-host-country-policy-and-critical-mineral-investment-in-latin-america",
           "credibility_tier": "B",
-          "headline": "2026 Latin America supply chain opportunities shaped by fluid regulatory environment"
+          "headline": "Chinese multinationals redirecting investment toward Latin American sourcing networks as Western markets close"
+        }
+      ]
+    },
+    {
+      "name": "Sinovel Wind Sector IP Theft Precedent",
+      "pillar": "Cyber",
+      "convergence": 4,
+      "topic_id": "supply-chain-wind-components",
+      "sources": [
+        {
+          "name": "Reuters",
+          "url": "https://www.reuters.com/article/business/chinas-sinovel-convicted-in-us-of-trade-secret-theft-idUSKBN1FD39O/",
+          "credibility_tier": "A",
+          "headline": "China's Sinovel convicted in US of trade secret theft from AMSC wind turbine software"
+        },
+        {
+          "name": "U.S. Department of Justice",
+          "url": "https://www.justice.gov/archives/opa/pr/court-imposes-maximum-fine-sinovel-wind-group-theft-trade-secrets",
+          "credibility_tier": "A",
+          "headline": "Court imposes maximum fine on Sinovel Wind Group for theft of trade secrets"
+        },
+        {
+          "name": "NPR",
+          "url": "https://www.npr.org/2018/07/06/626683457/judge-orders-chinese-wind-turbine-maker-to-pay-59-million-for-stealing-trade-sec",
+          "credibility_tier": "B",
+          "headline": "Judge orders Chinese wind turbine maker to pay $59 million for stealing trade secrets"
+        },
+        {
+          "name": "Dark Reading",
+          "url": "https://www.darkreading.com/cyberattacks-data-breaches/chinese-wind-turbine-manufacturer-gets-max-fine-for-source-code-theft",
+          "credibility_tier": "B",
+          "headline": "Chinese wind turbine manufacturer gets maximum fine for source code theft"
         }
       ]
     }

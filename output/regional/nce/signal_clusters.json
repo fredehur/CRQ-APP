@@ -19,14 +19,14 @@
         },
         {
           "name": "E&E News (POLITICO)",
-          "url": "https://www.eenews.net/articles/eu-launches-legal-action-as-26-countries-fail-to-enforce-renewables-rules/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "EU launches legal action as 26 member states fail to enforce renewable energy directives"
         },
         {
           "name": "Business.gov.nl",
-          "url": "https://business.gov.nl/amendments/cer-directive-protects-critical-infrastructure/",
-          "credibility_tier": "A",
+          "url": null,
+          "credibility_tier": "B",
           "headline": "CER Directive transposition delayed beyond 2024 deadline — wind turbine manufacturers excluded from critical entity designation"
         },
         {
@@ -65,7 +65,7 @@
         },
         {
           "name": "Cybersecurity Review",
-          "url": "https://www.cybersecurity-review.com/china-remains-embedded-in-us-energy-networks-for-the-purpose-of-taking-it-down/",
+          "url": null,
           "credibility_tier": "B",
           "headline": "China-nexus actors confirmed embedded in energy networks — capability development for potential disruption operations"
         },

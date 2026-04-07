@@ -1,30 +1,30 @@
 {
   "region": "AME",
-  "generated_at": "2026-04-06T09:35:00Z",
-  "threat_actor": "Chinese state-affiliated entities",
-  "signal_type_label": "Emerging Pattern",
+  "generated_at": "2026-04-07T09:45:00Z",
+  "threat_actor": "",
+  "signal_type_label": "Confirmed Incident + Emerging Pattern",
   "status_label": "ESCALATED — GEO-LED",
   "intel_bullets": [
-    "China has deployed export controls on rare earth permanent magnets as a direct instrument of economic statecraft, constraining wind turbine component availability and elevating the intelligence value of proprietary wind technology IP.",
-    "The US Commerce Department has opened a national security investigation into imported wind turbines with proposed tariffs of 11–50%, signalling Washington's intent to treat wind energy supply chains as a strategic vulnerability.",
-    "Mexico's AMLO-era energy sovereignty policy has introduced sustained regulatory uncertainty for foreign-owned wind farm operators, creating conditions for politically motivated interference with operational assets."
+    "In March 2026, confirmed strikes hit three major Gulf energy terminals — Ras Laffan LNG (Qatar), Shaybah oil field (Saudi Arabia), and Shah gas field (UAE) — during the U.S.-Iran conflict, demonstrating direct adversary action against energy infrastructure.",
+    "CSIS confirmed Iran holds demonstrated intent and capability to conduct cyber operations against U.S. critical infrastructure, with threat elevated during active kinetic conflict.",
+    "The U.S. Department of Commerce Section 232 investigation formally identified that approximately two-thirds of U.S. wind turbine value is imported, placing renewable energy supply chains under active national security scrutiny."
   ],
   "adversary_bullets": [
-    "No confirmed intrusion or named threat actor targeting AME wind farm operational systems was recovered in the current collection window — the cyber assessment is inferred from geopolitical conditions and cross-regional sector precedent.",
-    "State actors with rare earth leverage have a documented cross-regional history of pairing supply chain pressure with targeted collection against wind energy IP, consistent with an assessed pre-crisis intelligence collection posture."
+    "Vestas Wind Energy suffered confirmed ransomware with data exfiltration and manufacturing disruption — direct precedent for this attack class against wind energy OT environments.",
+    "A March 14, 2026 ransomware intrusion at the Minot Water Treatment Plant forced 16 hours of manual SCADA fallback, confirming active adversary capability against North American OT infrastructure."
   ],
   "impact_bullets": [
-    "AeroGrid's Houston Operations Center — primary hub for wind farm telemetry network NA-01 — sits at the centre of the state-actor collection incentive, with sustained low-visibility access representing the primary risk pathway over operational disruption.",
-    "Both the NextEra Energy three-year maintenance contract and the Ontario Wind Power service agreement depend on the integrity of the predictive maintenance IP held at the Toronto Engineering Hub, a secondary collection priority."
+    "A ransomware intrusion at the Houston Operations Center would halt real-time monitoring across wind farm telemetry network NA-01, directly disrupting the NextEra Energy maintenance contract and Ontario Wind Power service agreement.",
+    "The Toronto Engineering Hub's predictive maintenance IP underpins both commercial agreements — its encryption or exfiltration would erode AeroGrid's service competitive advantage across future contract cycles."
   ],
   "watch_bullets": [
-    "Reports from US-nexus wind energy operators disclosing supply chain component anomalies or unexplained access events in maintenance scheduling infrastructure.",
-    "Chinese government statements further restricting rare earth exports to US-headquartered renewable energy companies specifically, signalling a targeted rather than broad coercive posture.",
-    "US Commerce Department final ruling imposing tariffs above 25% on wind turbine imports, compressing procurement windows and increasing pressure to source components through less-vetted supply chains."
+    "Any ransomware disclosure by a U.S.- or Canada-based wind energy operator involving OT or SCADA system downtime or maintenance scheduling disruption.",
+    "U.S. government or CISA advisories specifically naming renewable energy operators as targets during the Iran conflict arc.",
+    "Detection of unusual authentication attempts or access anomalies on systems connected to the NA-01 telemetry network or the Toronto predictive maintenance environment."
   ],
   "action_bullets": [
-    "Audit third-party and supply chain access credentials for privileged systems.",
-    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
-    "Conduct an access review of all remote authentication pathways into the Houston Operations Center wind farm telemetry network NA-01, prioritising credentials linked to component vendors operating under current US Commerce Department scrutiny."
+    "Verify offline backup integrity and tested recovery time for OT/SCADA environments.",
+    "Confirm IT/OT network segmentation is enforced — no lateral path from corporate to operational systems.",
+    "Validate backup and recovery procedures for the NA-01 telemetry network at Houston Operations Center, ensuring recovery time objectives are tested against the 16-hour OT fallback precedent from the Minot incident."
   ]
 }

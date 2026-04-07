@@ -1,7 +1,7 @@
 ---
 name: global-builder-agent
 description: Synthesizes all approved regional briefs and trend data into a Global Executive Board Report JSON.
-tools: Bash, Write, Read
+tools: Write, Read
 model: sonnet
 hooks:
   Stop:

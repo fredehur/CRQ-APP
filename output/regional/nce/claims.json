@@ -1,12 +1,12 @@
 {
   "region": "NCE",
-  "generated_at": "2026-04-06T09:45:00Z",
+  "generated_at": "2026-04-07T10:00:00Z",
   "claims": [
     {
       "claim_id": "nce-001",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "IEA analysis confirms clean energy manufacturing is structurally concentrated: less than 25% of global demand could be met at key supply chain steps without the dominant producer, creating asymmetric incentives for state actors to steal wind technology IP rather than develop it independently.",
+      "text": "The EU Commission launched a formal investigation into Chinese wind turbine manufacturer Goldwind under the Foreign Subsidies Regulation, signalling active state-backed competitive pressure on NCE-based manufacturers.",
       "signal_ids": ["nce-geo-001"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -15,7 +15,7 @@
       "claim_id": "nce-002",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "The European Commission has launched legal proceedings against 26 member states for failure to implement renewable energy directives, signalling governance gaps that delay critical infrastructure protection timelines across the EU.",
+      "text": "Sinovel Wind Group was convicted by a US federal court for theft of wind turbine control software from AMSC, establishing a confirmed precedent of Chinese state-linked actors targeting Western wind OT intellectual property through insider recruitment.",
       "signal_ids": ["nce-geo-002"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -24,7 +24,7 @@
       "claim_id": "nce-003",
       "claim_type": "fact",
       "pillar": "geopolitical",
-      "text": "The EU CER Directive transposition missed its 2024 deadline, leaving wind turbine manufacturers in NCE without formal critical entity designation and associated state-level resilience obligations — a regulatory gap that state actors are positioned to exploit.",
+      "text": "The EU Industrial Accelerator Act (2026) formally designates wind energy as a strategic sector, elevating it as a high-value intelligence collection target for adversarial states seeking technological parity with European manufacturers.",
       "signal_ids": ["nce-geo-003"],
       "confidence": "Confirmed",
       "paragraph": "why"
@@ -32,46 +32,64 @@
     {
       "claim_id": "nce-004",
       "claim_type": "fact",
-      "pillar": "cyber",
-      "text": "China-nexus groups UNC3886 and UNC5221 have been documented targeting edge devices and network appliances as initial access vectors into defense industrial base and aerospace manufacturing environments, per Google GTIG reporting covering 2024–2025.",
-      "signal_ids": ["nce-cyber-001"],
+      "pillar": "geopolitical",
+      "text": "The EU Institute for Security Studies (March 2026) identified competition over clean technology supply chains and industrial capacity as a central axis of US-China geopolitical rivalry directly impacting European energy sector security.",
+      "signal_ids": ["nce-geo-004"],
       "confidence": "Confirmed",
-      "paragraph": "how"
+      "paragraph": "why"
     },
     {
       "claim_id": "nce-005",
       "claim_type": "fact",
       "pillar": "cyber",
-      "text": "Russian state-aligned groups have been confirmed by multiple federal agencies as actively targeting manufacturing sector organisations via insecure remote connection points, consistent with a dual-track strategy combining IP exfiltration with pre-positioning for disruption.",
-      "signal_ids": ["nce-cyber-002"],
+      "text": "Volt Typhoon (Chinese state-sponsored actor) has been assessed by CISA and Five Eyes partners as pre-positioning persistent access within critical infrastructure OT networks across Western nations, with specific focus on staging disruption capability in energy sector environments.",
+      "signal_ids": ["nce-cyber-001"],
       "confidence": "Confirmed",
       "paragraph": "how"
     },
     {
       "claim_id": "nce-006",
-      "claim_type": "estimate",
+      "claim_type": "fact",
       "pillar": "cyber",
-      "text": "No named threat actor incident has been publicly attributed to NCE wind turbine manufacturer operational technology or design repository compromise in the current collection window — this is a confirmed intelligence gap, not a disconfirmation of targeting.",
-      "signal_ids": [],
-      "confidence": "Analyst judgment",
+      "text": "Sandworm (Russian GRU-linked actor) has conducted confirmed destructive attacks against European OT and energy infrastructure, with the 2015 and 2016 Ukrainian power grid incidents serving as the documented operational precedent now assessed by CISA and Five Eyes as applicable to NCE energy operators.",
+      "signal_ids": ["nce-cyber-002"],
+      "confidence": "Confirmed",
       "paragraph": "how"
     },
     {
       "claim_id": "nce-007",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "A coordinated attack on 22 Danish energy companies in 2023 represents the geographically closest confirmed OT-targeting incident to NCE wind manufacturing operations, demonstrating that state-directed campaigns against the European energy sector have already materialised at scale.",
+      "signal_ids": ["nce-cyber-003"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "nce-008",
+      "claim_type": "fact",
+      "pillar": "cyber",
+      "text": "No confirmed intrusion, data exfiltration, or ransomware staging incident specifically attributable to NCE wind manufacturing networks or their named supply chain partners is present in signals recovered during the current collection window.",
+      "signal_ids": ["nce-cyber-004"],
+      "confidence": "Confirmed",
+      "paragraph": "how"
+    },
+    {
+      "claim_id": "nce-009",
       "claim_type": "assessment",
       "pillar": "geopolitical",
-      "text": "The combination of delayed EU critical entity designation, documented state-actor targeting of peer industrial environments, and IEA-confirmed supply chain concentration creates a structurally elevated threat environment for European wind turbine manufacturers holding R&D crown jewels.",
-      "signal_ids": ["nce-geo-001", "nce-geo-002", "nce-geo-003"],
+      "text": "CER Directive transposition delays have left NCE wind turbine manufacturers without formal critical entity designation, removing state-level protective obligations that would otherwise apply to their manufacturing and engineering infrastructure under EU law.",
+      "signal_ids": ["nce-geo-003", "nce-geo-004"],
       "confidence": "Assessed",
       "paragraph": "sowhat"
     },
     {
-      "claim_id": "nce-008",
-      "claim_type": "assessment",
+      "claim_id": "nce-010",
+      "claim_type": "estimate",
       "pillar": "cyber",
-      "text": "The tradecraft documented against peer defence and aerospace manufacturers — edge device exploitation as an initial foothold followed by deeper network access — is directly transferable to wind turbine manufacturing environments sharing comparable network architectures.",
-      "signal_ids": ["nce-cyber-001", "nce-cyber-002"],
-      "confidence": "Assessed",
+      "text": "Volt Typhoon's documented low-and-slow pre-positioning methodology is specifically designed to evade detection — the absence of a confirmed breach of NCE manufacturing systems in open-source collection is consistent with, not contradictory to, an active but undetected intrusion campaign at this level of target value.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment",
       "paragraph": "sowhat"
     }
   ]

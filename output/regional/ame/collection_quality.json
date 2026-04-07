@@ -1,7 +1,7 @@
 {
   "region": "AME",
-  "thin_collection": true,
+  "thin_collection": false,
   "geo_grounded_count": 3,
-  "cyber_grounded_count": 0,
+  "cyber_grounded_count": 3,
   "threshold": 3
 }

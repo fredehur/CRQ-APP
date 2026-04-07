@@ -1,0 +1,203 @@
+{
+  "generated_at": "2026-04-07T10:30:00Z",
+  "total_runs_analysed": 14,
+  "run_dates": [
+    "2026-03-09",
+    "2026-03-09",
+    "2026-03-13",
+    "2026-03-14",
+    "2026-03-15",
+    "2026-03-16",
+    "2026-03-20",
+    "2026-03-26",
+    "2026-03-28",
+    "2026-04-01",
+    "2026-04-05",
+    "2026-04-05",
+    "2026-04-06",
+    "2026-04-07"
+  ],
+  "regions": {
+    "APAC": {
+      "escalation_rate": "14/14",
+      "escalation_rate_pct": 100,
+      "severity_trend": "HIGH — persistent",
+      "primary_scenario_history": ["System intrusion"],
+      "scenario_stable": true,
+      "dominant_pillar_history": ["Geopolitical", "Cyber", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical"],
+      "admiralty_range": ["B2", "C3"],
+      "vacr_exposure_usd": 18500000,
+      "velocity_current": "stable",
+      "velocity_history": ["stable"],
+      "threat_actors": ["China-nexus APT", "SideWinder APT", "PLA Unit 61398"],
+      "primary_threat_actor": "China-nexus APT",
+      "key_assets_at_risk": ["Kaohsiung Series 7 production line", "SCADA TW-01", "Shanghai Service Hub"],
+      "pattern_summary": "Persistent escalation across all 14 runs. State-sponsored IP acquisition campaign targeting wind manufacturing IP at Kaohsiung. China-nexus APT espionage surge (150% increase in APAC energy/manufacturing) confirmed by multiple sources. Geopolitical drivers include Persian Gulf conflict accelerating APAC offshore wind deployment, China-Iran renewable energy MoU, and MingYang state-backed turbine programme. Intelligence gap: no confirmed wind-sector-specific OT lateral movement, but structural threat environment and PRIMARY site exposure sustain escalation.",
+      "trend_direction": "stable_high",
+      "confidence_note": "Admiralty degraded from B2 to C3 in mid-series runs after analyst feedback that APAC threat was overstated, then restored to B2 in recent runs as dual-pillar evidence strengthened."
+    },
+    "AME": {
+      "escalation_rate": "13/14",
+      "escalation_rate_pct": 93,
+      "severity_trend": "CRITICAL — persistent",
+      "primary_scenario_history": ["Ransomware", "Ransomware", "Ransomware", "Ransomware", "Ransomware", "Ransomware", "Ransomware", "Ransomware", "System intrusion", "Ransomware", "Ransomware", "Physical threat", "System intrusion", "Ransomware"],
+      "scenario_stable": false,
+      "scenario_shift": "Ransomware dominant (10/14 runs), with occasional System intrusion classification when collection emphasised state-actor IP theft over encryption-for-leverage tradecraft",
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Cyber", "Cyber", "Cyber", "Geopolitical", "Cyber", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical"],
+      "admiralty_range": ["B1", "C3"],
+      "vacr_exposure_usd": 22000000,
+      "velocity_current": "stable",
+      "velocity_history": ["stable", "unknown"],
+      "threat_actors": ["APT33 (Iran-nexus)", "Chinese state-affiliated entities", "Vestas ransomware precedent"],
+      "primary_threat_actor": "APT33 (Iran-nexus)",
+      "key_assets_at_risk": ["Houston Operations Center", "Wind farm telemetry NA-01", "Toronto Engineering Hub", "NextEra Energy contract", "Ontario Wind Power agreement"],
+      "pattern_summary": "Highest financial exposure region ($22M VaCR). Consistently CRITICAL severity with one MONITOR exception (run 12, when financial_rank fell outside top-4). Ransomware against energy OT is the dominant scenario, with confirmed Vestas Wind Energy precedent and Minot Water Treatment Plant OT fallback (March 2026). Geopolitical drivers include China rare earth export controls, US Section 232 investigation, and Mexico energy sovereignty posture. The single MONITOR run demonstrates scenario sensitivity to financial_rank threshold positioning rather than genuine threat reduction.",
+      "trend_direction": "stable_critical",
+      "confidence_note": "Admiralty reached B1 in early runs, degraded to C3 mid-series when confirmed wind-specific cyber incidents were absent, stabilised at B2 in recent runs with strengthened geopolitical indicators."
+    },
+    "LATAM": {
+      "escalation_rate": "4/14",
+      "escalation_rate_pct": 29,
+      "severity_trend": "LOW to ESCALATED — accelerating",
+      "primary_scenario_history": [null, null, null, null, null, "Physical threat", null, "none", "System intrusion", "System intrusion", "System intrusion", "System intrusion", "System intrusion", "System intrusion"],
+      "scenario_stable": false,
+      "scenario_shift": "Emerged from CLEAR (runs 1-8) to escalated System intrusion (runs 10-14) as geopolitical supply chain pressure from Chinese SOE expansion and US Section 232 investigation materialised",
+      "dominant_pillar_history": ["Geopolitical"],
+      "admiralty_range": ["B2", "E5"],
+      "vacr_exposure_usd": 0,
+      "velocity_current": "accelerating",
+      "velocity_history": ["stable", "unknown", "accelerating"],
+      "threat_actors": ["Chinese state-owned enterprises", "Sinovel Wind Group (historical precedent)", "APT41 / Volt Typhoon (capability-based)"],
+      "primary_threat_actor": "Chinese state-owned enterprises (supply chain vector)",
+      "key_assets_at_risk": ["Sao Paulo service operations", "Santiago service operations", "Enel Chile wind maintenance contract", "Neoenergia turbine service Brazil"],
+      "pattern_summary": "Most significant trajectory change across all regions. LATAM was consistently CLEAR for the first 8 runs with zero cyber indicators and stable geopolitical environment. Beginning run 9 (2026-03-28), escalation began as three converging geopolitical pressures emerged: US Section 232 national security investigation into wind turbine imports, Chinese SOE expansion across Argentina/Brazil/Chile, and unprecedented regulatory shifts in 2026 across all three LATAM markets. No confirmed cyber targeting — escalation is entirely geopolitical-led with supply chain dependency risk. Service-only footprint (680 staff, no manufacturing) means component flow disruption translates directly to field service delivery risk.",
+      "trend_direction": "accelerating_upward",
+      "confidence_note": "Velocity marked accelerating in recent runs. Zero VaCR exposure reflects service-only footprint, but contract delivery risk to Enel Chile and Neoenergia Brazil is material."
+    },
+    "MED": {
+      "escalation_rate": "14/14",
+      "escalation_rate_pct": 100,
+      "severity_trend": "MEDIUM — persistent",
+      "primary_scenario_history": ["Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "Insider misuse", "System intrusion", "System intrusion", "System intrusion", "System intrusion", "System intrusion"],
+      "scenario_stable": false,
+      "scenario_shift": "Shifted from Insider misuse (runs 1-9) to System intrusion (runs 10-14) as Iran-nexus OT pre-positioning intelligence and Strait of Hormuz supply chain disruption entered the collection window",
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical"],
+      "admiralty_range": ["B2", "C3"],
+      "vacr_exposure_usd": 4200000,
+      "velocity_current": "stable",
+      "velocity_history": ["stable"],
+      "threat_actors": ["MuddyWater (MOIS)", "CyberAv3ngers (IRGC)", "Pioneer Kitten", "APT33", "APT35"],
+      "primary_threat_actor": "MuddyWater (MOIS)",
+      "key_assets_at_risk": ["Palermo manufacturing (HIGH criticality)", "Malaga service hub", "Iberdrola offshore maintenance contract", "ENEL MED service contract", "Mediterranean supply corridor", "North African logistics route"],
+      "pattern_summary": "Persistent escalation across all 14 runs at MEDIUM severity. Notable scenario shift from Insider misuse to System intrusion mid-series as Iran-related intelligence strengthened. Iran's March 2026 Strait of Hormuz transit fee legislation formalised a durable supply chain leverage mechanism. Cyber pillar anchored by CISA/FBI/NSA joint advisory confirming MuddyWater pre-positioned backdoors in critical infrastructure supply chain firms and CyberAv3ngers IOCONTROL malware against 40,000-48,000 exposed ICS/OT devices. Palermo manufacturing on the disrupted Mediterranean corridor faces dual exposure: supply chain disruption from Hormuz-linked shipping delays and nation-state OT pre-positioning.",
+      "trend_direction": "stable_medium_with_scenario_evolution",
+      "confidence_note": "Intelligence gap: no confirmed wind-sector-specific IP exfiltration in MED, but OT pre-positioning in analogous sectors is confirmed. Scenario shift from insider to state-actor reflects improved collection, not necessarily increased threat."
+    },
+    "NCE": {
+      "escalation_rate": "7/14",
+      "escalation_rate_pct": 50,
+      "severity_trend": "LOW to HIGH — step change",
+      "primary_scenario_history": [null, null, null, null, null, "System intrusion", null, "none", "System intrusion", "System intrusion", "Physical threat", "System intrusion", "System intrusion", "System intrusion"],
+      "scenario_stable": false,
+      "scenario_shift": "Emerged from CLEAR (runs 1-7) to persistent ESCALATED System intrusion (runs 8-14, with one MONITOR exception) as EU regulatory gap intelligence and state-actor edge device targeting entered the collection window",
+      "dominant_pillar_history": ["Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Geopolitical", "Cyber", "Geopolitical", "Geopolitical", "Geo+Cyber", "Geo+Cyber"],
+      "admiralty_range": ["B2", "E5"],
+      "vacr_exposure_usd": 0,
+      "velocity_current": "accelerating",
+      "velocity_history": ["stable", "unknown", "accelerating", "improving"],
+      "threat_actors": ["UNC3886", "UNC5221", "Sandworm", "Volt Typhoon", "Russian state-aligned groups"],
+      "primary_threat_actor": "UNC3886 (China-nexus)",
+      "key_assets_at_risk": ["Hamburg Manufacturing Hub", "Gdansk Blade Plant", "Copenhagen Engineering Hub", "OT/SCADA EU-01 and EU-02", "Core turbine aerodynamic IP", "R&D roadmap and prototype designs", "Orsted contract", "Vattenfall contract"],
+      "pattern_summary": "Second most significant trajectory change. NCE was consistently CLEAR in early runs when NATO-aligned stable environment assessment dominated. Escalation began as intelligence surfaced on CER Directive transposition failures, China-nexus groups (UNC3886/UNC5221) targeting edge devices in manufacturing environments, and Russian state-aligned groups targeting manufacturing via remote connection points. Recent runs show dominant_pillar shifting to Geo+Cyber as dual-pillar evidence converges. Three HIGH-criticality sites (Hamburg, Gdansk, Copenhagen) with 2,800 staff and core IP assets. Regulatory gap is structural: Germany failed NIS2 and CER transposition before federal elections.",
+      "trend_direction": "accelerating_upward",
+      "confidence_note": "Intelligence gap: no publicly attributed incident specific to NCE wind OT environments. Velocity accelerating in recent runs. The regulatory gap (NIS2/CER non-transposition) is a structural enabler that persists regardless of threat actor activity."
+    }
+  },
+  "cross_regional_patterns": {
+    "system_intrusion_convergence": {
+      "description": "System intrusion has become the dominant scenario across all five regions by the most recent runs. Early pipeline runs showed scenario diversity (Ransomware in AME, Insider misuse in MED), but collection maturity and geopolitical developments have converged threat assessments toward state-sponsored system intrusion targeting wind manufacturing IP and OT/SCADA networks.",
+      "regions_affected": ["APAC", "AME", "LATAM", "MED", "NCE"],
+      "first_observed": "2026-03-09",
+      "current_status": "active"
+    },
+    "china_nexus_supply_chain_pressure": {
+      "description": "Chinese state economic statecraft — rare earth export controls, SOE infrastructure expansion, state-backed turbine development — creates a cross-regional supply chain pressure vector affecting all five regions simultaneously. This geopolitical driver is the single most persistent escalation factor, appearing in every run from March 2026 onward.",
+      "regions_affected": ["APAC", "AME", "LATAM", "MED", "NCE"],
+      "threat_actors": ["China-nexus APT groups", "Chinese state-owned enterprises", "Sinovel (historical precedent)"],
+      "first_observed": "2026-03-09",
+      "current_status": "active_and_intensifying"
+    },
+    "iran_dual_vector": {
+      "description": "Iran operates a dual-vector threat: kinetic/coercive actions against energy infrastructure (Strait of Hormuz transit fees, Gulf terminal strikes) combined with cyber pre-positioning (MuddyWater, CyberAv3ngers). This directly affects MED supply corridor and elevates threat posture for AME energy operators during the active US-Iran conflict arc.",
+      "regions_affected": ["MED", "AME"],
+      "threat_actors": ["MuddyWater (MOIS)", "CyberAv3ngers (IRGC)", "APT33", "APT35", "Pioneer Kitten"],
+      "first_observed": "2026-03-15",
+      "current_status": "active"
+    },
+    "eu_regulatory_gap_as_structural_enabler": {
+      "description": "NIS2 and CER Directive transposition failures across EU member states — particularly Germany — leave wind energy manufacturers without formal critical entity designation and state protection obligations. This regulatory gap persists as a structural attack surface enabler independent of threat actor activity.",
+      "regions_affected": ["NCE", "MED"],
+      "first_observed": "2026-03-28",
+      "current_status": "active_structural"
+    },
+    "latam_nce_emergence": {
+      "description": "Both LATAM and NCE transitioned from consistently CLEAR to ESCALATED during the observation period. LATAM escalated due to geopolitical supply chain pressure; NCE escalated due to regulatory gaps and state-actor targeting intelligence. This represents a genuine expansion of the threat surface rather than pipeline calibration — both regions show accelerating velocity.",
+      "regions_affected": ["LATAM", "NCE"],
+      "first_observed": "2026-03-28",
+      "current_status": "accelerating"
+    },
+    "ot_scada_targeting_convergence": {
+      "description": "Multiple state-actor groups across different nexuses (China, Iran, Russia) are independently documented targeting OT/SCADA and edge device infrastructure in manufacturing and energy sectors. This convergence means AeroGrid's operational technology exposure is relevant regardless of which geopolitical conflict escalates.",
+      "regions_affected": ["APAC", "AME", "MED", "NCE"],
+      "threat_actors": ["UNC3886", "UNC5221", "MuddyWater", "CyberAv3ngers", "Sandworm", "Volt Typhoon"],
+      "first_observed": "2026-03-13",
+      "current_status": "active"
+    }
+  },
+  "threat_actor_registry": {
+    "china_nexus": {
+      "actors": ["China-nexus APT (generic)", "UNC3886", "UNC5221", "SideWinder", "APT41", "Volt Typhoon", "PLA Unit 61398"],
+      "regions_active": ["APAC", "NCE", "LATAM", "AME"],
+      "primary_tradecraft": "Edge device initial access, OT/SCADA reconnaissance, IP exfiltration, supply chain compromise",
+      "targeting_profile": "Wind manufacturing IP, turbine aerodynamic designs, SCADA control systems, energy sector manufacturing environments",
+      "run_appearances": 14
+    },
+    "iran_nexus": {
+      "actors": ["MuddyWater (MOIS)", "CyberAv3ngers (IRGC)", "Pioneer Kitten", "APT33", "APT35"],
+      "regions_active": ["MED", "AME"],
+      "primary_tradecraft": "OT pre-positioning via backdoors, ICS malware (IOCONTROL), default credential exploitation, energy infrastructure coercion",
+      "targeting_profile": "Critical infrastructure supply chain firms, internet-exposed ICS/OT devices, energy operators",
+      "run_appearances": 10
+    },
+    "russia_nexus": {
+      "actors": ["Sandworm", "Russian state-aligned groups", "Russian GRU-affiliated units"],
+      "regions_active": ["NCE", "LATAM"],
+      "primary_tradecraft": "Manufacturing targeting via insecure remote connections, ICS-focused tools, OT data exfiltration",
+      "targeting_profile": "European energy infrastructure, manufacturing OT environments, critical infrastructure",
+      "run_appearances": 7
+    },
+    "supply_chain_actors": {
+      "actors": ["Chinese state-owned enterprises", "Sinovel Wind Group (convicted)", "Goldwind", "Mingyang"],
+      "regions_active": ["LATAM", "AME", "MED", "APAC"],
+      "primary_tradecraft": "Supply chain dependency creation, insider placement, IP theft via corrupted insiders, state-backed market competition",
+      "targeting_profile": "Wind turbine component supply chains, maintenance contracts, manufacturing IP",
+      "run_appearances": 8
+    }
+  },
+  "escalation_matrix": {
+    "always_escalated": ["APAC", "MED"],
+    "nearly_always_escalated": ["AME"],
+    "emerging_escalation": ["NCE", "LATAM"],
+    "never_clear_after_first_escalation": ["APAC", "MED", "NCE"],
+    "highest_financial_exposure": "AME ($22M VaCR)",
+    "highest_asset_density": "NCE (3 HIGH-criticality sites, 2,800 staff)",
+    "most_rapid_trajectory_change": "LATAM (CLEAR to ESCALATED in 2 runs)"
+  },
+  "intelligence_gaps": [
+    "No confirmed wind-sector-specific OT/SCADA intrusion in any region during the observation period — escalations are based on structural threat indicators, sector-adjacent targeting, and confirmed capability, not confirmed incidents against AeroGrid or wind energy peers.",
+    "LATAM cyber collection is consistently thin — escalations are entirely geopolitical-led with no confirmed cyber targeting of regional wind infrastructure.",
+    "NCE lacks a publicly attributed incident specific to wind OT environments despite persistent escalation.",
+    "AME Ransomware scenario relies heavily on Vestas precedent (historical) and Minot Water Treatment Plant (adjacent sector) rather than current wind-specific incidents."
+  ],
+  "summary": "Across 14 pipeline runs from 2026-03-09 to 2026-04-07, the threat landscape shows three defining patterns: (1) system intrusion convergence — all five regions now escalate on the same scenario, driven by state-actor IP theft and OT targeting; (2) China-nexus supply chain pressure as the single most persistent cross-regional threat driver; and (3) threat surface expansion, with LATAM and NCE transitioning from CLEAR to ESCALATED as geopolitical and regulatory intelligence matured. APAC and MED have been escalated in every run. AME carries the highest financial exposure at $22M. The core intelligence gap across all regions is the absence of confirmed wind-sector-specific intrusions — escalations are driven by structural threat indicators and sector-adjacent evidence, not confirmed targeting of AeroGrid or wind energy operators."
+}

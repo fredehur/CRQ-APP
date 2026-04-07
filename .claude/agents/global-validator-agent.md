@@ -1,7 +1,7 @@
 ---
 name: global-validator-agent
 description: Devil's advocate validator — read-only cross-check of global report against regional data. Returns APPROVED or REWRITE with specific failure list.
-tools: Bash, Read
+tools: Read
 model: haiku
 ---
 

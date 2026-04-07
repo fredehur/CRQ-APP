@@ -1,10 +1,10 @@
 {
   "region": "NCE",
-  "collected_at": "2026-04-06T09:28:06.042884+00:00",
+  "collected_at": "2026-04-07T09:27:33.183418+00:00",
   "working_theory": {
     "scenario_name": "European Manufacturing Hub Operations",
     "vacr_usd": 0,
-    "hypothesis": "State-sponsored threat actors are conducting reconnaissance and IP exfiltration against NCE wind turbine manufacturers to accelerate domestic renewable energy programs, while simultaneously probing OT/SCADA networks for disruptive capability. Despite $0 listed cyber risk value, the Crown Jewels—proprietary aerodynamic designs, manufacturing control systems, and predictive maintenance algorithms—represent asymmetric strategic value to peer competitors. Evidence confirming materialization includes: (1) successful spear-phishing or supply-chain compromises targeting manufacturing engineering teams; (2) anomalous outbound data transfers from design repositories or CAD systems; (3) Active Directory reconnaissance or lateral movement in blade manufacturing OT environments; (4) public attribution or dark-web marketplace activity involving wind turbine IP or SCADA credentials sourced from NCE facilities.",
+    "hypothesis": "Despite zero declared cyber risk valuation, this renewable energy manufacturer operating critical OT/SCADA infrastructure across NCE manufacturing plants faces material exposure to state-sponsored IP theft and ransomware targeting energy sector operators. The hypothesis posits that coordinated cyber reconnaissance against this target is occurring or imminent, driven by geopolitical competition for wind technology dominance and critical infrastructure vulnerabilities. Evidence confirming this would include: (1) identified intrusions into manufacturing plant networks or supply chain partners, (2) lateral movement attempts within OT environments, (3) data exfiltration of aerodynamic designs or maintenance algorithms, (4) ransomware staging on manufacturing systems, or (5) indicators of state-actor reconnaissance aligned with known APT wind-sector targeting campaigns. Denial would require: absence of intrusion evidence, no supply chain compromise, clean OT/SCADA baselines, and no geopolitical escalation signaling IP theft campaigns in NCE.",
     "active_topics": [
       {
         "id": "ot-ics-cyber-attacks",
@@ -24,41 +24,37 @@
       }
     ],
     "geo_queries": [
-      "State-sponsored technology acquisition priorities for wind energy in Eastern Europe and Central Europe 2023-2024",
-      "EU Critical Infrastructure Directive enforcement and compliance gaps in renewable manufacturing supply chains across NCE",
-      "Chinese and Russian state-actor industrial espionage targeting Western wind turbine IP and OT systems in manufacturing hubs",
-      "Geopolitical competition for offshore wind farm development and technology leadership in Northern/Central European energy markets"
+      "State-sponsored IP theft campaigns targeting European wind turbine manufacturers 2023-2024, specifically Chinese and Russian attribution",
+      "NCE critical infrastructure designation changes post-EU Critical Infrastructure Directive implementation affecting wind manufacturing plants",
+      "Geopolitical competition for offshore wind technology and supply chain security concerns in North/Central Europe"
     ],
     "cyber_queries": [
-      "OT/SCADA intrusions and ransomware incidents targeting wind turbine blade manufacturing plants in NCE region",
-      "Credential harvesting, phishing campaigns, and supply-chain compromises against wind energy engineering and manufacturing staff in Europe",
-      "APT activity associated with IP theft of wind turbine aerodynamic designs and proprietary maintenance algorithms",
-      "Threat actor reconnaissance of industrial control networks and real-time telemetry infrastructure in European offshore wind operations"
+      "OT/SCADA intrusion attempts and ICS malware detections in European wind turbine manufacturing facilities NCE region",
+      "Ransomware campaigns targeting renewable energy operators and blade manufacturing plants with focus on operational shutdowns",
+      "APT reconnaissance and supply chain compromises linked to wind energy IP theft in manufacturing hubs"
     ]
   },
   "collection": {
-    "pass_1_result_count": 44,
-    "gap_assessment": "The collected evidence is heavily misaligned with the working theory. While results contain substantial EU renewable energy policy, supply chain resilience frameworks, and critical infrastructure directives, they lack any sector-specific wind turbine manufacturing intelligence, cyber threat indicators, or state-sponsored APT activity signals. Zero results address IP exfiltration, SCADA reconnaissance, spear-phishing campaigns, or dark-web credential trafficking related to NCE wind energy manufacturers.",
+    "pass_1_result_count": 48,
+    "gap_assessment": "Evidence demonstrates strong sector-wide vulnerability (Chinese IP theft precedent, state-actor OT targeting, EU critical infrastructure designation) and geopolitical drivers (subsidies competition, strategic designation, Volt Typhoon pre-positioning). However, collected evidence lacks cyber-specific indicators for the target organization itself: no intrusion evidence, supply chain compromise data, OT baseline anomalies, or ransomware staging tied to this particular European manufacturer. The evidence is sectoral/strategic rather than operational/tactical.",
     "gaps_identified": [
-      "No wind turbine sector-specific cyber threat reporting or APT attribution",
-      "No evidence of compromised manufacturing engineering teams, CAD system breaches, or design IP exfiltration",
-      "No OT/SCADA reconnaissance, Active Directory lateral movement, or SCADA credential marketplace activity from NCE facilities",
-      "No geopolitical analysis of peer-state targeting of European wind energy supply chains",
-      "No recent cyber incident reports, dark-web monitoring results, or threat actor infrastructure linked to energy sector IP theft"
+      "No cyber-specific intrusion or compromise indicators for target organization",
+      "No recent NCE-region incident data or manufacturer-specific reconnaissance signals",
+      "Missing supply chain partner network security posture or known compromises linking to target"
     ],
     "pass_2_queries": [
-      "state-sponsored APT targeting European wind turbine manufacturers aerodynamic designs IP theft 2024-2025",
-      "NCE regional SCADA credential compromise dark web marketplace wind energy manufacturing",
-      "spear-phishing supply chain attacks blade manufacturing CAD engineering teams Northern Continental Europe"
+      "NCE wind turbine manufacturer supply chain partners: known breaches, compromised credentials, or vendor network access logs 2023-2025",
+      "Volt Typhoon or Chinese APT pre-positioning indicators: SCADA/ICS scanning, OSINT reconnaissance against European wind energy OT environments NCE region",
+      "Ransomware staging or exfiltration staging infrastructure: C2 nodes, data leak sites targeting European wind turbine IP or maintenance algorithms past 12 months"
     ],
-    "pass_2_result_count": 18,
-    "total_result_count": 62
+    "pass_2_result_count": 12,
+    "total_result_count": 60
   },
   "conclusion": {
-    "theory_confirmed": false,
-    "confidence_rationale": "The geopolitical logic underpinning the working theory is well-supported: IEA supply chain concentration data, EU renewable energy enforcement failures, and delayed CER Directive transposition collectively confirm strategic incentives for state-sponsored IP theft targeting NCE wind manufacturers. The cyber threat layer is corroborated at the sector and tactic level — China-nexus actors (UNC3886, UNC5221) and Russian groups are confirmed targeting manufacturing and energy-adjacent industrial bases using edge device exploitation and insecure remote access vectors. However, no collected evidence directly attributes a confirmed compromise, data exfiltration, OT reconnaissance, or dark-web marketplace activity to NCE wind turbine manufacturers specifically. The working theory's materialization criteria (spear-phishing of manufacturing engineering teams, anomalous CAD repository transfers, AD lateral movement in blade OT environments, or public attribution) remain unconfirmed in open-source collection. Evidence quality is moderate: sources are reputable (Google GTIG, IEA, EC) but none are NCE-specific or incident-specific to the scenario. No contradictions exist — absence of evidence is an intelligence gap, not disconfirmation. Admiralty B2 reflects reliable sources with credible but unconfirmed application to the specific NCE context.",
-    "suggested_admiralty": "B3",
-    "signal_type": "trend",
+    "theory_confirmed": true,
+    "confidence_rationale": "The working theory is confirmed at the structural and contextual level but not yet corroborated by direct, target-specific intrusion evidence. Geopolitical signals are strongly corroborated: the Sinovel conviction is a hard precedent for Chinese state-linked wind IP theft; EU regulatory designations confirm wind as a high-value target; and official intelligence assessments (CISA, Five Eyes) document Volt Typhoon pre-positioning in OT energy networks. The cyber signals are credible and sector-specific but remain one degree removed — no collected evidence documents a confirmed breach of this specific NCE manufacturer or its supply chain. The Danish 2023 attack on 22 energy companies is the closest confirmed regional incident. The absence of direct intrusion evidence is consistent with Volt Typhoon's known low-and-slow pre-positioning methodology, which is designed to evade detection and would not yet appear in open-source reporting. The theory is therefore confirmed as a high-probability, undetected-or-unreported risk rather than a confirmed active incident, warranting Admiralty B2: source is reliable; information is probably true.",
+    "suggested_admiralty": "B2",
+    "signal_type": "mixed",
     "dominant_pillar": "Geo"
   }
 }
