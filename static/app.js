@@ -1049,86 +1049,183 @@ async function loadAuditTrace() {
 async function renderTrends() {
   const container = $('trends-content');
   if (!container) return;
-  container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">Loading trend data...</div>';
+  container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">Loading threat landscape...</div>';
 
-  const data = await fetch('/api/trends').then(r => r.ok ? r.json() : {}).catch(() => ({}));
+  const [trends, landscape] = await Promise.all([
+    fetch('/api/trends').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+    fetch('/api/threat-landscape').then(r => r.ok ? r.json() : {}).catch(() => ({})),
+  ]);
 
-  if (!data.regions || data.status === 'no_data') {
-    container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">No trend data yet — run the pipeline to generate historical analysis.</div>';
+  const hasLandscape = landscape && landscape.status !== 'no_data' && landscape.analysis_window;
+  const hasTrends = trends && trends.status !== 'no_data' && trends.regions;
+
+  if (!hasLandscape && !hasTrends) {
+    container.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:20px 0">No threat landscape data yet — run the pipeline to generate analysis.</div>';
     return;
   }
 
-  const TREND_REGIONS = ['APAC','AME','LATAM','MED','NCE'];
-  const sevColor = s => s==='CRITICAL'?'#ff7b72':s==='HIGH'?'#ffa657':s==='MEDIUM'?'#e3b341':s==='LOW'?'#3fb950':'#484f58';
-  const sevVal  = s => s==='CRITICAL'?3:s==='HIGH'?2:s==='MEDIUM'?1:0;
+  const window_ = hasLandscape ? landscape.analysis_window : {};
+  const sufficiency = window_.data_sufficiency || 'limited';
+  const runCount = window_.runs_included || trends?.run_count || 0;
+  const dateRange = window_.from && window_.to ? `${window_.from} – ${window_.to}` : '';
+  const generatedAt = hasLandscape ? landscape.generated_at : '';
 
-  function buildTrendSparkline(trajectory) {
-    if (!trajectory || !trajectory.length) return '<span style="color:#484f58;font-size:10px">no data</span>';
-    const w=160,h=32,n=trajectory.length;
-    const pts = trajectory.map((s,i) => {
-      const x = n===1 ? w/2 : (i/(n-1))*w;
-      const y = h-4 - (sevVal(s)/3)*(h-8);
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    });
-    const last = trajectory[trajectory.length-1];
-    const circles = pts.map((p,i) => `<circle cx="${p.split(',')[0]}" cy="${p.split(',')[1]}" r="2" fill="${sevColor(trajectory[i])}"/>`).join('');
-    return `<svg width="${w}" height="${h}" style="display:block"><polyline points="${pts.join(' ')}" fill="none" stroke="${sevColor(last)}" stroke-width="1.5"/>${circles}</svg>`;
-  }
+  // ── Header bar ──
+  const limitedBadge = sufficiency === 'limited'
+    ? `<span style="background:#2d2208;border:1px solid #d29922;color:#d29922;padding:2px 8px;border-radius:2px;font-size:9px">Limited data — ${window_.runs_with_full_sections || 0}/${runCount} runs with full attribution</span>`
+    : '';
+  const genLabel = generatedAt
+    ? `Last generated: ${new Date(generatedAt).toLocaleString()}`
+    : 'Not yet generated';
 
-  function buildScenarioBars(freq) {
-    if (!freq || !Object.keys(freq).length) return '<span style="color:#484f58;font-size:10px">none</span>';
-    const max = Math.max(...Object.values(freq));
-    const w = 160;
-    return Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([name,count]) => {
-      const bw = max>0 ? Math.round((count/max)*w) : 0;
-      return `<div style="margin-bottom:4px"><div style="font-size:9px;color:#8b949e;margin-bottom:2px">${esc(name)} (${count})</div><svg width="${w}" height="8"><rect x="0" y="0" width="${bw}" height="8" fill="#58a6ff" rx="2"/></svg></div>`;
-    }).join('');
-  }
-
-  const runCount = data.run_count || 0;
-  const cellW = Math.min(20, Math.max(6, Math.floor(280/Math.max(runCount,1))));
-  const heatmapHtml = `
-    <div style="margin-bottom:20px">
-      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Escalation Heatmap — ${runCount} runs</div>
-      <div class="heatmap-grid">
-        ${TREND_REGIONS.map(r => {
-          const traj = (data.regions[r]||{}).severity_trajectory||[];
-          return `<div class="heatmap-row"><span class="heatmap-label">${r}</span>${traj.map(s=>`<div style="width:${cellW}px;height:12px;background:${sevColor(s)};border-radius:2px;opacity:0.85" title="${s}"></div>`).join('')}${!traj.length?'<span style="color:#484f58;font-size:9px">no data</span>':''}</div>`;
-        }).join('')}
-      </div>
-    </div>`;
-
-  const regionCards = TREND_REGIONS.map(r => {
-    const rd = data.regions[r];
-    if (!rd) return '';
-    return `
-<div class="trend-region-card">
-  <div class="trend-region-header">
-    <span>${r}</span>
-    <span style="color:#c9d1d9;font-size:10px;text-transform:none;letter-spacing:0">Escalated ${rd.escalation_count||0}/${runCount} runs</span>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-    <div><div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase">Severity Trend</div>${buildTrendSparkline(rd.severity_trajectory)}</div>
-    <div><div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.06em;text-transform:uppercase">Top Scenarios</div>${buildScenarioBars(rd.scenario_frequency)}</div>
-  </div>
-  ${rd.assessment?`<div style="font-size:11px;color:#8b949e;margin-top:10px;line-height:1.6;border-top:1px solid #21262d;padding-top:8px">${esc(rd.assessment)}</div>`:''}
-</div>`;
-  }).join('');
-
-  const talkingPoints = (data.ciso_talking_points||[]).map(tp=>`<div class="talking-point-card">▸ ${esc(tp)}</div>`).join('');
-  const cross = data.cross_regional||{};
-
-  container.innerHTML = `
-    <div style="margin-bottom:20px">
-      <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:10px">Executive Talking Points</div>
-      ${talkingPoints||'<div style="color:#484f58;font-size:11px">No talking points generated.</div>'}
+  let html = `<div style="background:#080c10;border-bottom:1px solid #21262d;padding:10px 16px;margin:-20px -24px 16px -24px;display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;gap:12px;align-items:center;font-size:10px;color:#8b949e">
+      <span>${runCount} runs · ${dateRange}</span>
+      ${limitedBadge}
     </div>
-    ${heatmapHtml}
-    ${cross.compound_risk?`<div style="margin-bottom:16px;padding:12px;background:#161b22;border:1px solid #21262d;border-radius:4px"><div style="font-size:9px;color:#6e7681;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px">Cross-Regional Risk</div><div style="font-size:11px;color:#c9d1d9;line-height:1.6">${esc(cross.compound_risk)}</div></div>`:''}
-    <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:12px">Regional Analysis</div>
-    ${regionCards}
-    <div style="font-size:9px;color:#484f58;margin-top:8px">Based on ${runCount} pipeline runs · Generated ${data.generated_at?new Date(data.generated_at).toLocaleString():'unknown'}</div>
-  `;
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:8px;color:#6e7681">${genLabel}</span>
+      <button onclick="runThreatLandscape(this)" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 14px;border-radius:2px;cursor:pointer">&#8635; Generate Quarterly Brief</button>
+    </div>
+  </div>`;
+
+  // ── Section 1: Cross-Regional Compound Risks ──
+  html += `<div style="margin-bottom:24px">
+    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:10px">CROSS-REGIONAL COMPOUND RISKS</div>`;
+
+  const compoundRisks = hasLandscape ? (landscape.compound_risks || []) : [];
+  if (sufficiency === 'limited' || !compoundRisks.length) {
+    html += `<div style="padding:12px;background:#161b22;border:1px solid #21262d;border-radius:4px;color:#6e7681;font-size:10px">Insufficient data to identify compound risks — analysis available after 5+ runs with attribution data.</div>`;
+  } else {
+    compoundRisks.forEach(cr => {
+      html += `<div style="border-left:3px solid #ff7b72;background:#160808;border-radius:0 4px 4px 0;padding:10px 14px;margin-bottom:8px">
+        <div style="font-size:8px;color:#8b949e;margin-bottom:4px">${esc(cr.risk_level || '')} · ${(cr.regions||[]).join(' + ')} · ${cr.corroborating_runs || 0} corroborating runs</div>
+        <div style="font-size:10px;color:#e6edf3;line-height:1.6">${esc(cr.description || '')}</div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  // ── Section 2: Threat Actors ──
+  html += `<div style="margin-bottom:24px">
+    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:10px">THREAT ACTORS</div>`;
+
+  const actors = hasLandscape ? (landscape.threat_actors || []) : [];
+  if (sufficiency === 'limited' || !actors.length) {
+    html += `<div style="border:1px solid #21262d;border-radius:4px;overflow:hidden">
+      <div style="background:#161b22;padding:5px 12px;font-size:8px;color:#484f58;text-transform:uppercase;display:grid;grid-template-columns:130px 1fr 80px 80px 50px"><span>Actor</span><span>Objective</span><span>Regions</span><span>Activity</span><span>Conf.</span></div>
+      <div style="padding:12px;color:#6e7681;font-size:10px;font-style:italic">Attribution data accumulating — table will populate after 5+ runs.</div>
+    </div>`;
+  } else {
+    html += `<div style="border:1px solid #21262d;border-radius:4px;overflow:hidden">
+      <div style="background:#161b22;padding:5px 12px;font-size:8px;color:#484f58;text-transform:uppercase;display:grid;grid-template-columns:130px 1fr 80px 80px 50px"><span>Actor</span><span>Objective</span><span>Regions</span><span>Activity</span><span>Conf.</span></div>`;
+    actors.forEach(a => {
+      const isUnknown = !a.name;
+      const bg = isUnknown ? 'background:#0d1117;opacity:0.7;' : '';
+      const nameStyle = isUnknown ? 'color:#6e7681;font-style:italic' : 'color:#e6edf3;font-weight:600';
+      const trendColor = a.activity_trend === 'escalating' ? '#ff7b72' : a.activity_trend === 'declining' ? '#3fb950' : '#6e7681';
+      html += `<div style="display:grid;grid-template-columns:130px 1fr 80px 80px 50px;padding:7px 12px;border-top:1px solid #21262d;font-size:10px;${bg}">
+        <span style="${nameStyle}">${esc(a.name || 'Unattributed')}</span>
+        <span style="color:${isUnknown ? '#6e7681' : '#c9d1d9'};${isUnknown ? 'font-style:italic' : ''}">${esc(a.objective || '')}</span>
+        <span style="color:#8b949e">${(a.regions||[]).join(', ')}</span>
+        <span style="color:${trendColor}">${esc(a.activity_trend || '—')}</span>
+        <span style="color:#6e7681">${esc(a.confidence || '—')}</span>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  html += '</div>';
+
+  // ── Section 3: Scenario Persistence ──
+  html += `<div style="margin-bottom:24px">
+    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:10px">SCENARIO PERSISTENCE</div>`;
+
+  const scenarios = hasLandscape ? (landscape.scenario_lifecycle || []) : [];
+  if (!scenarios.length) {
+    html += '<div style="color:#6e7681;font-size:10px">No scenario data available.</div>';
+  } else {
+    const total = runCount || 1;
+    scenarios.forEach(sc => {
+      const pillBg = sc.stage === 'persistent' ? '#2d0a0a' : sc.stage === 'emerging' ? '#2d2208' : '#161b22';
+      const pillBorder = sc.stage === 'persistent' ? '#ff7b72' : sc.stage === 'emerging' ? '#d29922' : '#6e7681';
+      const barPct = Math.round(((sc.run_count || 0) / total) * 100);
+      html += `<div style="margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="background:${pillBg};border:1px solid ${pillBorder};color:${pillBorder};font-size:7px;padding:1px 5px;border-radius:8px;text-transform:uppercase">${esc(sc.stage || '')}</span>
+          <span style="color:#e6edf3;font-size:10px">${esc(sc.name || '')}</span>
+          <span style="margin-left:auto;font-size:8px;color:#6e7681">${sc.run_count || 0}/${total} · ${(sc.regions||[]).join(', ')}</span>
+        </div>
+        <div style="background:#21262d;height:5px;border-radius:2px;margin-top:4px"><div style="background:${pillBorder};height:5px;border-radius:2px;width:${barPct}%"></div></div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+
+  // ── Section 4: Intelligence Gaps ──
+  const gaps = hasLandscape ? (landscape.intelligence_gaps || []) : [];
+  if (gaps.length) {
+    html += `<div style="margin-bottom:24px">
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:10px">INTELLIGENCE GAPS</div>
+      <div style="border:1px solid #30363d;border-radius:4px;overflow:hidden">`;
+    gaps.forEach((gap, i) => {
+      const isMaturity = (gap.description || '').toLowerCase().includes('accumulating') || (gap.description || '').toLowerCase().includes('maturity');
+      const badgeBg = isMaturity ? '#161b22' : '#2d2208';
+      const badgeBorder = isMaturity ? '#30363d' : '#d29922';
+      const badgeColor = isMaturity ? '#6e7681' : '#d29922';
+      const border = i > 0 ? 'border-top:1px solid #21262d;' : '';
+      html += `<div style="display:flex;gap:12px;padding:8px 12px;${border}">
+        <span style="background:${badgeBg};border:1px solid ${badgeBorder};color:${badgeColor};font-size:8px;padding:2px 6px;border-radius:2px;white-space:nowrap;height:fit-content">${esc(gap.region || 'ALL')}</span>
+        <div>
+          <div style="font-size:9px;color:#c9d1d9">${esc(gap.description || '')}</div>
+          <div style="font-size:8px;color:#6e7681;margin-top:2px">${esc(gap.impact || '')}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+  }
+
+  // ── Section 5: Board Talking Points ──
+  const talkingPoints = hasLandscape ? (landscape.board_talking_points || []) : [];
+  if (talkingPoints.length) {
+    html += `<div style="margin-bottom:24px">
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:10px">BOARD TALKING POINTS</div>`;
+    talkingPoints.forEach(tp => {
+      const isPositive = tp.type === 'POSITIVE SIGNAL';
+      const accent = isPositive ? '#3fb950' : '#58a6ff';
+      const borderAccent = isPositive ? '#238636' : '#1f6feb';
+      html += `<div style="border:1px solid ${borderAccent};border-left:3px solid ${accent};padding:8px 12px;border-radius:0 4px 4px 0;margin-bottom:8px">
+        <div style="font-size:8px;color:${accent};text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px">${esc(tp.type || '')}</div>
+        <div style="font-size:10px;color:#c9d1d9;line-height:1.6">${esc(tp.text || '')}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  // ── Footer ──
+  html += `<div style="font-size:9px;color:#484f58;margin-top:8px">${
+    hasLandscape ? `Threat landscape: ${sufficiency} data · ${runCount} runs` : ''
+  }${hasTrends ? ` · Trend analysis: ${trends.run_count || 0} runs` : ''}${
+    generatedAt ? ` · Generated ${new Date(generatedAt).toLocaleString()}` : ''
+  }</div>`;
+
+  container.innerHTML = html;
+}
+
+async function runThreatLandscape(btn) {
+  btn.disabled = true;
+  btn.innerHTML = '&#8635; Generating...';
+  try {
+    const r = await fetch('/api/run-threat-landscape', { method: 'POST' });
+    const data = await r.json();
+    if (data.status === 'already_running') {
+      btn.innerHTML = '&#8635; Already running...';
+    }
+  } catch {
+    btn.innerHTML = '&#8635; Failed';
+  }
+  setTimeout(() => {
+    if (btn) { btn.disabled = false; btn.innerHTML = '&#8635; Generate Quarterly Brief'; }
+  }, 5000);
 }
 
 // ── Review Gate ────────────────────────────────────────────────────────
