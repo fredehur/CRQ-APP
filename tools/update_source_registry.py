@@ -148,6 +148,7 @@ CREATE TABLE IF NOT EXISTS sources_registry (
     junk             INTEGER DEFAULT 0,
     blocked          INTEGER DEFAULT 0,
     collection_type  TEXT DEFAULT 'osint',
+    published_at     TEXT,
     first_seen       TEXT,
     last_seen        TEXT,
     appearance_count INTEGER DEFAULT 1,
@@ -202,6 +203,7 @@ def upsert_source(
     source_type: str = "news",
     credibility_tier: str = "B",
     collection_type: str = "osint",
+    published_at: str | None = None,
     timestamp: str,
 ) -> str:
     """
@@ -221,11 +223,11 @@ def upsert_source(
             """
             INSERT INTO sources_registry
                 (id, url, name, domain, source_type, credibility_tier, collection_type, junk,
-                 first_seen, last_seen, appearance_count, cited_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, 1, 0)
+                 published_at, first_seen, last_seen, appearance_count, cited_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, 1, 0)
             """,
             (sid, url or None, name, domain, source_type, credibility_tier, collection_type,
-             timestamp, timestamp),
+             published_at, timestamp, timestamp),
         )
     else:
         # On conflict: update last_seen + appearance_count; keep credibility_tier if junk=1
@@ -298,26 +300,27 @@ def ingest_osint_signals(
     named_sources = data.get("sources", [])
     flat_urls = data.get("source_urls", [])
 
-    # Build a unified list of (name, url) pairs
-    entries: list[tuple[str, str]] = []
+    # Build a unified list of (name, url, published_at) tuples
+    entries: list[tuple[str, str, str | None]] = []
     seen_urls: set[str] = set()
     for src in named_sources:
         if isinstance(src, dict):
             url = (src.get("url") or "").strip()
             name = (src.get("name") or "").strip()
+            pub = src.get("published_date") or None
             if url and url not in seen_urls:
-                entries.append((name or derive_name_from_url(url), url))
+                entries.append((name or derive_name_from_url(url), url, pub))
                 seen_urls.add(url)
     for url in flat_urls:
         if isinstance(url, str) and url.strip() and url.strip() not in seen_urls:
-            entries.append((derive_name_from_url(url.strip()), url.strip()))
+            entries.append((derive_name_from_url(url.strip()), url.strip(), None))
             seen_urls.add(url.strip())
 
     if not entries:
         return 0
 
     count = 0
-    for name, url in entries:
+    for name, url, published_at in entries:
         domain = extract_domain(url)
         stype = classify_source_type(domain)
         tier = assign_credibility_tier(domain, source_type=stype)
@@ -329,6 +332,7 @@ def ingest_osint_signals(
             domain=domain,
             source_type=stype,
             credibility_tier=tier,
+            published_at=published_at,
             timestamp=timestamp,
         )
         insert_appearance(
@@ -584,6 +588,13 @@ def main() -> int:
     # Migration: add collection_type column if missing
     try:
         conn.execute("ALTER TABLE sources_registry ADD COLUMN collection_type TEXT DEFAULT 'osint'")
+        conn.commit()
+    except Exception:
+        pass  # column already exists
+
+    # Migration: add published_at column if missing
+    try:
+        conn.execute("ALTER TABLE sources_registry ADD COLUMN published_at TEXT")
         conn.commit()
     except Exception:
         pass  # column already exists

@@ -1092,6 +1092,7 @@ async def get_source_registry(
                     "url": r["url"],
                     "name": r["name"],
                     "domain": r["domain"],
+                    "published_at": r["published_at"] if "published_at" in r.keys() else None,
                     "source_type": r["source_type"],
                     "credibility_tier": r["credibility_tier"],
                     "collection_type": r["collection_type"] if "collection_type" in r.keys() else "osint",

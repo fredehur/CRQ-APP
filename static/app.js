@@ -1315,7 +1315,7 @@ const cfgState = {
 };
 
 function switchTab(tab) {
-  if (cfgState.dirty.topics || cfgState.dirty.sources || cfgState.dirty.prompt) {
+  if (cfgState.dirty.topics || cfgState.dirty.sources) {
     showUnsavedModal(() => _doSwitchTab(tab));
     return;
   }
@@ -1662,6 +1662,144 @@ function toggleGlossary() {
     : '\u25b8 Agentic Concepts Glossary';
 }
 
+function openPipelinePanel(nodeId) {
+  const node = PIPELINE_NODES.find(n => n.id === nodeId);
+  if (!node) return;
+
+  // Mark active node
+  if (_plActiveNode) {
+    const prev = $(`plnode-${_plActiveNode}`);
+    if (prev) prev.classList.remove('active');
+  }
+  _plActiveNode = nodeId;
+  const el = $(`plnode-${nodeId}`);
+  if (el) el.classList.add('active');
+
+  // Render panel
+  $('pipeline-panel-title').textContent = `${node.phase} \u2014 ${node.name}`;
+  $('pipeline-panel-body').innerHTML = renderPanelContent(node);
+  $('pipeline-panel').classList.add('open');
+
+  // Load prompt if agent-backed
+  if (node.agentFile) plLoadPrompt(node.agentFile);
+}
+
+function closePipelinePanel() {
+  $('pipeline-panel').classList.remove('open');
+  if (_plActiveNode) {
+    const el = $(`plnode-${_plActiveNode}`);
+    if (el) el.classList.remove('active');
+    _plActiveNode = null;
+  }
+}
+
+function renderPanelContent(node) {
+  // Section 1: Analytical Role
+  let html = `
+<div class="pl-panel-section">
+  <div class="pl-panel-section-label">Analytical Role</div>
+  <div class="pl-panel-body">${node.analyticalRole}</div>
+  <div class="pl-io-row">
+    <span class="pl-io-label">IO \u00b7</span>
+    <span>${node.inputOutput}</span>
+  </div>
+</div>`;
+
+  // Section 2: Agentic Architecture
+  html += `
+<div class="pl-panel-section">
+  <div class="pl-panel-section-label">How This Is Built</div>
+  <div class="pl-panel-body">${node.agenticArch}</div>`;
+
+  if (node.principles && node.principles.length) {
+    node.principles.forEach(key => {
+      const p = PIPELINE_PRINCIPLES[key];
+      if (!p) return;
+      html += `
+  <div class="pl-principle">
+    <div class="pl-principle-name">${esc(p.name)}</div>
+    <div class="pl-principle-desc">${esc(p.desc)}</div>
+  </div>`;
+    });
+  }
+  html += `</div>`;
+
+  // Section 3: Agent Configuration (only for LLM agents)
+  if (node.agentFile) {
+    html += `
+<div class="pl-panel-section">
+  <div class="pl-config-divider">Agent Configuration</div>
+  <div id="pl-prompt-fm"></div>
+  <textarea id="pl-prompt-body" oninput="plOnPromptEdit()"></textarea>
+  <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+    <button id="pl-prompt-save" onclick="plSavePrompt()" disabled>Save</button>
+  </div>
+  <div id="pl-prompt-note">Changes affect future pipeline runs, not the current architectural description above.</div>
+</div>`;
+  }
+
+  return html;
+}
+
+// ── Pipeline prompt editor ────────────────────────────────────────────
+let _plPromptState = { agent: null, baseline: '', dirty: false };
+
+async function plLoadPrompt(agentName) {
+  // Reuse cfgState.prompts if already loaded; otherwise fetch
+  let prompts = cfgState.prompts;
+  if (!prompts || !prompts.length) {
+    prompts = await fetch('/api/config/prompts').then(r => r.ok ? r.json() : []).catch(() => []);
+    cfgState.prompts = prompts;
+  }
+  const obj = prompts.find(p => p.agent === agentName);
+  const fmEl = $('pl-prompt-fm');
+  const bodyEl = $('pl-prompt-body');
+  const saveEl = $('pl-prompt-save');
+  if (!fmEl || !bodyEl) return;
+
+  if (!obj) {
+    bodyEl.value = `Agent file not found: .claude/agents/${agentName}.md`;
+    bodyEl.disabled = true;
+    if (saveEl) saveEl.disabled = true;
+    return;
+  }
+
+  const fm = obj.frontmatter || {};
+  fmEl.innerHTML = Object.entries(fm).map(([k, v]) =>
+    `<span><span style="color:#3fb950">${esc(k)}:</span> <span style="color:#8b949e">${esc(String(v))}</span></span>`
+  ).join('');
+  bodyEl.value = obj.body || '';
+  bodyEl.disabled = false;
+  _plPromptState = { agent: agentName, baseline: obj.body || '', dirty: false };
+  if (saveEl) { saveEl.disabled = true; }
+}
+
+function plOnPromptEdit() {
+  _plPromptState.dirty = true;
+  const saveEl = $('pl-prompt-save');
+  if (saveEl) saveEl.disabled = false;
+}
+
+async function plSavePrompt() {
+  const bodyEl = $('pl-prompt-body');
+  const saveEl = $('pl-prompt-save');
+  if (!bodyEl || !_plPromptState.agent) return;
+  const body = bodyEl.value;
+  openDiffModal(_plPromptState.baseline, body, async () => {
+    const r = await fetch(`/api/config/prompts/${encodeURIComponent(_plPromptState.agent)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ body }),
+    });
+    return r.json();
+  }, 'pl-prompt');
+  _plPromptState.baseline = body;
+  _plPromptState.dirty = false;
+  if (saveEl) saveEl.disabled = true;
+  // Invalidate cfgState so Config tab re-loads fresh on next visit
+  cfgState.loaded = false;
+}
+
 // ── Run trigger \u2500\u2500─────────────────────────────────────────────────────
 async function runAll() {
   const windowVal = $('window-select').value;
@@ -1844,10 +1982,8 @@ function closePanel() {
 // ── Config Tab ────────────────────────────────────────────────────────
 function switchCfgTab(tab) {
   const leavingSources = $('cfg-tab-sources') && $('cfg-tab-sources').style.display !== 'none';
-  const leavingPrompts = $('cfg-tab-prompts') && $('cfg-tab-prompts').style.display !== 'none';
   const leavingFootprint = $('cfg-tab-footprint') && $('cfg-tab-footprint').style.display !== 'none';
   const isDirty = (leavingSources && (cfgState.dirty.topics || cfgState.dirty.sources)) ||
-                  (leavingPrompts && cfgState.dirty.prompt) ||
                   (leavingFootprint && Object.values(cfgState.footprintDirty).some(Boolean));
   if (isDirty) {
     showUnsavedModal(() => _doSwitchCfgTab(tab));
@@ -1857,10 +1993,10 @@ function switchCfgTab(tab) {
 }
 
 function _doSwitchCfgTab(tab) {
-  ['sources','footprint','prompts'].forEach(t => {
+  ['sources','footprint'].forEach(t => {
     const el = $(`cfg-tab-${t}`);
     if (!el) return;
-    el.style.display = t === tab ? (t === 'sources' ? 'grid' : t === 'prompts' ? 'flex' : 'block') : 'none';
+    el.style.display = t === tab ? (t === 'sources' ? 'grid' : 'block') : 'none';
     $(`cfg-nav-${t}`).classList.toggle('active', t === tab);
   });
   if (tab === 'footprint') loadFootprint();
@@ -1868,21 +2004,18 @@ function _doSwitchCfgTab(tab) {
 
 async function loadConfigTab() {
   if (cfgState.loaded) return;
-  const [topicsRaw, sourcesRaw, promptsRaw] = await Promise.all([
+  const [topicsRaw, sourcesRaw] = await Promise.all([
     fetch('/api/config/topics').then(r => r.ok ? r.text() : '[]').catch(() => '[]'),
     fetch('/api/config/sources').then(r => r.ok ? r.text() : '[]').catch(() => '[]'),
-    fetch('/api/config/prompts').then(r => r.ok ? r.json() : []).catch(() => []),
   ]);
   cfgState.topicsBaseline = JSON.stringify(JSON.parse(topicsRaw), null, 2);
   cfgState.topics = JSON.parse(cfgState.topicsBaseline);
   cfgState.sourcesBaseline = JSON.stringify(JSON.parse(sourcesRaw), null, 2);
   cfgState.sources = JSON.parse(cfgState.sourcesBaseline);
-  cfgState.prompts = promptsRaw;
   cfgState.dirty = { topics: false, sources: false, prompt: false };
   cfgState.loaded = true;
   renderTopicsTable();
   renderSourcesTable();
-  renderPromptsPanel();
   loadSuggestions(); // async, non-blocking
 }
 
@@ -2751,6 +2884,7 @@ function _childRow(s) {
       </span>
     </span>
     <span style="width:150px;flex-shrink:0">${_usageBar(s.appearance_count ?? 0, s.cited_count ?? 0)}</span>
+    <span style="width:90px;flex-shrink:0;font-size:10px;color:${s.published_at ? '#8b949e' : '#484f58'}">${s.published_at ? s.published_at.slice(0,10) : '\u2014'}</span>
     <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(s.last_seen)}">${s.last_seen ? s.last_seen.slice(0,10) : '\u2014'}</span>
     <span style="width:60px;flex-shrink:0">
       ${s.url ? `<button onclick="window.open('${esc(s.url)}','_blank')"
@@ -2943,6 +3077,7 @@ function renderSourceRegistryTable(sources) {
       ? `<span style="color:#484f58;font-size:10px;font-style:italic">— benchmark anchor</span>`
       : _usageBar(totalApp, totalCite)}
   </span>
+  <span style="width:90px;flex-shrink:0"></span>
   <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(lastSeen)}">
     ${lastSeen ? lastSeen.slice(0, 10) : '—'}
   </span>

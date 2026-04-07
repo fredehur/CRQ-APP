@@ -255,7 +255,7 @@ def synthesize_signals(
     Returns: (geo_signals, cyber_signals, conclusion)
     """
     snippets_text = "\n".join(
-        f"- [{r.get('title', '')}] ({r.get('url', '')}) {r.get('summary', '')}"
+        f"- [{r.get('title', '')}] ({r.get('url', '')}) published:{r.get('published_date', '') or 'unknown'} {r.get('summary', '')}"
         for r in results[:20]
     )
     topic_ids = [t["id"] for t in working_theory.get("active_topics", [])]
@@ -280,7 +280,7 @@ Return ONLY valid JSON (no markdown fences):
     "dominant_pillar": "Geopolitical",
     "matched_topics": ["topic-id-if-matched"],
     "sources": [
-      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>"}}
+      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>", "published_date": "<date from the published: field above, or null if unknown>"}}
     ]
   }},
   "cyber_signals": {{
@@ -289,7 +289,7 @@ Return ONLY valid JSON (no markdown fences):
     "dominant_pillar": "Cyber",
     "matched_topics": ["topic-id-if-matched"],
     "sources": [
-      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>"}}
+      {{"name": "<publication or organisation name derived from article title/domain>", "url": "<exact URL from the collected results>", "published_date": "<date from the published: field above, or null if unknown>"}}
     ]
   }},
   "conclusion": {{
