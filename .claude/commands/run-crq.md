@@ -234,6 +234,14 @@ Run: `uv run python tools/export_pdf.py output/deliverables/board_report.pdf`
 Run: `uv run python tools/export_pptx.py output/deliverables/board_report.pptx`
 Run: `uv run python tools/export_ciso_docx.py`
 
+## PHASE 5b — THREAT LANDSCAPE SYNTHESIS
+
+Delegate to `threat-landscape-agent` with this task description:
+"Read all output/runs/*/regional/*/data.json and output/runs/*/regional/*/sections.json files. Synthesize longitudinal adversary patterns across all archived runs. Write output/pipeline/threat_landscape.json per your agent instructions."
+
+On completion: `uv run python tools/audit_logger.py PHASE_COMPLETE "Threat landscape synthesis complete — output/pipeline/threat_landscape.json written"`
+If the agent fails or errors: `uv run python tools/audit_logger.py TREND_WARN "Threat landscape synthesis failed — Trends tab will show partial data"` — then continue. This phase is **non-fatal** (same pattern as Phase 2.5).
+
 ## PHASE 6 — FINALIZE
 
 Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/pipeline/run_manifest.json` from all regional `data.json` files.
