@@ -602,7 +602,12 @@
   </div>
 
   <!-- Filter bar -->
-  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:#0d1117;border:1px solid #21262d;border-radius:2px">
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:nowrap;margin-bottom:10px;padding:8px 12px;background:#0d1117;border:1px solid #21262d;border-radius:2px">
+    <input id="src-search" placeholder="Search publications, domains..."
+      oninput="applySourceFilters()"
+      style="background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 10px;border-radius:4px;width:220px;outline:none;flex-shrink:0"
+      onfocus="this.style.borderColor='#388bfd'" onblur="this.style.borderColor='#30363d'" />
+    <div style="width:1px;height:16px;background:#30363d;flex-shrink:0"></div>
     <select id="src-filter-region" onchange="applySourceFilters()" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:10px;padding:3px 6px;border-radius:2px">
       <option value="">All regions</option>
       <option value="APAC">APAC</option>
@@ -632,26 +637,31 @@
       <option value="osint">OSINT</option>
       <option value="benchmark">Benchmark</option>
     </select>
-    <label style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#8b949e;cursor:pointer">
-      <input type="checkbox" id="src-filter-cited" onchange="applySourceFilters()" style="accent-color:#3fb950"> Cited only
+    <label style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8b949e;cursor:pointer;white-space:nowrap">
+      <input type="checkbox" id="src-filter-cited" onchange="applySourceFilters()" style="accent-color:#3fb950"> Cited
     </label>
-    <label style="display:inline-flex;align-items:center;gap:5px;font-size:10px;color:#8b949e;cursor:pointer">
+    <label style="display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#8b949e;cursor:pointer;white-space:nowrap">
       <input type="checkbox" id="src-filter-hidejunk" onchange="applySourceFilters()" checked style="accent-color:#3fb950"> Hide junk
     </label>
-    <span id="src-stats-line" style="font-size:9px;color:#484f58;margin-left:auto"></span>
+    <span id="src-stats-line" style="font-size:9px;color:#484f58;margin-left:auto;white-space:nowrap"></span>
   </div>
+
+  <!-- Bulk action bar — shown when checkboxes selected -->
+  <div id="src-bulk-bar" style="display:none;align-items:center;gap:8px;padding:6px 12px;margin-bottom:6px;background:#161b22;border-left:2px solid #e3b341;border-radius:2px"></div>
 
   <!-- Table -->
   <div style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
     <!-- Column headers -->
     <div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58;background:#080c10">
-      <span style="flex:2;min-width:160px">Name / Domain</span>
-      <span style="width:90px;flex-shrink:0">Type</span>
-      <span style="width:50px;flex-shrink:0">Tier</span>
-      <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px">Appearances</span>
-      <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px">Cited</span>
-      <span style="width:90px;flex-shrink:0">Last Seen</span>
-      <span style="width:80px;flex-shrink:0">Actions</span>
+      <span style="width:24px;flex-shrink:0">
+        <input type="checkbox" id="src-select-all" onchange="selectAllSources(this.checked)" style="cursor:pointer" />
+      </span>
+      <span style="flex:2;min-width:180px">Publication</span>
+      <span style="width:100px;flex-shrink:0">Type</span>
+      <span style="width:55px;flex-shrink:0">Tier</span>
+      <span style="width:150px;flex-shrink:0">Usage</span>
+      <span style="width:80px;flex-shrink:0">Last Seen</span>
+      <span style="width:90px;flex-shrink:0">Actions</span>
     </div>
     <!-- Body -->
     <div id="src-table-body">

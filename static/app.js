@@ -36,6 +36,7 @@ let state = {
   rsmBriefs: {},        // keyed by region, cached {intsum, flash} from /api/rsm/{region}
   rsmActiveTab: {},     // keyed by region: 'flash' | 'intsum'
   rsmHasFlash: false,   // drives ● dot on tab label
+  selectedSourceIds: new Set(),
 };
 
 // Agent console state
@@ -2083,6 +2084,7 @@ function _listenValidationSSE(btn, prog) {
 }
 
 // ── Section: Sources Tab ──────────────────────────────────────────────
+let _visibleSourceIds = []; // populated by renderSourceRegistryTable
 
 async function renderSources() {
   // Populate stats summary line
@@ -2142,6 +2144,141 @@ function _collectionBadge(collectionType) {
   return '';
 }
 
+function applySourceSearch(query, sources) {
+  if (!query) return sources;
+  const q = query.toLowerCase();
+  return sources.filter(s =>
+    (s.name   || '').toLowerCase().includes(q) ||
+    (s.domain || '').toLowerCase().includes(q) ||
+    (s.url    || '').toLowerCase().includes(q)
+  );
+}
+
+function _freshnessStyle(dateStr) {
+  if (!dateStr) return 'color:#484f58';
+  const days = Math.floor((Date.now() - new Date(dateStr).getTime()) / 86400000);
+  if (days <= 14) return 'color:#3fb950';
+  if (days <= 42) return 'color:#e3b341';
+  return 'color:#f85149;font-weight:600';
+}
+
+function _usageBar(totalApp, totalCite) {
+  if (!totalApp) return '<span style="color:#484f58;font-size:10px">—</span>';
+  const pct = Math.round((totalCite / totalApp) * 100);
+  const color = pct > 60 ? '#3fb950' : pct >= 20 ? '#e3b341' : '#6e7681';
+  return `<span style="display:flex;align-items:center;gap:5px">
+    <span style="color:#8b949e;min-width:22px;font-size:10px">${totalApp}</span>
+    <span style="display:inline-block;width:55px;height:4px;background:#21262d;border-radius:2px;flex-shrink:0">
+      <span style="display:block;width:${Math.min(pct,100)}%;height:4px;background:${color};border-radius:2px"></span>
+    </span>
+    <span style="color:${color};min-width:30px;font-size:10px">${pct}%</span>
+  </span>`;
+}
+
+function copyUrl(url, btnEl) {
+  navigator.clipboard.writeText(url).then(() => {
+    const orig = btnEl.textContent;
+    btnEl.textContent = '\u2713';
+    setTimeout(() => { btnEl.textContent = orig; }, 1000);
+  });
+}
+
+function _childRow(s) {
+  const domain = s.domain || '';
+  const faviconHtml = domain
+    ? `<img src="https://www.google.com/s2/favicons?domain=${esc(domain)}&sz=16" width="12" height="12"
+         style="border-radius:2px;opacity:0.55;flex-shrink:0" onerror="this.style.display='none'" />`
+    : '';
+  const linkHtml = s.url
+    ? `<a href="${esc(s.url)}" target="_blank" title="${esc(s.url)}"
+         style="color:#79c0ff;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px">${esc(s.domain || s.url)}</a>
+       <span onclick="window.open('${esc(s.url)}','_blank')"
+         style="border:1px solid #21262d;border-radius:2px;padding:0 4px;font-size:9px;line-height:16px;cursor:pointer;color:#484f58;flex-shrink:0">\u2197</span>
+       <span onclick="copyUrl('${esc(s.url)}', this)"
+         style="border:1px solid #21262d;border-radius:2px;padding:0 4px;font-size:9px;line-height:16px;cursor:pointer;color:#484f58;flex-shrink:0">copy</span>`
+    : `<span style="color:#484f58;font-size:10px">${esc(domain || '\u2014')}</span>`;
+
+  const isChecked = state.selectedSourceIds.has(s.id);
+  const flagLabel = s.junk ? 'Unflag' : 'Flag junk';
+  const flagStyle = s.junk
+    ? 'font-size:9px;color:#f85149;background:#1a0a0a;border:1px solid #da3633;padding:2px 6px;border-radius:2px;cursor:pointer'
+    : 'font-size:9px;color:#6e7681;background:transparent;border:1px solid #30363d;padding:2px 6px;border-radius:2px;cursor:pointer';
+
+  return `<div style="display:flex;align-items:center;padding:5px 12px 5px 36px;border-bottom:1px solid #0d1117;font-size:11px;background:#080c10">
+    <span style="width:24px;flex-shrink:0">
+      <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleSourceCheck(['${esc(s.id)}'], this.checked)" style="cursor:pointer" />
+    </span>
+    <span style="flex:2;min-width:180px;display:flex;align-items:center;gap:6px;overflow:hidden">
+      ${faviconHtml}${linkHtml}
+    </span>
+    <span style="width:100px;flex-shrink:0"></span>
+    <span style="width:55px;flex-shrink:0">
+      <span onclick="showTierDropdown(this, ['${esc(s.id)}'])" style="display:inline-flex;align-items:center;gap:2px;cursor:pointer">
+        ${_tierBadge(s.credibility_tier)}<span style="font-size:8px;color:#484f58">\u25BE</span>
+      </span>
+    </span>
+    <span style="width:150px;flex-shrink:0">${_usageBar(s.appearance_count ?? 0, s.cited_count ?? 0)}</span>
+    <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(s.last_seen)}">${s.last_seen ? s.last_seen.slice(0,10) : '\u2014'}</span>
+    <span style="width:90px;flex-shrink:0">
+      <button onclick="flagSource('${esc(s.id)}', ${!s.junk})" style="${flagStyle}">${flagLabel}</button>
+      ${s.junk ? '<span style="color:#6e7681;font-size:9px;margin-left:4px">blocked</span>' : ''}
+    </span>
+  </div>`;
+}
+
+function _renderBulkBar() {
+  const bar = $('src-bulk-bar');
+  if (!bar) return;
+  const n = state.selectedSourceIds.size;
+  if (n === 0) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  bar.innerHTML = `
+    <span style="font-size:10px;color:#e3b341;font-weight:600">${n} selected</span>
+    <button onclick="bulkFlagSelected()"
+      style="font-size:10px;color:#f85149;background:#1a0a0a;border:1px solid #da3633;padding:2px 10px;border-radius:3px;cursor:pointer;margin-left:8px">Flag as junk</button>
+    <button onclick="clearSourceSelection()"
+      style="font-size:10px;color:#6e7681;background:transparent;border:1px solid #30363d;padding:2px 8px;border-radius:3px;cursor:pointer;margin-left:6px">Clear</button>`;
+}
+
+function toggleSourceCheck(ids, checked) {
+  for (const id of ids) {
+    if (checked) state.selectedSourceIds.add(id);
+    else state.selectedSourceIds.delete(id);
+  }
+  _renderBulkBar();
+  // sync select-all checkbox state
+  const selectAll = $('src-select-all');
+  if (selectAll) selectAll.checked = _visibleSourceIds.length > 0 &&
+    _visibleSourceIds.every(id => state.selectedSourceIds.has(id));
+}
+
+function selectAllSources(checked) {
+  for (const id of _visibleSourceIds) {
+    if (checked) state.selectedSourceIds.add(id);
+    else state.selectedSourceIds.delete(id);
+  }
+  renderSources();
+}
+
+async function bulkFlagSelected() {
+  const ids = [...state.selectedSourceIds];
+  if (!ids.length) return;
+  await Promise.all(ids.map(id =>
+    fetch(`/api/sources/${encodeURIComponent(id)}/flag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ junk: true }),
+    })
+  ));
+  state.selectedSourceIds.clear();
+  renderSources();
+}
+
+function clearSourceSelection() {
+  state.selectedSourceIds.clear();
+  renderSources();
+}
+
 function toggleSourceGroup(gid) {
   const children = document.getElementById('src-group-' + gid);
   const arrow    = document.getElementById('src-arrow-' + gid);
@@ -2151,71 +2288,137 @@ function toggleSourceGroup(gid) {
   if (arrow) arrow.textContent = open ? '▶' : '▼';
 }
 
+function showTierDropdown(badgeEl, ids) {
+  // Remove any open dropdown
+  document.getElementById('src-tier-dropdown')?.remove();
+
+  const rect = badgeEl.getBoundingClientRect();
+  const dropdown = document.createElement('div');
+  dropdown.id = 'src-tier-dropdown';
+  dropdown.style.cssText = `position:fixed;top:${rect.bottom + 2}px;left:${rect.left}px;
+    background:#161b22;border:1px solid #388bfd;border-radius:4px;z-index:100;min-width:48px;overflow:hidden`;
+
+  const tiers = [
+    { tier: 'A', color: '#3fb950' },
+    { tier: 'B', color: '#e3b341' },
+    { tier: 'C', color: '#6e7681' },
+  ];
+  dropdown.innerHTML = tiers.map(({ tier, color }) =>
+    `<div onclick="overrideTier(${JSON.stringify(ids)}, '${tier}')"
+       style="padding:4px 12px;font-size:10px;color:${color};cursor:pointer;font-family:'IBM Plex Mono',monospace"
+       onmouseover="this.style.background='#21262d'" onmouseout="this.style.background=''">${tier}</div>`
+  ).join('');
+
+  document.body.appendChild(dropdown);
+
+  // Close on outside click (defer so this click doesn't immediately close it)
+  setTimeout(() => {
+    document.addEventListener('click', function _handler(e) {
+      if (!dropdown.contains(e.target)) {
+        dropdown.remove();
+        document.removeEventListener('click', _handler);
+      }
+    });
+  }, 0);
+}
+
+async function overrideTier(ids, tier) {
+  document.getElementById('src-tier-dropdown')?.remove();
+  await Promise.all(ids.map(id =>
+    fetch(`/api/sources/${encodeURIComponent(id)}/tier`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tier }),
+    })
+  ));
+  renderSources();
+}
+
 function renderSourceRegistryTable(sources) {
   const body = $('src-table-body');
   if (!body) return;
 
+  // Client-side keyword post-filter
+  const query = ($('src-search')?.value || '').trim();
+  const filtered = applySourceSearch(query, sources);
+
+  if (!filtered.length) {
+    body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No sources found.</div>';
+    _visibleSourceIds = [];
+    _renderBulkBar();
+    return;
+  }
+
+  // Track all visible IDs for select-all
+  _visibleSourceIds = filtered.map(s => s.id);
+
   // Group by publication name
   const groups = {};
   const order  = [];
-  for (const s of sources) {
+  for (const s of filtered) {
     const key = (s.name || s.domain || '—').trim();
     if (!groups[key]) { groups[key] = []; order.push(key); }
     groups[key].push(s);
   }
 
   const html = order.map((name, idx) => {
-    const members = groups[name];
-    const gid     = idx;
-    const rep     = members[0]; // representative for badges
+    const members   = groups[name];
+    const gid       = idx;
+    const rep       = members[0];
     const totalApp  = members.reduce((a, s) => a + (s.appearance_count ?? 0), 0);
     const totalCite = members.reduce((a, s) => a + (s.cited_count ?? 0), 0);
-    const lastSeen  = members.map(s => s.last_seen || '').sort().at(-1)?.slice(0, 10) || '—';
+    const lastSeen  = members.map(s => s.last_seen || '').sort().at(-1) || null;
     const count     = members.length;
+    const allIds    = members.map(s => s.id);
+    const isBenchmark = (rep.collection_type || 'osint') === 'benchmark';
+    const allChecked  = allIds.every(id => state.selectedSourceIds.has(id));
 
-    // Parent row
-    const parent = `<div onclick="toggleSourceGroup(${gid})"
-      style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #21262d;
-             font-size:11px;cursor:pointer;background:#0d1117;user-select:none"
-      onmouseover="this.style.background='#161b22'" onmouseout="this.style.background='#0d1117'">
-      <span id="src-arrow-${gid}" style="width:16px;flex-shrink:0;color:#484f58;font-size:9px">▶</span>
-      <span style="flex:2;min-width:160px;overflow:hidden">
-        <span style="color:#e6edf3;font-weight:600">${esc(name)}</span>
-        <span style="color:#484f58;font-size:10px;margin-left:6px">${count} source${count !== 1 ? 's' : ''}</span>
-      </span>
-      <span style="width:90px;flex-shrink:0">${_typeBadge(rep.source_type)} ${_collectionBadge(rep.collection_type)}</span>
-      <span style="width:50px;flex-shrink:0">${_tierBadge(rep.credibility_tier)}</span>
-      <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px;color:#8b949e">${totalApp}</span>
-      <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px;color:${totalCite ? '#3fb950' : '#484f58'}">${totalCite}</span>
-      <span style="width:90px;flex-shrink:0;color:#484f58">${lastSeen}</span>
-      <span style="width:80px;flex-shrink:0"></span>
-    </div>`;
+    const faviconHtml = rep.domain
+      ? `<img src="https://www.google.com/s2/favicons?domain=${esc(rep.domain)}&sz=16" width="13" height="13"
+           style="border-radius:2px;opacity:0.6;flex-shrink:0;margin-right:4px" onerror="this.style.display='none'" />`
+      : '';
 
-    // Child rows (hidden by default)
-    const childRows = members.map(s => {
-      const flagLabel = s.junk ? 'Unflag' : 'Flag junk';
-      const flagStyle = s.junk
-        ? 'font-size:9px;color:#f85149;background:#1a0a0a;border:1px solid #da3633;padding:2px 6px;border-radius:2px;cursor:pointer'
-        : 'font-size:9px;color:#6e7681;background:#161b22;border:1px solid #30363d;padding:2px 6px;border-radius:2px;cursor:pointer';
-      const blockedBadge = s.junk ? '<span style="color:#6e7681;font-size:9px;margin-left:6px" title="Blocked from future collection">blocked</span>' : '';
-      const url = s.url ? `<a href="${esc(s.url)}" target="_blank" style="color:#484f58;font-size:10px;text-decoration:none" title="${esc(s.url)}">${esc(s.domain || s.url)}</a>` : `<span style="color:#484f58;font-size:10px">${esc(s.domain||'—')}</span>`;
-      return `<div style="display:flex;align-items:center;padding:6px 12px 6px 36px;border-bottom:1px solid #161b22;font-size:11px;background:#080c10">
-        <span style="flex:2;min-width:160px;overflow:hidden">${url}</span>
-        <span style="width:90px;flex-shrink:0"></span>
-        <span style="width:50px;flex-shrink:0"></span>
-        <span style="width:90px;flex-shrink:0;text-align:right;padding-right:16px;color:#8b949e">${s.appearance_count ?? 0}</span>
-        <span style="width:60px;flex-shrink:0;text-align:right;padding-right:16px;color:${s.cited_count ? '#3fb950' : '#484f58'}">${s.cited_count ?? 0}</span>
-        <span style="width:90px;flex-shrink:0;color:#484f58">${s.last_seen?.slice(0,10)||'—'}</span>
-        <span style="width:80px;flex-shrink:0">
-          <button onclick="flagSource('${esc(s.id)}',${!s.junk})" style="${flagStyle}">${flagLabel}</button>${blockedBadge}
-        </span>
-      </div>`;
-    }).join('');
+    const parent = `
+<div style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid #161b22;font-size:11px;background:#0d1117"
+     onmouseover="this.style.background='#0d1421'" onmouseout="this.style.background='#0d1117'">
+  <span style="width:24px;flex-shrink:0">
+    <input type="checkbox" ${allChecked ? 'checked' : ''}
+      onchange="toggleSourceCheck(${JSON.stringify(allIds)}, this.checked)" style="cursor:pointer" />
+  </span>
+  <span style="flex:2;min-width:180px;display:flex;align-items:center;overflow:hidden;cursor:pointer"
+        onclick="toggleSourceGroup(${gid})">
+    ${faviconHtml}
+    <span style="color:#e6edf3;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(name)}</span>
+    <span style="color:#484f58;font-size:9px;margin-left:6px;white-space:nowrap">${count} URL${count !== 1 ? 's' : ''}</span>
+    ${isBenchmark ? `<span style="font-size:9px;background:#5a3e0a;color:#e3b341;border:1px solid #7d6022;border-radius:3px;padding:0 4px;margin-left:5px;flex-shrink:0">Benchmark</span>` : ''}
+    <span id="src-arrow-${gid}" style="color:#484f58;font-size:9px;margin-left:5px;flex-shrink:0">▶</span>
+  </span>
+  <span style="width:100px;flex-shrink:0">${_typeBadge(rep.source_type)} ${_collectionBadge(rep.collection_type)}</span>
+  <span style="width:55px;flex-shrink:0">
+    <span onclick="showTierDropdown(this, ${JSON.stringify(allIds)})"
+          style="display:inline-flex;align-items:center;gap:2px;cursor:pointer">
+      ${_tierBadge(rep.credibility_tier)}<span style="font-size:8px;color:#484f58">▾</span>
+    </span>
+  </span>
+  <span style="width:150px;flex-shrink:0">
+    ${isBenchmark
+      ? `<span style="color:#484f58;font-size:10px;font-style:italic">— benchmark anchor</span>`
+      : _usageBar(totalApp, totalCite)}
+  </span>
+  <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(lastSeen)}">
+    ${lastSeen ? lastSeen.slice(0, 10) : '—'}
+  </span>
+  <span style="width:90px;flex-shrink:0"></span>
+</div>
+<div id="src-group-${gid}" style="display:none">
+  ${members.map(s => _childRow(s)).join('')}
+</div>`;
 
-    return parent + `<div id="src-group-${gid}" style="display:none">${childRows}</div>`;
+    return parent;
   }).join('');
 
   body.innerHTML = html;
+  _renderBulkBar();
 }
 
 async function flagSource(id, junk) {

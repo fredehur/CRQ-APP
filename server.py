@@ -1153,6 +1153,33 @@ async def flag_source(source_id: str, body: SourceFlagBody):
         return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
 
 
+
+class SourceTierBody(BaseModel):
+    tier: str
+
+
+@app.post("/api/sources/{source_id}/tier")
+async def set_source_tier(source_id: str, body: SourceTierBody):
+    """Override the credibility tier for a source."""
+    if body.tier not in ("A", "B", "C"):
+        return JSONResponse({"ok": False, "error": "tier must be A, B, or C"}, status_code=400)
+    try:
+        with sqlite3.connect(SOURCES_DB) as conn:
+            row = conn.execute(
+                "SELECT id FROM sources_registry WHERE id = ?", (source_id,)
+            ).fetchone()
+            if row is None:
+                return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
+            conn.execute(
+                "UPDATE sources_registry SET credibility_tier = ? WHERE id = ?",
+                (body.tier, source_id),
+            )
+            conn.commit()
+        return {"ok": True}
+    except Exception:
+        return JSONResponse({"ok": False, "error": "db error"}, status_code=500)
+
+
 @app.get("/api/sources/attribution")
 async def get_source_attribution():
     """Per-region source citation rates for the Validate tab."""
