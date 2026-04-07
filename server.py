@@ -40,6 +40,10 @@ validation_state = {
     "phase": None,
     "started_at": None,
 }
+threat_landscape_state = {
+    "running": False,
+    "started_at": None,
+}
 event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
 
 
@@ -298,6 +302,44 @@ async def get_trends():
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
     return {"status": "no_data"}
+
+
+@app.get("/api/threat-landscape")
+async def get_threat_landscape():
+    path = PIPELINE / "threat_landscape.json"
+    if path.exists():
+        return json.loads(path.read_text(encoding="utf-8"))
+    return {"status": "no_data"}
+
+
+@app.post("/api/run-threat-landscape")
+async def run_threat_landscape():
+    if threat_landscape_state["running"]:
+        return {"status": "already_running"}
+    threat_landscape_state["running"] = True
+    threat_landscape_state["started_at"] = time.time()
+    asyncio.create_task(_run_threat_landscape())
+    return {"status": "running"}
+
+
+async def _run_threat_landscape():
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "claude", "--agent", ".claude/agents/threat-landscape-agent.md",
+            "--message", (
+                "Read all output/runs/*/regional/*/data.json and sections.json files. "
+                "Synthesize longitudinal patterns. Write output/pipeline/threat_landscape.json "
+                "per your instructions."
+            ),
+            "--allowedTools", "Bash,Write,Read",
+            "--model", "sonnet",
+            cwd=str(BASE), stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        )
+        await asyncio.wait_for(proc.wait(), timeout=FULL_MODE_TIMEOUT)
+    except Exception as e:
+        log.error("threat-landscape-agent failed: %s", e)
+    finally:
+        threat_landscape_state["running"] = False
 
 
 @app.get("/api/review/{region}")
