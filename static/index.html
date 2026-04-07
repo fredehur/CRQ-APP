@@ -401,18 +401,11 @@
 </div>
 
 <!-- ── HISTORY TAB ─────────────────────────────────────────────── -->
-<div id="tab-history" class="hidden">
-  <h2 style="font-size:13px;color:#e6edf3;margin-bottom:12px">Run History</h2>
-  <div id="history-charts" style="margin-bottom:24px"></div>
-  <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Archived Runs</div>
-  <div id="run-history-list" style="margin-bottom:24px"></div>
-  <div style="border-top:1px solid #21262d;padding-top:14px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Audit Trace</span>
-      <button onclick="toggleTrace()" style="font-size:10px;color:#6e7681;cursor:pointer;background:none;border:none">&#9660;</button>
-    </div>
-    <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap"></pre>
-  </div>
+<div id="tab-history" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 36px)">
+  <div id="history-summary" style="background:#080c10;border-bottom:1px solid #21262d;padding:10px 16px;margin:-20px -24px 16px -24px;font-size:10px;color:#8b949e;display:flex;gap:12px;align-items:center"></div>
+  <div id="history-matrix" style="margin-bottom:16px;overflow-x:auto"></div>
+  <div id="history-run-strip" style="margin-bottom:16px;padding:10px 12px;background:#161b22;border:1px solid #21262d;border-radius:4px;font-size:10px"></div>
+  <div id="history-run-log"></div>
 </div>
 
 <!-- ── CONFIG TAB ──────────────────────────────────────────────── -->
