@@ -1089,6 +1089,7 @@ async def get_source_registry(
             return [
                 {
                     "id": r["id"],
+                    "url": r["url"],
                     "name": r["name"],
                     "domain": r["domain"],
                     "source_type": r["source_type"],

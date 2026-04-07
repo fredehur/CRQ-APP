@@ -301,6 +301,281 @@
       background: rgba(0,0,0,0.6); backdrop-filter: blur(2px);
     }
     #panel-overlay.visible { display: block; }
+
+    /* Pipeline tab */
+    #pipeline-header {
+      flex-shrink: 0;
+      background: #080c10;
+      border-bottom: 1px solid #21262d;
+      padding: 10px 20px;
+    }
+    #pipeline-requirement {
+      font-size: 10px;
+      color: #6e7681;
+      letter-spacing: 0.04em;
+      margin-bottom: 8px;
+    }
+    #pipeline-requirement strong { color: #8b949e; }
+    #admiralty-legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      font-size: 9px;
+      color: #484f58;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    #admiralty-legend .adm-pair { display: flex; flex-direction: column; gap: 2px; }
+    #admiralty-legend .adm-label { color: #6e7681; }
+    #admiralty-legend .adm-note { color: #484f58; font-size: 9px; text-transform: none; letter-spacing: 0; margin-top: 4px; max-width: 600px; font-style: italic; }
+
+    /* Pipeline two-panel layout */
+    #pipeline-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    #pipeline-flow {
+      flex: 0 0 62%;
+      overflow-y: auto;
+      padding: 24px 32px;
+      border-right: 1px solid #21262d;
+    }
+    #pipeline-panel {
+      flex: 0 0 38%;
+      display: none;
+      flex-direction: column;
+      overflow: hidden;
+      background: #080c10;
+    }
+    #pipeline-panel.open { display: flex; }
+
+    /* Pipeline nodes */
+    .pl-phase-label {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+      margin-top: 8px;
+      padding-left: 4px;
+    }
+    .pl-node {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 4px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color 150ms;
+      margin-bottom: 0;
+    }
+    .pl-node:hover { border-color: #3fb950; }
+    .pl-node.active { border-color: #3fb950; background: #0a130a; }
+    .pl-node-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .pl-phase-badge {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: #21262d;
+      color: #8b949e;
+      flex-shrink: 0;
+    }
+    .pl-node-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e6edf3;
+      flex: 1;
+    }
+    .pl-phase-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .pl-node-role {
+      font-size: 10px;
+      color: #6e7681;
+      margin-bottom: 8px;
+      line-height: 1.5;
+    }
+    .pl-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .pl-badge {
+      font-size: 9px;
+      padding: 1px 7px;
+      border-radius: 2px;
+      letter-spacing: 0.04em;
+    }
+    .pl-badge-model    { background: #1a2d3a; color: #79c0ff; border: 1px solid #1f4a6e; }
+    .pl-badge-type-det { background: #1a1a2e; color: #a371f7; border: 1px solid #3d2d7a; }
+    .pl-badge-type-llm { background: #1a2e1a; color: #3fb950; border: 1px solid #238636; }
+    .pl-badge-type-gate{ background: #2e2a1a; color: #e3b341; border: 1px solid #6e5c1a; }
+    .pl-badge-type-orch{ background: #2e1a1a; color: #ff7b72; border: 1px solid #6e2020; }
+    .pl-badge-concept  { background: #1a1a1a; color: #484f58; border: 1px solid #30363d; }
+
+    /* Connector with animated dot */
+    .pl-connector {
+      position: relative;
+      width: 2px;
+      height: 36px;
+      background: #21262d;
+      margin: 0 auto;
+      overflow: visible;
+    }
+    .pl-connector::after {
+      content: '';
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3fb950;
+      left: -2px;
+      top: 0;
+      animation: pl-dot-travel 2.4s ease-in-out infinite;
+    }
+    @keyframes pl-dot-travel {
+      0%   { top: 0;              opacity: 0; }
+      8%   { opacity: 1; }
+      92%  { opacity: 1; }
+      100% { top: calc(100% - 6px); opacity: 0; }
+    }
+
+    /* Fan-out block */
+    .pl-fanout {
+      border: 1px dashed #21262d;
+      border-radius: 4px;
+      padding: 12px;
+      margin: 0;
+    }
+    .pl-fanout-label {
+      font-size: 9px;
+      color: #484f58;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .pl-region-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 8px;
+      border-radius: 2px;
+      cursor: pointer;
+      transition: background 100ms;
+      margin-bottom: 3px;
+    }
+    .pl-region-row:hover { background: #0d1117; }
+    .pl-region-name { font-size: 10px; color: #8b949e; }
+    .pl-region-badge {
+      font-size: 9px;
+      padding: 1px 7px;
+      border-radius: 2px;
+    }
+    .badge-escalate { background: #2d1111; color: #ff7b72; border: 1px solid #6e2020; }
+    .badge-monitor  { background: #1a1a2d; color: #79c0ff; border: 1px solid #1f4a6e; }
+    .badge-clear    { background: #1a2d1a; color: #3fb950; border: 1px solid #238636; }
+
+    /* Side panel */
+    #pipeline-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid #21262d;
+      flex-shrink: 0;
+    }
+    #pipeline-panel-title { font-size: 11px; color: #e6edf3; font-weight: 600; }
+    #pipeline-panel-body  { flex: 1; overflow-y: auto; padding: 16px 14px; }
+    .pl-panel-section { margin-bottom: 20px; }
+    .pl-panel-section-label {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #484f58;
+      margin-bottom: 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #21262d;
+    }
+    .pl-panel-body { font-size: 11px; color: #8b949e; line-height: 1.65; }
+    .pl-panel-body strong { color: #c9d1d9; }
+    .pl-io-row {
+      display: flex;
+      gap: 8px;
+      font-size: 10px;
+      color: #6e7681;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+    .pl-io-label { color: #484f58; }
+    .pl-io-file  { color: #79c0ff; font-size: 9px; }
+    .pl-principle {
+      margin-top: 8px;
+      padding: 8px 10px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-radius: 3px;
+    }
+    .pl-principle-name { font-size: 10px; color: #e3b341; margin-bottom: 3px; }
+    .pl-principle-desc { font-size: 10px; color: #6e7681; line-height: 1.55; }
+
+    /* Config section in side panel */
+    .pl-config-divider {
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #484f58;
+      margin: 16px 0 8px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid #21262d;
+    }
+    #pl-prompt-fm { font-size: 10px; color: #6e7681; display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 6px; }
+    #pl-prompt-body {
+      width: 100%;
+      resize: vertical;
+      min-height: 200px;
+      background: #080c10;
+      border: 1px solid #21262d;
+      color: #c9d1d9;
+      padding: 10px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      line-height: 1.6;
+      outline: none;
+      border-radius: 2px;
+    }
+    #pl-prompt-save {
+      margin-top: 6px;
+      font-size: 10px;
+      padding: 3px 12px;
+      background: #1a3a1a;
+      border: 1px solid #238636;
+      color: #3fb950;
+      border-radius: 2px;
+      cursor: pointer;
+    }
+    #pl-prompt-save:disabled { opacity: 0.4; cursor: not-allowed; background: #0d1117; border-color: #21262d; color: #6e7681; }
+    #pl-prompt-note { font-size: 9px; color: #484f58; margin-top: 6px; font-style: italic; }
+
+    /* Glossary */
+    #pl-glossary { margin-top: 32px; }
+    #pl-glossary-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 8px 0;
+      border-top: 1px solid #21262d;
+    }
+    #pl-glossary-toggle span { font-size: 10px; color: #6e7681; letter-spacing: 0.06em; text-transform: uppercase; }
+    #pl-glossary-body { display: none; margin-top: 12px; }
+    #pl-glossary-body.open { display: block; }
+    .pl-glossary-term { margin-bottom: 12px; }
+    .pl-glossary-name { font-size: 10px; color: #e3b341; margin-bottom: 3px; }
+    .pl-glossary-def  { font-size: 10px; color: #6e7681; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -317,6 +592,7 @@
       <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
       <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Validate</div>
       <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Audit</div>
+      <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
     </nav>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
@@ -527,6 +803,53 @@
   </div>
 </div>
 
+<!-- ── PIPELINE TAB ─────────────────────────────────────────────────── -->
+<div id="tab-pipeline" class="hidden" style="height:calc(100vh - 36px);overflow:hidden;display:flex;flex-direction:column">
+
+  <!-- Fixed header: requirement + admiralty -->
+  <div id="pipeline-header">
+    <div id="pipeline-requirement">
+      <strong>Analytical Requirement</strong> — Does a credible geopolitical or cyber threat exist in any of AeroGrid's five operational regions that could materially disrupt operations, supply chains, or safety at critical assets?
+    </div>
+    <div id="admiralty-legend">
+      <div class="adm-pair">
+        <span class="adm-label">Source Reliability</span>
+        <span>A — Completely reliable &nbsp;·&nbsp; B — Usually reliable &nbsp;·&nbsp; C — Fairly reliable &nbsp;·&nbsp; D — Not usually reliable</span>
+      </div>
+      <div class="adm-pair">
+        <span class="adm-label">Information Credibility</span>
+        <span>1 — Confirmed &nbsp;·&nbsp; 2 — Probably true &nbsp;·&nbsp; 3 — Possibly true &nbsp;·&nbsp; 4 — Doubtful</span>
+      </div>
+      <div class="adm-pair" style="flex-basis:100%">
+        <span class="adm-note">Admiralty ratings are assigned by the Gatekeeper at triage and propagate through the pipeline. They reflect source corroboration quality — not model confidence scores.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Two-panel body -->
+  <div id="pipeline-body">
+    <!-- Flow column -->
+    <div id="pipeline-flow">
+      <div id="pipeline-nodes-container"></div>
+      <div id="pl-glossary">
+        <div id="pl-glossary-toggle" onclick="toggleGlossary()">
+          <span>▸ Agentic Concepts Glossary</span>
+        </div>
+        <div id="pl-glossary-body"></div>
+      </div>
+    </div>
+    <!-- Side panel -->
+    <div id="pipeline-panel">
+      <div id="pipeline-panel-header">
+        <span id="pipeline-panel-title">—</span>
+        <button onclick="closePipelinePanel()" style="background:none;border:none;color:#6e7681;cursor:pointer;font-size:14px">✕</button>
+      </div>
+      <div id="pipeline-panel-body"></div>
+    </div>
+  </div>
+
+</div>
+
 <!-- ── VALIDATE TAB ─────────────────────────────────────────────── -->
 <div id="tab-validate" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 36px)">
 
@@ -662,7 +985,8 @@
       <span style="width:55px;flex-shrink:0">Tier</span>
       <span style="width:150px;flex-shrink:0">Usage</span>
       <span style="width:80px;flex-shrink:0">Last Seen</span>
-      <span style="width:90px;flex-shrink:0">Actions</span>
+      <span style="width:60px;flex-shrink:0">Link</span>
+      <span style="width:70px;flex-shrink:0">Junk</span>
     </div>
     <!-- Body -->
     <div id="src-table-body">
