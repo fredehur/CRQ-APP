@@ -926,8 +926,16 @@ async function renderHistory() {
   if (trace?.log) $('audit-trace').textContent = trace.log;
 }
 
-function toggleTrace() {
-  $('audit-trace').classList.toggle('hidden');
+function toggleAuditTrace() {
+  const el = $('audit-trace');
+  const btn = $('btn-toggle-trace');
+  el.classList.toggle('hidden');
+  if (btn) btn.innerHTML = el.classList.contains('hidden') ? '&#9654;' : '&#9660;';
+}
+
+async function loadAuditTrace() {
+  const trace = await fetchJSON('/api/trace');
+  if (trace?.log) $('audit-trace').textContent = trace.log;
 }
 
 // ── Trends Tab ────────────────────────────────────────────────────────
@@ -1814,7 +1822,7 @@ function showUnsavedModal(onConfirm) {
 // ── Section: Validate Tab ──────────────────────────────────────────────
 
 async function renderValidateTab() {
-  await Promise.all([loadValScenarios(), loadValSources(), loadValCandidates()]);
+  await Promise.all([loadValScenarios(), loadValSources(), loadValCandidates(), loadAuditTrace()]);
 }
 
 function applyRegionFilterAndSwitch(region) {
