@@ -803,50 +803,31 @@ async function generateCisoDocx() {
   }
 }
 
-// ── History helpers ────────────────────────────────────────────────────
-function _sevHeatColor(severity) {
-  const s = (severity || '').toUpperCase();
-  if (s === 'CRITICAL') return '#f85149';
-  if (s === 'HIGH')     return '#d29922';
-  if (s === 'MEDIUM')   return '#3fb950';
-  return '#6e7681';
+// ── History Matrix Helpers ────────────────────────────────────────────
+const MATRIX_COLORS = {
+  CRITICAL: 'rgba(255,123,114,0.95)',
+  HIGH:     'rgba(255,123,114,0.85)',
+  MEDIUM:   'rgba(255,166,87,0.80)',
+  LOW:      'rgba(227,179,65,0.75)',
+  MONITOR:  'rgba(121,192,255,0.55)',
+  CLEAR:    '#1a2a1a',
+  NO_DATA:  '#21262d',
+};
+const MATRIX_SEV_LABEL = { CRITICAL: '#ff7b72', HIGH: '#ff7b72', MEDIUM: '#ffa657', LOW: '#e3b341' };
+
+function _matrixCellColor(status, severity) {
+  if (!status || status === 'no_data') return MATRIX_COLORS.NO_DATA;
+  const s = (status || '').toLowerCase();
+  if (s === 'clear') return MATRIX_COLORS.CLEAR;
+  if (s === 'monitor') return MATRIX_COLORS.MONITOR;
+  return MATRIX_COLORS[severity] || MATRIX_COLORS.MEDIUM;
 }
 
-function _buildSparkline(points) {
-  // points: array of numbers (vacr_usd). Returns SVG string.
-  const W = 200, H = 40, PAD = 4;
-  if (!points.length) return '';
-  const vals = points.map(v => v || 0);
-  const mn = Math.min(...vals), mx = Math.max(...vals);
-  const range = mx - mn || 1;
-  const xs = vals.map((_, i) => PAD + (i / Math.max(vals.length - 1, 1)) * (W - PAD * 2));
-  const ys = vals.map(v => H - PAD - ((v - mn) / range) * (H - PAD * 2));
-  const polyPts = xs.map((x, i) => `${x.toFixed(1)},${ys[i].toFixed(1)}`).join(' ');
-  const dots = xs.map((x, i) => {
-    const fill = vals[i] === 0 ? '#6e7681' : '#58a6ff';
-    return `<circle cx="${x.toFixed(1)}" cy="${ys[i].toFixed(1)}" r="2" fill="${fill}"/>`;
-  }).join('');
-  return `<svg class="sparkline-container" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-    <polyline points="${polyPts}" stroke="#58a6ff" stroke-width="1.5" fill="none" stroke-linejoin="round"/>
-    ${dots}
-  </svg>`;
-}
-
-function _buildHeatmap(runs) {
-  // runs: array of {severity, vacr_usd, timestamp} newest last
-  const last10 = runs.slice(-10);
-  return last10.map(r => {
-    const color = _sevHeatColor(r.severity);
-    const label = `${r.timestamp ? r.timestamp.slice(0, 10) : '?'}: ${r.severity || 'CLEAR'} $${((r.vacr_usd || 0) / 1e6).toFixed(1)}M`;
-    return `<div class="heatmap-square" style="background:${color}" title="${esc(label)}"></div>`;
-  }).join('');
-}
-
-function _velArrow(velocity) {
-  if (!velocity) return '';
-  if (velocity === 'accelerating') return ' <span style="color:#f85149">↑</span>';
-  if (velocity === 'improving')    return ' <span style="color:#3fb950">↓</span>';
-  return ' <span style="color:#8b949e">→</span>';
+function _fmtShortDate(ts) {
+  if (!ts) return '?';
+  const d = new Date(ts);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${months[d.getMonth()]} ${d.getDate()}`;
 }
 
 async function renderHistory() {
@@ -855,75 +836,200 @@ async function renderHistory() {
     fetchJSON('/api/runs'),
   ]);
 
-  const chartsEl = $('history-charts');
   const regionData = history?.regions || {};
   const drift = history?.drift || {};
-  const hasAny = REGIONS.some(r => (regionData[r] || []).length > 0);
+  const allRuns = runs || [];
 
-  if (!hasAny) {
-    chartsEl.innerHTML = '<p style="color:#6e7681;font-size:11px">Run the pipeline to build history.</p>';
-  } else {
-    chartsEl.innerHTML = REGIONS.map(region => {
-      const pts = regionData[region] || [];
-      const driftInfo = drift[region];
-      const driftBadge = driftInfo && driftInfo.consecutive_runs >= 2
-        ? `<span class="drift-badge">${esc(driftInfo.current_scenario)} &times; ${driftInfo.consecutive_runs} runs</span>`
-        : '';
+  // Build run index: array of {folder, ts, regionMap, window}
+  const runIndex = allRuns.map(run => {
+    const m = run.manifest || {};
+    const ts = m.run_timestamp || run.name;
+    const regionMap = {};
+    REGIONS.forEach(r => {
+      const pts = regionData[r] || [];
+      const match = pts.find(p => p.run_folder === run.name);
+      if (match) regionMap[r] = match;
+    });
+    return { folder: run.name, ts, regionMap, window: m.window_used || '7d' };
+  });
 
-      if (!pts.length) {
-        return `<div class="history-region-card">
-          <div class="history-region-header">
-            <span class="history-region-label">${esc(region)}</span>
-            <span style="font-size:10px;color:#6e7681">${esc(REGION_LABELS[region] || region)}</span>
-          </div>
-          <div style="font-size:10px;color:#6e7681;padding:8px 0">No run data yet.</div>
-        </div>`;
-      }
+  // ── Summary bar ──
+  const totalRuns = runIndex.length;
+  const dateRange = totalRuns
+    ? `${_fmtShortDate(runIndex[0].ts)} – ${_fmtShortDate(runIndex[runIndex.length - 1].ts)}`
+    : '';
+  const persistCount = REGIONS.filter(r => {
+    const pts = regionData[r] || [];
+    const escalated = pts.filter(p => p.status === 'escalated').length;
+    return pts.length > 0 && escalated > pts.length / 2;
+  }).length;
+  const improvingCount = REGIONS.filter(r => {
+    const pts = regionData[r] || [];
+    if (pts.length < 2) return false;
+    const last2 = pts.slice(-2);
+    return last2[0].status === 'escalated' && last2[1].status !== 'escalated';
+  }).length;
+  const clearCount = REGIONS.filter(r => {
+    const pts = regionData[r] || [];
+    return pts.length > 0 && pts.every(p => p.status === 'clear');
+  }).length;
 
-      const last = pts[pts.length - 1];
-      const sparkline = _buildSparkline(pts.map(p => p.vacr_usd || 0));
-      const heatmap = _buildHeatmap(pts);
-      const scenario = last.primary_scenario
-        ? `<span style="color:#c9d1d9">${esc(last.primary_scenario)}</span>${_velArrow(last.velocity)}`
-        : `<span style="color:#6e7681">—</span>`;
+  let summaryHtml = `<span>${totalRuns} runs · ${dateRange}</span>`;
+  if (persistCount) summaryHtml += `<span style="color:#ff7b72">· ${persistCount} persistently escalated</span>`;
+  if (improvingCount) summaryHtml += `<span style="color:#3fb950">· ${improvingCount} improving</span>`;
+  if (clearCount) summaryHtml += `<span style="color:#3fb950">· ${clearCount} stable clear</span>`;
+  $('history-summary').innerHTML = summaryHtml;
 
-      return `<div class="history-region-card">
-        <div class="history-region-header">
-          <span class="history-region-label">${esc(region)}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span style="font-size:10px;color:#6e7681">${esc(REGION_LABELS[region] || region)}</span>
-            ${driftBadge}
-          </div>
-        </div>
-        <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
-          <div>
-            <div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">VaCR Exposure</div>
-            ${sparkline}
-          </div>
-          <div>
-            <div style="font-size:9px;color:#6e7681;margin-bottom:4px;letter-spacing:0.08em;text-transform:uppercase">Severity (last ${Math.min(pts.length, 10)} runs)</div>
-            <div class="severity-heatmap">${heatmap}</div>
-          </div>
-        </div>
-        <div class="history-meta">Last run: ${scenario} &nbsp;·&nbsp; ${pts.length} run${pts.length !== 1 ? 's' : ''} recorded</div>
-      </div>`;
-    }).join('');
+  if (!totalRuns) {
+    $('history-matrix').innerHTML = '<p style="color:#6e7681;font-size:11px">Run the pipeline to build history.</p>';
+    $('history-run-strip').innerHTML = '';
+    $('history-run-log').innerHTML = '';
+    return;
   }
 
-  // Archived runs list
-  const runsEl = $('run-history-list');
-  runsEl.innerHTML = !runs?.length
-    ? '<p style="color:#6e7681;font-size:11px">No archived runs yet.</p>'
-    : (runs).map(run => {
-        const m = run.manifest || {};
-        return `<div style="border:1px solid #21262d;border-radius:4px;padding:10px 12px;margin-bottom:6px;font-size:11px;color:#8b949e">
-          <span style="color:#e6edf3">${esc(m.run_timestamp ? fmtTime(m.run_timestamp) : run.name)}</span>
-          ${m.window_used ? `<span style="color:#6e7681;margin-left:8px">${esc(m.window_used)} window</span>` : ''}
-        </div>`;
-      }).join('');
+  // ── Disambiguate same-day date labels ──
+  const dateLabels = runIndex.map((r, i) => {
+    const base = _fmtShortDate(r.ts);
+    const dupes = runIndex.filter((x, j) => j <= i && _fmtShortDate(x.ts) === base);
+    return dupes.length > 1 ? `${base}${String.fromCharCode(96 + dupes.length)}` : base;
+  });
 
-  const trace = await fetchJSON('/api/trace');
-  if (trace?.log) $('audit-trace').textContent = trace.log;
+  const isLatest = i => i === runIndex.length - 1;
+  const colW = Math.max(20, Math.min(36, Math.floor(600 / totalRuns)));
+
+  // ── Escalation matrix ──
+  let matrixHtml = `<div style="display:grid;grid-template-columns:164px repeat(${totalRuns}, ${colW}px);gap:2px;align-items:center">`;
+  // Header row
+  matrixHtml += '<div></div>';
+  dateLabels.forEach((label, i) => {
+    const style = isLatest(i)
+      ? 'color:#8b949e;font-weight:600;font-size:8px;text-align:center'
+      : 'color:#6e7681;font-size:8px;text-align:center';
+    matrixHtml += `<div style="${style}">${label}</div>`;
+  });
+
+  // Region rows
+  REGIONS.forEach(r => {
+    const pts = regionData[r] || [];
+    const driftInfo = drift[r];
+    const driftText = driftInfo && driftInfo.consecutive_runs >= 2
+      ? `${driftInfo.current_scenario} ×${driftInfo.consecutive_runs} →`
+      : '';
+    const latest = pts.length ? pts[pts.length - 1] : null;
+    const vacr = latest?.vacr_usd ? `$${(latest.vacr_usd / 1e6).toFixed(1)}M` : '—';
+    const escRatio = pts.length
+      ? `${pts.filter(p => p.status === 'escalated').length}/${pts.length}`
+      : '';
+    const statusColor = latest?.status === 'escalated'
+      ? (MATRIX_SEV_LABEL[latest.severity] || '#ffa657')
+      : latest?.status === 'monitor' ? '#79c0ff' : '#3fb950';
+
+    matrixHtml += `<div style="padding:4px 8px">
+      <div style="display:flex;align-items:center;gap:6px">
+        <span style="color:${statusColor};font-weight:600;font-size:10px">${r}</span>
+        ${driftText ? `<span style="font-size:8px;color:#e3b341">${esc(driftText)}</span>` : ''}
+      </div>
+      <div style="font-size:8px;color:#6e7681">${vacr} · ${escRatio} escalated</div>
+    </div>`;
+
+    runIndex.forEach((run, i) => {
+      const cell = run.regionMap[r];
+      const status = cell?.status || 'no_data';
+      const severity = cell?.severity || '';
+      const bg = _matrixCellColor(status, severity);
+      const border = status === 'clear' ? 'border:1px solid #21262d;' : '';
+      const latestBorder = isLatest(i) ? 'border:1px solid #58a6ff;' : '';
+      const scenario = cell?.primary_scenario || '';
+      const cellVacr = cell?.vacr_usd ? `$${(cell.vacr_usd / 1e6).toFixed(1)}M` : '';
+      const title = `${dateLabels[i]} · ${severity || status} · ${scenario} · ${cellVacr}`;
+      matrixHtml += `<div style="height:20px;background:${bg};border-radius:2px;cursor:pointer;${border}${latestBorder}" title="${esc(title)}" onclick="selectHistoryRun(${i})"></div>`;
+    });
+  });
+  matrixHtml += '</div>';
+
+  // ── Legend ──
+  const legendItems = [
+    ['CRITICAL', MATRIX_COLORS.CRITICAL, ''],
+    ['HIGH', MATRIX_COLORS.HIGH, ''],
+    ['MEDIUM', MATRIX_COLORS.MEDIUM, ''],
+    ['LOW', MATRIX_COLORS.LOW, ''],
+    ['MONITOR', MATRIX_COLORS.MONITOR, ''],
+    ['CLEAR', MATRIX_COLORS.CLEAR, 'border:1px solid #21262d;'],
+    ['No data', MATRIX_COLORS.NO_DATA, ''],
+  ];
+  matrixHtml += `<div style="display:flex;flex-wrap:wrap;gap:12px;border-top:1px solid #21262d;padding-top:8px;margin-top:8px">`;
+  legendItems.forEach(([label, color, extra]) => {
+    matrixHtml += `<div style="display:flex;align-items:center;gap:4px;font-size:8px;color:#6e7681"><div style="width:10px;height:10px;border-radius:2px;background:${color};${extra}"></div>${label}</div>`;
+  });
+  matrixHtml += '</div>';
+  $('history-matrix').innerHTML = matrixHtml;
+
+  // ── Store state for click handler ──
+  window._historyRunIndex = runIndex;
+  window._historyDateLabels = dateLabels;
+
+  // ── Run strip: default to latest run ──
+  selectHistoryRun(runIndex.length - 1);
+
+  // ── Run log ──
+  const DOT_COLORS = {
+    CRITICAL: '#ff7b72', HIGH: '#ff7b72', MEDIUM: '#ffa657', LOW: '#e3b341',
+    MONITOR: '#79c0ff', CLEAR: '#3fb950', NO_DATA: '#21262d',
+  };
+  const dotLegend = REGIONS.map(r => `<span style="font-size:9px;color:#8b949e">${r}</span>`).join(' · ');
+  const recentRuns = runIndex.slice().reverse();
+  const visibleCount = 3;
+  const runRows = recentRuns.map((run, i) => {
+    const dateColor = i < 1 ? '#e6edf3' : i < 3 ? '#8b949e' : '#484f58';
+    const dots = REGIONS.map(r => {
+      const cell = run.regionMap[r];
+      const sev = cell?.status === 'escalated'
+        ? (cell.severity || 'MEDIUM')
+        : cell?.status === 'monitor' ? 'MONITOR'
+        : cell?.status === 'clear' ? 'CLEAR'
+        : 'NO_DATA';
+      return `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${DOT_COLORS[sev] || DOT_COLORS.NO_DATA}"></span>`;
+    }).join('');
+    const hidden = i >= visibleCount ? 'class="run-log-row" style="display:none"' : 'class="run-log-row"';
+    return `<div ${hidden} style="display:grid;grid-template-columns:1fr auto;padding:4px 0">
+      <span style="font-size:10px;color:${dateColor}">${_fmtShortDate(run.ts)} · ${run.window} window</span>
+      <span style="display:flex;gap:4px">${dots}</span>
+    </div>`;
+  }).join('');
+
+  $('history-run-log').innerHTML = `
+    <div style="font-size:8px;color:#6e7681;margin-bottom:6px">dots: ${dotLegend}</div>
+    <div>${runRows}</div>
+    ${recentRuns.length > visibleCount
+      ? `<div style="font-size:9px;color:#484f58;margin-top:6px;cursor:pointer" onclick="document.querySelectorAll('.run-log-row').forEach(r=>r.style.display='grid');this.style.display='none'">${recentRuns.length} runs total · showing ${visibleCount} most recent — click to expand</div>`
+      : ''}
+  `;
+}
+
+function selectHistoryRun(idx) {
+  const runIndex = window._historyRunIndex;
+  const dateLabels = window._historyDateLabels;
+  if (!runIndex || !runIndex[idx]) return;
+  const run = runIndex[idx];
+  const isLatestRun = idx === runIndex.length - 1;
+  const label = isLatestRun ? 'latest run · click any cell to inspect' : 'click any cell to inspect';
+
+  const items = REGIONS.map(r => {
+    const cell = run.regionMap[r];
+    if (!cell || cell.status === 'no_data') return `<span style="color:#484f58">${r} no data</span>`;
+    const sColor = cell.status === 'escalated'
+      ? (MATRIX_SEV_LABEL[cell.severity] || '#ffa657')
+      : cell.status === 'monitor' ? '#79c0ff' : '#3fb950';
+    const info = cell.status === 'escalated'
+      ? `${cell.primary_scenario || '?'} · $${((cell.vacr_usd || 0) / 1e6).toFixed(1)}M`
+      : cell.status;
+    return `<span><span style="color:${sColor};font-weight:600">${r}</span> <span style="color:#8b949e">${esc(info)}</span></span>`;
+  }).join(' &nbsp;·&nbsp; ');
+
+  $('history-run-strip').innerHTML = `
+    <div style="font-size:9px;color:#6e7681;margin-bottom:6px">${dateLabels[idx]} — ${run.window} window (${label})</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:10px">${items}</div>
+  `;
 }
 
 function toggleAuditTrace() {
