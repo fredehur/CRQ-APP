@@ -2595,22 +2595,18 @@ function _renderScenarioList() {
       ? _regValVerdictBadge('%', pVerdict)
       : `<span style="font-size:10px;color:#484f58">—</span>`;
     const isSelected = s.scenario_id === state.selectedScenarioId;
-    const selStyle = isSelected
-      ? 'border-left:2px solid #1f6feb;background:#111820;'
-      : 'border-left:2px solid transparent;';
-    return `<div onclick="_selectScenario('${esc(s.scenario_id)}')"
-      style="padding:8px 12px;border-bottom:1px solid #21262d;cursor:pointer;${selStyle}">
-      <div style="font-size:11px;color:#e6edf3;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.scenario_name)}</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <span style="font-size:10px;color:#3fb950;font-family:monospace">${vacr}</span>
-        <span style="font-size:10px;color:#484f58">${prob}</span>
-        <span style="margin-left:auto;display:flex;gap:4px">${fBadge}${pBadge}</span>
+    return `<div onclick="_selectScenario('${esc(s.scenario_id)}')" class="rr-scenario-row${isSelected ? ' is-selected' : ''}">
+      <div class="rr-scenario-name">${esc(s.scenario_name)}</div>
+      <div class="rr-scenario-meta">
+        <span class="rr-vacr">${vacr}</span>
+        <span class="rr-prob">${prob}</span>
+        <span style="margin-left:auto;display:flex;gap:3px">${fBadge}${pBadge}</span>
       </div>
     </div>`;
   }).join('');
 
-  const addBtn = `<div style="padding:8px 12px;border-top:1px solid #21262d">
-    <button onclick="_showAddScenarioForm()" style="width:100%;background:transparent;border:1px dashed #21262d;color:#484f58;border-radius:3px;padding:6px;font-size:10px;cursor:pointer">+ Add Scenario</button>
+  const addBtn = `<div style="padding:10px 12px;border-top:1px solid #21262d">
+    <button onclick="_showAddScenarioForm()" style="width:100%;background:transparent;border:1px dashed #21262d;color:#6e7681;border-radius:2px;padding:7px;font-size:9px;font-weight:600;letter-spacing:0.08em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;transition:border-color 0.15s,color 0.15s" onmouseover="this.style.borderColor='#30363d';this.style.color='#8b949e'" onmouseout="this.style.borderColor='#21262d';this.style.color='#6e7681'">+ Add Scenario</button>
   </div>`;
 
   el.innerHTML = (rows || '<div style="padding:12px;color:#484f58;font-size:10px">No scenarios.</div>') + addBtn;
@@ -2639,14 +2635,14 @@ function _renderScenarioDetail(scenario, valScenario) {
   const prob = scenario.probability_pct != null ? `${scenario.probability_pct}%` : '—';
 
   // Numbers zone
-  const numbersZone = `<div id="rr-numbers-zone" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 14px;border-bottom:1px solid #21262d">
-    <div>
-      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Value at Cyber Risk</div>
-      <div style="font-size:18px;font-weight:600;color:#3fb950;font-family:monospace">${vacr}</div>
+  const numbersZone = `<div id="rr-numbers-zone" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #21262d">
+    <div style="padding:14px 16px;border-right:1px solid #161b22">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Value at Cyber Risk</div>
+      <div style="font-size:22px;font-weight:600;color:#3fb950;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.02em">${vacr}</div>
     </div>
-    <div>
-      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Probability</div>
-      <div style="font-size:18px;font-weight:600;color:#8b949e;font-family:monospace">${prob}</div>
+    <div style="padding:14px 16px">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Probability</div>
+      <div style="font-size:22px;font-weight:600;color:#8b949e;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.02em">${prob}</div>
     </div>
   </div>`;
 
@@ -2665,13 +2661,13 @@ function _renderScenarioDetail(scenario, valScenario) {
   }
 
   el.innerHTML = `
-    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center">
+    <div style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center;background:#080c10">
       <div>
-        <div style="font-size:12px;font-weight:600;color:#c9d1d9">${esc(scenario.scenario_name)}</div>
-        <div style="font-size:10px;color:#484f58;margin-top:2px;font-family:monospace">${esc(scenario.scenario_id)}</div>
+        <div style="font-size:13px;font-weight:600;color:#e6edf3;font-family:'IBM Plex Sans',sans-serif">${esc(scenario.scenario_name)}</div>
+        <div style="font-size:9px;color:#484f58;margin-top:3px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.02em">${esc(scenario.scenario_id)}</div>
       </div>
       <button onclick="_renderEditZone('${esc(scenario.scenario_id)}')"
-        style="background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">&#9998; Edit</button>
+        style="background:transparent;border:1px solid #21262d;color:#6e7681;border-radius:2px;padding:3px 10px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎ Edit</button>
     </div>
     ${numbersZone}
     ${validationZone}`;
@@ -3254,14 +3250,11 @@ async function loadRegisterValidationResults() {
 
 
 function _regValVerdictBadge(prefix, verdict) {
-  const styles = {
-    supports: 'background:#0a1a0a;color:#3fb950;border:1px solid #238636',
-    challenges: 'background:#2d0000;color:#ff7b72;border:1px solid #da3633',
-    insufficient: 'background:#1a1a1a;color:#484f58;border:1px solid #21262d',
-  };
-  const labels = {supports: 'SUPPORTS', challenges: 'CHALLENGES', insufficient: 'INSUFFICIENT'};
-  const style = styles[verdict] || styles.insufficient;
-  return `<span style="${style};font-size:9px;padding:2px 6px;border-radius:10px;letter-spacing:0.04em">${prefix} ${labels[verdict] || verdict.toUpperCase()}</span>`;
+  const cls = {supports: 'rr-verdict-supports', challenges: 'rr-verdict-challenges', insufficient: 'rr-verdict-insufficient'}[verdict] || 'rr-verdict-insufficient';
+  const labels = {supports: 'SUPPORTS', challenges: 'CHALLENGES', insufficient: 'INSUF'};
+  const label = labels[verdict] || verdict.toUpperCase();
+  const text = prefix ? `${prefix} ${label}` : label;
+  return `<span class="rr-verdict-badge ${cls}">${text}</span>`;
 }
 
 function _ctxBadge(tag) {
@@ -3342,18 +3335,18 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
     : `<div style="color:#484f58;font-size:10px">No sources found.</div>`;
 
   return `
-  <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:4px;overflow:hidden">
-    <div onclick="toggleRegValRow('${expandId}')" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#080c10;cursor:pointer">
-      <span style="color:#6e7681;width:75px;flex-shrink:0;font-size:10px;letter-spacing:0.04em">${label}</span>
-      <span style="color:#c9d1d9;width:100px;flex-shrink:0;font-weight:600;font-size:11px">${vacr}</span>
-      <span style="color:#484f58">→</span>
-      <span style="color:#6e7681;font-size:10px">benchmark</span>
-      <span style="color:#c9d1d9;font-size:10px;margin-left:4px">${range}</span>
-      <span style="margin-left:auto">${_regValVerdictBadge('', d.verdict)} <span style="color:#484f58;font-size:10px;margin-left:4px">${allSources.length} src</span></span>
+  <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:3px;overflow:hidden">
+    <div onclick="toggleRegValRow('${expandId}')" class="rr-dim-header">
+      <span class="rr-dim-label">${label}</span>
+      <span class="rr-dim-value">${vacr}</span>
+      <span class="rr-dim-sep">·</span>
+      <span class="rr-dim-bench-label">benchmark</span>
+      <span class="rr-dim-bench-val">${range}</span>
+      <span class="rr-dim-right">${_regValVerdictBadge('', d.verdict)}<span class="rr-src-count">${allSources.length} src</span></span>
     </div>
-    <div id="${expandId}" style="display:block;background:#070a0e;padding:8px 10px;border-top:1px solid #161b22">
+    <div id="${expandId}" style="display:block;background:#060a0f;padding:8px 10px;border-top:1px solid #0d1117">
       ${sourcesHtml}
-      ${d.recommendation ? `<div style="margin-top:6px;padding:6px 8px;background:#0d1117;border-left:2px solid ${borderColor};border-radius:0 3px 3px 0;font-size:10px;color:#8b949e">${esc(d.recommendation)}</div>` : ''}
+      ${d.recommendation ? `<div style="margin-top:8px;padding:8px 10px;background:#080c10;border-left:2px solid ${borderColor};font-size:10px;color:#8b949e;line-height:1.6;font-family:'IBM Plex Sans',sans-serif">${esc(d.recommendation)}</div>` : ''}
     </div>
   </div>`;
 }
