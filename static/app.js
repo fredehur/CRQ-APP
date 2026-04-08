@@ -1585,8 +1585,11 @@ function renderPipelineTab() {
 
   PIPELINE_NODES.forEach((node, i) => {
     if (node.analyticalPhase !== lastPhase) {
-      if (lastPhase !== null) html += `<div class="pl-connector"></div>`;
-      html += `<div class="pl-phase-label" style="color:${phaseColors[node.analyticalPhase]}">${phaseLabels[node.analyticalPhase]}</div>`;
+      if (i === 0) {
+        html += `<div class="pl-phase-label" style="color:${phaseColors[node.analyticalPhase]};margin-bottom:12px;padding-left:4px;position:static;transform:none">${phaseLabels[node.analyticalPhase]}</div>`;
+      } else {
+        html += `<div class="pl-phase-transition"><div class="pl-connector" style="height:100%;margin:0 auto"></div><span class="pl-phase-label" style="color:${phaseColors[node.analyticalPhase]}">${phaseLabels[node.analyticalPhase]}</span></div>`;
+      }
       lastPhase = node.analyticalPhase;
     } else if (i > 0) {
       html += `<div class="pl-connector"></div>`;
@@ -2628,22 +2631,38 @@ async function addRegionalScenario() {
 async function loadMasterScenarios() {
   const el = document.getElementById('rr-master-table');
   try {
-    const data = await fetch('/api/risk-register/master').then(r => r.json());
+    const [data, activeReg] = await Promise.all([
+      fetch('/api/risk-register/master').then(r => r.json()),
+      fetch('/api/registers/active').then(r => r.json()).catch(() => null),
+    ]);
     const scenarios = data.scenarios || [];
     if (!scenarios.length) {
       el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No master scenarios.</div>';
       return;
     }
+    // Build lookup: scenario_name → {value_at_cyber_risk_usd, probability_pct} from active register
+    const regMap = {};
+    if (activeReg && activeReg.scenarios) {
+      for (const s of activeReg.scenarios) regMap[s.scenario_name.toLowerCase()] = s;
+    }
+    const regLabel = activeReg ? `<span style="color:#58a6ff;font-size:9px;margin-left:6px">${activeReg.display_name}</span>` : '';
     const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
       <span style="flex:1">Incident Type</span>
       <span style="width:70px;flex-shrink:0;text-align:right">Freq Rank</span>
       <span style="width:80px;flex-shrink:0;text-align:right">Fin. Rank</span>
       <span style="width:80px;flex-shrink:0;text-align:right">Freq %</span>
       <span style="width:80px;flex-shrink:0;text-align:right">Fin. %</span>
+      <span style="width:80px;flex-shrink:0;text-align:right">VaCR${regLabel}</span>
+      <span style="width:60px;flex-shrink:0;text-align:right">Prob %</span>
       <span style="width:24px;flex-shrink:0"></span>
     </div>`;
     const rows = scenarios.map(s => {
       const safeId = s.incident_type.replace(/\s+/g, '_');
+      const reg = regMap[s.incident_type.toLowerCase()];
+      const vacr = reg ? `$${(reg.value_at_cyber_risk_usd/1e6).toFixed(1)}M` : '—';
+      const prob = reg ? `${reg.probability_pct}%` : '—';
+      const vacrColor = reg ? '#58a6ff' : '#484f58';
+      const probColor = reg ? '#e3b341' : '#484f58';
       return `
         <div class="rr-master-row" data-type="${s.incident_type}" style="border-bottom:1px solid #21262d">
           <div onclick="toggleMasterRow('${safeId}')" style="display:flex;align-items:center;padding:7px 12px;font-size:11px;cursor:pointer">
@@ -2652,6 +2671,8 @@ async function loadMasterScenarios() {
             <span style="color:#8b949e;width:80px;flex-shrink:0;text-align:right;font-family:monospace">#${s.financial_rank}</span>
             <span style="color:#3fb950;width:80px;flex-shrink:0;text-align:right;font-family:monospace">${s.event_frequency_pct}%</span>
             <span style="color:#e3b341;width:80px;flex-shrink:0;text-align:right;font-family:monospace">${s.financial_impact_pct}%</span>
+            <span style="color:${vacrColor};width:80px;flex-shrink:0;text-align:right;font-family:monospace">${vacr}</span>
+            <span style="color:${probColor};width:60px;flex-shrink:0;text-align:right;font-family:monospace">${prob}</span>
             <span style="width:24px;flex-shrink:0;text-align:center;color:#6e7681;font-size:10px">&#9660;</span>
           </div>
           <div id="rr-master-expand-${safeId}" style="display:none;padding:10px 12px;background:#0d1117;border-top:1px solid #21262d">
@@ -3167,7 +3188,7 @@ async function setActiveRegister(registerId) {
     body: JSON.stringify({register_id: registerId}),
   });
   if (!res.ok) return;
-  await loadRegisters();
+  await Promise.all([loadRegisters(), loadMasterScenarios()]);
   toggleRegisterDrawer(); // close drawer after switch
 }
 
