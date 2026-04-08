@@ -160,6 +160,7 @@
     .nav-tab:hover { color: #c9d1d9; }
     .nav-tab.active { color: #3fb950; border-bottom-color: #3fb950; }
     #nav-history { border-right: 1px solid #21262d; margin-right: 4px; }
+    #nav-config.active { color: #3fb950 !important; }
 
     /* Sev badges */
     .sev { font-size: 9px; padding: 1px 5px; border-radius: 2px; letter-spacing: 0.06em; }
@@ -794,7 +795,6 @@
       <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
       <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
-      <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
       <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
       <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Audit</div>
       <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
@@ -802,7 +802,10 @@
     </nav>
   </div>
   <div style="display:flex;align-items:center;gap:8px">
-    <span id="pipeline-status" style="font-size:10px;color:#6e7681">Idle</span>
+    <button id="nav-config" onclick="switchTab('config')" title="Config"
+      style="background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:3px;
+             font-size:15px;color:#6e7681;transition:color 0.15s;line-height:1"
+      onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#6e7681'">⚙</button>
     <select id="window-select">
       <option value="1d">Last 24h</option>
       <option value="7d" selected>Last 7 days</option>
