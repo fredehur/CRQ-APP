@@ -1,7 +1,7 @@
 ---
 name: run-crq
 description: Orchestrates the full Top-Down CRQ Geopolitical Intelligence Pipeline across all five regions.
-tools: Bash, Agent, Task
+tools: Bash, Agent, Task, AskUserQuestion
 model: opus
 ---
 
@@ -36,9 +36,46 @@ Run: `python -c "from dotenv import load_dotenv; import os; load_dotenv(); print
 Store the mode as `OSINT_MODE` (either `--mock` or empty string) for use in Phase 1.
 
 **Determine WINDOW:**
-Parse `--window` from the invocation arguments (e.g., `/run-crq --window 30d`).
-- If `--window` is provided with a valid value (`1d`, `7d`, `30d`, `90d`): store as `WINDOW` (e.g., `30d`).
-- If `--window` is omitted or not provided: default to `WINDOW=7d`.
+Parse `--window` from the invocation arguments. Valid explicit values: `1d`, `7d`, `30d`, `90d`, `all`.
+- If `--window` is provided with a valid value: store as `WINDOW`. Skip the prompt below.
+- If `--window` is omitted: use `AskUserQuestion` to present this menu and wait for the operator's response:
+
+  ```
+  How far back should we collect OSINT signals?
+    1) 1 day    — today's signals (daily ops)
+    2) 1 week   — 7 days
+    3) 1 month  — 30 days
+    4) 3 months — 90 days
+    5) All      — no date filter (baseline sweep)
+  ```
+
+  Map the response to `WINDOW`:
+  - `1` → `1d`
+  - `2` → `7d`
+  - `3` → `30d`
+  - `4` → `90d`
+  - `5` → `all`
+
+**Write run_config.json** — immediately after `WINDOW` is resolved, write the run configuration file. Determine `OSINT_MODE_LABEL` as `live` if `OSINT_LIVE=true`, else `mock`. Run:
+
+```bash
+python -c "
+import json
+from pathlib import Path
+from datetime import datetime, timezone
+Path('output/pipeline').mkdir(parents=True, exist_ok=True)
+config = {
+    'window': 'WINDOW_VALUE',
+    'osint_mode': 'OSINT_MODE_LABEL',
+    'written_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+}
+Path('output/pipeline/run_config.json').write_text(json.dumps(config, indent=2), encoding='utf-8')
+print('run_config.json written — window=WINDOW_VALUE')
+"
+```
+
+Substitute the actual resolved `WINDOW` value for `WINDOW_VALUE` and the actual mode label for `OSINT_MODE_LABEL` when running this command.
+
 Store `WINDOW` for use in Phase 1 and Phase 6.
 
 Clear stale log: `rm -f output/logs/system_trace.log`
@@ -75,10 +112,11 @@ Each task is self-contained and writes its own output files. Do NOT wait for one
 
 For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
 
-1. **Run OSINT tool chain** (mode determined in Phase 0 — `OSINT_MODE` is `--mock` or empty, `WINDOW` defaults to `7d`):
+1. **Run OSINT tool chain** (mode determined in Phase 0 — `OSINT_MODE` is `--mock` or empty, `WINDOW` set by operator prompt or `--window` flag):
 
    **If `OSINT_MODE` is empty (live mode — `OSINT_LIVE=true`):**
-   - `uv run python tools/research_collector.py {REGION} --window {WINDOW}`
+   - If `WINDOW` is not `all`: `uv run python tools/research_collector.py {REGION} --window {WINDOW}`
+   - If `WINDOW` is `all`: `uv run python tools/research_collector.py {REGION}` (omit --window — no date filter)
    - This runs the target-centric research loop (3 LLM calls) and writes:
      - `output/regional/{region_lower}/research_scratchpad.json` (working theory + audit trail)
      - `output/regional/{region_lower}/geo_signals.json`
@@ -86,8 +124,10 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
    - Then run: `uv run python tools/scenario_mapper.py {REGION}`
 
    **Otherwise (default mock mode — `OSINT_MODE` is `--mock`):**
-   - `uv run python tools/geo_collector.py {REGION} --mock --window {WINDOW}`
-   - `uv run python tools/cyber_collector.py {REGION} --mock --window {WINDOW}`
+   - If `WINDOW` is not `all`: `uv run python tools/geo_collector.py {REGION} --mock --window {WINDOW}`
+   - If `WINDOW` is `all`: `uv run python tools/geo_collector.py {REGION} --mock` (omit --window)
+   - If `WINDOW` is not `all`: `uv run python tools/cyber_collector.py {REGION} --mock --window {WINDOW}`
+   - If `WINDOW` is `all`: `uv run python tools/cyber_collector.py {REGION} --mock` (omit --window)
    - `uv run python tools/scenario_mapper.py {REGION} --mock`
 
    All paths write signal files to `output/regional/{region_lower}/`:
@@ -96,7 +136,8 @@ For each region (APAC, AME, LATAM, MED, NCE), the regional pipeline is:
    - `scenario_map.json`
 
    **YouTube signals (always run, both modes):**
-   - `uv run python tools/youtube_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
+   - If `WINDOW` is not `all`: `uv run python tools/youtube_collector.py {REGION} {OSINT_MODE} --window {WINDOW}`
+   - If `WINDOW` is `all`: `uv run python tools/youtube_collector.py {REGION} {OSINT_MODE}` (omit --window)
    - Writes `output/regional/{region_lower}/youtube_signals.json`
    - If no approved channels exist for the region, tool exits 0 with an empty signals file — this is expected and not an error.
    - `OSINT_MODE` passes `--mock` in mock mode; omit in live mode.
@@ -244,7 +285,7 @@ If the agent fails or errors: `uv run python tools/audit_logger.py TREND_WARN "T
 
 ## PHASE 6 — FINALIZE
 
-Run: `uv run python tools/write_manifest.py --window {WINDOW}` to assemble the master `output/pipeline/run_manifest.json` from all regional `data.json` files.
+Run: `uv run python tools/write_manifest.py` to assemble the master `output/pipeline/run_manifest.json` from all regional `data.json` files. (window is read automatically from `output/pipeline/run_config.json`)
 
 Run: `uv run python tools/archive_run.py` to archive the completed run into `output/runs/{timestamp}/` and update `output/latest/`.
 

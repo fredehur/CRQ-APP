@@ -4,10 +4,21 @@ import json
 import os
 import sys
 from datetime import datetime, timezone
+from pathlib import Path
 from tools.config import REGIONS, MANIFEST_PATH
 
 
 def build_manifest(window_used=None):
+    # If not supplied via CLI, try run_config.json
+    if window_used is None:
+        config_path = Path("output/pipeline/run_config.json")
+        if config_path.exists():
+            try:
+                config = json.loads(config_path.read_text(encoding="utf-8"))
+                window_used = config.get("window")
+            except Exception:
+                pass
+
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     date_slug = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H%M%SZ")
 
@@ -68,7 +79,7 @@ def build_manifest(window_used=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Assemble run_manifest.json")
-    parser.add_argument("--window", choices=["1d", "7d", "30d", "90d"], default=None,
-                        help="Date window used for OSINT collection")
+    parser.add_argument("--window", choices=["1d", "7d", "30d", "90d", "all"], default=None,
+                        help="Date window used for OSINT collection (all = no date filter)")
     args = parser.parse_args()
     build_manifest(window_used=args.window)

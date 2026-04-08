@@ -1,7 +1,7 @@
 ---
 name: crq-region
 description: Runs the full CRQ intelligence pipeline for a single named region (APAC, AME, LATAM, MED, or NCE) without touching the other four. Use this when fresh intelligence arrives for one region mid-cycle, when you want to re-run a specific region after editing its threat feed, or when you need a targeted update without running the full 5-region pipeline. Triggers on phrases like "re-run APAC", "refresh AME analysis", "update the MED region", "run pipeline for NCE", "check LATAM status".
-tools: Bash, Agent, Read
+tools: Bash, Agent, Read, AskUserQuestion
 model: sonnet
 ---
 
@@ -23,10 +23,45 @@ Normalize to uppercase. If the region is invalid or missing, stop and report: "V
 
 Run each step in sequence. Use the region name where `{REGION}` appears (uppercase) and `{region}` (lowercase).
 
-**Step 0 — Load regional data**
+**Step 0 — Load regional data + determine window**
 
 Read `data/mock_crq_database.json` to get the critical assets and VaCR for this region.
-Log start: `uv run python tools/audit_logger.py PIPELINE_START "crq-region: {REGION} pipeline initiated"`
+
+**Determine WINDOW:**
+Parse `--window` from the invocation arguments. Valid values: `1d`, `7d`, `30d`, `90d`, `all`.
+- If `--window` is provided: store as `WINDOW`. Skip the prompt.
+- If omitted: use `AskUserQuestion` to present:
+
+  ```
+  How far back should we collect OSINT signals?
+    1) 1 day    — today's signals (daily ops)
+    2) 1 week   — 7 days
+    3) 1 month  — 30 days
+    4) 3 months — 90 days
+    5) All      — no date filter (baseline sweep)
+  ```
+
+  Map: `1`→`1d`, `2`→`7d`, `3`→`30d`, `4`→`90d`, `5`→`all`.
+
+**Write run_config.json** — substitute the actual resolved `WINDOW` value for `WINDOW_VALUE` when running:
+
+```bash
+python -c "
+import json
+from pathlib import Path
+from datetime import datetime, timezone
+Path('output/pipeline').mkdir(parents=True, exist_ok=True)
+config = {
+    'window': 'WINDOW_VALUE',
+    'osint_mode': 'mock',
+    'written_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
+}
+Path('output/pipeline/run_config.json').write_text(json.dumps(config, indent=2), encoding='utf-8')
+print('run_config.json written — window=WINDOW_VALUE')
+"
+```
+
+Log start: `uv run python tools/audit_logger.py PIPELINE_START "crq-region: {REGION} pipeline initiated — window={WINDOW}"`
 
 **Step 1 — Gather intelligence**
 ```

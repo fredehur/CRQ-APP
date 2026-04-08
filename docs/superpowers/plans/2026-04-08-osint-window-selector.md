@@ -1,6 +1,6 @@
 # OSINT Window Selector — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the silent `7d` OSINT default with an interactive window selector in `/run-crq` and `/crq-region`, persisting the choice to `run_config.json` as canonical state.
 
