@@ -22,6 +22,8 @@ PIPELINE      = OUTPUT / "pipeline"
 VALIDATION    = OUTPUT / "validation"
 LOGS          = OUTPUT / "logs"
 REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+REGISTERS_DIR    = BASE / "data" / "registers"
+ACTIVE_REGISTER  = BASE / "data" / "active_register.json"
 SOURCES_DB = "data/sources.db"
 TOOL_TIMEOUT = 60  # seconds per subprocess
 FULL_MODE_TIMEOUT = 600  # 10 min for claude CLI
@@ -60,6 +62,11 @@ def _read_json(path: Path) -> Optional[dict]:
         return json.loads(path.read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         return None
+
+
+def _active_register_id() -> str:
+    data = _read_json(ACTIVE_REGISTER)
+    return data.get("register_id", "aerogrid_enterprise") if data else "aerogrid_enterprise"
 
 
 # ── Subprocess Helper ────────────────────────────────────────────────────
@@ -221,6 +228,97 @@ async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(
     except Exception as e:
         os.unlink(tmp.name)
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ── API: Registers ──────────────────────────────────────────────────────
+@app.get("/api/registers")
+async def list_registers():
+    REGISTERS_DIR.mkdir(parents=True, exist_ok=True)
+    active_id = _active_register_id()
+    registers = []
+    for f in sorted(REGISTERS_DIR.glob("*.json")):
+        data = _read_json(f)
+        if data:
+            data["is_active"] = data.get("register_id") == active_id
+            registers.append(data)
+    return registers
+
+
+@app.post("/api/registers")
+async def create_register(payload: dict):
+    register_id = payload.get("register_id", "").strip()
+    if not register_id:
+        return JSONResponse({"error": "register_id required"}, status_code=400)
+    path = REGISTERS_DIR / f"{register_id}.json"
+    if path.exists():
+        return JSONResponse({"error": f"Register '{register_id}' already exists"}, status_code=409)
+    REGISTERS_DIR.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+@app.put("/api/registers/{register_id}")
+async def update_register(register_id: str, payload: dict):
+    path = REGISTERS_DIR / f"{register_id}.json"
+    if not path.exists():
+        return JSONResponse({"error": f"Register '{register_id}' not found"}, status_code=404)
+    payload["register_id"] = register_id
+    path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return payload
+
+
+@app.delete("/api/registers/{register_id}")
+async def delete_register(register_id: str):
+    path = REGISTERS_DIR / f"{register_id}.json"
+    if not path.exists():
+        return JSONResponse({"error": f"Register '{register_id}' not found"}, status_code=404)
+    if _active_register_id() == register_id:
+        return JSONResponse({"error": "Cannot delete the active register"}, status_code=409)
+    path.unlink()
+    return {"deleted": register_id}
+
+
+@app.get("/api/registers/active")
+async def get_active_register():
+    active_id = _active_register_id()
+    path = REGISTERS_DIR / f"{active_id}.json"
+    data = _read_json(path)
+    return data or {"error": "active register file not found", "register_id": active_id}
+
+
+@app.post("/api/registers/active")
+async def set_active_register(payload: dict):
+    register_id = payload.get("register_id", "").strip()
+    if not register_id:
+        return JSONResponse({"error": "register_id required"}, status_code=400)
+    path = REGISTERS_DIR / f"{register_id}.json"
+    if not path.exists():
+        return JSONResponse({"error": f"Register '{register_id}' not found"}, status_code=404)
+    ACTIVE_REGISTER.write_text(json.dumps({"register_id": register_id}), encoding="utf-8")
+    return {"active": register_id}
+
+
+@app.post("/api/registers/suggest-tags")
+async def suggest_register_tags(payload: dict):
+    name = payload.get("name", "").strip()
+    description = payload.get("description", "").strip()
+    if not name or not description:
+        return JSONResponse({"error": "name and description required"}, status_code=400)
+    proc = await asyncio.create_subprocess_exec(
+        "uv", "run", "python", str(BASE / "tools" / "suggest_tags.py"),
+        "--name", name, "--description", description,
+        cwd=str(BASE),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        return JSONResponse({"error": stderr.decode(errors="replace")[:200]}, status_code=500)
+    try:
+        tags = json.loads(stdout.decode().strip())
+        return {"tags": tags}
+    except json.JSONDecodeError:
+        return JSONResponse({"error": "tag suggestion returned invalid JSON"}, status_code=500)
 
 
 @app.get("/api/global-report")
@@ -1159,6 +1257,33 @@ async def run_validate():
 @app.get("/api/validation/status")
 async def get_validation_status():
     return validation_state
+
+
+@app.get("/api/validation/register-results")
+@app.get("/api/register-validation/results")
+async def get_register_validation():
+    path = VALIDATION / "register_validation.json"
+    data = _read_json(path)
+    return data or {"status": "no_data"}
+
+
+@app.post("/api/validation/run-register")
+async def run_register_validation():
+    import asyncio
+    VALIDATION.mkdir(parents=True, exist_ok=True)
+    proc = await asyncio.create_subprocess_exec(
+        "uv", "run", "python", str(BASE / "tools" / "register_validator.py"),
+        cwd=str(BASE),
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, stderr = await proc.communicate()
+    if proc.returncode != 0:
+        return JSONResponse(
+            {"error": stderr.decode(errors="replace")[:500]}, status_code=500
+        )
+    data = _read_json(VALIDATION / "register_validation.json")
+    return data or {"status": "no_data"}
 
 
 # ── API: Risk Register — Regional Scenarios ──────────────────────────────

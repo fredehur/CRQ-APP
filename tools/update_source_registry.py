@@ -190,6 +190,21 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def migrate_db(conn: sqlite3.Connection) -> None:
+    """Idempotent migrations — ALTER TABLE fails silently if column exists."""
+    migrations = [
+        "ALTER TABLE sources_registry ADD COLUMN has_quantitative_data INTEGER DEFAULT 0",
+        "ALTER TABLE sources_registry ADD COLUMN quantitative_figure TEXT",
+        "ALTER TABLE sources_registry ADD COLUMN source_tags TEXT DEFAULT '[]'",
+    ]
+    for sql in migrations:
+        try:
+            conn.execute(sql)
+        except sqlite3.OperationalError:
+            pass  # column already exists
+    conn.commit()
+
+
 # ---------------------------------------------------------------------------
 # Upsert logic
 # ---------------------------------------------------------------------------
@@ -577,6 +592,7 @@ def main() -> int:
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
     init_db(conn)
+    migrate_db(conn)
 
     # Migration: add blocked column if missing
     try:
