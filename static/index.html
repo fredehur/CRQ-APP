@@ -209,13 +209,6 @@
 
     /* Reports tab */
     #tab-reports { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
-    .deliverable-card { transition: border-color 0.15s; }
-    .deliverable-card:hover { border-color: #30363d !important; }
-    .deliverable-card.card-selected { border-color: #3fb950 !important; }
-    #report-preview { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.7; color: #c9d1d9; }
-    #report-preview h1, #report-preview h2, #report-preview h3 { color: #e6edf3; margin: 1em 0 0.5em; }
-    #report-preview p { margin-bottom: 0.75em; }
-    #report-preview code { background: #161b22; padding: 1px 4px; border-radius: 2px; }
 
     /* History tab */
     #tab-history { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
@@ -590,7 +583,7 @@
       <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
       <div class="nav-tab" id="nav-config"   onclick="switchTab('config')">Config</div>
-      <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Validate</div>
+      <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
       <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Audit</div>
       <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
     </nav>
@@ -765,31 +758,6 @@
   </div>
 </div>
 
-<!-- ── RSM TAB ──────────────────────────────────────────────── -->
-<div id="tab-rsm" class="hidden">
-  <div style="display:grid;grid-template-columns:280px 1fr;height:calc(100vh - 36px);overflow:hidden">
-
-    <!-- RSM left panel — region list -->
-    <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
-      <div style="padding:10px 12px;border-bottom:1px solid #21262d">
-        <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">REGIONS</div>
-      </div>
-      <div id="rsm-region-list"></div>
-    </div>
-
-    <!-- RSM right panel — brief content -->
-    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
-      <div id="rsm-panel-header" style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px;flex-shrink:0">
-        <span id="rsm-region-label" style="font-size:13px;color:#e6edf3"></span>
-      </div>
-      <div id="rsm-panel-body" style="flex:1;overflow:hidden;display:flex">
-        <p style="color:#6e7681;font-size:11px;padding:12px 16px">Select a region to view briefs.</p>
-      </div>
-    </div>
-
-  </div>
-</div>
-
 <!-- ── PIPELINE TAB ─────────────────────────────────────────────────── -->
 <div id="tab-pipeline" class="hidden" style="height:calc(100vh - 36px);overflow:hidden;display:flex;flex-direction:column">
 
@@ -840,20 +808,53 @@
 <!-- ── VALIDATE TAB ─────────────────────────────────────────────── -->
 <div id="tab-validate" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 36px)">
 
+  <!-- Regional Scenarios Editor -->
+  <div style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Regional Scenarios (CRQ Database)</span>
+      <button onclick="addRegionalScenario()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 10px;border-radius:2px;cursor:pointer">+ Add</button>
+    </div>
+    <div id="rr-regional-table" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
+      <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Master Scenarios Editor -->
+  <div style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Master Scenario Types</span>
+      <button onclick="addMasterScenario()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 10px;border-radius:2px;cursor:pointer">+ Add</button>
+    </div>
+    <div id="rr-master-table" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
+      <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
+    </div>
+  </div>
+
+  <div style="border-top:1px solid #21262d;padding-top:14px;margin-bottom:14px">
+    <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#484f58">Validation & Benchmark Research</span>
+  </div>
+
   <!-- Header row -->
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <div>
       <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">CRQ Validation</span>
       <span id="val-last-run" style="font-size:9px;color:#6e7681;margin-left:10px"></span>
     </div>
-    <button id="btn-run-validate" onclick="runValidate()"
-      style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 14px;border-radius:2px;cursor:pointer">
-      &#9654; RUN VALIDATION
-    </button>
+    <div style="display:flex;gap:8px">
+      <button id="btn-run-research" onclick="runResearch()"
+        style="font-size:10px;color:#58a6ff;background:#1a2a3a;border:1px solid #1f6feb;padding:4px 14px;border-radius:2px;cursor:pointer">
+        &#9654; RUN RESEARCH
+      </button>
+      <button id="btn-run-validate" onclick="runValidate()"
+        style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 14px;border-radius:2px;cursor:pointer">
+        &#9654; RUN VALIDATION
+      </button>
+    </div>
   </div>
 
   <!-- Progress line (hidden until running) -->
   <div id="val-progress" style="display:none;font-size:10px;color:#6e7681;margin-bottom:10px;padding:6px 10px;background:#161b22;border:1px solid #21262d;border-radius:2px"></div>
+  <div id="research-progress" style="display:none;font-size:10px;color:#58a6ff;margin-bottom:10px;padding:6px 10px;background:#161b22;border:1px solid #21262d;border-radius:2px"></div>
 
   <!-- Scenario verdicts table -->
   <div style="margin-bottom:20px">
@@ -971,10 +972,8 @@
       <span style="width:100px;flex-shrink:0">Type</span>
       <span style="width:55px;flex-shrink:0">Tier</span>
       <span style="width:150px;flex-shrink:0">Usage</span>
-      <span style="width:90px;flex-shrink:0">Published</span>
       <span style="width:80px;flex-shrink:0">Last Seen</span>
-      <span style="width:60px;flex-shrink:0">Link</span>
-      <span style="width:70px;flex-shrink:0">Junk</span>
+      <span style="width:90px;flex-shrink:0">Actions</span>
     </div>
     <!-- Body -->
     <div id="src-table-body">
