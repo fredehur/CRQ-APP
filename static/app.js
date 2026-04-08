@@ -596,8 +596,7 @@ const AUDIENCE_REGISTRY = [
     id: 'rsm',
     name: 'RSM Briefs',
     format: 'Markdown + PDF · 5 regions',
-    phase: 'phase-2',
-    phaseLabel: 'Requires Seerist integration',
+    phase: 'live',
     generate: null,
     downloads: [],
     renderer: 'region-list',
@@ -1870,64 +1869,80 @@ function selectRsmRegion(r) {
   renderRsmContent(r);
 }
 
+function selectRsmBriefTab(region, type) {
+  state.rsmActiveTab[region] = type;
+  renderRsmContent(region);
+}
+
 async function renderRsmContent(region) {
   const header = $('rsm-region-label');
   const body   = $('rsm-panel-body');
   if (!header || !body) return;
 
   header.textContent = REGION_LABELS[region] || region;
-  body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">Loading...</p>`;
 
-  // Fetch lazily — cache hit skips network
+  // Only show loading on first fetch — cache hit renders immediately
   if (!state.rsmBriefs[region]) {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">Loading...</p>`;
     const data = await fetchJSON(`/api/rsm/${region.toLowerCase()}`);
-    if (!data) {
-      body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">No brief available for this region.</p>`;
-      return;
-    }
-    state.rsmBriefs[region] = data;
+    state.rsmBriefs[region] = data || { flash: null, intsum: null };
   }
 
   const brief = state.rsmBriefs[region];
-  const r = region.toLowerCase();
+  const r     = region.toLowerCase();
 
-  // Build one split pane
-  function _pane(type, content) {
-    const weekMatch = type === 'intsum' ? (content || '').match(/WK(\d+)/i) : null;
-    const label = type === 'flash'
-      ? `<span style="color:#da3633;font-weight:600;font-size:10px">⚡ FLASH</span>`
-      : `<span style="color:#58a6ff;font-weight:600;font-size:10px">${weekMatch ? `INTSUM WK${weekMatch[1]}` : 'INTSUM'}</span>`;
-    const pdf = `<a href="/api/rsm/${r}/pdf?type=${type}" download
-      style="margin-left:auto;font-size:9px;font-family:inherit;padding:2px 8px;border-radius:3px;
-             background:transparent;border:1px solid #30363d;color:#6e7681;text-decoration:none"
-      title="Download as PDF">&#8659; PDF</a>`;
-    const text = content
-      ? `<pre style="font-size:10px;color:#e6edf3;white-space:pre-wrap;word-break:break-word;line-height:1.6;margin:0;padding:12px 14px">${esc(content)}</pre>`
-      : `<p style="color:#6e7681;font-size:11px;padding:12px 14px">No ${type.toUpperCase()} brief available.</p>`;
-    return `
-      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0">
-        <div style="padding:6px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:6px;flex-shrink:0">
-          ${label}${pdf}
-        </div>
-        <div style="flex:1;overflow-y:auto">${text}</div>
-      </div>`;
+  // Default active tab: flash if available, else intsum
+  if (!state.rsmActiveTab[region]) {
+    state.rsmActiveTab[region] = brief?.flash ? 'flash' : 'intsum';
+  }
+  const activeTab = state.rsmActiveTab[region];
+
+  function _tabBtn(type, label) {
+    const isActive = type === activeTab;
+    return `<button onclick="selectRsmBriefTab('${region}', '${type}')"
+      style="font-size:10px;font-family:inherit;padding:5px 14px;border:none;
+             border-bottom:2px solid ${isActive ? '#58a6ff' : 'transparent'};
+             background:transparent;color:${isActive ? '#e6edf3' : '#6e7681'};
+             cursor:pointer;transition:color 0.1s">
+      ${label}
+    </button>`;
   }
 
-  const hasFlash  = !!brief.flash;
-  const hasIntsum = !!brief.intsum;
+  const tabBar = `
+    <div style="border-bottom:1px solid #21262d;display:flex;align-items:center;padding:0 8px;flex-shrink:0">
+      ${_tabBtn('flash', '⚡ Flash Alert')}
+      ${_tabBtn('intsum', 'INTSUM')}
+      <a href="/api/rsm/${r}/pdf?type=${activeTab}" download
+         style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:3px;
+                background:transparent;border:1px solid #30363d;color:#6e7681;text-decoration:none">
+         &#8659; PDF</a>
+    </div>`;
 
-  if (hasFlash && hasIntsum) {
-    body.innerHTML = `
-      ${_pane('flash', brief.flash)}
-      <div style="width:1px;background:#21262d;flex-shrink:0"></div>
-      ${_pane('intsum', brief.intsum)}`;
-  } else if (hasFlash) {
-    body.innerHTML = _pane('flash', brief.flash);
-  } else if (hasIntsum) {
-    body.innerHTML = _pane('intsum', brief.intsum);
-  } else {
-    body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">No briefs available for this region.</p>`;
+  function _tabContent(type) {
+    const content = brief?.[type];
+    if (!content) {
+      const typeLabel = type === 'flash' ? 'flash alert' : 'INTSUM brief';
+      return `
+        <div style="padding:20px 16px">
+          <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#484f58;margin-bottom:8px">
+            ${type === 'flash' ? '⚡ Flash Alert' : 'Weekly INTSUM'}
+          </div>
+          <div style="font-size:11px;color:#6e7681">No ${typeLabel} available for ${region}.</div>
+          <div style="margin-top:6px;font-size:10px;color:#484f58">
+            RSM briefs are generated in Phase 2 (Seerist integration).
+            Run <code style="font-size:9px;color:#8b949e">/run-crq</code> after Seerist is configured.
+          </div>
+        </div>`;
+    }
+    return `<pre style="font-size:10px;color:#e6edf3;white-space:pre-wrap;word-break:break-word;
+                         line-height:1.6;margin:0;padding:12px 14px">${esc(content)}</pre>`;
   }
+
+  body.innerHTML = `
+    <div style="display:flex;flex-direction:column;flex:1;overflow:hidden;width:100%">
+      ${tabBar}
+      <div style="flex:1;overflow-y:auto">${_tabContent(activeTab)}</div>
+    </div>`;
 }
 
 // ── SSE stream (identical pattern to current) ──────────────────────────
