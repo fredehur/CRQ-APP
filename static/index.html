@@ -995,119 +995,45 @@
 </div>
 
 <!-- ── VALIDATE TAB ─────────────────────────────────────────────── -->
-<div id="tab-validate" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 60px)">
+<div id="tab-validate" class="hidden" style="display:flex;flex-direction:column;height:calc(100vh - 60px);overflow:hidden">
 
-  <!-- VaCR Intelligence (Register Validation) — PRIMARY -->
-  <div id="register-validation-panel" style="margin-bottom:20px;border:1px solid #1f6feb55;border-radius:4px;overflow:hidden">
-    <div style="padding:8px 12px;background:#0d1526;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #1f6feb44">
-      <div>
-        <span style="font-size:10px;font-weight:600;color:#79c0ff;letter-spacing:0.05em">VaCR INTELLIGENCE</span>
-        <span id="reg-val-register-name" style="font-size:10px;color:#484f58;margin-left:8px"></span>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span id="reg-val-timestamp" style="font-size:10px;color:#484f58"></span>
-        <button onclick="runRegisterValidation()" style="background:#1f6feb22;border:1px solid #1f6feb;color:#79c0ff;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">&#9654; RUN</button>
-      </div>
-    </div>
-    <div id="register-validation-body" style="padding:0">
-      <div style="padding:12px;color:#484f58;font-size:10px">No results — select an active register and click RUN.</div>
-    </div>
-  </div>
-
-  <!-- Scenario Library (Master Scenarios) -->
-  <div style="margin-bottom:20px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Scenario Library</span>
-      <button onclick="addMasterScenario()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 10px;border-radius:2px;cursor:pointer">+ Add</button>
-    </div>
-    <div id="rr-master-table" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
-    </div>
-  </div>
-
-  <!-- Regional Risk Register -->
-  <div style="margin-bottom:20px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Regional Risk Register</span>
-      <button onclick="addRegionalScenario()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 10px;border-radius:2px;cursor:pointer">+ Add</button>
-    </div>
-    <div id="rr-regional-table" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
-    </div>
-  </div>
-
-  <!-- Section break — Benchmark Validation (secondary) -->
-  <div style="border-top:1px solid #21262d;padding-top:14px;margin-bottom:14px;display:flex;align-items:center;gap:10px">
-    <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;white-space:nowrap">Benchmark Validation</span>
-    <div style="flex:1;height:1px;background:#21262d"></div>
-    <span style="font-size:9px;color:#484f58;white-space:nowrap">DBIR / industry sources</span>
-  </div>
-
-  <!-- Header row -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-    <div>
-      <span id="val-last-run" style="font-size:9px;color:#6e7681"></span>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button id="btn-run-research" onclick="runResearch()"
-        style="font-size:10px;color:#58a6ff;background:#1a2a3a;border:1px solid #1f6feb;padding:4px 14px;border-radius:2px;cursor:pointer">
-        &#9654; RUN RESEARCH
-      </button>
-      <button id="btn-run-validate" onclick="runValidate()"
-        style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 14px;border-radius:2px;cursor:pointer">
-        &#9654; RUN VALIDATION
-      </button>
-    </div>
+  <!-- Tab header strip -->
+  <div style="flex-shrink:0;padding:7px 16px;background:#0d1117;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px">
+    <span id="rr-header-name" style="font-size:11px;font-weight:600;color:#c9d1d9">—</span>
+    <span id="rr-header-count" style="font-size:10px;color:#484f58"></span>
+    <span id="rr-header-ts" style="font-size:10px;color:#484f58;margin-left:auto"></span>
+    <button onclick="runRegisterValidation()" style="background:#1f6feb22;border:1px solid #1f6feb;color:#79c0ff;border-radius:3px;padding:3px 10px;font-size:10px;cursor:pointer">&#9654; RUN</button>
   </div>
 
   <!-- Progress line (hidden until running) -->
-  <div id="val-progress" style="display:none;font-size:10px;color:#6e7681;margin-bottom:10px;padding:6px 10px;background:#161b22;border:1px solid #21262d;border-radius:2px"></div>
-  <div id="research-progress" style="display:none;font-size:10px;color:#58a6ff;margin-bottom:10px;padding:6px 10px;background:#161b22;border:1px solid #21262d;border-radius:2px"></div>
+  <div id="val-progress" style="display:none;flex-shrink:0;font-size:10px;color:#6e7681;padding:5px 16px;background:#161b22;border-bottom:1px solid #21262d"></div>
 
-  <!-- Scenario verdicts table -->
-  <div style="margin-bottom:20px">
-    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Benchmark Results</div>
-    <div id="val-scenarios" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div id="val-scenarios-header" style="display:none;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
-        <div style="display:flex">
-          <span style="width:180px;flex-shrink:0">Scenario</span>
-          <span style="width:60px;flex-shrink:0">VaCR</span>
-          <span style="width:120px;flex-shrink:0">Verdict</span>
-          <span style="width:60px;flex-shrink:0">Dev.</span>
-          <span style="width:100px;flex-shrink:0" title="Regions escalated with this scenario this run">OSINT Signal</span>
-          <span style="width:80px;flex-shrink:0" title="Run-over-run frequency from trend analysis">Velocity</span>
-          <span style="flex:1">Source</span>
+  <!-- Two-column body -->
+  <div style="flex:1;display:grid;grid-template-columns:40% 60%;overflow:hidden;min-height:0">
+    <!-- Left panel: Scenario list -->
+    <div id="rr-scenario-list" style="overflow-y:auto;border-right:1px solid #21262d"></div>
+    <!-- Right panel: Scenario detail -->
+    <div id="rr-scenario-detail" style="overflow-y:auto"></div>
+  </div>
+
+  <!-- Source Registry (full-width, collapsed by default) -->
+  <div style="flex-shrink:0;border-top:1px solid #21262d">
+    <div onclick="toggleSourceRegistry()" style="display:flex;justify-content:space-between;align-items:center;padding:7px 16px;cursor:pointer">
+      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Source Registry</span>
+      <span id="rr-src-toggle" style="font-size:10px;color:#484f58">&#9654; Show</span>
+    </div>
+    <div id="rr-src-body" style="display:none;max-height:320px;overflow-y:auto;border-top:1px solid #21262d">
+      <div style="display:grid;grid-template-columns:1fr 1fr">
+        <div style="border-right:1px solid #21262d;padding:12px 14px">
+          <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Registered Sources</div>
+          <div id="val-sources"><div style="color:#6e7681;font-size:11px;padding:8px">Loading...</div></div>
+        </div>
+        <div style="padding:12px 14px">
+          <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">New Sources <span id="val-candidate-count" style="color:#e3b341"></span></div>
+          <div id="val-candidates"><div style="color:#6e7681;font-size:11px;padding:8px">No candidates.</div></div>
         </div>
       </div>
-      <div id="val-scenarios-body">
-        <div style="color:#6e7681;font-size:11px;padding:12px">No validation data — click Run Validation.</div>
-      </div>
     </div>
-  </div>
-
-  <!-- Registered sources table -->
-  <div style="margin-bottom:20px">
-    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Registered Sources</div>
-    <div id="val-sources" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
-    </div>
-  </div>
-
-  <!-- Candidate sources -->
-  <div>
-    <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">New Sources <span id="val-candidate-count" style="color:#e3b341"></span></div>
-    <div id="val-candidates" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
-      <div style="color:#6e7681;font-size:11px;padding:12px">No candidates — run validation to discover new sources.</div>
-    </div>
-  </div>
-
-  <!-- Audit Trace (relocated from History) -->
-  <div style="border-top:1px solid #21262d;padding-top:14px;margin-top:20px">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">AUDIT TRACE</span>
-      <button onclick="toggleAuditTrace()" style="font-size:10px;color:#6e7681;cursor:pointer;background:none;border:none" id="btn-toggle-trace">&#9654;</button>
-    </div>
-    <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:12px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap"></pre>
   </div>
 
 </div>

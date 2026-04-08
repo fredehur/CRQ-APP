@@ -278,6 +278,27 @@ async def delete_register(register_id: str):
     return {"deleted": register_id}
 
 
+@app.patch("/api/registers/{register_id}/scenarios/{scenario_id}")
+async def patch_scenario(register_id: str, scenario_id: str, payload: dict):
+    path = REGISTERS_DIR / f"{register_id}.json"
+    if not path.exists():
+        return JSONResponse({"error": f"Register '{register_id}' not found"}, status_code=404)
+    data = _read_json(path)
+    if not data:
+        return JSONResponse({"error": "Register file corrupt"}, status_code=500)
+    scenarios = data.get("scenarios", [])
+    for i, s in enumerate(scenarios):
+        if s.get("scenario_id") == scenario_id:
+            if "value_at_cyber_risk_usd" in payload:
+                scenarios[i]["value_at_cyber_risk_usd"] = int(payload["value_at_cyber_risk_usd"])
+            if "probability_pct" in payload:
+                scenarios[i]["probability_pct"] = float(payload["probability_pct"])
+            data["scenarios"] = scenarios
+            path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            return scenarios[i]
+    return JSONResponse({"error": f"Scenario '{scenario_id}' not found"}, status_code=404)
+
+
 @app.get("/api/registers/active")
 async def get_active_register():
     active_id = _active_register_id()

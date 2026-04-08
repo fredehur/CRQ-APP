@@ -40,6 +40,8 @@ let state = {
   selectedSourceIds: new Set(),
   registers: [],
   activeRegister: null,
+  validationData: null,       // register_validation.json content | null
+  selectedScenarioId: null,   // currently selected scenario in the register tab
   registerDrawerOpen: false,
 };
 
@@ -1354,7 +1356,7 @@ function _doSwitchTab(tab) {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' ? 'flex' : 'block') : '';
+    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' || t === 'validate' ? 'flex' : 'block') : '';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
@@ -1362,7 +1364,7 @@ function _doSwitchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
-  if (tab === 'validate') { renderValidateTab(); loadRegisterValidationResults(); }
+  if (tab === 'validate') { renderRiskRegisterTab(); }
   if (tab === 'sources')  renderSources();
   if (tab === 'pipeline') renderPipelineTab();
   if (tab === 'runlog') renderRunLog();
@@ -2537,283 +2539,304 @@ function showUnsavedModal(onConfirm) {
 
 // ── Section: Validate Tab ──────────────────────────────────────────────
 
-async function renderValidateTab() {
-  await Promise.all([loadRiskRegister(), loadMasterScenarios(), loadValScenarios(), loadValSources(), loadValCandidates(), loadAuditTrace()]);
-}
+// ── Section: Risk Register Tab ────────────────────────────────────────
 
-async function loadRiskRegister() {
-  const el = document.getElementById('rr-regional-table');
-  try {
-    const data = await fetch('/api/risk-register/regional').then(r => r.json());
-    // Flatten region-keyed object into array with region field
-    const scenarios = Object.entries(data).flatMap(([region, arr]) =>
-      arr.map(s => ({...s, region}))
-    );
-    if (!scenarios.length) {
-      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No scenarios — click + Add.</div>';
-      return;
-    }
-    const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
-      <span style="width:60px;flex-shrink:0">Region</span>
-      <span style="width:180px;flex-shrink:0">Scenario</span>
-      <span style="width:120px;flex-shrink:0">Department</span>
-      <span style="flex:1">Critical Assets</span>
-      <span style="width:90px;flex-shrink:0;text-align:right">VaCR</span>
-      <span style="width:24px;flex-shrink:0"></span>
-    </div>`;
-    const rows = scenarios.map(s => {
-      const vacr = s.value_at_cyber_risk_usd ? `$${(s.value_at_cyber_risk_usd/1e6).toFixed(1)}M` : '—';
-      const chips = (s.critical_assets || []).map(a =>
-        `<span style="display:inline-block;background:#21262d;color:#8b949e;font-size:9px;padding:1px 6px;border-radius:2px;margin:1px">${a}</span>`
-      ).join('');
-      return `
-        <div class="rr-row" data-id="${s.scenario_id}" style="border-bottom:1px solid #21262d">
-          <div onclick="toggleRRRow('${s.scenario_id}')" style="display:flex;align-items:center;padding:7px 12px;font-size:11px;cursor:pointer">
-            <span style="color:#58a6ff;width:60px;flex-shrink:0;font-family:monospace;font-weight:600">${s.region}</span>
-            <span style="color:#e6edf3;width:180px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.scenario_name}</span>
-            <span style="color:#8b949e;width:120px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.department}</span>
-            <span style="flex:1;overflow:hidden">${chips}</span>
-            <span style="color:#3fb950;width:90px;flex-shrink:0;text-align:right;font-family:monospace">${vacr}</span>
-            <span style="width:24px;flex-shrink:0;text-align:center;color:#6e7681;font-size:10px">&#9660;</span>
-          </div>
-          <div id="rr-expand-${s.scenario_id}" style="display:none;padding:10px 12px;background:#0d1117;border-top:1px solid #21262d">
-            ${_rrEditForm(s)}
-          </div>
-        </div>`;
-    }).join('');
-    el.innerHTML = header + rows;
-  } catch(e) {
-    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load regional scenarios.</div>';
+async function renderRiskRegisterTab() {
+  const r = state.activeRegister;
+  if (!r) {
+    const listEl = $('rr-scenario-list');
+    if (listEl) listEl.innerHTML = '<div style="padding:12px;color:#484f58;font-size:10px">No active register selected.</div>';
+    return;
   }
+
+  // Update tab header
+  const nameEl = $('rr-header-name');
+  const countEl = $('rr-header-count');
+  if (nameEl) nameEl.textContent = r.display_name || '—';
+  if (countEl) countEl.textContent = `${(r.scenarios || []).length} scenarios`;
+
+  // Render left panel immediately from state
+  _renderScenarioList();
+
+  // Auto-select first scenario
+  const first = (r.scenarios || [])[0];
+  if (first) _selectScenario(first.scenario_id);
+
+  // Load validation results (will re-render list + detail when done)
+  loadRegisterValidationResults();
+
+  // Pre-load source registry data
+  loadValSources();
+  loadValCandidates();
 }
 
-function _rrEditForm(s) {
-  return `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Scenario Name</div>
-      <input id="rr-name-${s.scenario_id}" value="${s.scenario_name}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Department</div>
-      <input id="rr-dept-${s.scenario_id}" value="${s.department}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">VaCR (USD)</div>
-      <input id="rr-vacr-${s.scenario_id}" type="number" value="${s.value_at_cyber_risk_usd || 0}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Region</div>
-      <select id="rr-region-${s.scenario_id}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box">
-        ${['APAC','AME','LATAM','MED','NCE'].map(r => `<option value="${r}"${r===s.region?' selected':''}>${r}</option>`).join('')}
-      </select>
-    </div>
-  </div>
-  <div style="margin-bottom:8px">
-    <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Critical Assets (comma-separated)</div>
-    <textarea id="rr-assets-${s.scenario_id}" rows="2" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none;resize:vertical">${(s.critical_assets||[]).join(', ')}</textarea>
-  </div>
-  <div style="display:flex;gap:8px">
-    <button onclick="saveRegionalScenario('${s.scenario_id}')" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 12px;border-radius:2px;cursor:pointer">Save</button>
-    <button onclick="toggleRRRow('${s.scenario_id}')" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer">Cancel</button>
-    <button onclick="deleteRegionalScenario('${s.scenario_id}')" style="font-size:10px;color:#f85149;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer;margin-left:auto">Delete</button>
-  </div>`;
-}
+function _renderScenarioList() {
+  const el = $('rr-scenario-list');
+  if (!el) return;
+  const scenarios = state.activeRegister?.scenarios || [];
 
-function toggleRRRow(scenarioId) {
-  const expand = document.getElementById(`rr-expand-${scenarioId}`);
-  if (expand) expand.style.display = expand.style.display === 'none' ? 'block' : 'none';
-}
-
-async function saveRegionalScenario(scenarioId) {
-  const name = document.getElementById(`rr-name-${scenarioId}`).value.trim();
-  const dept = document.getElementById(`rr-dept-${scenarioId}`).value.trim();
-  const vacr = parseInt(document.getElementById(`rr-vacr-${scenarioId}`).value) || 0;
-  const region = document.getElementById(`rr-region-${scenarioId}`).value;
-  const assetsRaw = document.getElementById(`rr-assets-${scenarioId}`).value;
-  const assets = assetsRaw.split(',').map(a => a.trim()).filter(Boolean);
-  const r = await fetch(`/api/risk-register/regional/${scenarioId}`, {
-    method: 'PUT',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({scenario_name: name, department: dept, value_at_cyber_risk_usd: vacr, region, critical_assets: assets})
-  });
-  if (r.ok) { toggleRRRow(scenarioId); loadRiskRegister(); }
-  else { alert('Save failed'); }
-}
-
-async function deleteRegionalScenario(scenarioId) {
-  if (!confirm(`Delete scenario ${scenarioId}?`)) return;
-  const r = await fetch(`/api/risk-register/regional/${scenarioId}`, {method: 'DELETE'});
-  if (r.ok) loadRiskRegister();
-  else alert('Delete failed');
-}
-
-async function addRegionalScenario() {
-  const region = prompt('Region (APAC/AME/LATAM/MED/NCE):')?.toUpperCase();
-  if (!['APAC','AME','LATAM','MED','NCE'].includes(region)) return;
-  const r = await fetch('/api/risk-register/regional', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({region, scenario_name: 'New Scenario', department: '', critical_assets: [], value_at_cyber_risk_usd: 0})
-  });
-  if (r.ok) loadRiskRegister();
-  else alert('Add failed');
-}
-
-async function loadMasterScenarios() {
-  const el = document.getElementById('rr-master-table');
-  try {
-    const [data, activeReg] = await Promise.all([
-      fetch('/api/risk-register/master').then(r => r.json()),
-      fetch('/api/registers/active').then(r => r.json()).catch(() => null),
-    ]);
-    const scenarios = data.scenarios || [];
-    if (!scenarios.length) {
-      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No master scenarios.</div>';
-      return;
-    }
-    // Build lookup: scenario_name → {value_at_cyber_risk_usd, probability_pct} from active register
-    const regMap = {};
-    if (activeReg && activeReg.scenarios) {
-      for (const s of activeReg.scenarios) regMap[s.scenario_name.toLowerCase()] = s;
-    }
-    const regLabel = activeReg ? `<span style="color:#58a6ff;font-size:9px;margin-left:6px">${activeReg.display_name}</span>` : '';
-    const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
-      <span style="flex:1">Incident Type</span>
-      <span style="width:80px;flex-shrink:0;text-align:right">VaCR${regLabel}</span>
-      <span style="width:60px;flex-shrink:0;text-align:right">Prob %</span>
-      <span style="width:70px;flex-shrink:0;text-align:right">Freq Rank</span>
-      <span style="width:80px;flex-shrink:0;text-align:right">Fin. Rank</span>
-      <span style="width:70px;flex-shrink:0;text-align:right">Freq %</span>
-      <span style="width:70px;flex-shrink:0;text-align:right">Fin. %</span>
-      <span style="width:24px;flex-shrink:0"></span>
-    </div>`;
-    const rows = scenarios.map(s => {
-      const safeId = s.incident_type.replace(/\s+/g, '_');
-      const reg = regMap[s.incident_type.toLowerCase()];
-      const vacr = reg ? `$${(reg.value_at_cyber_risk_usd/1e6).toFixed(1)}M` : '—';
-      const prob = reg ? `${reg.probability_pct}%` : '—';
-      const vacrColor = reg ? '#58a6ff' : '#484f58';
-      const probColor = reg ? '#e3b341' : '#484f58';
-      return `
-        <div class="rr-master-row" data-type="${s.incident_type}" style="border-bottom:1px solid #21262d">
-          <div onclick="toggleMasterRow('${safeId}')" style="display:flex;align-items:center;padding:7px 12px;font-size:11px;cursor:pointer">
-            <span style="color:#e6edf3;flex:1">${s.incident_type}</span>
-            <span style="color:${vacrColor};width:80px;flex-shrink:0;text-align:right;font-family:monospace">${vacr}</span>
-            <span style="color:${probColor};width:60px;flex-shrink:0;text-align:right;font-family:monospace">${prob}</span>
-            <span style="color:#8b949e;width:70px;flex-shrink:0;text-align:right;font-family:monospace">#${s.frequency_rank}</span>
-            <span style="color:#8b949e;width:80px;flex-shrink:0;text-align:right;font-family:monospace">#${s.financial_rank}</span>
-            <span style="color:#3fb950;width:70px;flex-shrink:0;text-align:right;font-family:monospace">${s.event_frequency_pct}%</span>
-            <span style="color:#e3b341;width:70px;flex-shrink:0;text-align:right;font-family:monospace">${s.financial_impact_pct}%</span>
-            <span style="width:24px;flex-shrink:0;text-align:center;color:#6e7681;font-size:10px">&#9660;</span>
-          </div>
-          <div id="rr-master-expand-${safeId}" style="display:none;padding:10px 12px;background:#0d1117;border-top:1px solid #21262d">
-            ${_masterEditForm(s, safeId)}
-          </div>
-        </div>`;
-    }).join('');
-    el.innerHTML = header + rows;
-  } catch {
-    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load master scenarios.</div>';
+  // Build verdict lookup from state.validationData
+  const valMap = {};
+  if (state.validationData?.scenarios) {
+    for (const s of state.validationData.scenarios) valMap[s.scenario_id] = s;
   }
-}
 
-function _masterEditForm(s, safeId) {
-  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Frequency Rank</div>
-      <input id="ms-freq-rank-${safeId}" type="number" value="${s.frequency_rank}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Financial Rank</div>
-      <input id="ms-fin-rank-${safeId}" type="number" value="${s.financial_rank}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Records Rank</div>
-      <input id="ms-rec-rank-${safeId}" type="number" value="${s.records_rank}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Event Freq %</div>
-      <input id="ms-evt-pct-${safeId}" type="number" step="0.1" value="${s.event_frequency_pct}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Financial Impact %</div>
-      <input id="ms-fin-pct-${safeId}" type="number" step="0.1" value="${s.financial_impact_pct}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-    <div>
-      <div style="font-size:9px;color:#6e7681;margin-bottom:3px">Records Affected %</div>
-      <input id="ms-rec-pct-${safeId}" type="number" step="0.01" value="${s.records_affected_pct}" style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
-    </div>
-  </div>
-  <div style="display:flex;gap:8px">
-    <button onclick="saveMasterScenario('${s.incident_type}', '${safeId}')" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 12px;border-radius:2px;cursor:pointer">Save</button>
-    <button onclick="toggleMasterRow('${safeId}')" style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer">Cancel</button>
-    <button onclick="deleteMasterScenario('${s.incident_type}')" style="font-size:10px;color:#f85149;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer;margin-left:auto">Delete</button>
+  const rows = scenarios.map(s => {
+    const vacr = s.value_at_cyber_risk_usd != null
+      ? `$${(s.value_at_cyber_risk_usd / 1e6).toFixed(1)}M` : '—';
+    const prob = s.probability_pct != null ? `${s.probability_pct}%` : '—';
+    const val = valMap[s.scenario_id];
+    const fVerdict = val?.financial?.verdict;
+    const pVerdict = val?.probability?.verdict;
+    const fBadge = fVerdict
+      ? _regValVerdictBadge('$', fVerdict)
+      : `<span style="font-size:10px;color:#484f58">—</span>`;
+    const pBadge = pVerdict
+      ? _regValVerdictBadge('%', pVerdict)
+      : `<span style="font-size:10px;color:#484f58">—</span>`;
+    const isSelected = s.scenario_id === state.selectedScenarioId;
+    const selStyle = isSelected
+      ? 'border-left:2px solid #1f6feb;background:#111820;'
+      : 'border-left:2px solid transparent;';
+    return `<div onclick="_selectScenario('${esc(s.scenario_id)}')"
+      style="padding:8px 12px;border-bottom:1px solid #21262d;cursor:pointer;${selStyle}">
+      <div style="font-size:11px;color:#e6edf3;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(s.scenario_name)}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:10px;color:#3fb950;font-family:monospace">${vacr}</span>
+        <span style="font-size:10px;color:#484f58">${prob}</span>
+        <span style="margin-left:auto;display:flex;gap:4px">${fBadge}${pBadge}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const addBtn = `<div style="padding:8px 12px;border-top:1px solid #21262d">
+    <button onclick="_showAddScenarioForm()" style="width:100%;background:transparent;border:1px dashed #21262d;color:#484f58;border-radius:3px;padding:6px;font-size:10px;cursor:pointer">+ Add Scenario</button>
   </div>`;
+
+  el.innerHTML = (rows || '<div style="padding:12px;color:#484f58;font-size:10px">No scenarios.</div>') + addBtn;
 }
 
-function toggleMasterRow(safeId) {
-  const el = document.getElementById(`rr-master-expand-${safeId}`);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+function _selectScenario(id) {
+  if (!id) return;
+  state.selectedScenarioId = id;
+  _renderScenarioList(); // refresh highlight
+
+  const scenario = (state.activeRegister?.scenarios || []).find(s => s.scenario_id === id);
+  const valScenario = state.validationData?.scenarios?.find(s => s.scenario_id === id) || null;
+  _renderScenarioDetail(scenario, valScenario);
 }
 
-async function saveMasterScenario(incidentType, safeId) {
-  const body = {
-    frequency_rank: parseInt(document.getElementById(`ms-freq-rank-${safeId}`).value),
-    financial_rank: parseInt(document.getElementById(`ms-fin-rank-${safeId}`).value),
-    records_rank: parseInt(document.getElementById(`ms-rec-rank-${safeId}`).value),
-    event_frequency_pct: parseFloat(document.getElementById(`ms-evt-pct-${safeId}`).value),
-    financial_impact_pct: parseFloat(document.getElementById(`ms-fin-pct-${safeId}`).value),
-    records_affected_pct: parseFloat(document.getElementById(`ms-rec-pct-${safeId}`).value),
+function _renderScenarioDetail(scenario, valScenario) {
+  const el = $('rr-scenario-detail');
+  if (!el) return;
+  if (!scenario) {
+    el.innerHTML = `<div style="padding:20px;color:#484f58;font-size:10px">Select a scenario.</div>`;
+    return;
+  }
+
+  const vacr = scenario.value_at_cyber_risk_usd != null
+    ? `$${Number(scenario.value_at_cyber_risk_usd).toLocaleString('en-US')}` : '—';
+  const prob = scenario.probability_pct != null ? `${scenario.probability_pct}%` : '—';
+
+  // Numbers zone
+  const numbersZone = `<div id="rr-numbers-zone" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:16px 14px;border-bottom:1px solid #21262d">
+    <div>
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Value at Cyber Risk</div>
+      <div style="font-size:18px;font-weight:600;color:#3fb950;font-family:monospace">${vacr}</div>
+    </div>
+    <div>
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Probability</div>
+      <div style="font-size:18px;font-weight:600;color:#8b949e;font-family:monospace">${prob}</div>
+    </div>
+  </div>`;
+
+  // Validation zone
+  let validationZone;
+  if (!valScenario) {
+    validationZone = `<div style="padding:16px 14px;color:#484f58;font-size:10px">No validation data — click &#9654; RUN to validate this register.</div>`;
+  } else {
+    const versionChecks = state.validationData?.version_checks || [];
+    const finHtml = _renderRegValDimension(scenario.scenario_id, 'financial', valScenario.financial, versionChecks);
+    const probHtml = _renderRegValDimension(scenario.scenario_id, 'probability', valScenario.probability, versionChecks);
+    const noteHtml = valScenario.asset_context_note
+      ? `<div style="padding:0 12px 8px 12px;font-size:10px;color:#6e7681;font-style:italic">${esc(valScenario.asset_context_note)}</div>`
+      : '';
+    validationZone = `<div style="padding:8px 0">${finHtml}${probHtml}${noteHtml}</div>`;
+  }
+
+  // Audit trace (collapsed, global to last run)
+  const auditZone = `<div style="border-top:1px solid #21262d;padding:6px 12px 10px">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Audit Trace</span>
+      <button onclick="toggleAuditTrace()" id="btn-toggle-trace" style="font-size:10px;color:#484f58;cursor:pointer;background:none;border:none">&#9654;</button>
+    </div>
+    <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:10px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap;max-height:180px;overflow-y:auto"></pre>
+  </div>`;
+
+  el.innerHTML = `
+    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:12px;font-weight:600;color:#c9d1d9">${esc(scenario.scenario_name)}</div>
+        <div style="font-size:10px;color:#484f58;margin-top:2px;font-family:monospace">${esc(scenario.scenario_id)}</div>
+      </div>
+      <button onclick="_renderEditZone('${esc(scenario.scenario_id)}')"
+        style="background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">&#9998; Edit</button>
+    </div>
+    ${numbersZone}
+    ${validationZone}
+    ${auditZone}`;
+
+  loadAuditTrace();
+}
+
+function _renderEditZone(scenarioId) {
+  const scenario = (state.activeRegister?.scenarios || []).find(s => s.scenario_id === scenarioId);
+  if (!scenario) return;
+  const zone = $('rr-numbers-zone');
+  if (!zone) return;
+  zone.innerHTML = `
+    <div>
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Value at Cyber Risk (USD)</div>
+      <input id="rr-edit-vacr" type="number" value="${scenario.value_at_cyber_risk_usd || 0}"
+        style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:14px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none;font-family:monospace" />
+    </div>
+    <div>
+      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Probability (%)</div>
+      <input id="rr-edit-prob" type="number" step="0.1" min="0" max="100" value="${scenario.probability_pct || 0}"
+        style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:14px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none;font-family:monospace" />
+    </div>
+    <div style="grid-column:1/-1;display:flex;gap:6px;margin-top:4px">
+      <button onclick="saveScenarioEdit('${esc(scenarioId)}')"
+        style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 12px;border-radius:2px;cursor:pointer">Save</button>
+      <button onclick="_selectScenario('${esc(scenarioId)}')"
+        style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer">Cancel</button>
+    </div>`;
+}
+
+async function saveScenarioEdit(scenarioId) {
+  const vacrInput = $('rr-edit-vacr');
+  const probInput = $('rr-edit-prob');
+  if (!vacrInput || !probInput) return;
+  const vacr = parseFloat(vacrInput.value) || 0;
+  const prob = parseFloat(probInput.value) || 0;
+  const registerId = state.activeRegister?.register_id;
+  if (!registerId) return;
+
+  const r = await fetch(
+    `/api/registers/${encodeURIComponent(registerId)}/scenarios/${encodeURIComponent(scenarioId)}`,
+    {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({value_at_cyber_risk_usd: vacr, probability_pct: prob}),
+    }
+  );
+  if (!r.ok) { alert('Save failed'); return; }
+
+  const updated = await r.json();
+  // Update state without a network round-trip
+  const idx = (state.activeRegister.scenarios || []).findIndex(s => s.scenario_id === scenarioId);
+  if (idx !== -1) state.activeRegister.scenarios[idx] = {...state.activeRegister.scenarios[idx], ...updated};
+
+  _selectScenario(scenarioId); // re-renders both list and detail
+}
+
+function _showAddScenarioForm() {
+  const el = $('rr-scenario-detail');
+  if (!el) return;
+  const prevId = state.selectedScenarioId || '';
+  el.innerHTML = `
+    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:12px;font-weight:600;color:#c9d1d9">Add Scenario</span>
+      <button onclick="_selectScenario('${esc(prevId)}')"
+        style="background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">&#10005; Cancel</button>
+    </div>
+    <div style="padding:16px 14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div style="grid-column:1/-1">
+          <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Scenario Name</div>
+          <input id="rr-add-name" type="text" placeholder="e.g. Ransomware"
+            style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
+        </div>
+        <div>
+          <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">VaCR (USD)</div>
+          <input id="rr-add-vacr" type="number" value="0"
+            style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
+        </div>
+        <div>
+          <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Probability (%)</div>
+          <input id="rr-add-prob" type="number" step="0.1" min="0" max="100" value="0"
+            style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none" />
+        </div>
+      </div>
+      <div id="rr-add-err" style="font-size:10px;color:#f85149;margin-bottom:8px;display:none"></div>
+      <button onclick="saveNewScenario()"
+        style="background:#238636;color:#fff;border:none;border-radius:3px;padding:5px 16px;font-size:10px;cursor:pointer">Save Scenario</button>
+    </div>`;
+}
+
+async function saveNewScenario() {
+  const name = $('rr-add-name')?.value.trim();
+  const vacr = parseFloat($('rr-add-vacr')?.value) || 0;
+  const prob = parseFloat($('rr-add-prob')?.value) || 0;
+  const errEl = $('rr-add-err');
+  if (errEl) errEl.style.display = 'none';
+
+  if (!name) {
+    if (errEl) { errEl.textContent = 'Scenario name is required.'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  const register = state.activeRegister;
+  if (!register) return;
+
+  const newScenario = {
+    scenario_id: `scen-${Date.now()}`,
+    scenario_name: name,
+    value_at_cyber_risk_usd: vacr,
+    probability_pct: prob,
+    probability_source: 'internal_estimate',
   };
-  const encoded = encodeURIComponent(incidentType);
-  const r = await fetch(`/api/risk-register/master/${encoded}`, {
+
+  const updatedRegister = {...register, scenarios: [...(register.scenarios || []), newScenario]};
+  const r = await fetch(`/api/registers/${encodeURIComponent(register.register_id)}`, {
     method: 'PUT',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body)
+    body: JSON.stringify(updatedRegister),
   });
-  if (r.ok) { toggleMasterRow(safeId); loadMasterScenarios(); }
-  else alert('Save failed');
+  if (!r.ok) {
+    if (errEl) { errEl.textContent = 'Save failed.'; errEl.style.display = 'block'; }
+    return;
+  }
+
+  state.activeRegister = updatedRegister;
+  state.selectedScenarioId = newScenario.scenario_id;
+  _renderScenarioList();
+  _selectScenario(newScenario.scenario_id);
 }
 
-async function deleteMasterScenario(incidentType) {
-  if (!confirm(`Delete master scenario "${incidentType}"?`)) return;
-  const r = await fetch(`/api/risk-register/master/${encodeURIComponent(incidentType)}`, {method: 'DELETE'});
-  if (r.ok) loadMasterScenarios();
-  else alert('Delete failed');
-}
-
-async function addMasterScenario() {
-  const name = prompt('New incident type name:')?.trim();
-  if (!name) return;
-  const r = await fetch('/api/risk-register/master', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({incident_type: name})
-  });
-  if (r.ok) loadMasterScenarios();
-  else { const e = await r.json(); alert(e.error || 'Add failed'); }
-}
-
-async function runResearch() {
-  const btn = document.getElementById('btn-run-research');
-  const prog = document.getElementById('research-progress');
-  btn.disabled = true;
-  prog.style.display = 'block';
-  prog.textContent = 'Starting research run...';
-  try {
-    const r = await fetch('/api/risk-register/research', {method: 'POST'});
-    if (!r.ok) {
-      const err = await r.json().catch(() => ({}));
-      prog.textContent = `Error: ${err.error || 'Run failed'}`;
-      btn.disabled = false;
-      return;
-    }
-    _listenResearchSSE(btn, prog);
-  } catch {
-    prog.textContent = 'Server offline';
-    btn.disabled = false;
+function toggleSourceRegistry() {
+  const body = $('rr-src-body');
+  const toggle = $('rr-src-toggle');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (toggle) toggle.innerHTML = isOpen ? '&#9654; Show' : '&#9660; Hide';
+  if (!isOpen) {
+    loadValSources();
+    loadValCandidates();
   }
 }
+
+
+
+
+
+
+
+
+
+
+
 
 function applyRegionFilterAndSwitch(region) {
   switchTab('sources');
@@ -2821,94 +2844,8 @@ function applyRegionFilterAndSwitch(region) {
   if (sel) { sel.value = region; applySourceFilters(); }
 }
 
-async function loadValScenarios() {
-  const el = $('val-scenarios');
-  try {
-    const [data, research] = await Promise.all([
-      fetch('/api/validation/flags').then(r => r.json()),
-      fetch('/api/risk-register/research').then(r => r.json()).catch(() => ({results: []}))
-    ]);
-    if (!data || data.status === 'no_data' || !data.scenarios?.length) {
-      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No validation data — run validation first.</div>';
-      return;
-    }
-    const researchMap = Object.fromEntries((research.results||[]).map(r => [r.incident_type, r]));
-    $('val-last-run').textContent = data.generated_at ? `Last run: ${data.generated_at.slice(0,10)}` : '';
-    const rows = data.scenarios.map(s => {
-      const vacr = s.our_vacr_usd ? `$${(s.our_vacr_usd/1e6).toFixed(1)}M` : '—';
-      const dev = s.deviation_pct != null ? `+${s.deviation_pct.toFixed(0)}%` : '—';
-      const src = s.supporting_sources?.[0];
-      const srcLabel = src ? `${src.source_id.split('-')[0].toUpperCase()} ${src.admiralty}` : '—';
-      let verdict, verdictColor;
-      if (s.verdict === 'supported') { verdict = '✓ SUPPORTED'; verdictColor = '#3fb950'; }
-      else if (s.verdict === 'challenged' || s.flagged_for_review) { verdict = '⚠ REVIEW'; verdictColor = '#e3b341'; }
-      else { verdict = `— ${s.verdict.toUpperCase().replace('_',' ')}`; verdictColor = '#6e7681'; }
-      const osintBadges = (s.osint_signal && s.osint_signal.length)
-        ? s.osint_signal.map(r => `<span class="badge-region">${r}</span>`).join(' ')
-        : '<span style="color:#6e7681;font-size:11px">—</span>';
-      const velLabel = s.velocity
-        ? `<span style="font-family:monospace;font-size:11px;color:#8b949e">${s.velocity}</span>`
-        : '<span style="color:#6e7681;font-size:11px">—</span>';
-      const resResult = researchMap[s.scenario];
-      const hasResearch = resResult && resResult.findings && resResult.findings.length > 0;
-      const directionIcon = resResult ? (resResult.direction === '↑' ? '↑' : resResult.direction === '↓' ? '↓' : resResult.direction === '→' ? '→' : '?') : '';
-      const dirColor = resResult?.direction === '↑' ? '#f85149' : resResult?.direction === '↓' ? '#3fb950' : '#8b949e';
-      return `<div style="border-bottom:1px solid #21262d">
-        <div style="display:flex;align-items:center;padding:7px 12px;font-size:11px${hasResearch ? ';cursor:pointer' : ''}"
-             ${hasResearch ? `onclick="toggleResearchExpand('${s.scenario}')"` : ''}>
-          <span style="color:#e6edf3;width:180px;flex-shrink:0">${s.scenario}</span>
-          <span style="color:#8b949e;width:60px;flex-shrink:0;font-family:monospace">${vacr}</span>
-          <span style="color:${verdictColor};width:120px;flex-shrink:0;font-weight:500">${verdict}</span>
-          <span style="color:#6e7681;width:60px;flex-shrink:0">${dev}</span>
-          <span style="width:100px;flex-shrink:0">${osintBadges}</span>
-          <span style="width:80px;flex-shrink:0">${velLabel}</span>
-          <span style="color:#484f58;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${srcLabel}</span>
-          ${hasResearch ? `<span style="color:${dirColor};width:30px;flex-shrink:0;text-align:right;font-weight:700">${directionIcon}</span>` : '<span style="width:30px;flex-shrink:0"></span>'}
-        </div>
-        ${hasResearch ? `<div id="research-expand-${s.scenario.replace(/\s+/g,'_')}" style="display:none;padding:10px 12px;background:#0d1117;border-top:1px solid #21262d">
-          ${_renderResearchFindings(resResult)}
-        </div>` : ''}
-      </div>`;
-    }).join('');
-    const sm = data.summary || {};
-    const summary = `<div style="padding:6px 12px;background:#161b22;font-size:10px;color:#6e7681;border-top:1px solid #21262d">
-      ${sm.supported||0} supported · ${sm.challenged||0} challenged · ${sm.no_data||0} no data · ${sm.sources_used||0} sources
-    </div>`;
-    const headerEl = document.getElementById('val-scenarios-header');
-    if (headerEl) headerEl.style.display = 'block';
-    const bodyEl = document.getElementById('val-scenarios-body');
-    (bodyEl || el).innerHTML = rows + summary;
-  } catch {
-    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load validation flags.</div>';
-  }
-}
 
-function toggleResearchExpand(scenario) {
-  const id = `research-expand-${scenario.replace(/\s+/g,'_')}`;
-  const el = document.getElementById(id);
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
-}
 
-function _renderResearchFindings(res) {
-  const dirColors = {'↑': '#f85149', '↓': '#3fb950', '→': '#8b949e', '?': '#6e7681'};
-  const findings = (res.findings || []).map(f => {
-    const dc = dirColors[f.direction] || '#6e7681';
-    const fig = f.figure_usd ? `$${(f.figure_usd/1e6).toFixed(2)}M` : '';
-    return `<div style="padding:6px 0;border-bottom:1px solid #21262d;display:flex;gap:10px;align-items:flex-start">
-      <span style="color:${dc};font-size:14px;font-weight:700;flex-shrink:0;width:16px">${f.direction}</span>
-      <div style="flex:1;min-width:0">
-        <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:2px">
-          <span style="color:#58a6ff;font-size:10px;font-weight:600">${f.source}</span>
-          ${fig ? `<span style="color:#e3b341;font-family:monospace;font-size:10px">${fig}</span>` : ''}
-        </div>
-        ${f.quote ? `<div style="color:#6e7681;font-size:10px;font-style:italic;margin-bottom:2px">"${f.quote}"</div>` : ''}
-        <div style="color:#8b949e;font-size:11px">${f.assessment}</div>
-      </div>
-    </div>`;
-  }).join('');
-  return `<div style="margin-bottom:8px;padding:6px 8px;background:#161b22;border-radius:2px;font-size:11px;color:#c9d1d9;font-style:italic">${res.agent_summary}</div>
-    ${findings || '<div style="color:#6e7681;font-size:11px">No findings.</div>'}`;
-}
 
 async function loadValSources() {
   const el = $('val-sources');
@@ -3073,76 +3010,8 @@ async function dismissCandidate(encodedUrl) {
   await loadValCandidates();
 }
 
-async function runValidate() {
-  const btn = $('btn-run-validate');
-  const prog = $('val-progress');
-  btn.disabled = true;
-  prog.style.display = 'block';
-  prog.textContent = 'Starting validation run...';
-  try {
-    const r = await fetch('/api/run/validate', {method: 'POST'});
-    if (!r.ok) {
-      const err = await r.json().catch(()=>({}));
-      prog.textContent = `Error: ${err.error || 'Run failed'}`;
-      btn.disabled = false;
-      return;
-    }
-    // Poll status + listen to SSE for validation events
-    _listenValidationSSE(btn, prog);
-  } catch {
-    prog.textContent = 'Server offline';
-    btn.disabled = false;
-  }
-}
 
-function _listenValidationSSE(btn, prog) {
-  // Reuse the existing SSE stream, filter for validation events
-  const stepLabels = {
-    source_harvester: 'Fetching known sources...',
-    source_discoverer: 'Discovering new sources...',
-    benchmark_extractor: 'Extracting benchmarks via Haiku...',
-    crq_comparator: 'Comparing VaCR figures...',
-  };
-  const es = new EventSource('/api/logs/stream');
-  es.addEventListener('validation', e => {
-    const d = JSON.parse(e.data);
-    if (d.status === 'step') {
-      prog.textContent = stepLabels[d.step] || d.message || d.step;
-    } else if (d.status === 'complete') {
-      prog.textContent = '✓ Validation complete';
-      btn.disabled = false;
-      es.close();
-      renderValidateTab();
-    } else if (d.status === 'error') {
-      prog.textContent = `✗ Error at ${d.step||'unknown step'}: ${d.message||''}`;
-      btn.disabled = false;
-      es.close();
-    }
-  });
-  // Auto-close after 10 min safety
-  setTimeout(() => { es.close(); btn.disabled = false; }, 600_000);
-}
 
-function _listenResearchSSE(btn, prog) {
-  const es = new EventSource('/api/logs/stream');
-  es.addEventListener('research', e => {
-    const d = JSON.parse(e.data);
-    if (d.status === 'step') {
-      prog.textContent = d.message || d.incident_type || 'Researching...';
-    } else if (d.status === 'complete') {
-      prog.textContent = '✓ Research complete';
-      btn.disabled = false;
-      es.close();
-      // Reload scenarios table to show research expand arrows
-      loadValScenarios();
-    } else if (d.status === 'error') {
-      prog.textContent = `✗ Error: ${d.message || d.incident_type || 'unknown'}`;
-      btn.disabled = false;
-      es.close();
-    }
-  });
-  setTimeout(() => { es.close(); btn.disabled = false; }, 600_000);
-}
 
 // ── Section: Register Management ──────────────────────────────────────
 
@@ -3376,38 +3245,20 @@ async function runRegisterValidation() {
 
 async function loadRegisterValidationResults() {
   const data = await fetchJSON('/api/register-validation/results');
-  _renderRegisterValidationResults(data);
+  state.validationData = (data && data.status !== 'no_data' && data.scenarios) ? data : null;
+
+  // Update timestamp in tab header
+  const tsEl = $('rr-header-ts');
+  if (tsEl) tsEl.textContent = state.validationData?.validated_at
+    ? `Validated ${relTime(state.validationData.validated_at)}` : '';
+
+  // Re-render left panel to show updated verdict badges
+  _renderScenarioList();
+
+  // Re-render right panel to show validation data for current selection
+  if (state.selectedScenarioId) _selectScenario(state.selectedScenarioId);
 }
 
-function _renderRegisterValidationResults(data) {
-  const body = $('register-validation-body');
-  const nameEl = $('reg-val-register-name');
-  const tsEl = $('reg-val-timestamp');
-  if (!body) return;
-  if (!data || data.status === 'no_data' || !data.scenarios) {
-    body.innerHTML = `<div style="padding:12px;color:#484f58;font-size:10px">No validation results. Click RUN REGISTER VALIDATION to run.</div>`;
-    return;
-  }
-  if (nameEl) nameEl.textContent = `· ${data.register_id}`;
-  if (tsEl) tsEl.textContent = data.validated_at ? `Validated ${relTime(data.validated_at)}` : '';
-
-  body.innerHTML = data.scenarios.map(s => {
-    const fv = s.financial?.verdict || 'insufficient';
-    const pv = s.probability?.verdict || 'insufficient';
-    return `
-    <div style="border-bottom:1px solid #161b22">
-      <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;font-weight:600;color:#c9d1d9">${esc(s.scenario_name)}</span>
-        <div style="display:flex;gap:5px">
-          ${_regValVerdictBadge('$', fv)}
-          ${_regValVerdictBadge('%', pv)}
-        </div>
-      </div>
-      ${_renderRegValDimension(s.scenario_id, 'financial', s.financial, data.version_checks)}
-      ${_renderRegValDimension(s.scenario_id, 'probability', s.probability, data.version_checks)}
-    </div>`;
-  }).join('');
-}
 
 function _regValVerdictBadge(prefix, verdict) {
   const styles = {
