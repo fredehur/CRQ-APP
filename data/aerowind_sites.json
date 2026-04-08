@@ -1,16 +1,100 @@
 {
   "sites": [
-    {"name": "Kaohsiung Manufacturing Hub",   "region": "APAC",  "country": "TW", "lat": 22.62, "lon": 120.30, "type": "manufacturing"},
-    {"name": "Shanghai Service Hub",           "region": "APAC",  "country": "CN", "lat": 31.23, "lon": 121.47, "type": "service"},
-    {"name": "Tokyo Regional Office",          "region": "APAC",  "country": "JP", "lat": 35.68, "lon": 139.69, "type": "office"},
-    {"name": "Houston Operations Center",      "region": "AME",   "country": "US", "lat": 29.76, "lon": -95.37, "type": "service"},
-    {"name": "Toronto Engineering Hub",        "region": "AME",   "country": "CA", "lat": 43.65, "lon": -79.38, "type": "office"},
-    {"name": "Sao Paulo Service Hub",          "region": "LATAM", "country": "BR", "lat": -23.55, "lon": -46.63, "type": "service"},
-    {"name": "Santiago Manufacturing Support", "region": "LATAM", "country": "CL", "lat": -33.45, "lon": -70.67, "type": "service"},
-    {"name": "Palermo Offshore Ops",           "region": "MED",   "country": "IT", "lat": 38.12, "lon": 13.36,  "type": "manufacturing"},
-    {"name": "Malaga Service Hub",             "region": "MED",   "country": "ES", "lat": 36.72, "lon": -4.42,  "type": "service"},
-    {"name": "Hamburg Manufacturing Hub",      "region": "NCE",   "country": "DE", "lat": 53.55, "lon": 10.00,  "type": "manufacturing"},
-    {"name": "Copenhagen Engineering Hub",     "region": "NCE",   "country": "DK", "lat": 55.68, "lon": 12.57,  "type": "office"},
-    {"name": "Gdansk Blade Plant",             "region": "NCE",   "country": "PL", "lat": 54.35, "lon": 18.65,  "type": "manufacturing"}
+    {
+      "name": "Kaohsiung Manufacturing Hub",
+      "region": "APAC",
+      "country": "TW",
+      "lat": 22.62,
+      "lon": 120.3,
+      "type": "manufacturing"
+    },
+    {
+      "name": "Shanghai Service Hub",
+      "region": "APAC",
+      "country": "CN",
+      "lat": 31.23,
+      "lon": 121.47,
+      "type": "service"
+    },
+    {
+      "name": "Tokyo Regional Office",
+      "region": "APAC",
+      "country": "JP",
+      "lat": 35.68,
+      "lon": 139.69,
+      "type": "service"
+    },
+    {
+      "name": "Houston Operations Center",
+      "region": "AME",
+      "country": "US",
+      "lat": 29.76,
+      "lon": -95.37,
+      "type": "service"
+    },
+    {
+      "name": "Toronto Engineering Hub",
+      "region": "AME",
+      "country": "CA",
+      "lat": 43.65,
+      "lon": -79.38,
+      "type": "service"
+    },
+    {
+      "name": "São Paulo Regional Office",
+      "region": "LATAM",
+      "country": "BR",
+      "lat": -23.55,
+      "lon": -46.63,
+      "type": "service"
+    },
+    {
+      "name": "Santiago Service Centre",
+      "region": "LATAM",
+      "country": "CL",
+      "lat": -33.45,
+      "lon": -70.67,
+      "type": "service"
+    },
+    {
+      "name": "Palermo Offshore Ops",
+      "region": "MED",
+      "country": "IT",
+      "lat": 38.12,
+      "lon": 13.36,
+      "type": "manufacturing"
+    },
+    {
+      "name": "Malaga Service Hub",
+      "region": "MED",
+      "country": "ES",
+      "lat": 36.72,
+      "lon": -4.42,
+      "type": "service"
+    },
+    {
+      "name": "Hamburg Manufacturing Hub",
+      "region": "NCE",
+      "country": "DE",
+      "lat": 53.55,
+      "lon": 10.0,
+      "type": "manufacturing"
+    },
+    {
+      "name": "Gdansk Blade Plant",
+      "region": "NCE",
+      "country": "PL",
+      "lat": 54.35,
+      "lon": 18.65,
+      "type": "manufacturing"
+    },
+    {
+      "name": "Copenhagen Engineering Hub",
+      "region": "NCE",
+      "country": "DK",
+      "lat": 55.68,
+      "lon": 12.57,
+      "type": "service"
+    }
   ]
 }
