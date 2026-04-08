@@ -37,6 +37,9 @@ let state = {
   rsmActiveTab: {},     // keyed by region: 'flash' | 'intsum'
   rsmHasFlash: false,   // drives ● dot on tab label
   selectedSourceIds: new Set(),
+  registers: [],
+  activeRegister: null,
+  registerDrawerOpen: false,
 };
 
 // Run log state (mirrors last_run_log.json, updated live via SSE)
@@ -152,6 +155,7 @@ async function loadLatestData() {
   if (!state.selectedRegion) {
     state.selectedRegion = pickDefaultRegion();
   }
+  await loadRegisters();
   renderAll();
 }
 
@@ -1343,7 +1347,7 @@ function _doSwitchTab(tab) {
   if (tab === 'history') renderHistory();
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
-  if (tab === 'validate') renderValidateTab();
+  if (tab === 'validate') { renderValidateTab(); loadRegisterValidationResults(); }
   if (tab === 'sources')  renderSources();
   if (tab === 'pipeline') renderPipelineTab();
   if (tab === 'runlog') renderRunLog();
@@ -3086,6 +3090,335 @@ function _listenResearchSSE(btn, prog) {
     }
   });
   setTimeout(() => { es.close(); btn.disabled = false; }, 600_000);
+}
+
+// ── Section: Register Management ──────────────────────────────────────
+
+async function loadRegisters() {
+  const registers = await fetchJSON('/api/registers');
+  if (!registers) return;
+  state.registers = registers;
+  state.activeRegister = registers.find(r => r.is_active) || registers[0] || null;
+  renderRegisterBar();
+  renderRegisterList();
+}
+
+function renderRegisterBar() {
+  const r = state.activeRegister;
+  const nameEl = $('register-bar-name');
+  const countEl = $('register-bar-count');
+  if (!nameEl) return;
+  nameEl.textContent = r ? r.display_name : '—';
+  countEl.textContent = r ? `${(r.scenarios || []).length} scenarios` : '—';
+}
+
+function toggleRegisterDrawer() {
+  state.registerDrawerOpen = !state.registerDrawerOpen;
+  const drawer = $('register-drawer');
+  if (!drawer) return;
+  drawer.style.display = state.registerDrawerOpen ? 'block' : 'none';
+  $('register-bar-toggle').textContent = state.registerDrawerOpen ? 'Switch Register ▴' : 'Switch Register ▾';
+  if (state.registerDrawerOpen) renderRegisterList();
+}
+
+// Close drawer on outside click
+document.addEventListener('click', e => {
+  if (!state.registerDrawerOpen) return;
+  const drawer = $('register-drawer');
+  const bar = $('register-bar');
+  if (drawer && !drawer.contains(e.target) && bar && !bar.contains(e.target)) {
+    state.registerDrawerOpen = false;
+    drawer.style.display = 'none';
+    $('register-bar-toggle').textContent = 'Switch Register ▾';
+  }
+});
+
+function renderRegisterList() {
+  const el = $('register-list');
+  if (!el) return;
+  if (!state.registers.length) {
+    el.innerHTML = `<div style="padding:10px 12px;color:#484f58;font-size:10px">No registers found.</div>`;
+    return;
+  }
+  el.innerHTML = state.registers.map(r => {
+    const isActive = r.is_active;
+    const validatedAt = r.last_validated_at ? relTime(r.last_validated_at) : 'Never validated';
+    const scenCount = (r.scenarios || []).length;
+    return `
+    <div style="padding:8px 12px;border-bottom:1px solid #161b22;${isActive ? 'background:#111820;' : ''}">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:11px;font-weight:600;color:${isActive ? '#c9d1d9' : '#8b949e'}">${esc(r.display_name)}</div>
+          <div style="font-size:10px;color:#484f58;margin-top:2px">${scenCount} scenarios · ${validatedAt}</div>
+        </div>
+        ${isActive
+          ? `<span style="background:#1f6feb;color:#79c0ff;font-size:9px;padding:2px 6px;border-radius:10px;letter-spacing:0.04em">ACTIVE</span>`
+          : `<button onclick="setActiveRegister('${esc(r.register_id)}')" style="background:transparent;border:1px solid #21262d;color:#8b949e;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">Set Active</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function setActiveRegister(registerId) {
+  const res = await fetch('/api/registers/active', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({register_id: registerId}),
+  });
+  if (!res.ok) return;
+  await loadRegisters();
+  toggleRegisterDrawer(); // close drawer after switch
+}
+
+async function deleteRegister(registerId) {
+  if (!confirm(`Delete register "${registerId}"?`)) return;
+  const res = await fetch(`/api/registers/${registerId}`, {method: 'DELETE'});
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Failed to delete register');
+    return;
+  }
+  await loadRegisters();
+}
+
+// ── Register Creation Form ───────────────────────────────────────────
+
+function showRegisterForm() {
+  const panel = $('register-form-panel');
+  if (!panel) return;
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div style="font-size:10px;font-weight:600;color:#8b949e;letter-spacing:0.05em;margin-bottom:8px">NEW REGISTER</div>
+    <input id="rf-id" placeholder="register_id (slug, no spaces)"
+      style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:5px 8px;font-size:10px;color:#c9d1d9;margin-bottom:6px;box-sizing:border-box">
+    <input id="rf-name" placeholder="Display Name"
+      style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:5px 8px;font-size:10px;color:#c9d1d9;margin-bottom:6px;box-sizing:border-box">
+    <textarea id="rf-context" placeholder="Company context..."
+      style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:5px 8px;font-size:10px;color:#c9d1d9;margin-bottom:8px;box-sizing:border-box;height:50px;resize:none"></textarea>
+    <div style="font-size:10px;color:#8b949e;margin-bottom:6px;letter-spacing:0.04em">SCENARIOS</div>
+    <div id="rf-scenarios"></div>
+    <button onclick="addScenarioRow()" style="width:100%;background:transparent;border:1px dashed #21262d;color:#484f58;border-radius:3px;padding:5px;font-size:10px;cursor:pointer;margin-bottom:8px">+ Add Scenario</button>
+    <div style="display:flex;gap:6px">
+      <button onclick="saveNewRegister()" style="flex:1;background:#238636;color:#fff;border:none;border-radius:3px;padding:6px;font-size:10px;cursor:pointer">Save Register</button>
+      <button onclick="$('register-form-panel').style.display='none'" style="background:transparent;border:1px solid #21262d;color:#8b949e;border-radius:3px;padding:6px 10px;font-size:10px;cursor:pointer">Cancel</button>
+    </div>`;
+  addScenarioRow(); // start with one empty row
+}
+
+let _scenRowIdx = 0;
+function addScenarioRow() {
+  const idx = _scenRowIdx++;
+  const container = $('rf-scenarios');
+  if (!container) return;
+  const row = document.createElement('div');
+  row.id = `scen-row-${idx}`;
+  row.style.cssText = 'background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:8px;margin-bottom:6px;';
+  row.innerHTML = `
+    <div style="display:grid;grid-template-columns:80px 1fr;gap:6px;margin-bottom:5px">
+      <input placeholder="Risk ID" id="scen-${idx}-id"
+        style="background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:4px 6px;font-size:10px;color:#c9d1d9">
+      <input placeholder="Scenario Name" id="scen-${idx}-name"
+        style="background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:4px 6px;font-size:10px;color:#c9d1d9">
+    </div>
+    <textarea placeholder="Description..." id="scen-${idx}-desc"
+      onblur="triggerTagSuggestion(${idx})"
+      style="width:100%;background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:4px 6px;font-size:10px;color:#c9d1d9;height:40px;resize:none;box-sizing:border-box;margin-bottom:5px"></textarea>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:5px">
+      <input placeholder="Financial impact (USD)" id="scen-${idx}-usd" type="number"
+        style="background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:4px 6px;font-size:10px;color:#c9d1d9">
+      <input placeholder="Probability (%)" id="scen-${idx}-prob" type="number" step="0.1"
+        style="background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:4px 6px;font-size:10px;color:#c9d1d9">
+    </div>
+    <div id="scen-${idx}-tags-area" style="background:#070a0e;border:1px solid #21262d;border-radius:3px;padding:6px;font-size:10px;color:#484f58">
+      Fill in name + description to generate tags
+    </div>`;
+  container.appendChild(row);
+}
+
+async function triggerTagSuggestion(idx) {
+  const name = ($(`scen-${idx}-name`) || {}).value || '';
+  const desc = ($(`scen-${idx}-desc`) || {}).value || '';
+  if (!name || !desc) return;
+  const area = $(`scen-${idx}-tags-area`);
+  if (!area) return;
+  area.innerHTML = `<span style="color:#484f58">Suggesting tags...</span>`;
+  try {
+    const r = await fetch('/api/registers/suggest-tags', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({name, description: desc}),
+    });
+    const data = await r.json();
+    const tags = data.tags || [];
+    area.dataset.tags = JSON.stringify(tags);
+    area.innerHTML = `
+      <div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+        ${tags.map(t => `<span style="background:#1f2d3d;color:#79c0ff;padding:2px 7px;border-radius:10px">${esc(t)}</span>`).join('')}
+        <span style="color:#484f58;font-size:9px;margin-left:4px">LLM suggested</span>
+      </div>`;
+  } catch {
+    area.innerHTML = `<span style="color:#da3633">Tag suggestion failed</span>`;
+  }
+}
+
+async function saveNewRegister() {
+  const register_id = ($('rf-id') || {}).value.trim().replace(/\s+/g, '_');
+  const display_name = ($('rf-name') || {}).value.trim();
+  const company_context = ($('rf-context') || {}).value.trim();
+  if (!register_id || !display_name) {
+    alert('Register ID and Display Name are required.');
+    return;
+  }
+  const scenarioRows = $('rf-scenarios').querySelectorAll('[id^="scen-row-"]');
+  const scenarios = [];
+  scenarioRows.forEach(row => {
+    const idx = row.id.replace('scen-row-', '');
+    const scenario_id = ($(`scen-${idx}-id`) || {}).value.trim();
+    const scenario_name = ($(`scen-${idx}-name`) || {}).value.trim();
+    const description = ($(`scen-${idx}-desc`) || {}).value.trim();
+    const value_at_cyber_risk_usd = parseFloat(($(`scen-${idx}-usd`) || {}).value) || 0;
+    const probability_pct = parseFloat(($(`scen-${idx}-prob`) || {}).value) || null;
+    const tagsArea = $(`scen-${idx}-tags-area`);
+    let search_tags = [];
+    try { search_tags = JSON.parse(tagsArea.dataset.tags || '[]'); } catch {}
+    if (scenario_id && scenario_name) {
+      scenarios.push({scenario_id, scenario_name, description, search_tags,
+        value_at_cyber_risk_usd, figure_source: 'internal_estimate',
+        probability_pct, probability_source: 'internal_estimate'});
+    }
+  });
+  const payload = {register_id, display_name, company_context,
+    created_at: new Date().toISOString().slice(0,10), last_validated_at: null, scenarios};
+  const res = await fetch('/api/registers', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json();
+    alert(err.error || 'Failed to save register');
+    return;
+  }
+  $('register-form-panel').style.display = 'none';
+  await loadRegisters();
+}
+
+// ── Register Validation Results ──────────────────────────────────────
+
+async function runRegisterValidation() {
+  const btn = document.querySelector('[onclick="runRegisterValidation()"]');
+  if (btn) { btn.textContent = 'Running...'; btn.disabled = true; }
+  try {
+    const res = await fetch('/api/validation/run-register', {method: 'POST'});
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error || 'Register validation failed');
+    }
+  } catch (e) {
+    alert('Register validation request failed');
+  }
+  if (btn) { btn.textContent = 'RUN REGISTER VALIDATION'; btn.disabled = false; }
+  await loadRegisterValidationResults();
+}
+
+async function loadRegisterValidationResults() {
+  const data = await fetchJSON('/api/register-validation/results');
+  _renderRegisterValidationResults(data);
+}
+
+function _renderRegisterValidationResults(data) {
+  const body = $('register-validation-body');
+  const nameEl = $('reg-val-register-name');
+  const tsEl = $('reg-val-timestamp');
+  if (!body) return;
+  if (!data || data.status === 'no_data' || !data.scenarios) {
+    body.innerHTML = `<div style="padding:12px;color:#484f58;font-size:10px">No validation results. Click RUN REGISTER VALIDATION to run.</div>`;
+    return;
+  }
+  if (nameEl) nameEl.textContent = `· ${data.register_id}`;
+  if (tsEl) tsEl.textContent = data.validated_at ? `Validated ${relTime(data.validated_at)}` : '';
+
+  body.innerHTML = data.scenarios.map(s => {
+    const fv = s.financial?.verdict || 'insufficient';
+    const pv = s.probability?.verdict || 'insufficient';
+    return `
+    <div style="border-bottom:1px solid #161b22">
+      <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;font-weight:600;color:#c9d1d9">${esc(s.scenario_name)}</span>
+        <div style="display:flex;gap:5px">
+          ${_regValVerdictBadge('$', fv)}
+          ${_regValVerdictBadge('%', pv)}
+        </div>
+      </div>
+      ${_renderRegValDimension(s.scenario_id, 'financial', s.financial)}
+      ${_renderRegValDimension(s.scenario_id, 'probability', s.probability)}
+    </div>`;
+  }).join('');
+}
+
+function _regValVerdictBadge(prefix, verdict) {
+  const styles = {
+    supports: 'background:#0a1a0a;color:#3fb950;border:1px solid #238636',
+    challenges: 'background:#2d0000;color:#ff7b72;border:1px solid #da3633',
+    insufficient: 'background:#1a1a1a;color:#484f58;border:1px solid #21262d',
+  };
+  const labels = {supports: 'SUPPORTS', challenges: 'CHALLENGES', insufficient: 'INSUFFICIENT'};
+  const style = styles[verdict] || styles.insufficient;
+  return `<span style="${style};font-size:9px;padding:2px 6px;border-radius:10px;letter-spacing:0.04em">${prefix} ${labels[verdict] || verdict.toUpperCase()}</span>`;
+}
+
+function _renderRegValDimension(scenId, dim, d) {
+  if (!d) return '';
+  const isFinancial = dim === 'financial';
+  const label = isFinancial ? 'FINANCIAL' : 'PROBABILITY';
+  const vacr = isFinancial
+    ? (d.vacr_figure_usd != null ? `$${Number(d.vacr_figure_usd).toLocaleString()}` : '—')
+    : (d.vacr_probability_pct != null ? `${d.vacr_probability_pct}%` : '—');
+  const range = isFinancial
+    ? (d.benchmark_range_usd?.length === 2 ? `$${Number(d.benchmark_range_usd[0]).toLocaleString()} – $${Number(d.benchmark_range_usd[1]).toLocaleString()}` : '—')
+    : (d.benchmark_range_pct?.length === 2 ? `${d.benchmark_range_pct[0]}% – ${d.benchmark_range_pct[1]}%` : '—');
+  const allSources = [...(d.existing_sources || []), ...(d.new_sources || [])];
+  const expandId = `regval-${scenId}-${dim}`;
+  const borderColor = {supports: '#238636', challenges: '#da3633', insufficient: '#21262d'}[d.verdict] || '#21262d';
+
+  return `
+  <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:4px;overflow:hidden">
+    <div onclick="toggleRegValRow('${expandId}')" style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#080c10;cursor:pointer">
+      <span style="color:#6e7681;width:75px;flex-shrink:0;font-size:10px;letter-spacing:0.04em">${label}</span>
+      <span style="color:#c9d1d9;width:100px;flex-shrink:0;font-weight:600;font-size:11px">${vacr}</span>
+      <span style="color:#484f58">→</span>
+      <span style="color:#6e7681;font-size:10px">benchmark</span>
+      <span style="color:#c9d1d9;font-size:10px;margin-left:4px">${range}</span>
+      <span style="margin-left:auto">${_regValVerdictBadge('', d.verdict)} <span style="color:#484f58;font-size:10px;margin-left:4px">${allSources.length} src</span></span>
+    </div>
+    <div id="${expandId}" style="display:none;background:#070a0e;padding:8px 10px;border-top:1px solid #161b22">
+      ${allSources.length === 0
+        ? `<div style="color:#484f58;font-size:10px">No sources found.</div>`
+        : allSources.map(src => {
+            const isNew = src.is_new;
+            const fig = isFinancial
+              ? (src.figure_usd ? `$${Number(src.figure_usd).toLocaleString()}` : src.figure_financial || '')
+              : (src.figure_pct ? `${src.figure_pct}%` : src.figure_probability || '');
+            return `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 8px;border-radius:3px;margin-bottom:4px;${isNew ? 'background:#0d1f36;border:1px solid #1f6feb22' : 'background:#0d1117'}">
+              <div>
+                <div style="font-size:10px;color:${isNew ? '#79c0ff' : '#c9d1d9'}">${isNew ? '★ ' : ''}${esc(src.name || '')} ${isNew ? '<span style="background:#1f6feb22;color:#79c0ff;font-size:9px;padding:1px 4px;border-radius:3px">NEW</span>' : ''}</div>
+                ${src.improvement_note ? `<div style="font-size:9px;color:#484f58;margin-top:2px">${esc(src.improvement_note)}</div>` : ''}
+              </div>
+              <span style="font-size:10px;color:${isNew ? '#79c0ff' : '#6e7681'};white-space:nowrap;margin-left:8px">${esc(fig)}</span>
+            </div>`;
+          }).join('')
+      }
+      ${d.recommendation ? `<div style="margin-top:6px;padding:6px 8px;background:#0d1117;border-left:2px solid ${borderColor};border-radius:0 3px 3px 0;font-size:10px;color:#8b949e">${esc(d.recommendation)}</div>` : ''}
+    </div>
+  </div>`;
+}
+
+function toggleRegValRow(id) {
+  const el = $(id);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
 // ── Section: Sources Tab ──────────────────────────────────────────────

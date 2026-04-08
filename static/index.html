@@ -32,7 +32,7 @@
   </script>
   <style>
     * { font-family: 'IBM Plex Mono', monospace; }
-    body { background: #070a0e; color: #c9d1d9; padding-top: 36px; }
+    body { background: #070a0e; color: #c9d1d9; padding-top: 60px; }
 
     /* Prose elements — IBM Plex Sans for readability */
     .brief-content,
@@ -56,15 +56,32 @@
       padding: 0 16px;
     }
 
+    /* Register bar */
+    #register-bar {
+      position: fixed; top: 36px; left: 0; right: 0; z-index: 35;
+      height: 24px;
+      background: #080c10;
+      border-bottom: 1px solid #21262d;
+      display: flex; align-items: center;
+      padding: 0 16px; gap: 8px;
+      font-size: 10px;
+    }
+    #register-drawer {
+      position: fixed; top: 60px; left: 16px; z-index: 50;
+      background: #0d1117; border: 1px solid #21262d; border-radius: 4px;
+      width: 320px; overflow: hidden;
+      display: none;
+    }
+
     /* Progress bar */
     #progress-bar-container {
-      position: fixed; top: 36px; left: 0; right: 0; z-index: 30;
+      position: fixed; top: 60px; left: 0; right: 0; z-index: 30;
       background: #0d1117; border-bottom: 1px solid #21262d;
     }
     #progress-fill { height: 100%; background: #3fb950; transition: width 300ms ease-in-out; }
 
     /* Overview tab — flex column so synthesis bar + split pane stack */
-    #tab-overview { flex-direction: column; height: calc(100vh - 36px); }
+    #tab-overview { flex-direction: column; height: calc(100vh - 60px); }
 
     /* Global synthesis */
     #global-synthesis {
@@ -208,10 +225,10 @@
     }
 
     /* Reports tab */
-    #tab-reports { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
+    #tab-reports { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 60px); }
 
     /* History tab */
-    #tab-history { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 36px); }
+    #tab-history { padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 60px); }
     .history-region-card { border: 1px solid #21262d; border-radius: 6px; background: #161b22; padding: 14px 16px; margin-bottom: 12px; }
     .history-region-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
     .history-region-label { font-size: 12px; font-weight: 600; color: #e6edf3; letter-spacing: 0.05em; }
@@ -588,6 +605,28 @@
   </div>
 </header>
 
+<!-- Register bar -->
+<div id="register-bar">
+  <span style="color:#6e7681">▣</span>
+  <span style="color:#6e7681">Active:</span>
+  <span id="register-bar-name" style="color:#c9d1d9;font-weight:600">—</span>
+  <span style="color:#21262d">·</span>
+  <span id="register-bar-count" style="color:#484f58">— scenarios</span>
+  <span style="flex:1"></span>
+  <span id="register-bar-toggle" onclick="toggleRegisterDrawer()"
+    style="color:#6e7681;cursor:pointer;letter-spacing:0.04em">Switch Register ▾</span>
+</div>
+
+<!-- Register drawer (hidden by default) -->
+<div id="register-drawer">
+  <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #21262d">
+    <span style="font-size:10px;font-weight:600;color:#8b949e;letter-spacing:0.05em">RISK REGISTERS</span>
+    <button onclick="showRegisterForm()" style="background:#238636;color:#fff;border:none;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">+ New</button>
+  </div>
+  <div id="register-list" style="max-height:240px;overflow-y:auto"></div>
+  <div id="register-form-panel" style="display:none;border-top:1px solid #21262d;padding:12px"></div>
+</div>
+
 <!-- Progress bar -->
 <div id="progress-bar-container" class="hidden" style="padding:4px 16px">
   <div style="display:flex;align-items:center;gap:10px">
@@ -653,12 +692,12 @@
 </div>
 
 <!-- ── TRENDS TAB ──────────────────────────────────────────────── -->
-<div id="tab-trends" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 36px)">
+<div id="tab-trends" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 60px)">
   <div id="trends-content"></div>
 </div>
 
 <!-- ── HISTORY TAB ─────────────────────────────────────────────── -->
-<div id="tab-history" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 36px)">
+<div id="tab-history" class="hidden" style="padding:20px 24px;overflow-y:auto;max-height:calc(100vh - 60px)">
   <div id="history-summary" style="background:#080c10;border-bottom:1px solid #21262d;padding:10px 16px;margin:-20px -24px 16px -24px;font-size:10px;color:#8b949e;display:flex;gap:12px;align-items:center"></div>
   <div id="history-matrix" style="margin-bottom:16px;overflow-x:auto"></div>
   <div id="history-run-strip" style="margin-bottom:16px;padding:10px 12px;background:#161b22;border:1px solid #21262d;border-radius:4px;font-size:10px"></div>
@@ -666,7 +705,7 @@
 </div>
 
 <!-- ── CONFIG TAB ──────────────────────────────────────────────── -->
-<div id="tab-config" class="hidden" style="height:calc(100vh - 36px);flex-direction:column;overflow:hidden">
+<div id="tab-config" class="hidden" style="height:calc(100vh - 60px);flex-direction:column;overflow:hidden">
   <div style="display:flex;border-bottom:1px solid #21262d;flex-shrink:0;padding:0 16px">
     <div class="nav-tab active" id="cfg-nav-sources" onclick="switchCfgTab('sources')">Intelligence Sources</div>
     <div class="nav-tab" id="cfg-nav-footprint" onclick="switchCfgTab('footprint')">Footprint</div>
@@ -747,7 +786,7 @@
 </div>
 
 <!-- ── PIPELINE TAB ─────────────────────────────────────────────────── -->
-<div id="tab-pipeline" class="hidden" style="height:calc(100vh - 36px);overflow:hidden;display:flex;flex-direction:column">
+<div id="tab-pipeline" class="hidden" style="height:calc(100vh - 60px);overflow:hidden;display:flex;flex-direction:column">
 
   <!-- Fixed header: requirement + admiralty -->
   <div id="pipeline-header">
@@ -808,7 +847,7 @@
 </div>
 
 <!-- ── VALIDATE TAB ─────────────────────────────────────────────── -->
-<div id="tab-validate" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 36px)">
+<div id="tab-validate" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 60px)">
 
   <!-- Regional Scenarios Editor -->
   <div style="margin-bottom:20px">
@@ -829,6 +868,23 @@
     </div>
     <div id="rr-master-table" style="border:1px solid #21262d;border-radius:2px;overflow:hidden">
       <div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Register Validation Results -->
+  <div id="register-validation-panel" style="margin-bottom:16px;border:1px solid #21262d;border-radius:4px;overflow:hidden">
+    <div style="padding:8px 12px;background:#080c10;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #21262d">
+      <div>
+        <span style="font-size:10px;font-weight:600;color:#8b949e;letter-spacing:0.05em">REGISTER VALIDATION</span>
+        <span id="reg-val-register-name" style="font-size:10px;color:#484f58;margin-left:8px"></span>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="reg-val-timestamp" style="font-size:10px;color:#484f58"></span>
+        <button onclick="runRegisterValidation()" style="background:#1f6feb22;border:1px solid #1f6feb;color:#79c0ff;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">RUN REGISTER VALIDATION</button>
+      </div>
+    </div>
+    <div id="register-validation-body" style="padding:0">
+      <div style="padding:12px;color:#484f58;font-size:10px">No validation results. Click RUN REGISTER VALIDATION to run.</div>
     </div>
   </div>
 
@@ -907,7 +963,7 @@
 </div>
 
 <!-- ── SOURCES TAB ─────────────────────────────────────────────── -->
-<div id="tab-sources" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 36px)">
+<div id="tab-sources" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 60px)">
 
   <!-- Header -->
   <div style="margin-bottom:14px">
