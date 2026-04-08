@@ -3586,7 +3586,7 @@ function _childRow(s) {
     </span>
     <span style="width:150px;flex-shrink:0">${_usageBar(s.appearance_count ?? 0, s.cited_count ?? 0)}</span>
     <span style="width:90px;flex-shrink:0;font-size:10px;color:${s.published_at ? '#8b949e' : '#484f58'}">${s.published_at ? s.published_at.slice(0,10) : '\u2014'}</span>
-    <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(s.last_seen)}">${s.last_seen ? s.last_seen.slice(0,10) : '\u2014'}</span>
+    <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(s.first_seen)}">${s.first_seen ? s.first_seen.slice(0,10) : '\u2014'}</span>
     <span style="width:60px;flex-shrink:0">
       ${s.url ? `<button onclick="window.open('${esc(s.url)}','_blank')"
          style="font-size:9px;color:#6e7681;background:transparent;border:1px solid #30363d;padding:2px 6px;border-radius:2px;cursor:pointer"
