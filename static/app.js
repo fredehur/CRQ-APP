@@ -3351,7 +3351,7 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
       <span style="color:#c9d1d9;font-size:10px;margin-left:4px">${range}</span>
       <span style="margin-left:auto">${_regValVerdictBadge('', d.verdict)} <span style="color:#484f58;font-size:10px;margin-left:4px">${allSources.length} src</span></span>
     </div>
-    <div id="${expandId}" style="display:none;background:#070a0e;padding:8px 10px;border-top:1px solid #161b22">
+    <div id="${expandId}" style="display:block;background:#070a0e;padding:8px 10px;border-top:1px solid #161b22">
       ${sourcesHtml}
       ${d.recommendation ? `<div style="margin-top:6px;padding:6px 8px;background:#0d1117;border-left:2px solid ${borderColor};border-radius:0 3px 3px 0;font-size:10px;color:#8b949e">${esc(d.recommendation)}</div>` : ''}
     </div>
