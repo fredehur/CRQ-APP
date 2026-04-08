@@ -1,8 +1,10 @@
 """CRQ Command Center — FastAPI backend."""
 
 import asyncio
+import datetime
 import json
 import logging
+import re
 import sqlite3
 import time
 from pathlib import Path
@@ -44,7 +46,13 @@ threat_landscape_state = {
     "running": False,
     "started_at": None,
 }
+research_state = {
+    "running": False,
+    "progress": [],   # list of {incident_type, status: "running"|"done"|"error"}
+    "started_at": None,
+}
 event_queue: asyncio.Queue = asyncio.Queue(maxsize=1000)
+_run_log: dict = {"status": "no_run", "timestamp": None, "duration_seconds": None, "regions": {}}
 
 
 def _read_json(path: Path) -> Optional[dict]:
@@ -726,14 +734,102 @@ async def post_feedback(run_id: str, body: dict):
 
 
 # ── API: Run Pipeline ────────────────────────────────────────────────────
+def _update_run_log(event: str, data: dict) -> None:
+    """Incrementally update in-memory run log and persist to disk."""
+    global _run_log
+
+    if event == "pipeline":
+        status = data.get("status")
+        if status == "started":
+            _run_log = {
+                "status": "running",
+                "timestamp": datetime.datetime.now().isoformat(timespec="seconds"),
+                "started_at": time.time(),
+                "duration_seconds": None,
+                "regions": {},
+            }
+        elif status == "complete":
+            _run_log["status"] = "done"
+            started = _run_log.pop("started_at", None)
+            if started:
+                _run_log["duration_seconds"] = int(time.time() - started)
+        elif status == "error":
+            _run_log["status"] = "error"
+            _run_log["error"] = data.get("message", "Unknown error")
+            started = _run_log.pop("started_at", None)
+            if started:
+                _run_log["duration_seconds"] = int(time.time() - started)
+
+    elif event == "gatekeeper":
+        region = data.get("region", "")
+        if region:
+            if region not in _run_log.get("regions", {}):
+                _run_log.setdefault("regions", {})[region] = {
+                    "decision": data.get("decision"),
+                    "admiralty": data.get("admiralty", ""),
+                    "rationale": data.get("rationale", ""),
+                    "scenario_match": data.get("scenario_match", ""),
+                    "dominant_pillar": data.get("dominant_pillar", ""),
+                    "signal_count": None,
+                    "summary": None,
+                    "events": [],
+                    "error": None,
+                }
+            else:
+                _run_log["regions"][region].update({
+                    "decision": data.get("decision"),
+                    "admiralty": data.get("admiralty", ""),
+                    "rationale": data.get("rationale", ""),
+                    "scenario_match": data.get("scenario_match", ""),
+                    "dominant_pillar": data.get("dominant_pillar", ""),
+                })
+
+    elif event == "phase":
+        region = data.get("region", "")
+        message = data.get("message", "")
+        ts = datetime.datetime.now().strftime("%H:%M:%S")
+        entry = {"time": ts, "type": "phase", "message": message}
+        if region and region in _run_log.get("regions", {}):
+            _run_log["regions"][region]["events"].append(entry)
+        else:
+            _run_log.setdefault("global_events", []).append(entry)
+
+    elif event == "deep_research":
+        region = data.get("region", "")
+        ts = datetime.datetime.now().strftime("%H:%M:%S")
+        msg = f"Deep research — {data.get('type', '')} — {data.get('message', '')}"
+        entry = {"time": ts, "type": "deep_research", "message": msg}
+        if region and region in _run_log.get("regions", {}):
+            _run_log["regions"][region]["events"].append(entry)
+
+    elif event == "error":
+        region = data.get("region", "")
+        message = data.get("message", "Unknown error")
+        if region and region in _run_log.get("regions", {}):
+            _run_log["regions"][region]["error"] = message
+        else:
+            _run_log["error"] = message
+
+    # Persist to disk
+    log_path = BASE / "output" / "pipeline" / "last_run_log.json"
+    try:
+        log_path.parent.mkdir(parents=True, exist_ok=True)
+        log_path.write_text(json.dumps(_run_log, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
 async def _emit(event: str, data: dict):
     """Push a structured SSE event. Drops oldest if queue is full."""
+    global _run_log
     if event_queue.full():
         try:
             event_queue.get_nowait()
         except asyncio.QueueEmpty:
             pass
     await event_queue.put({"event": event, "data": json.dumps(data)})
+    # Write run log incrementally
+    _update_run_log(event, data)
 
 
 async def _run_full_mode(regions: list[str], window: str = "7d"):
@@ -757,11 +853,21 @@ async def _run_full_mode(regions: list[str], window: str = "7d"):
                 await _emit("log", {"line": text})
                 # Parse structured events from known output patterns
                 # GATEKEEPER: lines like "APAC — ESCALATE (B2, HIGH, ...)"  or  "`APAC — CLEAR`"
-                import re
                 gk = re.search(r'`?([A-Z]{2,5})\s*[—-]+\s*(ESCALATE|MONITOR|CLEAR)', text)
                 if gk:
                     region, decision = gk.group(1), gk.group(2)
-                    await _emit("gatekeeper", {"region": region, "decision": decision})
+                    gk_payload: dict = {"region": region, "decision": decision}
+                    gk_file = BASE / "output" / "regional" / region / "gatekeeper_decision.json"
+                    if gk_file.exists():
+                        try:
+                            gk_data = json.loads(gk_file.read_text(encoding="utf-8"))
+                            gk_payload["rationale"] = gk_data.get("rationale", "")
+                            gk_payload["admiralty"] = gk_data.get("admiralty", "")
+                            gk_payload["scenario_match"] = gk_data.get("scenario_match", "")
+                            gk_payload["dominant_pillar"] = gk_data.get("dominant_pillar", "")
+                        except Exception:
+                            pass
+                    await _emit("gatekeeper", gk_payload)
                     if decision in ("ESCALATE", "MONITOR", "CLEAR"):
                         rd = pipeline_state["regions_done"]
                         if region not in rd:
@@ -816,6 +922,15 @@ async def run_region(
         return JSONResponse({"error": "Pipeline already running"}, status_code=409)
     asyncio.create_task(_run_full_mode([r], window=window))
     return {"started": True, "regions": [r], "window": window}
+
+
+@app.get("/api/run/log")
+async def get_run_log():
+    """Return the last run log from disk, or no_run sentinel."""
+    log_path = BASE / "output" / "pipeline" / "last_run_log.json"
+    if log_path.exists():
+        return json.loads(log_path.read_text(encoding="utf-8"))
+    return {"status": "no_run"}
 
 
 # ── SSE Stream ───────────────────────────────────────────────────────────
@@ -1046,6 +1161,213 @@ async def get_validation_status():
     return validation_state
 
 
+# ── API: Risk Register — Regional Scenarios ──────────────────────────────
+_REGIONAL_DB = BASE / "data" / "mock_crq_database.json"
+_MASTER_DB   = BASE / "data" / "master_scenarios.json"
+
+
+@app.get("/api/risk-register/regional")
+async def get_regional_scenarios():
+    data = _read_json(_REGIONAL_DB)
+    return data or {}
+
+
+@app.put("/api/risk-register/regional/{scenario_id}")
+async def update_regional_scenario(scenario_id: str, body: dict):
+    data = _read_json(_REGIONAL_DB)
+    if not data:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+    for region, scenarios in data.items():
+        for i, s in enumerate(scenarios):
+            if s.get("scenario_id") == scenario_id:
+                # Merge update fields; preserve scenario_id and region structure
+                data[region][i].update({k: v for k, v in body.items() if k != "scenario_id"})
+                _REGIONAL_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+                return {"ok": True, "scenario_id": scenario_id}
+    return JSONResponse({"error": f"Scenario {scenario_id} not found"}, status_code=404)
+
+
+@app.post("/api/risk-register/regional")
+async def add_regional_scenario(body: dict):
+    data = _read_json(_REGIONAL_DB) or {}
+    region = body.get("region", "").upper()
+    if not region:
+        return JSONResponse({"error": "region required"}, status_code=400)
+    # Auto-generate scenario_id: REGION-NNN
+    existing = [s for scenarios in data.values() for s in scenarios if s.get("scenario_id", "").startswith(region)]
+    new_id = f"{region}-{len(existing) + 1:03d}"
+    scenario = {
+        "scenario_id": new_id,
+        "department": body.get("department", ""),
+        "scenario_name": body.get("scenario_name", "New Scenario"),
+        "critical_assets": body.get("critical_assets", []),
+        "value_at_cyber_risk_usd": body.get("value_at_cyber_risk_usd", 0),
+    }
+    data.setdefault(region, []).append(scenario)
+    _REGIONAL_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+    return {"ok": True, "scenario_id": new_id}
+
+
+@app.delete("/api/risk-register/regional/{scenario_id}")
+async def delete_regional_scenario(scenario_id: str):
+    data = _read_json(_REGIONAL_DB)
+    if not data:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+    for region, scenarios in data.items():
+        for i, s in enumerate(scenarios):
+            if s.get("scenario_id") == scenario_id:
+                data[region].pop(i)
+                if not data[region]:
+                    del data[region]
+                _REGIONAL_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+                return {"ok": True}
+    return JSONResponse({"error": f"Scenario {scenario_id} not found"}, status_code=404)
+
+
+# ── API: Risk Register — Master Scenarios ────────────────────────────────
+
+@app.get("/api/risk-register/master")
+async def get_master_scenarios():
+    data = _read_json(_MASTER_DB)
+    return {"scenarios": data.get("scenarios", [])} if data else {"scenarios": []}
+
+
+@app.put("/api/risk-register/master/{incident_type}")
+async def update_master_scenario(incident_type: str, body: dict):
+    data = _read_json(_MASTER_DB)
+    if not data:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+    for i, s in enumerate(data.get("scenarios", [])):
+        if s.get("incident_type") == incident_type:
+            data["scenarios"][i].update({k: v for k, v in body.items() if k != "incident_type"})
+            _MASTER_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+            return {"ok": True}
+    return JSONResponse({"error": f"Scenario '{incident_type}' not found"}, status_code=404)
+
+
+@app.post("/api/risk-register/master")
+async def add_master_scenario(body: dict):
+    data = _read_json(_MASTER_DB) or {"meta": {}, "scenarios": []}
+    incident_type = body.get("incident_type", "").strip()
+    if not incident_type:
+        return JSONResponse({"error": "incident_type required"}, status_code=400)
+    if any(s.get("incident_type") == incident_type for s in data.get("scenarios", [])):
+        return JSONResponse({"error": f"'{incident_type}' already exists"}, status_code=409)
+    scenario = {
+        "incident_type": incident_type,
+        "event_frequency_pct": body.get("event_frequency_pct", 0.0),
+        "frequency_rank": body.get("frequency_rank", 99),
+        "financial_impact_pct": body.get("financial_impact_pct", 0.0),
+        "financial_rank": body.get("financial_rank", 99),
+        "records_affected_pct": body.get("records_affected_pct", 0.0),
+        "records_rank": body.get("records_rank", 99),
+    }
+    data["scenarios"].append(scenario)
+    _MASTER_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+    return {"ok": True, "incident_type": incident_type}
+
+
+@app.delete("/api/risk-register/master/{incident_type}")
+async def delete_master_scenario(incident_type: str):
+    # URL-encode spaces — FastAPI path param decodes automatically
+    data = _read_json(_MASTER_DB)
+    if not data:
+        return JSONResponse({"error": "Database not found"}, status_code=404)
+    original_len = len(data.get("scenarios", []))
+    data["scenarios"] = [s for s in data.get("scenarios", []) if s.get("incident_type") != incident_type]
+    if len(data["scenarios"]) == original_len:
+        return JSONResponse({"error": f"Scenario '{incident_type}' not found"}, status_code=404)
+    _MASTER_DB.write_text(json.dumps(data, indent=4, ensure_ascii=False), encoding="utf-8")
+    return {"ok": True}
+
+
+# ── API: Risk Register — VaCR Research Pipeline ──────────────────────────
+
+@app.get("/api/risk-register/research")
+async def get_research_results():
+    data = _read_json(PIPELINE / "vacr_research.json")
+    return data or {"generated_at": None, "results": []}
+
+
+@app.post("/api/risk-register/research")
+async def trigger_research():
+    if research_state["running"]:
+        return JSONResponse({"error": "Research already running"}, status_code=409)
+    asyncio.create_task(_run_research())
+    return {"started": True}
+
+
+@app.get("/api/risk-register/research/status")
+async def get_research_status():
+    return research_state
+
+
+async def _run_research():
+    """Run vacr_researcher.py for all master scenarios in parallel. Emits SSE events."""
+    import importlib.util, sys as _sys
+    research_state.update(running=True, progress=[], started_at=time.time())
+    await _emit("research", {"status": "started"})
+
+    # Load master scenarios to get incident types + find matching regional VaCR
+    master_data = _read_json(BASE / "data" / "master_scenarios.json") or {}
+    scenarios = master_data.get("scenarios", [])
+    regional_data = _read_json(BASE / "data" / "mock_crq_database.json") or {}
+
+    # Build a map of incident_type -> best VaCR (highest across regions for that scenario)
+    # Since regional scenarios use different names, we use the highest regional VaCR as proxy
+    all_regional_vacr = [
+        s.get("value_at_cyber_risk_usd", 0)
+        for region_list in regional_data.values()
+        for s in region_list
+        if s.get("value_at_cyber_risk_usd", 0) > 0
+    ]
+    default_vacr = max(all_regional_vacr) if all_regional_vacr else 0
+
+    research_state["progress"] = [{"incident_type": s["incident_type"], "status": "pending"} for s in scenarios]
+
+    async def _research_one(scenario: dict) -> None:
+        incident_type = scenario["incident_type"]
+        # Update progress
+        for p in research_state["progress"]:
+            if p["incident_type"] == incident_type:
+                p["status"] = "running"
+        done_count = sum(1 for p in research_state["progress"] if p["status"] == "done")
+        await _emit("research", {"status": "step", "incident_type": incident_type,
+                                  "message": f"Researching: {incident_type}... [{done_count}/{len(scenarios)} complete]"})
+        try:
+            # Run in thread pool to avoid blocking the event loop
+            loop = asyncio.get_event_loop()
+            spec = importlib.util.spec_from_file_location("vacr_researcher", BASE / "tools" / "vacr_researcher.py")
+            mod = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(mod)
+
+            result = await loop.run_in_executor(
+                None,
+                lambda: mod.research_scenario(incident_type, default_vacr, "energy")
+            )
+            mod._update_output(result)
+
+            for p in research_state["progress"]:
+                if p["incident_type"] == incident_type:
+                    p["status"] = "done"
+            done_count = sum(1 for p in research_state["progress"] if p["status"] == "done")
+            await _emit("research", {"status": "step", "incident_type": incident_type,
+                                      "message": f"Done: {incident_type} [{done_count}/{len(scenarios)} complete]"})
+        except Exception as exc:
+            for p in research_state["progress"]:
+                if p["incident_type"] == incident_type:
+                    p["status"] = "error"
+            await _emit("research", {"status": "error", "incident_type": incident_type, "message": str(exc)})
+
+    try:
+        await asyncio.gather(*[_research_one(s) for s in scenarios])
+        await _emit("research", {"status": "complete"})
+    except Exception as exc:
+        await _emit("research", {"status": "error", "message": str(exc)})
+    finally:
+        research_state.update(running=False)
+
+
 # ── API: Source Registry ─────────────────────────────────────────────────
 @app.get("/api/sources")
 async def get_source_registry(
@@ -1270,6 +1592,18 @@ async def get_source_velocity():
             return {"new_this_run": new_count, "total": total_count, "by_region": by_region}
     except Exception:
         return zeroed
+
+
+# ── Startup ──────────────────────────────────────────────────────────────
+@app.on_event("startup")
+async def _startup():
+    global _run_log
+    log_path = BASE / "output" / "pipeline" / "last_run_log.json"
+    if log_path.exists():
+        try:
+            _run_log = json.loads(log_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
 
 
 # ── Static Files ─────────────────────────────────────────────────────────

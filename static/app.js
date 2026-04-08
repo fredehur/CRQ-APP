@@ -39,8 +39,8 @@ let state = {
   selectedSourceIds: new Set(),
 };
 
-// Agent console state
-let _consolePinned = true, _consoleEverStarted = false;
+// Run log state (mirrors last_run_log.json, updated live via SSE)
+let _runLog = { status: 'no_run', regions: {} };
 
 // ── Section 3: Helpers ─────────────────────────────────────────────────
 const $ = id => document.getElementById(id);
@@ -125,6 +125,17 @@ async function loadLatestData() {
       ]);
       state.regionData[r] = data;
       state.regionClusters[r] = clusters;
+      // Enrich run log with analyst summary
+      if (data && _runLog.regions && _runLog.regions[r]) {
+        _runLog.regions[r].signal_count = (data.geo_signals || []).length + (data.cyber_signals || []).length;
+        _runLog.regions[r].summary = {
+          scenario: data.primary_scenario || '',
+          dominant_pillar: data.dominant_pillar || '',
+          admiralty: data.admiralty || '',
+          strategic_assessment: data.strategic_assessment || '',
+        };
+        _updateRunLogAccordion(r);
+      }
     }));
   }
 
@@ -1320,11 +1331,11 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
-  ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'pipeline'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'pipeline', 'runlog'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' ? 'flex' : 'block') : '';
+    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' ? 'flex' : 'block') : '';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
@@ -1335,6 +1346,7 @@ function _doSwitchTab(tab) {
   if (tab === 'validate') renderValidateTab();
   if (tab === 'sources')  renderSources();
   if (tab === 'pipeline') renderPipelineTab();
+  if (tab === 'runlog') renderRunLog();
 }
 
 // ── Pipeline Tab Data ─────────────────────────────────────────────────
@@ -1802,8 +1814,6 @@ async function runAll() {
   const btn = $('btn-run-all');
   btn.disabled = true;
   $('pipeline-status').textContent = 'Running...';
-  showConsole();
-  _consoleEverStarted = true;
   try {
     const r = await fetch(`/api/run/all?window=${windowVal}`, { method: 'POST' });
     if (!r.ok) {
@@ -1817,31 +1827,6 @@ async function runAll() {
   }
 }
 
-// ── Agent Console ─────────────────────────────────────────────────────
-function showConsole() {
-  $('agent-console').classList.remove('hidden');
-  $('agent-console-toggle').classList.add('hidden');
-}
-function hideConsole() {
-  $('agent-console').classList.add('hidden');
-  if (_consoleEverStarted) $('agent-console-toggle').classList.remove('hidden');
-}
-function appendConsoleEntry(html) {
-  const log = $('console-log');
-  const div = document.createElement('div');
-  div.innerHTML = html;
-  log.appendChild(div);
-  if (_consolePinned) log.scrollTop = log.scrollHeight;
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const log = $('console-log');
-  if (log) {
-    log.addEventListener('scroll', () => {
-      _consolePinned = log.scrollTop >= log.scrollHeight - log.clientHeight - 5;
-    });
-  }
-});
 
 // ── Section 9: Render — RSM Tab ────────────────────────────────────────
 function renderRsmTab() {
@@ -1935,35 +1920,74 @@ function startEventStream() {
   const es = new EventSource('/api/logs/stream');
   es.addEventListener('phase', e => {
     const d = JSON.parse(e.data);
-    appendConsoleEntry(`<span style="color:#3fb950;font-size:10px">[${d.phase}] ${esc(d.message||'')}</span>`);
+    // Track phase events in run log
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    const entry = { time: ts, type: 'phase', message: d.message || d.phase || '' };
+    const regionMatch = (d.message || '').match(/\b(APAC|AME|LATAM|MED|NCE)\b/);
+    if (regionMatch && _runLog.regions && _runLog.regions[regionMatch[1]]) {
+      _runLog.regions[regionMatch[1]].events = _runLog.regions[regionMatch[1]].events || [];
+      _runLog.regions[regionMatch[1]].events.push(entry);
+      _updateRunLogAccordion(regionMatch[1]);
+    } else {
+      _runLog.globalEvents = _runLog.globalEvents || [];
+      _runLog.globalEvents.push(entry);
+    }
   });
   es.addEventListener('gatekeeper', e => {
     const d = JSON.parse(e.data);
-    const color = d.decision === 'ESCALATE' ? '#ff7b72' : d.decision === 'MONITOR' ? '#79c0ff' : '#3fb950';
-    appendConsoleEntry(`<span style="color:${color};font-size:10px">[GK] ${esc(d.region)} &#8594; ${esc(d.decision)}</span>`);
+    // Update run log state
+    if (!_runLog.regions) _runLog.regions = {};
+    if (!_runLog.regions[d.region]) {
+      _runLog.regions[d.region] = { decision: d.decision, admiralty: d.admiralty || '', rationale: d.rationale || '', scenario_match: d.scenario_match || '', dominant_pillar: d.dominant_pillar || '', events: [], error: null };
+    } else {
+      Object.assign(_runLog.regions[d.region], { decision: d.decision, admiralty: d.admiralty || '', rationale: d.rationale || '', scenario_match: d.scenario_match || '', dominant_pillar: d.dominant_pillar || '' });
+    }
+    // Update progress bar
+    const done = Object.keys(_runLog.regions).length;
+    const progressLabel = $('progress-label');
+    if (progressLabel) progressLabel.textContent = `Running — ${done}/5 regions`;
+    const pct = (done / 5) * 80;
+    const fill = $('progress-fill');
+    if (fill) fill.style.width = pct + '%';
+    // Live-update run log tab if active
+    _updateRunLogAccordion(d.region);
   });
   es.addEventListener('pipeline', e => {
     const d = JSON.parse(e.data);
+    if (d.status === 'started') {
+      _runLog = { status: 'running', timestamp: new Date().toISOString(), regions: {} };
+      if ($('tab-runlog') && $('tab-runlog').style.display !== 'none') renderRunLog();
+    }
     if (d.status === 'complete') {
       $('pipeline-status').textContent = 'Idle';
       $('btn-run-all').disabled = false;
+      _runLog.status = 'done';
+      if ($('tab-runlog') && $('tab-runlog').style.display !== 'none') renderRunLog();
       loadLatestData();
     } else if (d.status === 'error') {
-      $('pipeline-status').textContent = 'Run failed — check console';
+      $('pipeline-status').textContent = 'Run failed';
       $('btn-run-all').disabled = false;
-      appendConsoleEntry(`<span style="color:#ff7b72;font-size:10px">[ERROR] ${esc(d.message||'')}</span>`);
+      _runLog.status = 'error';
+      _runLog.error = d.message || 'Unknown error';
+      if ($('tab-runlog') && $('tab-runlog').style.display !== 'none') renderRunLog();
     }
   });
   es.addEventListener('log', e => {
-    const d = JSON.parse(e.data);
-    const text = d.line || d.message || '';
-    if (text) appendConsoleEntry(`<span style="color:#6e7681;font-size:9px">${esc(text)}</span>`);
+    // Raw log lines intentionally not displayed — noise suppressed
   });
   es.addEventListener('deep_research', e => {
     const d = JSON.parse(e.data);
-    appendConsoleEntry(
-      `<span style="color:#79c0ff;font-size:10px">[deep] ${esc(d.region||'')} ${esc(d.type||'')} — ${esc(d.message||'')}</span>`
-    );
+    // Track deep research events in run log
+    const ts = new Date().toLocaleTimeString('en-GB', { hour12: false });
+    const entry = { time: ts, type: 'deep_research', message: `[deep] ${d.region || ''} ${d.type || ''} — ${d.message || ''}` };
+    if (d.region && _runLog.regions && _runLog.regions[d.region]) {
+      _runLog.regions[d.region].events = _runLog.regions[d.region].events || [];
+      _runLog.regions[d.region].events.push(entry);
+      _updateRunLogAccordion(d.region);
+    } else {
+      _runLog.globalEvents = _runLog.globalEvents || [];
+      _runLog.globalEvents.push(entry);
+    }
   });
   es.onerror = () => {};
 }
@@ -3428,6 +3452,98 @@ async function flagSource(id, junk) {
 
 function applySourceFilters() {
   renderSources();
+}
+
+// ── Run Log Tab ──────────────────────────────────────────────────────
+function _updateRunLogAccordion(region) {
+  const tabEl = $('tab-runlog');
+  if (!tabEl || tabEl.style.display === 'none') return;
+  const container = $('runlog-regions');
+  if (!container) return;
+  const regionData = (_runLog.regions || {})[region];
+  if (!regionData) return;
+  let el = $(`runlog-region-${region}`);
+  if (!el) {
+    el = document.createElement('div');
+    el.id = `runlog-region-${region}`;
+    el.style.cssText = 'border:1px solid #21262d;border-radius:6px;overflow:hidden';
+    container.appendChild(el);
+  }
+  const isEscalated = regionData.decision === 'ESCALATE';
+  const decisionColor = regionData.decision === 'ESCALATE' ? '#ff7b72' : regionData.decision === 'MONITOR' ? '#79c0ff' : '#3fb950';
+  const timelineOpen = isEscalated;
+  const events = (regionData.events || []).map(ev =>
+    `<div style="font-size:10px;color:#8b949e;padding:2px 0">[${esc(ev.time)}] ${esc(ev.message)}</div>`
+  ).join('');
+  let summaryHtml;
+  if (isEscalated && regionData.summary) {
+    summaryHtml = `
+      <div style="font-size:11px;color:#c9d1d9"><b>Scenario:</b> ${esc(regionData.summary.scenario || regionData.scenario_match || '')}</div>
+      <div style="font-size:11px;color:#c9d1d9"><b>Pillar:</b> ${esc(regionData.summary.dominant_pillar || regionData.dominant_pillar || '')}</div>
+      <div style="font-size:11px;color:#c9d1d9"><b>Admiralty:</b> ${esc(regionData.summary.admiralty || regionData.admiralty || '')}</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px">${esc(regionData.summary.strategic_assessment || '')}</div>`;
+  } else {
+    summaryHtml = `
+      <div style="font-size:11px;color:#c9d1d9"><b>Admiralty:</b> ${esc(regionData.admiralty || '')}</div>
+      <div style="font-size:11px;color:#8b949e;margin-top:4px">${esc(regionData.rationale || '')}</div>`;
+  }
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:#161b22;cursor:pointer" onclick="this.parentElement.querySelector('.runlog-body').classList.toggle('hidden')">
+      <span style="font-size:12px;font-weight:600;color:#c9d1d9;min-width:48px">${esc(region)}</span>
+      <span style="font-size:10px;font-weight:600;color:${decisionColor};background:${decisionColor}22;padding:2px 8px;border-radius:3px">${esc(regionData.decision || '...')}</span>
+      ${regionData.signal_count != null ? `<span style="font-size:10px;color:#6e7681">${regionData.signal_count} signals</span>` : ''}
+    </div>
+    ${regionData.error ? `<div style="padding:6px 12px;background:#ff7b7222;border-top:1px solid #ff7b7244;font-size:11px;color:#ff7b72">${esc(regionData.error)}</div>` : ''}
+    <div class="runlog-body" style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">
+      <div style="font-size:10px;font-weight:600;color:#6e7681;text-transform:uppercase;letter-spacing:0.06em">Summary</div>
+      ${summaryHtml}
+      <details ${timelineOpen ? 'open' : ''} style="margin-top:4px">
+        <summary style="font-size:10px;font-weight:600;color:#6e7681;text-transform:uppercase;letter-spacing:0.06em;cursor:pointer;list-style:none">&#9654; Event Timeline</summary>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:1px">
+          ${events || '<div style="font-size:10px;color:#6e7681">No events yet</div>'}
+        </div>
+      </details>
+    </div>`;
+}
+
+async function renderRunLog() {
+  const container = $('runlog-regions');
+  const header = $('runlog-header');
+  if (!container) return;
+
+  if (_runLog.status === 'no_run') {
+    try {
+      const r = await fetch('/api/run/log');
+      const data = await r.json();
+      if (data.status !== 'no_run') _runLog = data;
+    } catch { /* server offline */ }
+  }
+
+  if (_runLog.status === 'no_run') {
+    header.innerHTML = `<span style="font-size:11px;color:#6e7681">No run yet — click RUN ALL to start</span>`;
+    container.innerHTML = '';
+    return;
+  }
+
+  const ts = _runLog.timestamp ? new Date(_runLog.timestamp).toLocaleString() : '';
+  const dur = _runLog.duration_seconds ? `${Math.floor(_runLog.duration_seconds / 60)}m ${_runLog.duration_seconds % 60}s` : '';
+  const escalations = Object.values(_runLog.regions || {}).filter(r => r.decision === 'ESCALATE').length;
+  let outcomeColor = '#3fb950', outcomeText = 'All Clear';
+  if (_runLog.status === 'error') { outcomeColor = '#ff7b72'; outcomeText = 'Failed'; }
+  else if (escalations > 0) { outcomeColor = '#e3b341'; outcomeText = `Escalations: ${escalations}`; }
+
+  header.innerHTML = `
+    <span style="font-size:11px;color:#8b949e">Last run: ${esc(ts)}</span>
+    ${dur ? `<span style="font-size:11px;color:#8b949e">${esc(dur)}</span>` : ''}
+    <span style="font-size:11px;font-weight:600;color:${outcomeColor}">${esc(outcomeText)}</span>`;
+
+  container.innerHTML = '';
+  const ORDER = ['APAC', 'AME', 'LATAM', 'MED', 'NCE'];
+  ORDER.forEach(region => {
+    if ((_runLog.regions || {})[region]) {
+      _updateRunLogAccordion(region);
+    }
+  });
 }
 
 // ── Init ──────────────────────────────────────────────────────────────
