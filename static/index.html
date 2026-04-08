@@ -99,7 +99,7 @@
     /* Split pane — only visible on Overview tab */
     #split-pane {
       display: grid;
-      grid-template-columns: 280px 1fr;
+      grid-template-columns: 180px 1fr;
       flex: 1;
       overflow: hidden;
     }
@@ -121,13 +121,12 @@
 
     /* Region rows */
     .region-row {
-      display: flex; align-items: center;
-      padding: 5px 10px; border-bottom: 1px solid #0d1117;
+      display: flex; flex-direction: column; align-items: flex-start;
+      padding: 10px 14px; border-bottom: 1px solid #0d1117;
       cursor: pointer; transition: background 0.1s;
-      min-height: 34px;
     }
-    .region-row:hover { background: #0d1117; }
-    .region-row.active { background: #111820; border-left: 2px solid; padding-left: 8px; }
+    .region-row:hover { background: rgba(13,17,23,0.5); }
+    .region-row.active { background: #0d1117; border-left: 2px solid; padding-left: 12px; }
 
     /* Cluster cards */
     .cluster-card {
@@ -417,6 +416,39 @@
       line-height: 1.5;
       text-align: right;
     }
+
+    /* Context tag badges */
+    .ctx-badge {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-left: 4px;
+      vertical-align: middle;
+    }
+    .ctx-asset   { background: #1e3a5f; color: #7ec8e3; border: 1px solid #2a5280; }
+    .ctx-scale   { background: #2d1b4e; color: #b794f4; border: 1px solid #4a2d7a; }
+    .ctx-both    { background: #1a3a2e; color: #68d391; border: 1px solid #276749; }
+    .ctx-general { background: #2d2d2d; color: #a0aec0; border: 1px solid #4a4a4a; }
+    .smb-flag    { background: #3d2000; color: #f6ad55; border: 1px solid #7b3f00; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
+
+    /* Two-box source display */
+    .rr-sources-section { margin-top: 12px; }
+    .rr-sources-box { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; margin-bottom: 8px; }
+    .rr-sources-box-header { padding: 6px 10px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #2a2a2a; display: flex; align-items: center; gap: 6px; }
+    .rr-sources-box-header .new-edition-badge { font-size: 9px; color: #f6ad55; background: #3d2800; border: 1px solid #7b4f00; border-radius: 3px; padding: 1px 5px; }
+    .rr-source-row { padding: 8px 10px; border-bottom: 1px solid #222; font-size: 12px; display: flex; align-items: flex-start; gap: 8px; }
+    .rr-source-row:last-child { border-bottom: none; }
+    .rr-source-row-main { flex: 1; min-width: 0; }
+    .rr-source-name { color: #d0d0d0; font-weight: 500; }
+    .rr-source-name a { color: #7ec8e3; text-decoration: none; }
+    .rr-source-name a:hover { text-decoration: underline; }
+    .rr-source-figure { color: #68d391; font-weight: 600; margin-top: 2px; font-size: 11px; }
+    .rr-source-note { color: #888; font-size: 11px; margin-top: 2px; line-height: 1.4; }
+    .rr-source-quote { color: #666; font-size: 10px; margin-top: 3px; font-style: italic; line-height: 1.3; }
 
     /* Pipeline two-panel layout */
     #pipeline-body {

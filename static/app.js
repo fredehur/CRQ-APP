@@ -225,7 +225,8 @@ function renderLeftPanel() {
 
     return `
 <div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')" style="${borderStyle}">
-  <span style="font-size:11px;font-weight:500;color:${color}">${r}</span>
+  <span style="font-size:11px;font-weight:600;color:${color}">${r}</span>
+  <span style="font-size:9px;color:#484f58;margin-top:2px">${REGION_LABELS[r] || r}</span>
 </div>`;
   }).join('');
 }
@@ -3459,7 +3460,7 @@ function _renderSourcesBox(title, sources, versionChecks, extraHeaderHtml) {
     </div>`;
 }
 
-function _renderRegValDimension(scenId, dim, d) {
+function _renderRegValDimension(scenId, dim, d, versionChecks) {
   if (!d) return '';
   const isFinancial = dim === 'financial';
   const label = isFinancial ? 'FINANCIAL' : 'PROBABILITY';
@@ -3469,9 +3470,24 @@ function _renderRegValDimension(scenId, dim, d) {
   const range = isFinancial
     ? (d.benchmark_range_usd?.length === 2 ? `$${Number(d.benchmark_range_usd[0]).toLocaleString('en-US')} – $${Number(d.benchmark_range_usd[1]).toLocaleString('en-US')}` : '—')
     : (d.benchmark_range_pct?.length === 2 ? `${d.benchmark_range_pct[0]}% – ${d.benchmark_range_pct[1]}%` : '—');
-  const allSources = [...(d.existing_sources || []), ...(d.new_sources || [])];
+  const allSources = [...(d.registered_sources || d.existing_sources || []), ...(d.new_sources || [])];
   const expandId = `regval-${scenId}-${dim}`;
   const borderColor = {supports: '#238636', challenges: '#da3633', insufficient: '#21262d'}[d.verdict] || '#21262d';
+
+  // Two-box source display
+  const regSourcesHtml = _renderSourcesBox(
+    'Registered Sources',
+    d.registered_sources || d.existing_sources || [],
+    versionChecks || []
+  );
+  const newSourcesHtml = _renderSourcesBox(
+    'New Sources',
+    d.new_sources || [],
+    versionChecks || []
+  );
+  const sourcesHtml = (regSourcesHtml || newSourcesHtml)
+    ? `<div class="rr-sources-section">${regSourcesHtml}${newSourcesHtml}</div>`
+    : `<div style="color:#484f58;font-size:10px">No sources found.</div>`;
 
   return `
   <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:4px;overflow:hidden">
@@ -3484,23 +3500,7 @@ function _renderRegValDimension(scenId, dim, d) {
       <span style="margin-left:auto">${_regValVerdictBadge('', d.verdict)} <span style="color:#484f58;font-size:10px;margin-left:4px">${allSources.length} src</span></span>
     </div>
     <div id="${expandId}" style="display:none;background:#070a0e;padding:8px 10px;border-top:1px solid #161b22">
-      ${allSources.length === 0
-        ? `<div style="color:#484f58;font-size:10px">No sources found.</div>`
-        : allSources.map(src => {
-            const isNew = src.is_new;
-            const fig = isFinancial
-              ? (src.figure_usd ? `$${Number(src.figure_usd).toLocaleString('en-US')}` : src.figure_financial || '')
-              : (src.figure_pct ? `${src.figure_pct}%` : src.figure_probability || '');
-            return `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 8px;border-radius:3px;margin-bottom:4px;${isNew ? 'background:#0d1f36;border:1px solid #1f6feb22' : 'background:#0d1117'}">
-              <div>
-                <div style="font-size:10px;color:${isNew ? '#79c0ff' : '#c9d1d9'}">${isNew ? '★ ' : ''}${esc(src.name || '')} ${isNew ? '<span style="background:#1f6feb22;color:#79c0ff;font-size:9px;padding:1px 4px;border-radius:3px">NEW</span>' : ''}</div>
-                ${src.improvement_note ? `<div style="font-size:9px;color:#484f58;margin-top:2px">${esc(src.improvement_note)}</div>` : ''}
-              </div>
-              <span style="font-size:10px;color:${isNew ? '#79c0ff' : '#6e7681'};white-space:nowrap;margin-left:8px">${esc(fig)}</span>
-            </div>`;
-          }).join('')
-      }
+      ${sourcesHtml}
       ${d.recommendation ? `<div style="margin-top:6px;padding:6px 8px;background:#0d1117;border-left:2px solid ${borderColor};border-radius:0 3px 3px 0;font-size:10px;color:#8b949e">${esc(d.recommendation)}</div>` : ''}
     </div>
   </div>`;
