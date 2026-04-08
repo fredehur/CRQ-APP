@@ -7,9 +7,9 @@
   "scenarios": [
     {
       "scenario_id": "AE-001",
-      "scenario_name": "Manufacturing IP and SCADA Compromise",
-      "description": "Adversary exfiltrates proprietary turbine aerodynamic designs or compromises OT/SCADA networks in blade manufacturing plants, disrupting production and exposing IP.",
-      "search_tags": ["ot_systems", "scada", "manufacturing", "ip_theft", "wind_turbine"],
+      "scenario_name": "System intrusion",
+      "description": "Adversary gains persistent access to OT/SCADA networks or corporate IT across manufacturing and service divisions.",
+      "search_tags": ["ot_systems", "scada", "manufacturing", "system_intrusion", "energy_operator"],
       "value_at_cyber_risk_usd": 18500000,
       "figure_source": "internal_estimate",
       "probability_pct": 31.7,
@@ -17,22 +17,82 @@
     },
     {
       "scenario_id": "AE-002",
-      "scenario_name": "Wind Farm Telemetry and Maintenance Disruption",
-      "description": "Attack on live telemetry systems or remote maintenance scheduling disrupts service delivery and offshore wind farm operations.",
-      "search_tags": ["telemetry", "remote_maintenance", "wind_farm", "energy_operator", "ransomware"],
+      "scenario_name": "Ransomware",
+      "description": "Ransomware encrypts corporate IT and OT systems across manufacturing and service divisions, causing operational shutdown and ransom demand.",
+      "search_tags": ["ransomware", "manufacturing", "energy", "enterprise", "ot_systems"],
       "value_at_cyber_risk_usd": 22000000,
       "figure_source": "internal_estimate",
-      "probability_pct": 43.3,
+      "probability_pct": 31.7,
       "probability_source": "industry_report"
     },
     {
       "scenario_id": "AE-003",
-      "scenario_name": "Ransomware — Enterprise-wide",
-      "description": "Ransomware encrypts corporate IT and OT systems across manufacturing and service divisions, causing operational shutdown and ransom demand.",
-      "search_tags": ["ransomware", "manufacturing", "energy", "enterprise"],
-      "value_at_cyber_risk_usd": 12000000,
+      "scenario_name": "Accidental disclosure",
+      "description": "Unintentional exposure of proprietary turbine designs, customer contracts, or employee data through misconfiguration or human error.",
+      "search_tags": ["data_breach", "accidental_disclosure", "ip_theft", "manufacturing"],
+      "value_at_cyber_risk_usd": 3500000,
       "figure_source": "internal_estimate",
-      "probability_pct": 31.7,
+      "probability_pct": 12.0,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-004",
+      "scenario_name": "Physical threat",
+      "description": "Physical attack or sabotage at manufacturing plants, wind farm sites, or service depots.",
+      "search_tags": ["physical_security", "sabotage", "energy_infrastructure", "manufacturing"],
+      "value_at_cyber_risk_usd": 5000000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 3.3,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-005",
+      "scenario_name": "Insider misuse",
+      "description": "Malicious or negligent insider exfiltrates proprietary turbine designs, maintenance algorithms, or customer data.",
+      "search_tags": ["insider_threat", "ip_theft", "manufacturing", "energy_operator"],
+      "value_at_cyber_risk_usd": 7000000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 8.0,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-006",
+      "scenario_name": "DoS attack",
+      "description": "Denial-of-service attack disrupts remote monitoring, live telemetry, or maintenance scheduling platforms.",
+      "search_tags": ["dos_attack", "telemetry", "remote_maintenance", "energy_operator"],
+      "value_at_cyber_risk_usd": 4000000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 15.0,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-007",
+      "scenario_name": "Scam or fraud",
+      "description": "Business email compromise or procurement fraud targeting supplier payments, contract negotiations, or executive accounts.",
+      "search_tags": ["bec", "fraud", "supply_chain", "energy"],
+      "value_at_cyber_risk_usd": 2000000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 10.0,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-008",
+      "scenario_name": "Defacement",
+      "description": "Public-facing website or customer portal defaced, causing reputational damage and loss of customer confidence.",
+      "search_tags": ["web_defacement", "reputational_damage", "energy"],
+      "value_at_cyber_risk_usd": 500000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 5.0,
+      "probability_source": "industry_report"
+    },
+    {
+      "scenario_id": "AE-009",
+      "scenario_name": "System failure",
+      "description": "Critical failure across predictive maintenance platforms or wind farm telemetry, causing unplanned downtime and service disruption.",
+      "search_tags": ["system_failure", "telemetry", "wind_farm", "energy_operator"],
+      "value_at_cyber_risk_usd": 8000000,
+      "figure_source": "internal_estimate",
+      "probability_pct": 20.0,
       "probability_source": "industry_report"
     }
   ]

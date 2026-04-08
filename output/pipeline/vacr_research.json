@@ -1,0 +1,120 @@
+{
+  "generated_at": "2026-04-08T06:24:12.426503+00:00",
+  "results": [
+    {
+      "incident_type": "Physical threat",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpoMPLBRfWaQBmzf2DN'}",
+      "researched_at": "2026-04-08T06:24:03.170913+00:00"
+    },
+    {
+      "incident_type": "Scam or fraud",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpoT2fC1Y5jWq16Jx75'}",
+      "researched_at": "2026-04-08T06:24:04.258731+00:00"
+    },
+    {
+      "incident_type": "Accidental disclosure",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpoVbC9RZodA7yoh5q1'}",
+      "researched_at": "2026-04-08T06:24:05.454591+00:00"
+    },
+    {
+      "incident_type": "Defacement",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpoZWLeV5K9aMRcaezs'}",
+      "researched_at": "2026-04-08T06:24:06.064122+00:00"
+    },
+    {
+      "incident_type": "Ransomware",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpofNZUyyeA4fyUHzWb'}",
+      "researched_at": "2026-04-08T06:24:07.964004+00:00"
+    },
+    {
+      "incident_type": "System failure",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpoowWLddEjzQvg1JAb'}",
+      "researched_at": "2026-04-08T06:24:10.242747+00:00"
+    },
+    {
+      "incident_type": "DoS attack",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "?",
+      "findings": [],
+      "agent_summary": "Reasoning failed: Error code: 529 - {'type': 'error', 'error': {'type': 'overloaded_error', 'message': 'Overloaded'}, 'request_id': 'req_011CZqpp1AC9BvgKGDQaEzZh'}",
+      "researched_at": "2026-04-08T06:24:12.206698+00:00"
+    },
+    {
+      "incident_type": "Insider misuse",
+      "current_vacr_usd": 22000000,
+      "sector": "energy",
+      "direction": "↓",
+      "findings": [
+        {
+          "source": "What Is an Attack Vector? - IBM",
+          "quote": "malicious insider attacks stand out as the most costly cause of data breaches among all attack vectors, at USD 4.92 million per incident",
+          "figure_usd": 4920000,
+          "direction": "↓",
+          "assessment": "At $4.92M per incident, this benchmark is well below the current $22M VaCR, suggesting the estimate may be significantly overstated relative to average breach costs."
+        },
+        {
+          "source": "Insider Threat Statistics 2025: Costs, Trends & Defense - DeepStrike",
+          "quote": "insider threats cost businesses $17.4M annually",
+          "figure_usd": 17400000,
+          "direction": "↓",
+          "assessment": "The $17.4M annual aggregate cost of insider threats across businesses is still below the $22M VaCR, mildly challenging the current estimate though closer in magnitude."
+        },
+        {
+          "source": "Insider Threat Statistics 2025: Costs, Trends & Defense - DeepStrike",
+          "quote": "credential theft topping $779K per incident",
+          "figure_usd": 779000,
+          "direction": "↓",
+          "assessment": "A per-incident cost of $779K for credential theft is substantially lower than $22M, strongly challenging the current VaCR unless multiple simultaneous incidents or sector-specific amplifiers are assumed."
+        },
+        {
+          "source": "Insider Threat Statistics 2025: Costs, Trends & Defense - DeepStrike",
+          "quote": "single breach initiated by a malicious insider costs an average of $4.92 million",
+          "figure_usd": 4920000,
+          "direction": "↓",
+          "assessment": "Consistent with the IBM figure, this $4.92M average per-breach cost is far below the $22M VaCR, reinforcing that the current estimate may be overstated relative to typical single-incident losses."
+        },
+        {
+          "source": "Insider Threat Statistics 2025: Costs, Trends & Defense - DeepStrike",
+          "quote": "credential theft is the most expensive at $779,797",
+          "figure_usd": 779797,
+          "direction": "↓",
+          "assessment": "This per-incident figure of ~$780K for the costliest insider threat sub-type is an order of magnitude below $22M, significantly challenging the current VaCR on a per-event basis."
+        },
+        {
+          "source": "Insider Threat Statistics 2025: Costs, Trends & Defense - DeepStrike",
+          "quote": "malicious acts at $715,366",
+          "figure_usd": 715366,
+          "direction": "↓",
+          "assessment": "At $715K per malicious insider act, this benchmark is orders of magnitude below $22M, challenging the current VaCR unless the energy sector's critical infrastructure context justifies a very large uplift."
+        }
+      ],
+      "agent_summary": "All six benchmarks—ranging from $715K to $17.4M per incident or annually—fall well below the current $22M VaCR, consistently suggesting the estimate may be overstated relative to industry norms, though energy-sector critical infrastructure exposure and potential multi-incident or cascading loss scenarios could partially justify a premium above these averages.",
+      "researched_at": "2026-04-08T06:24:12.425880+00:00"
+    }
+  ]
+}

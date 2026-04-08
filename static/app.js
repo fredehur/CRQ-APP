@@ -156,6 +156,10 @@ async function loadLatestData() {
     state.selectedRegion = pickDefaultRegion();
   }
   await loadRegisters();
+  // Register bar is only relevant on the Risk Register tab — hide on all others
+  const registerBar = document.getElementById('register-bar');
+  if (registerBar) registerBar.style.display = 'none';
+  document.body.style.paddingTop = '36px';
   renderAll();
 }
 
@@ -1335,6 +1339,10 @@ function switchTab(tab) {
 
 function _doSwitchTab(tab) {
   state.activeTab = tab;
+  const registerBar = document.getElementById('register-bar');
+  const onRegister = tab === 'validate';
+  if (registerBar) registerBar.style.display = onRegister ? 'flex' : 'none';
+  document.body.style.paddingTop = onRegister ? '60px' : '36px';
   ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'pipeline', 'runlog'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
@@ -2648,12 +2656,12 @@ async function loadMasterScenarios() {
     const regLabel = activeReg ? `<span style="color:#58a6ff;font-size:9px;margin-left:6px">${activeReg.display_name}</span>` : '';
     const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
       <span style="flex:1">Incident Type</span>
-      <span style="width:70px;flex-shrink:0;text-align:right">Freq Rank</span>
-      <span style="width:80px;flex-shrink:0;text-align:right">Fin. Rank</span>
-      <span style="width:80px;flex-shrink:0;text-align:right">Freq %</span>
-      <span style="width:80px;flex-shrink:0;text-align:right">Fin. %</span>
       <span style="width:80px;flex-shrink:0;text-align:right">VaCR${regLabel}</span>
       <span style="width:60px;flex-shrink:0;text-align:right">Prob %</span>
+      <span style="width:70px;flex-shrink:0;text-align:right">Freq Rank</span>
+      <span style="width:80px;flex-shrink:0;text-align:right">Fin. Rank</span>
+      <span style="width:70px;flex-shrink:0;text-align:right">Freq %</span>
+      <span style="width:70px;flex-shrink:0;text-align:right">Fin. %</span>
       <span style="width:24px;flex-shrink:0"></span>
     </div>`;
     const rows = scenarios.map(s => {
@@ -2667,12 +2675,12 @@ async function loadMasterScenarios() {
         <div class="rr-master-row" data-type="${s.incident_type}" style="border-bottom:1px solid #21262d">
           <div onclick="toggleMasterRow('${safeId}')" style="display:flex;align-items:center;padding:7px 12px;font-size:11px;cursor:pointer">
             <span style="color:#e6edf3;flex:1">${s.incident_type}</span>
-            <span style="color:#8b949e;width:70px;flex-shrink:0;text-align:right;font-family:monospace">#${s.frequency_rank}</span>
-            <span style="color:#8b949e;width:80px;flex-shrink:0;text-align:right;font-family:monospace">#${s.financial_rank}</span>
-            <span style="color:#3fb950;width:80px;flex-shrink:0;text-align:right;font-family:monospace">${s.event_frequency_pct}%</span>
-            <span style="color:#e3b341;width:80px;flex-shrink:0;text-align:right;font-family:monospace">${s.financial_impact_pct}%</span>
             <span style="color:${vacrColor};width:80px;flex-shrink:0;text-align:right;font-family:monospace">${vacr}</span>
             <span style="color:${probColor};width:60px;flex-shrink:0;text-align:right;font-family:monospace">${prob}</span>
+            <span style="color:#8b949e;width:70px;flex-shrink:0;text-align:right;font-family:monospace">#${s.frequency_rank}</span>
+            <span style="color:#8b949e;width:80px;flex-shrink:0;text-align:right;font-family:monospace">#${s.financial_rank}</span>
+            <span style="color:#3fb950;width:70px;flex-shrink:0;text-align:right;font-family:monospace">${s.event_frequency_pct}%</span>
+            <span style="color:#e3b341;width:70px;flex-shrink:0;text-align:right;font-family:monospace">${s.financial_impact_pct}%</span>
             <span style="width:24px;flex-shrink:0;text-align:center;color:#6e7681;font-size:10px">&#9660;</span>
           </div>
           <div id="rr-master-expand-${safeId}" style="display:none;padding:10px 12px;background:#0d1117;border-top:1px solid #21262d">

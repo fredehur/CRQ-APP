@@ -17,6 +17,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import anthropic
+from dotenv import load_dotenv
+
+load_dotenv()
 
 REPO_ROOT = Path(__file__).parent.parent
 DB_PATH = REPO_ROOT / "data" / "sources.db"
@@ -224,7 +227,7 @@ def main():
         scenario_results.append(result)
         fin_v = result["financial"]["verdict"]
         prob_v = result["probability"]["verdict"]
-        print(f"  → financial: {fin_v}  probability: {prob_v}")
+        print(f"  -> financial: {fin_v}  probability: {prob_v}")
 
     output = {
         "register_id": register["register_id"],
@@ -238,7 +241,7 @@ def main():
     reg_path = REGISTERS_DIR / f"{register['register_id']}.json"
     reg_path.write_text(json.dumps(register, indent=2), encoding="utf-8")
 
-    print(f"[register_validator] Done → {OUTPUT_PATH}")
+    print(f"[register_validator] Done -> {OUTPUT_PATH}")
     conn.close()
 
 

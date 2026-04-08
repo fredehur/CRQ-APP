@@ -123,21 +123,6 @@
       ],
       "last_checked": "2026-04-07T10:32:30Z",
       "last_new_content": "2026-04-07"
-    },
-    {
-      "id": "2026-insider-threat-cyber-security-stati",
-      "name": "2026 Insider Threat Cyber Security Statistics - Swif",
-      "url": "https://www.swif.ai/blog/insider-threat-cyber-security-statistics",
-      "cadence": "unknown",
-      "admiralty_reliability": "C",
-      "sector_tags": [
-        "energy"
-      ],
-      "scenario_tags": [
-        "Insider misuse"
-      ],
-      "last_checked": null,
-      "last_new_content": null
     }
   ]
 }
