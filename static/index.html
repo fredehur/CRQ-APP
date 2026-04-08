@@ -304,27 +304,119 @@
       flex-shrink: 0;
       background: #080c10;
       border-bottom: 1px solid #21262d;
-      padding: 10px 20px;
+      border-top: 2px solid #3fb950;
+      padding: 14px 24px 12px;
     }
-    #pipeline-requirement {
-      font-size: 10px;
-      color: #6e7681;
+    #pipeline-intro {
+      margin-bottom: 12px;
+    }
+    #pipeline-mission {
+      font-size: 12px;
+      color: #c9d1d9;
+      line-height: 1.6;
+      letter-spacing: 0.01em;
+      margin-bottom: 10px;
+      max-width: 900px;
+    }
+    #pipeline-chips {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .pl-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border: 1px solid #21262d;
+      border-radius: 3px;
+      background: #0d1117;
+      font-size: 9px;
+      font-family: 'IBM Plex Mono', monospace;
+      color: #8b949e;
       letter-spacing: 0.04em;
-      margin-bottom: 8px;
     }
-    #pipeline-requirement strong { color: #8b949e; }
+    .pl-chip-val {
+      color: #e6edf3;
+      font-weight: 600;
+    }
+    .pl-chip-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
     #admiralty-legend {
       display: flex;
-      gap: 20px;
+      gap: 24px;
+      align-items: flex-start;
       flex-wrap: wrap;
+    }
+    .adm-block {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .adm-block-label {
+      font-size: 8px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #484f58;
+      margin-bottom: 1px;
+    }
+    .adm-badges {
+      display: flex;
+      gap: 4px;
+    }
+    .adm-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px 3px 5px;
+      border-radius: 3px;
+      border: 1px solid;
+      font-size: 9px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .adm-badge-key {
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1;
+      min-width: 10px;
+      text-align: center;
+    }
+    .adm-badge-val {
+      font-size: 8px;
+      letter-spacing: 0.02em;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+    .adm-a { background: #071810; border-color: #1a5c2a; color: #3fb950; }
+    .adm-b { background: #111a07; border-color: #4a5c1a; color: #a8c946; }
+    .adm-c { background: #1a1507; border-color: #5c4a1a; color: #d4a017; }
+    .adm-d { background: #1a0909; border-color: #5c1a1a; color: #e05555; }
+    .adm-1 { background: #071810; border-color: #1a5c2a; color: #3fb950; }
+    .adm-2 { background: #111a07; border-color: #4a5c1a; color: #a8c946; }
+    .adm-3 { background: #1a1507; border-color: #5c4a1a; color: #d4a017; }
+    .adm-4 { background: #1a0909; border-color: #5c1a1a; color: #e05555; }
+    .adm-divider {
+      width: 1px;
+      background: #21262d;
+      align-self: stretch;
+      margin: 0 4px;
+    }
+    #adm-note {
       font-size: 9px;
       color: #484f58;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
+      font-style: italic;
+      letter-spacing: 0;
+      align-self: flex-end;
+      margin-left: auto;
+      max-width: 340px;
+      line-height: 1.5;
+      text-align: right;
     }
-    #admiralty-legend .adm-pair { display: flex; flex-direction: column; gap: 2px; }
-    #admiralty-legend .adm-label { color: #6e7681; }
-    #admiralty-legend .adm-note { color: #484f58; font-size: 9px; text-transform: none; letter-spacing: 0; margin-top: 4px; max-width: 600px; font-style: italic; }
 
     /* Pipeline two-panel layout */
     #pipeline-body {
@@ -790,21 +882,37 @@
 
   <!-- Fixed header: requirement + admiralty -->
   <div id="pipeline-header">
-    <div id="pipeline-requirement">
-      <strong>Analytical Requirement</strong> — Does a credible geopolitical or cyber threat exist in any of AeroGrid's five operational regions that could materially disrupt operations, supply chains, or safety at critical assets?
+    <div id="pipeline-intro">
+      <div id="pipeline-mission">The CRQ intelligence pipeline runs across five regional theatres in parallel — collecting open-source signals, routing each region through a triage agent, and producing structured intelligence briefs for any region that escalates. Approved regional briefs are synthesised into a global cross-regional report and rendered into board, CISO, and RSM deliverables. Every handoff between agents is a file on disk. Every output is validated by a separate agent before it is accepted.</div>
+      <div id="pipeline-chips">
+        <span class="pl-chip"><span class="pl-chip-dot" style="background:#79c0ff"></span><span class="pl-chip-val">12</span> pipeline nodes</span>
+        <span class="pl-chip"><span class="pl-chip-dot" style="background:#3fb950"></span><span class="pl-chip-val">5</span> regions · parallel fan-out</span>
+        <span class="pl-chip"><span class="pl-chip-dot" style="background:#a371f7"></span><span class="pl-chip-val">3</span> agent models — Haiku · Sonnet · Opus</span>
+        <span class="pl-chip"><span class="pl-chip-dot" style="background:#e3b341"></span>stop-hook validated</span>
+        <span class="pl-chip"><span class="pl-chip-dot" style="background:#8b949e"></span>filesystem state — no shared memory</span>
+      </div>
     </div>
     <div id="admiralty-legend">
-      <div class="adm-pair">
-        <span class="adm-label">Source Reliability</span>
-        <span>A — Completely reliable &nbsp;·&nbsp; B — Usually reliable &nbsp;·&nbsp; C — Fairly reliable &nbsp;·&nbsp; D — Not usually reliable</span>
+      <div class="adm-block">
+        <div class="adm-block-label">Source Reliability</div>
+        <div class="adm-badges">
+          <span class="adm-badge adm-a"><span class="adm-badge-key">A</span><span class="adm-badge-val">Completely reliable</span></span>
+          <span class="adm-badge adm-b"><span class="adm-badge-key">B</span><span class="adm-badge-val">Usually reliable</span></span>
+          <span class="adm-badge adm-c"><span class="adm-badge-key">C</span><span class="adm-badge-val">Fairly reliable</span></span>
+          <span class="adm-badge adm-d"><span class="adm-badge-key">D</span><span class="adm-badge-val">Not usually reliable</span></span>
+        </div>
       </div>
-      <div class="adm-pair">
-        <span class="adm-label">Information Credibility</span>
-        <span>1 — Confirmed &nbsp;·&nbsp; 2 — Probably true &nbsp;·&nbsp; 3 — Possibly true &nbsp;·&nbsp; 4 — Doubtful</span>
+      <div class="adm-divider"></div>
+      <div class="adm-block">
+        <div class="adm-block-label">Information Credibility</div>
+        <div class="adm-badges">
+          <span class="adm-badge adm-1"><span class="adm-badge-key">1</span><span class="adm-badge-val">Confirmed</span></span>
+          <span class="adm-badge adm-2"><span class="adm-badge-key">2</span><span class="adm-badge-val">Probably true</span></span>
+          <span class="adm-badge adm-3"><span class="adm-badge-key">3</span><span class="adm-badge-val">Possibly true</span></span>
+          <span class="adm-badge adm-4"><span class="adm-badge-key">4</span><span class="adm-badge-val">Doubtful</span></span>
+        </div>
       </div>
-      <div class="adm-pair" style="flex-basis:100%">
-        <span class="adm-note">Admiralty ratings are assigned by the Gatekeeper at triage and propagate through the pipeline. They reflect source corroboration quality — not model confidence scores.</span>
-      </div>
+      <span id="adm-note">Ratings assigned by Gatekeeper at triage. Reflect source corroboration quality — not model confidence.</span>
     </div>
   </div>
 
