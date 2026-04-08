@@ -2659,6 +2659,15 @@ function _renderScenarioDetail(scenario, valScenario) {
     validationZone = `<div style="padding:8px 0">${finHtml}${probHtml}${noteHtml}</div>`;
   }
 
+  const descText = scenario.description || '';
+  const descZone = `<div id="rr-desc-zone" style="padding:10px 16px;border-bottom:1px solid #21262d;background:#080c10">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+      <div style="font-size:10px;color:#8b949e;line-height:1.6;font-family:'IBM Plex Sans',sans-serif;flex:1">${descText ? esc(descText) : '<span style="color:#484f58;font-style:italic">No description</span>'}</div>
+      <button onclick="_editDescription('${esc(scenario.scenario_id)}')"
+        style="flex-shrink:0;background:transparent;border:1px solid #21262d;color:#484f58;border-radius:2px;padding:2px 8px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎</button>
+    </div>
+  </div>`;
+
   el.innerHTML = `
     <div style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center;background:#080c10">
       <div>
@@ -2668,6 +2677,7 @@ function _renderScenarioDetail(scenario, valScenario) {
       <button onclick="_renderEditZone('${esc(scenario.scenario_id)}')"
         style="background:transparent;border:1px solid #21262d;color:#6e7681;border-radius:2px;padding:3px 10px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎ Edit</button>
     </div>
+    ${descZone}
     ${numbersZone}
     ${validationZone}`;
 }
@@ -2721,6 +2731,46 @@ async function saveScenarioEdit(scenarioId) {
   if (idx !== -1) state.activeRegister.scenarios[idx] = {...state.activeRegister.scenarios[idx], ...updated};
 
   _selectScenario(scenarioId); // re-renders both list and detail
+}
+
+function _editDescription(scenarioId) {
+  const scenario = (state.activeRegister?.scenarios || []).find(s => s.scenario_id === scenarioId);
+  if (!scenario) return;
+  const zone = $('rr-desc-zone');
+  if (!zone) return;
+  zone.innerHTML = `
+    <div style="font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Description <span style="color:#6e7681;font-size:8px;font-weight:400;letter-spacing:0">&nbsp;· feeds into validation context</span></div>
+    <textarea id="rr-edit-desc" rows="3"
+      style="width:100%;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;font-size:11px;padding:6px 8px;border-radius:2px;box-sizing:border-box;outline:none;resize:vertical;font-family:'IBM Plex Sans',sans-serif;line-height:1.5">${esc(scenario.description || '')}</textarea>
+    <div style="display:flex;gap:6px;margin-top:6px">
+      <button onclick="saveDescriptionEdit('${esc(scenarioId)}')"
+        style="font-size:9px;font-weight:700;color:#3fb950;background:#0a1f0a;border:1px solid #1a4d1a;padding:3px 12px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em">Save</button>
+      <button onclick="_selectScenario('${esc(scenarioId)}')"
+        style="font-size:9px;color:#6e7681;background:none;border:1px solid #21262d;padding:3px 12px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace">Cancel</button>
+    </div>`;
+}
+
+async function saveDescriptionEdit(scenarioId) {
+  const input = $('rr-edit-desc');
+  if (!input) return;
+  const registerId = state.activeRegister?.register_id;
+  if (!registerId) return;
+
+  const r = await fetch(
+    `/api/registers/${encodeURIComponent(registerId)}/scenarios/${encodeURIComponent(scenarioId)}`,
+    {
+      method: 'PATCH',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({description: input.value}),
+    }
+  );
+  if (!r.ok) { alert('Save failed'); return; }
+
+  const updated = await r.json();
+  const idx = (state.activeRegister.scenarios || []).findIndex(s => s.scenario_id === scenarioId);
+  if (idx !== -1) state.activeRegister.scenarios[idx] = {...state.activeRegister.scenarios[idx], ...updated};
+
+  _selectScenario(scenarioId);
 }
 
 function _showAddScenarioForm() {

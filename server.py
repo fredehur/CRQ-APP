@@ -293,6 +293,8 @@ async def patch_scenario(register_id: str, scenario_id: str, payload: dict):
                 scenarios[i]["value_at_cyber_risk_usd"] = int(payload["value_at_cyber_risk_usd"])
             if "probability_pct" in payload:
                 scenarios[i]["probability_pct"] = float(payload["probability_pct"])
+            if "description" in payload:
+                scenarios[i]["description"] = str(payload["description"]).strip()
             data["scenarios"] = scenarios
             path.write_text(json.dumps(data, indent=2), encoding="utf-8")
             return scenarios[i]
