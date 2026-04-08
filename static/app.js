@@ -215,17 +215,25 @@ function renderLeftPanel() {
     $('synthesis-brief').textContent = _narrative;
   }
 
-  // Region rows — name + status colour only
+  // Region rows — white name + severity badge (mirrors Reports rail style)
   $('region-list').innerHTML = REGIONS.map(r => {
     const d = state.regionData[r];
-    const sev = (d?.severity || d?.status || 'UNKNOWN').toUpperCase();
+    const sev = (d?.severity || d?.status || '').toUpperCase();
     const isActive = r === state.selectedRegion;
     const color = SEV_COLOR[sev] || '#6e7681';
     const borderStyle = isActive ? `border-left-color:${color}` : '';
 
+    const badge = sev
+      ? `<span style="font-size:8px;padding:1px 5px;border-radius:8px;margin-left:4px;
+                      background:${color}22;border:1px solid ${color}66;color:${color}">${sev}</span>`
+      : '';
+
     return `
 <div class="region-row ${isActive ? 'active' : ''}" onclick="selectRegion('${r}')" style="${borderStyle}">
-  <span style="font-size:11px;font-weight:600;color:${color}">${r}</span>
+  <div style="display:flex;align-items:center;gap:4px">
+    <span style="font-size:11px;font-weight:600;color:${isActive ? '#e6edf3' : '#8b949e'}">${r}</span>
+    ${badge}
+  </div>
   <span style="font-size:9px;color:#484f58;margin-top:2px">${REGION_LABELS[r] || r}</span>
 </div>`;
   }).join('');
