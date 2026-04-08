@@ -3237,7 +3237,8 @@ async function runRegisterValidation() {
 
 async function loadRegisterValidationResults() {
   const data = await fetchJSON('/api/register-validation/results');
-  state.validationData = (data && data.status !== 'no_data' && data.scenarios) ? data : null;
+  const isForActiveRegister = data?.register_id === state.activeRegister?.register_id;
+  state.validationData = (data && data.status !== 'no_data' && data.scenarios && isForActiveRegister) ? data : null;
 
   // Update timestamp in tab header
   const tsEl = $('rr-header-ts');
