@@ -2590,13 +2590,17 @@ function _renderScenarioList() {
       ? `$${(s.value_at_cyber_risk_usd / 1e6).toFixed(1)}M` : '—';
     const prob = s.probability_pct != null ? `${s.probability_pct}%` : '—';
     const isSelected = s.scenario_id === state.selectedScenarioId;
+    const desc = s.description ? `<div style="font-size:9px;color:#484f58;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif">${esc(s.description)}</div>` : '';
     return `<div onclick="_selectScenario('${esc(s.scenario_id)}')"
       class="rr-scenario-row${isSelected ? ' is-selected' : ''}"
-      style="display:grid;${COL};align-items:center">
-      <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace">${i + 1}</span>
-      <span style="font-size:11px;color:${isSelected ? '#e6edf3' : '#c9d1d9'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;padding-right:6px">${esc(s.scenario_name)}</span>
-      <span style="font-size:10px;color:#3fb950;font-family:'IBM Plex Mono',monospace;text-align:right">${vacr}</span>
-      <span style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace;text-align:right">${prob}</span>
+      style="display:grid;${COL};align-items:start">
+      <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace;padding-top:2px">${i + 1}</span>
+      <div style="overflow:hidden;padding-right:6px">
+        <div style="font-size:11px;color:${isSelected ? '#e6edf3' : '#c9d1d9'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif">${esc(s.scenario_name)}</div>
+        ${desc}
+      </div>
+      <span style="font-size:10px;color:#3fb950;font-family:'IBM Plex Mono',monospace;text-align:right;padding-top:2px">${vacr}</span>
+      <span style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace;text-align:right;padding-top:2px">${prob}</span>
     </div>`;
   }).join('');
 
