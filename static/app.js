@@ -31,6 +31,7 @@ let state = {
   expandedClusters: new Set(),
   expandedBriefs: new Set(),
   feedbackByRegion: {},   // { [region]: {rating, note, submitted_at} }
+  selectedAudienceId: 'ciso',
   selectedRsmRegion: 'APAC',
   rsmStatus: {},        // { APAC: {has_flash, has_intsum}, ... } from /api/rsm/status
   rsmBriefs: {},        // keyed by region, cached {intsum, flash} from /api/rsm/{region}
@@ -614,112 +615,110 @@ const AUDIENCE_REGISTRY = [
 ];
 
 async function renderReports() {
-  renderReportsHub();
+  const tab = $('tab-reports');
+  if (!tab) return;
+
+  // Build two-panel shell (idempotent — only if not already built)
+  if (!$('reports-rail')) {
+    tab.innerHTML = `
+      <div style="display:grid;grid-template-columns:180px 1fr;height:calc(100vh - 60px);overflow:hidden">
+        <div id="reports-rail"
+             style="border-right:1px solid #21262d;overflow-y:auto;background:#080c10"></div>
+        <div id="reports-content"
+             style="display:flex;flex-direction:column;overflow:hidden"></div>
+      </div>`;
+  }
+
+  renderReportsRail();
+  renderAudienceContent(state.selectedAudienceId);
 }
 
-function renderReportsHub() {
-  const hub = $('reports-hub');
-  if (!hub) return;
-  const cardsHtml = AUDIENCE_REGISTRY.map(a => {
-    const isLive = a.phase === 'live';
-    const isPhase2 = a.phase === 'phase-2';
-    const opacity = isLive ? '1' : isPhase2 ? '0.55' : '0.35';
-    const cursor  = isLive ? 'cursor:pointer' : 'cursor:default';
-    const onclick = isLive ? `onclick="openAudienceDetail('${a.id}')"` : '';
-    const tooltip = !isLive && a.phaseLabel ? `title="${a.phaseLabel}"` : '';
+function renderReportsRail() {
+  const rail = $('reports-rail');
+  if (!rail) return;
 
-    const phaseBadge = isLive
-      ? `<span style="font-size:9px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:2px 7px;border-radius:10px">Live</span>`
-      : isPhase2
-        ? `<span style="font-size:9px;background:#2d2208;border:1px solid #9e6a03;color:#e3b341;padding:2px 7px;border-radius:10px">${a.phaseLabel}</span>`
-        : `<span style="font-size:9px;background:#161b22;border:1px solid #30363d;color:#6e7681;padding:2px 7px;border-radius:10px">Planned</span>`;
+  rail.innerHTML = AUDIENCE_REGISTRY.map(a => {
+    const isActive = a.id === state.selectedAudienceId;
+    const isFuture = a.phase === 'future';
+    const opacity  = isFuture ? '0.4' : '1';
 
-    const dlHtml = a.downloads.length
-      ? a.downloads.map(d => `<a href="${d.endpoint}" target="_blank"
-          style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:3px 10px;border-radius:2px;text-decoration:none;pointer-events:${isLive?'auto':'none'}">${d.label}</a>`).join('')
-      : '';
-    const genHtml = a.generate
-      ? `<button onclick="event.stopPropagation();_hubGenerate('${a.id}')"
-           style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:3px 10px;border-radius:2px;cursor:pointer">
-           &#8635; Generate</button>`
-      : '';
+    const phaseBadge = a.phase === 'live'
+      ? `<span style="font-size:8px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;
+                      padding:1px 5px;border-radius:8px;margin-left:4px">Live</span>`
+      : a.phase === 'phase-2'
+        ? `<span style="font-size:8px;background:#2d2208;border:1px solid #9e6a03;color:#e3b341;
+                        padding:1px 5px;border-radius:8px;margin-left:4px">Phase 2</span>`
+        : `<span style="font-size:8px;background:#161b22;border:1px solid #30363d;color:#6e7681;
+                        padding:1px 5px;border-radius:8px;margin-left:4px">Planned</span>`;
 
     return `
-<div ${onclick} ${tooltip}
-  style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 16px;
-         opacity:${opacity};${cursor};transition:border-color 0.15s"
-  onmouseover="${isLive?"this.style.borderColor='#30363d'":''}"
-  onmouseout="${isLive?"this.style.borderColor='#21262d'":""}">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-    <div>
-      <div style="font-size:11px;font-weight:600;color:#e6edf3">${a.name}</div>
-      <div style="font-size:10px;color:#6e7681;margin-top:2px">${a.format}</div>
-    </div>
+<div onclick="selectAudience('${a.id}')"
+     style="padding:10px 14px;cursor:pointer;opacity:${opacity};
+            border-left:2px solid ${isActive ? '#58a6ff' : 'transparent'};
+            background:${isActive ? '#0d1117' : 'transparent'};
+            transition:background 0.1s"
+     onmouseover="if('${a.id}'!==state.selectedAudienceId)this.style.background='rgba(13,17,23,0.5)'"
+     onmouseout="if('${a.id}'!==state.selectedAudienceId)this.style.background='transparent'">
+  <div style="display:flex;align-items:center;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:600;color:${isActive ? '#e6edf3' : '#8b949e'}">${a.name}</span>
     ${phaseBadge}
   </div>
-  ${a.sections ? `<div style="font-size:10px;color:#484f58;margin-bottom:8px">${a.sections.join(' · ')}</div>` : '<div style="margin-bottom:8px"></div>'}
-  <div style="display:flex;gap:6px;flex-wrap:wrap">${genHtml}${dlHtml}</div>
+  <div style="font-size:9px;color:#484f58;margin-top:2px">${a.format}</div>
 </div>`;
   }).join('');
-
-  hub.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">${cardsHtml}</div>`;
 }
 
 async function _hubGenerate(audienceId) {
   if (audienceId === 'ciso') await generateCisoDocx();
 }
 
-function openAudienceDetail(id) {
+function selectAudience(id) {
+  state.selectedAudienceId = id;
+  renderReportsRail();
+  renderAudienceContent(id);
+}
+
+function renderAudienceContent(id) {
+  const content = $('reports-content');
+  if (!content) return;
+
   const audience = AUDIENCE_REGISTRY.find(a => a.id === id);
   if (!audience) return;
 
-  const hub    = $('reports-hub');
-  const detail = $('reports-detail');
-  if (!hub || !detail) return;
-
-  hub.classList.add('hidden');
-  detail.classList.remove('hidden');
-  detail.style.opacity = '0';
-  requestAnimationFrame(() => { detail.style.opacity = '1'; });
+  const isFuture = audience.phase === 'future';
 
   const dlHtml = audience.downloads.map(d =>
     `<a href="${d.endpoint}" target="_blank"
-       style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;padding:3px 10px;border-radius:2px;text-decoration:none">${d.label}</a>`
+       style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;
+              padding:3px 10px;border-radius:2px;text-decoration:none">${d.label}</a>`
   ).join('');
   const genHtml = audience.generate
     ? `<button onclick="_hubGenerate('${audience.id}')"
-         style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;padding:3px 10px;border-radius:2px;cursor:pointer">
+         style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;
+                padding:3px 10px;border-radius:2px;cursor:pointer;font-family:inherit">
          &#8635; Generate</button>`
     : '';
 
-  detail.innerHTML = `
-<div style="margin-bottom:14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-  <button onclick="closeAudienceDetail()"
-    style="font-size:10px;color:#6e7681;background:none;border:none;cursor:pointer;padding:0">
-    &#8592; All reports
-  </button>
-  <span style="font-size:11px;font-weight:600;color:#e6edf3">${audience.name}</span>
-  <span style="font-size:10px;color:#6e7681">${audience.format}</span>
-  <div style="margin-left:auto;display:flex;gap:6px">${genHtml}${dlHtml}</div>
-</div>
-<div id="audience-detail-body"></div>`;
+  content.innerHTML = `
+    <div style="padding:10px 16px;border-bottom:1px solid #21262d;flex-shrink:0;
+                display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:600;color:#e6edf3">${audience.name}</span>
+      <span style="font-size:10px;color:#6e7681">${audience.format}</span>
+      <div style="margin-left:auto;display:flex;gap:6px">${genHtml}${dlHtml}</div>
+    </div>
+    <div id="audience-detail-body" style="flex:1;overflow-y:auto;font-size:12px;color:#c9d1d9"></div>`;
+
+  if (isFuture) {
+    $('audience-detail-body').innerHTML =
+      `<p style="color:#6e7681;font-size:11px;padding:16px">${audience.phaseLabel || 'Coming soon.'}</p>`;
+    return;
+  }
 
   if (audience.renderer === 'region-list') {
     renderRegionListView(audience);
   } else {
     renderSingleDocView(audience);
   }
-}
-
-function closeAudienceDetail() {
-  const hub    = $('reports-hub');
-  const detail = $('reports-detail');
-  if (!hub || !detail) return;
-  detail.style.opacity = '0';
-  setTimeout(() => {
-    detail.classList.add('hidden');
-    hub.classList.remove('hidden');
-  }, 150);
 }
 
 async function renderSingleDocView(audience) {
@@ -779,7 +778,7 @@ function renderRegionListView(audience) {
   if (!body) return;
   // RSM region-list view — reuses existing RSM tab DOM and functions
   body.innerHTML = `
-<div style="display:grid;grid-template-columns:200px 1fr;height:calc(100vh - 140px);overflow:hidden;border:1px solid #21262d;border-radius:2px">
+<div style="display:grid;grid-template-columns:200px 1fr;height:100%;overflow:hidden;border:1px solid #21262d;border-radius:2px">
   <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
     <div style="padding:8px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">REGIONS</div>
     <div id="rsm-region-list"></div>
@@ -3395,8 +3394,8 @@ function _renderRegisterValidationResults(data) {
           ${_regValVerdictBadge('%', pv)}
         </div>
       </div>
-      ${_renderRegValDimension(s.scenario_id, 'financial', s.financial)}
-      ${_renderRegValDimension(s.scenario_id, 'probability', s.probability)}
+      ${_renderRegValDimension(s.scenario_id, 'financial', s.financial, data.version_checks)}
+      ${_renderRegValDimension(s.scenario_id, 'probability', s.probability, data.version_checks)}
     </div>`;
   }).join('');
 }
@@ -3412,15 +3411,63 @@ function _regValVerdictBadge(prefix, verdict) {
   return `<span style="${style};font-size:9px;padding:2px 6px;border-radius:10px;letter-spacing:0.04em">${prefix} ${labels[verdict] || verdict.toUpperCase()}</span>`;
 }
 
+function _ctxBadge(tag) {
+  const map = {
+    asset_specific: ['ctx-asset', 'OT / Asset'],
+    company_scale:  ['ctx-scale', 'Enterprise Scale'],
+    both:           ['ctx-both', 'Both'],
+    general:        ['ctx-general', 'General'],
+  };
+  const [cls, label] = map[tag] || ['ctx-general', 'General'];
+  return `<span class="ctx-badge ${cls}">${label}</span>`;
+}
+
+function _renderSourceRow(src, versionChecks) {
+  const fig = src.figure_usd
+    ? `<div class="rr-source-figure">$${src.figure_usd.toLocaleString('en-US')}</div>`
+    : '';
+  const note = src.note ? `<div class="rr-source-note">${src.note}</div>` : '';
+  const quote = src.raw_quote ? `<div class="rr-source-quote">"${src.raw_quote}"</div>` : '';
+  const smbFlag = src.smb_scale_flag
+    ? `<span class="smb-flag">SMB scale</span>` : '';
+  const ctxBadge = _ctxBadge(src.context_tag || 'general');
+
+  // check for new edition badge
+  const vc = (versionChecks || []).find(v => v.name === src.name && v.newer_version_found);
+  const newEditionBadge = vc ? `<span class="new-edition-badge">[NEW EDITION ${vc.newer_year}]</span>` : '';
+
+  const nameHtml = src.url
+    ? `<a href="${src.url}" target="_blank">${src.name}</a>`
+    : src.name;
+
+  return `
+    <div class="rr-source-row">
+      <div class="rr-source-row-main">
+        <div class="rr-source-name">${nameHtml}${ctxBadge}${smbFlag}${newEditionBadge}</div>
+        ${fig}${note}${quote}
+      </div>
+    </div>`;
+}
+
+function _renderSourcesBox(title, sources, versionChecks, extraHeaderHtml) {
+  if (!sources || sources.length === 0) return '';
+  const rows = sources.map(s => _renderSourceRow(s, versionChecks)).join('');
+  return `
+    <div class="rr-sources-box">
+      <div class="rr-sources-box-header">${title}${extraHeaderHtml || ''}</div>
+      ${rows}
+    </div>`;
+}
+
 function _renderRegValDimension(scenId, dim, d) {
   if (!d) return '';
   const isFinancial = dim === 'financial';
   const label = isFinancial ? 'FINANCIAL' : 'PROBABILITY';
   const vacr = isFinancial
-    ? (d.vacr_figure_usd != null ? `$${Number(d.vacr_figure_usd).toLocaleString()}` : '—')
+    ? (d.vacr_figure_usd != null ? `$${Number(d.vacr_figure_usd).toLocaleString('en-US')}` : '—')
     : (d.vacr_probability_pct != null ? `${d.vacr_probability_pct}%` : '—');
   const range = isFinancial
-    ? (d.benchmark_range_usd?.length === 2 ? `$${Number(d.benchmark_range_usd[0]).toLocaleString()} – $${Number(d.benchmark_range_usd[1]).toLocaleString()}` : '—')
+    ? (d.benchmark_range_usd?.length === 2 ? `$${Number(d.benchmark_range_usd[0]).toLocaleString('en-US')} – $${Number(d.benchmark_range_usd[1]).toLocaleString('en-US')}` : '—')
     : (d.benchmark_range_pct?.length === 2 ? `${d.benchmark_range_pct[0]}% – ${d.benchmark_range_pct[1]}%` : '—');
   const allSources = [...(d.existing_sources || []), ...(d.new_sources || [])];
   const expandId = `regval-${scenId}-${dim}`;
@@ -3442,7 +3489,7 @@ function _renderRegValDimension(scenId, dim, d) {
         : allSources.map(src => {
             const isNew = src.is_new;
             const fig = isFinancial
-              ? (src.figure_usd ? `$${Number(src.figure_usd).toLocaleString()}` : src.figure_financial || '')
+              ? (src.figure_usd ? `$${Number(src.figure_usd).toLocaleString('en-US')}` : src.figure_financial || '')
               : (src.figure_pct ? `${src.figure_pct}%` : src.figure_probability || '');
             return `
             <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:5px 8px;border-radius:3px;margin-bottom:4px;${isNew ? 'background:#0d1f36;border:1px solid #1f6feb22' : 'background:#0d1117'}">
