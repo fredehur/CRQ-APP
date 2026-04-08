@@ -2575,33 +2575,28 @@ function _renderScenarioList() {
   if (!el) return;
   const scenarios = state.activeRegister?.scenarios || [];
 
-  // Build verdict lookup from state.validationData
-  const valMap = {};
-  if (state.validationData?.scenarios) {
-    for (const s of state.validationData.scenarios) valMap[s.scenario_id] = s;
-  }
+  const COL = 'grid-template-columns:28px 1fr 72px 50px';
 
-  const rows = scenarios.map(s => {
+  // Sticky column header
+  const header = `<div style="display:grid;${COL};padding:5px 12px;background:#080c10;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:1">
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">#</span>
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Scenario</span>
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;text-align:right">Impact</span>
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;text-align:right">Prob</span>
+  </div>`;
+
+  const rows = scenarios.map((s, i) => {
     const vacr = s.value_at_cyber_risk_usd != null
       ? `$${(s.value_at_cyber_risk_usd / 1e6).toFixed(1)}M` : '—';
     const prob = s.probability_pct != null ? `${s.probability_pct}%` : '—';
-    const val = valMap[s.scenario_id];
-    const fVerdict = val?.financial?.verdict;
-    const pVerdict = val?.probability?.verdict;
-    const fBadge = fVerdict
-      ? _regValVerdictBadge('$', fVerdict)
-      : `<span style="font-size:10px;color:#484f58">—</span>`;
-    const pBadge = pVerdict
-      ? _regValVerdictBadge('%', pVerdict)
-      : `<span style="font-size:10px;color:#484f58">—</span>`;
     const isSelected = s.scenario_id === state.selectedScenarioId;
-    return `<div onclick="_selectScenario('${esc(s.scenario_id)}')" class="rr-scenario-row${isSelected ? ' is-selected' : ''}">
-      <div class="rr-scenario-name">${esc(s.scenario_name)}</div>
-      <div class="rr-scenario-meta">
-        <span class="rr-vacr">${vacr}</span>
-        <span class="rr-prob">${prob}</span>
-        <span style="margin-left:auto;display:flex;gap:3px">${fBadge}${pBadge}</span>
-      </div>
+    return `<div onclick="_selectScenario('${esc(s.scenario_id)}')"
+      class="rr-scenario-row${isSelected ? ' is-selected' : ''}"
+      style="display:grid;${COL};align-items:center">
+      <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace">${i + 1}</span>
+      <span style="font-size:11px;color:${isSelected ? '#e6edf3' : '#c9d1d9'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif;padding-right:6px">${esc(s.scenario_name)}</span>
+      <span style="font-size:10px;color:#3fb950;font-family:'IBM Plex Mono',monospace;text-align:right">${vacr}</span>
+      <span style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace;text-align:right">${prob}</span>
     </div>`;
   }).join('');
 
@@ -2609,7 +2604,7 @@ function _renderScenarioList() {
     <button onclick="_showAddScenarioForm()" style="width:100%;background:transparent;border:1px dashed #21262d;color:#6e7681;border-radius:2px;padding:7px;font-size:9px;font-weight:600;letter-spacing:0.08em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;transition:border-color 0.15s,color 0.15s" onmouseover="this.style.borderColor='#30363d';this.style.color='#8b949e'" onmouseout="this.style.borderColor='#21262d';this.style.color='#6e7681'">+ Add Scenario</button>
   </div>`;
 
-  el.innerHTML = (rows || '<div style="padding:12px;color:#484f58;font-size:10px">No scenarios.</div>') + addBtn;
+  el.innerHTML = header + (rows || '<div style="padding:12px;color:#484f58;font-size:10px">No scenarios.</div>') + addBtn;
 }
 
 function _selectScenario(id) {
