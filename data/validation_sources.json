@@ -6,6 +6,7 @@
       "url": "https://www.verizon.com/business/resources/reports/dbir/",
       "cadence": "annual",
       "admiralty_reliability": "A",
+      "edition_year": 2024,
       "sector_tags": [
         "all"
       ],
@@ -24,6 +25,7 @@
       "url": "https://www.ibm.com/reports/data-breach",
       "cadence": "annual",
       "admiralty_reliability": "A",
+      "edition_year": 2024,
       "sector_tags": [
         "all",
         "manufacturing",
@@ -43,6 +45,7 @@
       "url": "https://www.dragos.com/year-in-review/",
       "cadence": "annual",
       "admiralty_reliability": "A",
+      "edition_year": 2024,
       "sector_tags": [
         "ics_ot",
         "energy",
@@ -61,6 +64,7 @@
       "url": "https://www.mandiant.com/m-trends",
       "cadence": "annual",
       "admiralty_reliability": "B",
+      "edition_year": 2024,
       "sector_tags": [
         "all"
       ],
@@ -78,6 +82,7 @@
       "url": "https://claroty.com/resources/reports",
       "cadence": "biannual",
       "admiralty_reliability": "B",
+      "edition_year": 2024,
       "sector_tags": [
         "ics_ot",
         "manufacturing"
@@ -94,6 +99,7 @@
       "url": "https://www.marsh.com/en/services/cyber-risk/insights.html",
       "cadence": "annual",
       "admiralty_reliability": "B",
+      "edition_year": 2024,
       "sector_tags": [
         "all",
         "energy"
@@ -112,6 +118,7 @@
       "url": "https://www.enisa.europa.eu/topics/cyber-threats/enisa-threat-landscape",
       "cadence": "annual",
       "admiralty_reliability": "B",
+      "edition_year": 2024,
       "sector_tags": [
         "all",
         "energy"
