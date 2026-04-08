@@ -2664,15 +2664,6 @@ function _renderScenarioDetail(scenario, valScenario) {
     validationZone = `<div style="padding:8px 0">${finHtml}${probHtml}${noteHtml}</div>`;
   }
 
-  // Audit trace (collapsed, global to last run)
-  const auditZone = `<div style="border-top:1px solid #21262d;padding:6px 12px 10px">
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Audit Trace</span>
-      <button onclick="toggleAuditTrace()" id="btn-toggle-trace" style="font-size:10px;color:#484f58;cursor:pointer;background:none;border:none">&#9654;</button>
-    </div>
-    <pre id="audit-trace" class="hidden" style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:10px;font-size:10px;color:#6e7681;overflow-x:auto;white-space:pre-wrap;max-height:180px;overflow-y:auto"></pre>
-  </div>`;
-
   el.innerHTML = `
     <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center">
       <div>
@@ -2683,10 +2674,7 @@ function _renderScenarioDetail(scenario, valScenario) {
         style="background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">&#9998; Edit</button>
     </div>
     ${numbersZone}
-    ${validationZone}
-    ${auditZone}`;
-
-  loadAuditTrace();
+    ${validationZone}`;
 }
 
 function _renderEditZone(scenarioId) {
@@ -3088,8 +3076,12 @@ async function setActiveRegister(registerId) {
     body: JSON.stringify({register_id: registerId}),
   });
   if (!res.ok) return;
-  await Promise.all([loadRegisters(), loadMasterScenarios()]);
+  await loadRegisters();
   toggleRegisterDrawer(); // close drawer after switch
+  // Re-render the risk register tab if it's currently active
+  state.validationData = null;
+  state.selectedScenarioId = null;
+  renderRiskRegisterTab();
 }
 
 async function deleteRegister(registerId) {
