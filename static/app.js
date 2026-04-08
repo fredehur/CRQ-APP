@@ -3741,6 +3741,7 @@ function renderSourceRegistryTable(sources) {
     const totalApp  = members.reduce((a, s) => a + (s.appearance_count ?? 0), 0);
     const totalCite = members.reduce((a, s) => a + (s.cited_count ?? 0), 0);
     const lastSeen  = members.map(s => s.last_seen || '').sort().at(-1) || null;
+    const firstSeen = members.map(s => s.first_seen || '').filter(Boolean).sort().at(0) || null;
     const count     = members.length;
     const allIds    = members.map(s => s.id);
     const isBenchmark = (rep.collection_type || 'osint') === 'benchmark';
@@ -3779,8 +3780,8 @@ function renderSourceRegistryTable(sources) {
       : _usageBar(totalApp, totalCite)}
   </span>
   <span style="width:90px;flex-shrink:0"></span>
-  <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(lastSeen)}">
-    ${lastSeen ? lastSeen.slice(0, 10) : '—'}
+  <span style="width:80px;flex-shrink:0;font-size:10px;${_freshnessStyle(firstSeen)}">
+    ${firstSeen ? firstSeen.slice(0, 10) : '—'}
   </span>
   <span style="width:60px;flex-shrink:0">
     ${rep.url ? `<button onclick="window.open('${esc(rep.url)}','_blank')"
