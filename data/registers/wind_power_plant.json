@@ -3,13 +3,19 @@
   "display_name": "Wind Power Plant",
   "company_context": "Pure wind power plant operator. No manufacturing. Primary assets: wind turbines, grid connections, OT/SCADA control systems, energy generation capacity.",
   "created_at": "2026-04-07",
-  "last_validated_at": null,
+  "last_validated_at": "2026-04-09T07:02:29.719354+00:00",
   "scenarios": [
     {
       "scenario_id": "WP-001",
       "scenario_name": "System intrusion",
       "description": "Adversary gains persistent access to wind farm OT/SCADA control systems. Could enable sabotage, data theft, or ransomware staging.",
-      "search_tags": ["ot_systems", "scada", "system_intrusion", "energy_operator", "wind_farm"],
+      "search_tags": [
+        "ot_systems",
+        "scada",
+        "system_intrusion",
+        "energy_operator",
+        "wind_farm"
+      ],
       "value_at_cyber_risk_usd": 5200000,
       "figure_source": "internal_estimate",
       "probability_pct": 31.0,
@@ -19,17 +25,43 @@
       "scenario_id": "WP-002",
       "scenario_name": "Ransomware",
       "description": "Ransomware targeting OT/SCADA systems controlling wind turbines. Could cause full site shutdown and loss of grid generation capacity.",
-      "search_tags": ["ot_systems", "energy_operator", "ransomware", "scada", "wind_turbine"],
+      "search_tags": [
+        "ot_systems",
+        "energy_operator",
+        "ransomware",
+        "scada",
+        "wind_turbine"
+      ],
       "value_at_cyber_risk_usd": 8000000,
       "figure_source": "internal_estimate",
       "probability_pct": 12.0,
-      "probability_source": "internal_estimate"
+      "probability_source": "internal_estimate",
+      "analyst_baseline": {
+        "fin": {
+          "value_usd": 4200000, "low_usd": 1800000, "high_usd": 7500000,
+          "source_ids": ["verizon-dbir", "nonexistent-orphan-fixture"],
+          "notes": "Mid-case from 2025 Q4 incident response cost",
+          "updated": "2026-04-09", "updated_by": "analyst"
+        },
+        "prob": {
+          "annual_rate": 0.12, "low": 0.08, "high": 0.18,
+          "evidence_type": "frequency_rate",
+          "source_ids": ["dragos-ics-ot"],
+          "notes": "Dragos ICS/OT 2024 energy sector rate",
+          "updated": "2026-04-09", "updated_by": "analyst"
+        }
+      }
     },
     {
       "scenario_id": "WP-003",
       "scenario_name": "Accidental disclosure",
       "description": "Unintentional exposure of grid connection configurations, maintenance schedules, or operational data through misconfiguration.",
-      "search_tags": ["data_breach", "accidental_disclosure", "energy_operator", "wind_farm"],
+      "search_tags": [
+        "data_breach",
+        "accidental_disclosure",
+        "energy_operator",
+        "wind_farm"
+      ],
       "value_at_cyber_risk_usd": 800000,
       "figure_source": "internal_estimate",
       "probability_pct": 8.0,
@@ -39,7 +71,12 @@
       "scenario_id": "WP-004",
       "scenario_name": "Physical threat",
       "description": "Physical attack or sabotage at remote unmanned wind park sites. Includes deliberate damage to turbines, substations, or grid connection infrastructure.",
-      "search_tags": ["physical_security", "energy_infrastructure", "sabotage", "wind_farm"],
+      "search_tags": [
+        "physical_security",
+        "energy_infrastructure",
+        "sabotage",
+        "wind_farm"
+      ],
       "value_at_cyber_risk_usd": 3100000,
       "figure_source": "internal_estimate",
       "probability_pct": 3.3,
@@ -49,7 +86,12 @@
       "scenario_id": "WP-005",
       "scenario_name": "Insider misuse",
       "description": "Malicious or negligent insider misuses access to turbine control systems or grid connection configurations.",
-      "search_tags": ["insider_threat", "energy_operator", "ot_systems", "wind_farm"],
+      "search_tags": [
+        "insider_threat",
+        "energy_operator",
+        "ot_systems",
+        "wind_farm"
+      ],
       "value_at_cyber_risk_usd": 1500000,
       "figure_source": "internal_estimate",
       "probability_pct": 5.0,
@@ -59,7 +101,12 @@
       "scenario_id": "WP-006",
       "scenario_name": "DoS attack",
       "description": "Denial-of-service attack disrupts remote monitoring or SCADA communications, causing loss of visibility into turbine operations.",
-      "search_tags": ["dos_attack", "scada", "energy_operator", "wind_farm"],
+      "search_tags": [
+        "dos_attack",
+        "scada",
+        "energy_operator",
+        "wind_farm"
+      ],
       "value_at_cyber_risk_usd": 2000000,
       "figure_source": "internal_estimate",
       "probability_pct": 10.0,
@@ -69,7 +116,11 @@
       "scenario_id": "WP-007",
       "scenario_name": "Scam or fraud",
       "description": "Business email compromise or payment fraud targeting maintenance contractor invoices or energy trading accounts.",
-      "search_tags": ["bec", "fraud", "energy_operator"],
+      "search_tags": [
+        "bec",
+        "fraud",
+        "energy_operator"
+      ],
       "value_at_cyber_risk_usd": 500000,
       "figure_source": "internal_estimate",
       "probability_pct": 8.0,
@@ -79,7 +130,11 @@
       "scenario_id": "WP-008",
       "scenario_name": "Defacement",
       "description": "Public-facing operator website defaced, causing minor reputational impact.",
-      "search_tags": ["web_defacement", "reputational_damage", "energy"],
+      "search_tags": [
+        "web_defacement",
+        "reputational_damage",
+        "energy"
+      ],
       "value_at_cyber_risk_usd": 200000,
       "figure_source": "internal_estimate",
       "probability_pct": 3.0,
@@ -89,7 +144,12 @@
       "scenario_id": "WP-009",
       "scenario_name": "System failure",
       "description": "Critical failure of turbine monitoring or grid management systems causing unplanned downtime and generation loss.",
-      "search_tags": ["system_failure", "energy_operator", "wind_farm", "scada"],
+      "search_tags": [
+        "system_failure",
+        "energy_operator",
+        "wind_farm",
+        "scada"
+      ],
       "value_at_cyber_risk_usd": 4000000,
       "figure_source": "internal_estimate",
       "probability_pct": 15.0,
