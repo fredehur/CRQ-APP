@@ -1365,7 +1365,7 @@ function _doSwitchTab(tab) {
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
   if (tab === 'validate') { renderRiskRegisterTab(); }
-  if (tab === 'sources')  renderSources();
+  if (tab === 'sources')  switchSourceLibrarySubtab(_slActiveSubtab);
   if (tab === 'pipeline') renderPipelineTab();
   if (tab === 'runlog') renderRunLog();
 }
@@ -3375,7 +3375,7 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
     : (d.benchmark_range_pct?.length === 2 ? `${d.benchmark_range_pct[0]}% – ${d.benchmark_range_pct[1]}%` : '—');
   const allSources = [...(d.registered_sources || d.existing_sources || []), ...(d.new_sources || [])];
   const expandId = `regval-${scenId}-${dim}`;
-  const borderColor = {supports: '#238636', challenges: '#da3633', insufficient: '#21262d'}[d.verdict] || '#21262d';
+  const borderColor = '#21262d';
 
   const confLabel = {high: 'OT DATA', medium: 'SECTOR', low: 'GENERAL'}[d.verdict_confidence] || 'GENERAL';
   const confClass = {high: 'rr-conf-high', medium: 'rr-conf-medium', low: 'rr-conf-low'}[d.verdict_confidence] || 'rr-conf-low';
@@ -3883,6 +3883,332 @@ async function renderRunLog() {
       _updateRunLogAccordion(region);
     }
   });
+}
+
+// ── Source Library sub-tabs ────────────────────────────────────
+let _slActiveSubtab = 'osint';
+
+function switchSourceLibrarySubtab(which) {
+  _slActiveSubtab = which;
+  const osintBtn = $('sl-sub-osint');
+  const benchBtn = $('sl-sub-benchmarks');
+  const osintBody = $('sl-body-osint');
+  const benchBody = $('sl-body-benchmarks');
+  if (which === 'osint') {
+    osintBtn?.classList.add('sl-subtab-active');
+    benchBtn?.classList.remove('sl-subtab-active');
+    if (osintBtn) { osintBtn.style.background = '#161b22'; osintBtn.style.color = '#c9d1d9'; }
+    if (benchBtn) { benchBtn.style.background = '#0d1117'; benchBtn.style.color = '#8b949e'; }
+    if (osintBody) osintBody.style.display = '';
+    if (benchBody) benchBody.style.display = 'none';
+    loadSourceLibraryOSINT();
+  } else {
+    benchBtn?.classList.add('sl-subtab-active');
+    osintBtn?.classList.remove('sl-subtab-active');
+    if (benchBtn) { benchBtn.style.background = '#161b22'; benchBtn.style.color = '#c9d1d9'; }
+    if (osintBtn) { osintBtn.style.background = '#0d1117'; osintBtn.style.color = '#8b949e'; }
+    if (osintBody) osintBody.style.display = 'none';
+    if (benchBody) benchBody.style.display = '';
+    loadSourceLibraryBenchmarks();
+  }
+}
+
+async function loadSourceLibraryOSINT() {
+  // Prefer the new endpoint — fall back to the old one if it's not deployed yet
+  const statsEl = document.getElementById('src-stats-line');
+  const body = document.getElementById('src-table-body');
+  if (!body) return;
+  body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>';
+
+  const region   = document.getElementById('src-filter-region')?.value   || '';
+  const tier     = document.getElementById('src-filter-tier')?.value     || '';
+  const search   = document.getElementById('src-search')?.value?.trim()  || '';
+
+  const params = new URLSearchParams();
+  if (region) params.set('region', region);
+  if (tier)   params.set('tier',   tier);
+  if (search) params.set('search', search);
+
+  const data = await fetchJSON(`/api/source-library/osint?${params}`);
+  if (!data) {
+    body.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load sources.</div>';
+    return;
+  }
+  if (statsEl) {
+    statsEl.textContent = `${data.total} sources · ${data.filtered} shown · run ${(data.current_run_id||'').slice(0,10)}`;
+  }
+  const countPill = document.getElementById('sl-count-osint');
+  if (countPill) countPill.textContent = `(${data.total})`;
+
+  if (!data.sources.length) {
+    body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No sources found.</div>';
+    return;
+  }
+  _renderSourceLibraryOSINTTable(data.sources);
+}
+
+function _renderSourceLibraryOSINTTable(sources) {
+  const body = document.getElementById('src-table-body');
+  const rows = sources.map((s, i) => {
+    const tier = _tierBadge(s.tier);
+    const regions = (s.regions || []).join(', ') || '—';
+    const cited = s.cited_rate != null ? `${Math.round(s.cited_rate * 100)}%` : '—';
+    const delta = s.run_delta == null ? '—'
+      : s.run_delta > 0 ? `<span style="color:#3fb950">↑ +${s.run_delta}</span>`
+      : s.run_delta < 0 ? `<span style="color:#f85149">↓ ${s.run_delta}</span>`
+      : '—';
+    const lifecycle = s.lifecycle === 'active' ? `<span style="color:#3fb950">Active</span>`
+      : s.lifecycle === 'blocked' ? `<span style="color:#f85149">Blocked</span>`
+      : `<span style="color:#8b949e">Stale</span>`;
+    return `<tr style="border-bottom:1px solid #21262d;font-size:11px">
+      <td style="padding:6px 8px;color:#6e7681">${i + 1}</td>
+      <td style="padding:6px 8px;color:#c9d1d9">${esc(s.name || s.domain || '—')}</td>
+      <td style="padding:6px 8px">${tier}</td>
+      <td style="padding:6px 8px;color:#8b949e">${esc(s.type || '—')}</td>
+      <td style="padding:6px 8px;color:#8b949e">${s.pillar || '—'}</td>
+      <td style="padding:6px 8px;color:#8b949e">${esc(regions)}</td>
+      <td style="padding:6px 8px;color:#c9d1d9;text-align:right">${s.appearance_count}</td>
+      <td style="padding:6px 8px;color:#c9d1d9;text-align:right">${cited}</td>
+      <td style="padding:6px 8px;color:#8b949e">${s.last_seen ? s.last_seen.slice(0, 10) : '—'}</td>
+      <td style="padding:6px 8px;text-align:right">${delta}</td>
+      <td style="padding:6px 8px">${lifecycle}</td>
+    </tr>`;
+  }).join('');
+  body.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="text-align:left;color:#6e7681;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #30363d">
+        <th style="padding:8px">#</th><th style="padding:8px">Source</th>
+        <th style="padding:8px">Tier</th><th style="padding:8px">Type</th>
+        <th style="padding:8px">Pillar</th><th style="padding:8px">Regions</th>
+        <th style="padding:8px;text-align:right">Runs</th><th style="padding:8px;text-align:right">Cited %</th>
+        <th style="padding:8px">Last seen</th><th style="padding:8px;text-align:right">Δ vs prev</th>
+        <th style="padding:8px">Status</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div style="font-size:9px;color:#6e7681;padding:6px 2px">Runs/Cited %/Regions/Last seen are <strong>lifetime</strong>. Δ vs prev is <strong>per-run</strong>.</div>`;
+}
+
+// ── Source Library Benchmarks ──────────────────────────────────
+let _slBenchView = 'list';         // 'list' | 'matrix'
+let _slBenchData = null;
+
+async function loadSourceLibraryBenchmarks() {
+  const reg = document.getElementById('sl-bench-register')?.value || '';
+  const showAll = document.getElementById('sl-bench-showall')?.checked || false;
+  const body = document.getElementById('sl-bench-body');
+  if (!body) return;
+  body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">Loading...</div>';
+
+  // Populate register dropdown if empty
+  const sel = document.getElementById('sl-bench-register');
+  if (sel && sel.options.length === 0) {
+    const regs = await fetchJSON('/api/registers') || [];
+    sel.innerHTML = regs.map(r =>
+      `<option value="${esc(r.register_id)}">${esc(r.display_name || r.register_id)}</option>`
+    ).join('');
+  }
+
+  const params = new URLSearchParams();
+  if (reg) params.set('register', reg);
+  if (showAll) params.set('show_all', 'true');
+
+  const data = await fetchJSON(`/api/source-library/benchmarks?${params}`);
+  if (!data) {
+    body.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load benchmarks.</div>';
+    return;
+  }
+  _slBenchData = data;
+  const countPill = document.getElementById('sl-count-benchmarks');
+  if (countPill) countPill.textContent = `(${(data.sources || []).length})`;
+
+  if (_slBenchView === 'matrix') {
+    renderBenchmarkMatrix(data);
+  } else {
+    _renderBenchmarkList(data, showAll);
+  }
+}
+
+function _renderBenchmarkList(data, showAll) {
+  const body = document.getElementById('sl-bench-body');
+  if (!data.sources.length) {
+    body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No benchmark sources match this register.</div>';
+    return;
+  }
+  const scenColHeader = showAll ? 'Scenario tags covered' : 'Scenarios in this register';
+  const rows = data.sources.map((s, i) => {
+    const provBadge = s.provenance === 'analyst'
+      ? `<span style="font-size:9px;background:#3a2a0a;color:#e3b341;border:1px solid #6b4e0a;padding:1px 5px;border-radius:2px;margin-left:4px">analyst</span>`
+      : '';
+    const scenList = showAll ? (s.scenario_tags || []) : (s.covered_scenarios || []);
+    const cited = (s.cited_in_current_run || []).length > 0
+      ? (s.cited_in_current_run || []).map(c => esc(c.scenario)).join(', ')
+      : '<span style="color:#484f58">—</span>';
+    return `<tr style="border-bottom:1px solid #21262d;font-size:11px">
+      <td style="padding:6px 8px;color:#6e7681">${i + 1}</td>
+      <td style="padding:6px 8px;color:#c9d1d9">${esc(s.name)}${provBadge}</td>
+      <td style="padding:6px 8px">${_tierBadge(s.reliability)}</td>
+      <td style="padding:6px 8px;color:#8b949e">${s.edition_year || '—'}</td>
+      <td style="padding:6px 8px;color:#8b949e">${esc(s.cadence || '—')}</td>
+      <td style="padding:6px 8px;color:#8b949e">${esc((s.sector_tags || []).join(', ') || '—')}</td>
+      <td style="padding:6px 8px;color:#c9d1d9">${esc(scenList.join(', ') || '—')}</td>
+      <td style="padding:6px 8px;color:#8b949e">${s.last_checked ? s.last_checked.slice(0, 10) : '—'}</td>
+      <td style="padding:6px 8px;color:#c9d1d9">${cited}</td>
+    </tr>`;
+  }).join('');
+
+  body.innerHTML = `<table style="width:100%;border-collapse:collapse">
+    <thead>
+      <tr style="text-align:left;color:#6e7681;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #30363d">
+        <th style="padding:8px">#</th><th style="padding:8px">Source</th>
+        <th style="padding:8px">Reliability</th><th style="padding:8px">Edition</th>
+        <th style="padding:8px">Cadence</th><th style="padding:8px">Sectors</th>
+        <th style="padding:8px">${scenColHeader}</th><th style="padding:8px">Last checked</th>
+        <th style="padding:8px">Cited in current run</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function switchBenchmarkView(view) {
+  _slBenchView = view;
+  const listBtn = document.getElementById('sl-bench-view-list');
+  const matrixBtn = document.getElementById('sl-bench-view-matrix');
+  const showAllEl = document.getElementById('sl-bench-showall');
+  // When matrix view is active, grey out show_all (matrix is always register-scoped)
+  if (view === 'matrix') {
+    if (showAllEl) { showAllEl.disabled = true; showAllEl.checked = false; }
+    matrixBtn?.classList.add('sl-view-active');
+    listBtn?.classList.remove('sl-view-active');
+  } else {
+    if (showAllEl) showAllEl.disabled = false;
+    listBtn?.classList.add('sl-view-active');
+    matrixBtn?.classList.remove('sl-view-active');
+  }
+  loadSourceLibraryBenchmarks();
+}
+
+function renderBenchmarkMatrix(data) {
+  const body = document.getElementById('sl-bench-body');
+  const scenarios = data.scenarios || [];
+  const sources = data.sources || [];
+  if (!scenarios.length || !sources.length) {
+    body.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No register or no sources.</div>';
+    return;
+  }
+  const matrix = data.matrix || {};
+  const perScenarioCount = (scen) => sources.filter(s => matrix[scen] && matrix[scen][s.id]).length;
+  const perSourceCount   = (sid)  => scenarios.filter(scen => matrix[scen] && matrix[scen][sid]).length;
+
+  const headerCells = sources.map(s =>
+    `<th style="padding:6px;font-size:10px;color:#8b949e;writing-mode:vertical-rl;transform:rotate(180deg);min-width:26px">${esc(s.name)}</th>`
+  ).join('');
+  const rows = scenarios.map(scen => {
+    const count = perScenarioCount(scen);
+    const warn = count <= 1 ? ' ⚠' : '';
+    const cells = sources.map(s => {
+      const on = matrix[scen] && matrix[scen][s.id];
+      return on
+        ? `<td style="padding:6px;text-align:center;color:#3fb950">✓</td>`
+        : `<td style="padding:6px;text-align:center;color:#484f58">·</td>`;
+    }).join('');
+    const warnColor = count === 0 ? '#f85149' : count === 1 ? '#e3b341' : '#c9d1d9';
+    return `<tr style="border-bottom:1px solid #21262d;font-size:11px">
+      <td style="padding:6px;color:#c9d1d9;white-space:nowrap">${esc(scen)}</td>
+      ${cells}
+      <td style="padding:6px;text-align:right;color:${warnColor};font-weight:600">${count}/${sources.length}${warn}</td>
+    </tr>`;
+  }).join('');
+
+  const footerCells = sources.map(s =>
+    `<td style="padding:6px;text-align:center;color:#8b949e">${perSourceCount(s.id)}/${scenarios.length}</td>`
+  ).join('');
+
+  body.innerHTML = `<table style="border-collapse:collapse;margin-top:4px">
+    <thead>
+      <tr style="border-bottom:1px solid #30363d">
+        <th style="padding:6px;text-align:left;color:#6e7681;font-size:10px;text-transform:uppercase">Scenario</th>
+        ${headerCells}
+        <th style="padding:6px;color:#6e7681;font-size:10px;text-transform:uppercase">Coverage</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr style="border-top:1px solid #30363d">
+        <td style="padding:6px;color:#6e7681;font-size:10px;text-transform:uppercase">Coverage</td>
+        ${footerCells}
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  ${data.coverage_summary
+    ? `<div style="font-size:10px;color:#8b949e;padding:8px 2px">
+        ⚠ Gaps: ${data.coverage_summary.uncovered_count} uncovered, ${data.coverage_summary.thinly_covered_count} thinly covered</div>`
+    : ''}`;
+}
+
+// ── Shared: Add benchmark source modal ─────────────────────────
+let _slAddSourceOnSave = null;
+
+window.openAddBenchmarkSourceModal = function (opts) {
+  opts = opts || {};
+  _slAddSourceOnSave = typeof opts.onSave === 'function' ? opts.onSave : null;
+  const modal = document.getElementById('sl-add-source-modal');
+  const form = document.getElementById('sl-add-source-form');
+  if (!modal || !form) return;
+  form.innerHTML = `
+    <div style="display:grid;gap:8px;font-size:11px;color:#c9d1d9">
+      <label>Name <input id="sl-as-name" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <label>URL  <input id="sl-as-url"  style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <label>Reliability
+        <select id="sl-as-rel" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px">
+          <option value="A">A</option><option value="B" selected>B</option><option value="C">C</option>
+        </select>
+      </label>
+      <label>Edition year <input id="sl-as-year" type="number" value="2025" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <label>Cadence <input id="sl-as-cad" value="annual" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <label>Scenario tags (comma-separated) <input id="sl-as-scen" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <label>Sector tags (comma-separated) <input id="sl-as-sect" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+    </div>`;
+  modal.style.display = 'flex';
+};
+
+function closeAddBenchmarkSourceModal() {
+  const modal = document.getElementById('sl-add-source-modal');
+  if (modal) modal.style.display = 'none';
+  _slAddSourceOnSave = null;
+}
+
+async function submitAddBenchmarkSource() {
+  const body = {
+    name: document.getElementById('sl-as-name')?.value?.trim() || '',
+    url:  document.getElementById('sl-as-url')?.value?.trim() || '',
+    admiralty_reliability: document.getElementById('sl-as-rel')?.value || 'B',
+    edition_year: parseInt(document.getElementById('sl-as-year')?.value || '2025', 10),
+    cadence: document.getElementById('sl-as-cad')?.value || 'annual',
+    scenario_tags: (document.getElementById('sl-as-scen')?.value || '').split(',').map(x => x.trim()).filter(Boolean),
+    sector_tags:   (document.getElementById('sl-as-sect')?.value || '').split(',').map(x => x.trim()).filter(Boolean),
+    provenance: 'analyst',
+  };
+  if (!body.name || !body.url) {
+    alert('Name and URL are required');
+    return;
+  }
+  const res = await fetch('/api/validation/sources/add', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Failed to add source: ' + (err.error || res.status));
+    return;
+  }
+  const result = await res.json();
+  const newId = result.source_id;
+  closeAddBenchmarkSourceModal();
+  if (_slActiveSubtab === 'benchmarks') loadSourceLibraryBenchmarks();
+  if (_slAddSourceOnSave) _slAddSourceOnSave(newId);
 }
 
 // ── Init ──────────────────────────────────────────────────────────────

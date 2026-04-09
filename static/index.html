@@ -801,7 +801,7 @@
       <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
       <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
-      <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Audit</div>
+      <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Library</div>
       <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
       <div class="nav-tab" id="nav-runlog" onclick="switchTab('runlog')">Run Log</div>
     </nav>
@@ -828,9 +828,9 @@
   <span id="register-bar-name" style="color:#c9d1d9;font-weight:600">—</span>
   <span style="color:#21262d">·</span>
   <span id="register-bar-count" style="color:#484f58">— scenarios</span>
-  <span style="flex:1"></span>
+  <span style="color:#21262d">·</span>
   <span id="register-bar-toggle" onclick="toggleRegisterDrawer()"
-    style="color:#6e7681;cursor:pointer;letter-spacing:0.04em">Switch Register ▾</span>
+    style="color:#6e7681;cursor:pointer;letter-spacing:0.04em">Switch ▾</span>
 </div>
 
 <!-- Register drawer (hidden by default) -->
@@ -1127,6 +1127,51 @@
 <!-- ── SOURCES TAB ─────────────────────────────────────────────── -->
 <div id="tab-sources" class="hidden" style="padding:16px 20px;overflow-y:auto;max-height:calc(100vh - 60px)">
 
+  <!-- Sub-tab pills -->
+  <div id="sl-subtabs" style="display:flex;gap:8px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #21262d">
+    <button id="sl-sub-osint" class="sl-subtab sl-subtab-active"
+            onclick="switchSourceLibrarySubtab('osint')"
+            style="padding:6px 14px;border-radius:14px;border:1px solid #30363d;background:#161b22;color:#c9d1d9;font-size:11px;cursor:pointer">
+      OSINT <span id="sl-count-osint" style="color:#6e7681;margin-left:4px">(—)</span>
+    </button>
+    <button id="sl-sub-benchmarks" class="sl-subtab"
+            onclick="switchSourceLibrarySubtab('benchmarks')"
+            style="padding:6px 14px;border-radius:14px;border:1px solid #30363d;background:#0d1117;color:#8b949e;font-size:11px;cursor:pointer">
+      Benchmarks <span id="sl-count-benchmarks" style="color:#6e7681;margin-left:4px">(—)</span>
+    </button>
+  </div>
+
+  <!-- Benchmarks sub-tab body -->
+  <div id="sl-body-benchmarks" style="display:none">
+    <div id="sl-bench-header" style="display:flex;gap:12px;align-items:center;margin-bottom:10px;font-size:11px">
+      <span style="color:#6e7681">Register:</span>
+      <select id="sl-bench-register" onchange="loadSourceLibraryBenchmarks()"
+              style="background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 8px;font-size:11px"></select>
+      <span style="color:#6e7681;margin-left:auto">View:</span>
+      <button id="sl-bench-view-list"   class="sl-view-btn sl-view-active" onclick="switchBenchmarkView('list')">Source list</button>
+      <button id="sl-bench-view-matrix" class="sl-view-btn" onclick="switchBenchmarkView('matrix')">Coverage matrix</button>
+      <label style="color:#8b949e;margin-left:12px"><input type="checkbox" id="sl-bench-showall" onchange="loadSourceLibraryBenchmarks()"> Show all</label>
+      <button onclick="window.openAddBenchmarkSourceModal()"
+              style="margin-left:8px;padding:4px 10px;font-size:10px;color:#3fb950;background:#0a1a0a;border:1px solid #238636;border-radius:2px;cursor:pointer">+ Add source</button>
+    </div>
+    <div id="sl-bench-body"></div>
+  </div>
+
+  <!-- Shared modal: + Add benchmark source -->
+  <div id="sl-add-source-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;align-items:center;justify-content:center">
+    <div style="background:#0d1117;border:1px solid #30363d;padding:20px;border-radius:6px;min-width:420px;max-width:520px">
+      <div style="font-size:12px;color:#c9d1d9;font-weight:600;margin-bottom:12px">Add Benchmark Source</div>
+      <div id="sl-add-source-form"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button onclick="closeAddBenchmarkSourceModal()" style="padding:5px 12px;font-size:11px;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:2px;cursor:pointer">Cancel</button>
+        <button onclick="submitAddBenchmarkSource()" style="padding:5px 12px;font-size:11px;background:#1a3a1a;color:#3fb950;border:1px solid #238636;border-radius:2px;cursor:pointer">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- OSINT sub-tab body wrapper (existing source registry content lives inside) -->
+  <div id="sl-body-osint">
+
   <!-- Header -->
   <div style="margin-bottom:14px">
     <div style="font-size:11px;color:#e6edf3;font-weight:600;letter-spacing:0.05em;margin-bottom:4px">SOURCE REGISTRY</div>
@@ -1202,6 +1247,9 @@
       <div style="color:#6e7681;font-size:11px;padding:12px">Loading sources...</div>
     </div>
   </div>
+
+  </div>
+  <!-- /sl-body-osint -->
 
 </div>
 
