@@ -162,10 +162,12 @@ For each percentage figure found that relates to incident frequency or prevalenc
 - sector: the industry sector this applies to
 - probability_pct: the percentage value as a float
 - evidence_subtype: one of:
-    "prevalence_survey"  — % of surveyed organisations affected (most common in reports)
-    "frequency_rate"     — incidents per organisation per year (rare, usually in ICS reports)
-    "expert_estimate"    — stated as an expert judgement or model output
-    "unknown"            — cannot determine
+    "prevalence_survey"    — % of surveyed organisations affected (most common in reports)
+    "frequency_rate"       — incidents per organisation per year (rare, usually in ICS reports)
+    "expert_estimate"      — stated as an expert judgement or model output
+    "program_prevalence"   — % of orgs with a policy/program/control/awareness in place (NOT an incident rate)
+    "unknown"              — cannot determine
+- measures_incident: true if the figure counts incidents/breaches/attacks/compromises that actually occurred; false for policy adoption, program maturity, awareness, attitudinal surveys, or control presence (e.g. '% of orgs that have a program', '% aware of risk', '% planning to invest')
 - note: brief description of what this percentage represents and its population
 - raw_quote: the exact text excerpt (max 200 chars)
 - context_tag: one of "asset_specific", "company_scale", "both", or "general"
@@ -173,6 +175,8 @@ For each percentage figure found that relates to incident frequency or prevalenc
   "company_scale" if the source mentions enterprise/large organization/sector-wide/>1000 employees
   "both" if it matches both criteria
   "general" if neither
+
+IMPORTANT: Reject figures that describe program maturity, policy adoption, control presence, or attitudinal surveys (e.g. '% of orgs that have a policy', '% aware of risk', '% planning to invest'). Those are NOT incident frequency data. Label them "program_prevalence" and set measures_incident to false.
 
 Return ONLY a JSON array. If no probability figures found, return [].
 
@@ -209,6 +213,19 @@ def _extract_probability_figures(text: str, source_name: str) -> list[dict]:
 # Register-contextualized query builder
 # ---------------------------------------------------------------------------
 
+_SCENARIO_QUERY_PHRASES = {
+    "Physical threat": "physical cyber sabotage attack",
+    "Accidental disclosure": "accidental data exposure breach",
+    "System failure": "cyber system outage disruption",
+    "Defacement": "website defacement cyber attack",
+    "Insider misuse": "insider threat incident data theft",
+    "Scam or fraud": "business email compromise cyber fraud",
+    "DoS attack": "denial of service cyber attack",
+    "System intrusion": "cyber intrusion breach",
+    "Ransomware": "ransomware attack incident",
+}
+
+
 def build_register_queries(scenario: dict, register: dict) -> dict:
     """
     Build up to _PHASE2_QUERY_CAP financial queries and _PHASE2_QUERY_CAP probability
@@ -219,6 +236,7 @@ def build_register_queries(scenario: dict, register: dict) -> dict:
         Each list has 1-3 entries, ordered most-specific first.
     """
     name = scenario["scenario_name"]
+    query_phrase = _SCENARIO_QUERY_PHRASES.get(name, name)
     context = register.get("company_context", "energy sector")
     tags = set(scenario.get("search_tags", []))
     is_ot = bool(tags & {"ot_systems", "scada", "wind_turbine", "ics", "industrial_control"})
@@ -235,16 +253,16 @@ def build_register_queries(scenario: dict, register: dict) -> dict:
     probability: list[str] = []
 
     # Base: broad sector query (always included)
-    financial.append(f'"{name}" financial cost impact {sector} USD 2024 2025')
-    probability.append(f'"{name}" incident rate frequency annual {sector} 2024 2025')
+    financial.append(f'{query_phrase} financial cost impact {sector} USD 2024 2025')
+    probability.append(f'{query_phrase} cyber incident rate frequency annual {sector} 2024 2025')
 
     # OT branch: ICS-specific queries when relevant tags present
     if is_ot:
         financial.append(
-            f'"{name}" OT ICS SCADA operational technology cost USD 2024 2025 energy'
+            f'{query_phrase} OT ICS SCADA operational technology cost USD 2024 2025 energy'
         )
         probability.append(
-            f'"{name}" ICS OT incident frequency 2024 Dragos OR CISA OR ICS-CERT energy operator'
+            f'{query_phrase} ICS OT incident frequency 2024 Dragos OR CISA OR ICS-CERT energy operator'
         )
 
     # Wind-specific: named incident cost data
@@ -907,18 +925,19 @@ def validate_scenario(
         # Exclude enterprise/sector-wide aggregate figures — not per-site benchmarks
         if f.get("context_tag") == "company_scale":
             continue
-        val = f.get("cost_median_usd")
-        if not val:
-            lo = f.get("cost_low_usd") or 0
-            hi = f.get("cost_high_usd") or 0
-            val = (lo + hi) / 2 if (lo or hi) else None
-        if val and float(val) <= fin_cap:
-            fin_values.append(float(val))
+        lo = f.get("cost_low_usd")
+        med = f.get("cost_median_usd")
+        hi = f.get("cost_high_usd")
+        # A reported range is 2+ data points, not 1 — keep endpoints separate
+        for val in (lo, med, hi):
+            if val and float(val) <= fin_cap:
+                fin_values.append(float(val))
 
     prob_values: list[float] = []
     for f in all_prob_figs:
-        # Exclude policy-prevalence and non-incident stats from probability benchmarks
         if f.get("evidence_subtype") not in (None, "prevalence_survey", "frequency_rate", "expert_estimate", "unknown"):
+            continue
+        if f.get("measures_incident") is False:  # explicit False; None = legacy = allow
             continue
         val = f.get("probability_pct")
         if val and float(val) <= 100.0:  # sanity cap
