@@ -2668,6 +2668,13 @@ function _renderScenarioDetail(scenario, valScenario) {
     </div>
   </div>`;
 
+  const recommendationZone = valScenario?.recommendation
+    ? `<div style="margin:0 12px 14px 12px;padding:10px 12px;background:#080c10;border:1px solid #21262d;border-radius:3px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Analyst Note</div>
+        <div style="font-size:10px;color:#8b949e;line-height:1.7;font-family:'IBM Plex Sans',sans-serif">${esc(valScenario.recommendation)}</div>
+      </div>`
+    : '';
+
   el.innerHTML = `
     <div style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center;background:#080c10">
       <div>
@@ -2679,7 +2686,8 @@ function _renderScenarioDetail(scenario, valScenario) {
     </div>
     ${descZone}
     ${numbersZone}
-    ${validationZone}`;
+    ${validationZone}
+    ${recommendationZone}`;
 }
 
 function _renderEditZone(scenarioId) {
@@ -3357,6 +3365,7 @@ function _renderSourcesBox(title, sources, versionChecks, extraHeaderHtml) {
 function _renderRegValDimension(scenId, dim, d, versionChecks) {
   if (!d) return '';
   const isFinancial = dim === 'financial';
+  const isProb = dim === 'probability';
   const label = isFinancial ? 'FINANCIAL' : 'PROBABILITY';
   const vacr = isFinancial
     ? (d.vacr_figure_usd != null ? `$${Number(d.vacr_figure_usd).toLocaleString('en-US')}` : '—')
@@ -3367,6 +3376,17 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
   const allSources = [...(d.registered_sources || d.existing_sources || []), ...(d.new_sources || [])];
   const expandId = `regval-${scenId}-${dim}`;
   const borderColor = {supports: '#238636', challenges: '#da3633', insufficient: '#21262d'}[d.verdict] || '#21262d';
+
+  const confLabel = {high: 'OT DATA', medium: 'SECTOR', low: 'GENERAL'}[d.verdict_confidence] || 'GENERAL';
+  const confClass = {high: 'rr-conf-high', medium: 'rr-conf-medium', low: 'rr-conf-low'}[d.verdict_confidence] || 'rr-conf-low';
+
+  const evidenceCaveat = isProb
+    ? ({
+        prevalence_survey: `<span style="font-size:8px;color:#6e7681;font-family:'IBM Plex Mono',monospace;background:#0d1117;border:1px solid #21262d;border-radius:2px;padding:1px 5px">PREVALENCE SURVEY</span>`,
+        frequency_rate:    `<span style="font-size:8px;color:#3fb950;font-family:'IBM Plex Mono',monospace;background:#0a1f0a;border:1px solid #1a4d1a;border-radius:2px;padding:1px 5px">FREQUENCY DATA</span>`,
+        mixed:             `<span style="font-size:8px;color:#e3b341;font-family:'IBM Plex Mono',monospace;background:#1f1700;border:1px solid #4a3800;border-radius:2px;padding:1px 5px">MIXED EVIDENCE</span>`,
+      }[d.evidence_type] || '')
+    : '';
 
   // Two-box source display
   const regSourcesHtml = _renderSourcesBox(
@@ -3391,11 +3411,11 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
       <span class="rr-dim-sep">·</span>
       <span class="rr-dim-bench-label">benchmark</span>
       <span class="rr-dim-bench-val">${range}</span>
-      <span class="rr-dim-right">${_regValVerdictBadge('', d.verdict)}<span class="rr-src-count">${allSources.length} src</span></span>
+      <span class="rr-dim-right">${_regValVerdictBadge('', d.verdict)}<span class="${confClass}">${confLabel}</span><span class="rr-src-count">${allSources.length} src</span></span>
     </div>
     <div id="${expandId}" style="display:block;background:#060a0f;padding:8px 10px;border-top:1px solid #0d1117">
+      ${isProb && evidenceCaveat ? `<div style="margin-bottom:8px;font-size:9px;color:#6e7681;font-family:'IBM Plex Sans',sans-serif">Evidence type: ${evidenceCaveat}</div>` : ''}
       ${sourcesHtml}
-      ${d.recommendation ? `<div style="margin-top:8px;padding:8px 10px;background:#080c10;border-left:2px solid ${borderColor};font-size:10px;color:#8b949e;line-height:1.6;font-family:'IBM Plex Sans',sans-serif">${esc(d.recommendation)}</div>` : ''}
     </div>
   </div>`;
 }

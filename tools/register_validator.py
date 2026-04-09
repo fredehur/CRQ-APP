@@ -28,7 +28,8 @@ DB_PATH = REPO_ROOT / "data" / "sources.db"
 REGISTERS_DIR = REPO_ROOT / "data" / "registers"
 ACTIVE_REGISTER_PATH = REPO_ROOT / "data" / "active_register.json"
 OUTPUT_PATH = REPO_ROOT / "output" / "validation" / "register_validation.json"
-OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
+_PHASE1_SOURCE_CAP = 5  # limits Tavily API calls per scenario against known sources.db entries
+_PHASE2_QUERY_CAP = 3   # max queries per dimension per scenario in Phase 2
 
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 SONNET_MODEL = "claude-sonnet-4-6"
@@ -103,7 +104,6 @@ Extract all dollar-denominated financial impact figures for cyber incidents. For
   "company_scale" if the source mentions enterprise/large organization/sector-wide/>1000 employees
   "both" if it matches both criteria
   "general" if neither
-- smb_scale_flag: false
 
 Return ONLY a JSON array. If no financial figures found, return [].
 
@@ -137,25 +137,28 @@ def _extract_financial_figures(text: str, source_name: str) -> list[dict]:
 
 
 _PROB_EXTRACTION_PROMPT = """\
-You are extracting incident probability data from a cybersecurity industry report.
+You are extracting incident frequency data from a cybersecurity industry report.
 
-Extract all percentage figures that represent incident frequency or probability:
-- Annual incident probability (% of organizations affected per year)
-- Incident frequency rates
-- Prevalence rates for cyber incidents
+IMPORTANT: Most published cybersecurity reports contain prevalence rates — the percentage
+of surveyed organizations that experienced an incident in a given year. These are NOT
+per-organization annual probabilities. Extract them as-is and label their type accurately.
 
-For each figure found:
+For each percentage figure found that relates to incident frequency or prevalence:
 - scenario_tag: classify into one of: System intrusion, Ransomware, Accidental disclosure, Physical threat, Insider misuse, DoS attack, Scam or fraud, Defacement, System failure
 - sector: the industry sector this applies to
 - probability_pct: the percentage value as a float
-- note: brief description of what this percentage represents
+- evidence_subtype: one of:
+    "prevalence_survey"  — % of surveyed organisations affected (most common in reports)
+    "frequency_rate"     — incidents per organisation per year (rare, usually in ICS reports)
+    "expert_estimate"    — stated as an expert judgement or model output
+    "unknown"            — cannot determine
+- note: brief description of what this percentage represents and its population
 - raw_quote: the exact text excerpt (max 200 chars)
 - context_tag: one of "asset_specific", "company_scale", "both", or "general"
-  "asset_specific" if the source content mentions OT/ICS/SCADA/industrial/wind/turbine/control system
+  "asset_specific" if the source mentions OT/ICS/SCADA/industrial/wind/turbine/control system
   "company_scale" if the source mentions enterprise/large organization/sector-wide/>1000 employees
   "both" if it matches both criteria
   "general" if neither
-- smb_scale_flag: false
 
 Return ONLY a JSON array. If no probability figures found, return [].
 
@@ -192,18 +195,54 @@ def _extract_probability_figures(text: str, source_name: str) -> list[dict]:
 # Register-contextualized query builder
 # ---------------------------------------------------------------------------
 
-def _build_sector_queries(scenario: dict, register: dict) -> dict:
-    """Build broad sector queries. Context applied at extraction, not search time."""
+def build_register_queries(scenario: dict, register: dict) -> dict:
+    """
+    Build up to _PHASE2_QUERY_CAP financial queries and _PHASE2_QUERY_CAP probability
+    queries per scenario. OT/SCADA branches added when search_tags indicate ICS exposure.
+
+    Returns:
+        {"financial": [str, ...], "probability": [str, ...]}
+        Each list has 1-3 entries, ordered most-specific first.
+    """
     name = scenario["scenario_name"]
     context = register.get("company_context", "energy sector")
-    sector = "energy sector"
-    if "wind" in context.lower():
-        sector = "energy sector wind power"
+    tags = set(scenario.get("search_tags", []))
+    is_ot = bool(tags & {"ot_systems", "scada", "wind_turbine", "ics", "industrial_control"})
+    is_wind = "wind" in context.lower() or "wind_turbine" in tags
+
+    if is_wind:
+        sector = "wind power energy operator"
     elif "manufacturing" in context.lower():
         sector = "manufacturing energy sector"
-    financial = f"{name} financial cost impact {sector} operator USD 2024 2025"
-    probability = f"{name} incident rate probability annual {sector} 2024 2025"
-    return {"financial": financial, "probability": probability}
+    else:
+        sector = "energy sector"
+
+    financial: list[str] = []
+    probability: list[str] = []
+
+    # Base: broad sector query (always included)
+    financial.append(f'"{name}" financial cost impact {sector} USD 2024 2025')
+    probability.append(f'"{name}" incident rate frequency annual {sector} 2024 2025')
+
+    # OT branch: ICS-specific queries when relevant tags present
+    if is_ot:
+        financial.append(
+            f'"{name}" OT ICS SCADA operational technology cost USD 2024 2025 energy'
+        )
+        probability.append(
+            f'"{name}" ICS OT incident frequency 2024 Dragos OR CISA OR ICS-CERT energy operator'
+        )
+
+    # Wind-specific: named incident cost data
+    if is_wind:
+        financial.append(
+            f'wind farm cyber incident cost "system intrusion" OR "ransomware" USD 2022 2023 2024'
+        )
+
+    return {
+        "financial": financial[:_PHASE2_QUERY_CAP],
+        "probability": probability[:_PHASE2_QUERY_CAP],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -233,7 +272,7 @@ def phase1_refresh_known_sources(
             relevant.append({"name": name, "url": url or ""})
 
     fin_figures, prob_figures = [], []
-    for source in relevant[:5]:
+    for source in relevant[:_PHASE1_SOURCE_CAP]:
         name = source["name"]
         url = source["url"]
         domain = urlparse(url).netloc if url else ""
@@ -271,14 +310,14 @@ def phase2_osint_search(
     scenario: dict, register: dict
 ) -> tuple[list[dict], list[dict]]:
     """
-    Phase 2: Register-contextualized OSINT — broader Tavily search for new benchmark reports.
-    Queries are shaped by register.company_context and scenario search_tags.
+    Phase 2: Register-contextualized OSINT.
+    Iterates all queries from build_register_queries (up to _PHASE2_QUERY_CAP each).
     Returns (fin_figures, prob_figures) — each item has phase=2.
     """
-    queries = _build_sector_queries(scenario, register)
+    queries = build_register_queries(scenario, register)
     fin_figures, prob_figures = [], []
 
-    for query in [queries["financial"]]:
+    for query in queries["financial"]:
         print(f"[register_validator] Phase 2 fin -- {query[:80]}", file=sys.stderr)
         results = _search_web(query, max_results=4)
         for r in results:
@@ -289,7 +328,7 @@ def phase2_osint_search(
                 fig["source_url"] = r.get("url", "")
                 fin_figures.append(fig)
 
-    for query in [queries["probability"]]:
+    for query in queries["probability"]:
         print(f"[register_validator] Phase 2 prob -- {query[:80]}", file=sys.stderr)
         results = _search_web(query, max_results=4)
         for r in results:
@@ -341,18 +380,27 @@ Description: {scenario_description}
 
 Financial validation:
   - Register VaCR: ${vacr_usd:,}
-  - Benchmark range from industry sources: {fin_range}
-  - Verdict: {fin_verdict} ({fin_source_count} sources found)
+  - Benchmark range from peer industry sources: {fin_range}
+  - Verdict: {fin_verdict} ({fin_source_count} sources, data confidence: {fin_confidence})
 
 Probability validation:
   - Register probability: {prob_pct}%
   - Benchmark range from industry sources: {prob_range}
-  - Verdict: {prob_verdict} ({prob_source_count} sources found)
+  - Verdict: {prob_verdict} ({prob_source_count} sources, data confidence: {prob_confidence})
+  - Evidence type: {prob_evidence_type}
+
+IMPORTANT — PROBABILITY EVIDENCE:
+- "prevalence_survey": figures are % of organisations surveyed that experienced the incident.
+  These are NOT per-organisation annual frequencies. The probability verdict is directional
+  only — state this explicitly in your note.
+- "frequency_rate": figures are incidents per organisation per year — more directly comparable.
+- "mixed": sources include both types — note the limitation.
 
 Write a concise analyst note (2-3 sentences) addressing:
-1. Whether the register figures appear well-calibrated for this specific organisation type
-2. What the benchmark evidence suggests about direction of revision, if any
-3. If verdict is "insufficient", what source types would strengthen this validation
+1. Whether the financial figure appears well-calibrated against peer sector data. If data
+   confidence is "low", say the benchmark is from general sector sources, not asset-specific.
+2. What the probability evidence type means for the reliability of that verdict.
+3. If either verdict is "insufficient", what specific source types would strengthen this.
 
 Tone: direct, no jargon, no financial advice language. Plain text only."""
 
@@ -384,11 +432,14 @@ def _build_recommendation_sonnet(
         vacr_usd=fin.get("vacr_figure_usd") or 0,
         fin_range=_fmt_fin_range(fin.get("benchmark_range_usd")),
         fin_verdict=fin.get("verdict", "insufficient"),
+        fin_confidence=fin.get("verdict_confidence", "low"),
         fin_source_count=len(all_sources),
         prob_pct=prob.get("vacr_probability_pct") or 0,
         prob_range=_fmt_prob_range(prob.get("benchmark_range_pct")),
         prob_verdict=prob.get("verdict", "insufficient"),
+        prob_confidence=prob.get("verdict_confidence", "low"),
         prob_source_count=len(prob_all_sources),
+        prob_evidence_type=prob.get("evidence_type", "prevalence_survey"),
     )
     try:
         client = anthropic.Anthropic()
@@ -454,6 +505,21 @@ def compute_verdict(vacr_value: float | None, benchmark_values: list[float]) -> 
     return "challenges", [lo, hi]
 
 
+def compute_verdict_confidence(sources: list[dict]) -> str:
+    """
+    Deterministic confidence rating based on source context_tag values.
+    high   — at least one source tagged asset_specific or both (OT/ICS data)
+    medium — at least one source tagged company_scale (enterprise sector peer)
+    low    — all sources are general (no sector or asset specificity)
+    """
+    tags = [s.get("context_tag", "general") for s in sources]
+    if any(t in ("asset_specific", "both") for t in tags):
+        return "high"
+    if any(t == "company_scale" for t in tags):
+        return "medium"
+    return "low"
+
+
 # ---------------------------------------------------------------------------
 # Track 3: check source versions
 # ---------------------------------------------------------------------------
@@ -472,7 +538,8 @@ def check_source_versions(sources: list, web_search_fn) -> list:
             newer_url = None
             for r in results:
                 title = r.get("title", "") + " " + r.get("snippet", r.get("content", ""))
-                for year in [2025, 2026]:
+                current_year = datetime.now().year
+                for year in range(edition_year + 1, current_year + 2):
                     if str(year) in title and year > edition_year:
                         newer_year = year
                         newer_url = r.get("url", r.get("link", ""))
@@ -488,6 +555,7 @@ def check_source_versions(sources: list, web_search_fn) -> list:
                 "url": newer_url,
             })
         except Exception as e:
+            print(f"[register_validator] Version check failed ({name[:40]}): {e}", file=sys.stderr)
             version_checks.append({
                 "source_id": source_id,
                 "name": name,
@@ -605,31 +673,47 @@ def validate_scenario(
     if total_prob_sources < 2 and prob_verdict != "insufficient":
         prob_verdict = "insufficient"
 
+    fin_confidence = compute_verdict_confidence(fin_registered_out + fin_new_out)
+    prob_confidence = compute_verdict_confidence(prob_registered_out + prob_new_out)
+
+    # Probability evidence type: derived from what Haiku found
+    prob_evidence_subtypes = {
+        f.get("evidence_subtype", "unknown")
+        for f in all_prob_figs
+        if f.get("evidence_subtype") and f.get("evidence_subtype") != "unknown"
+    }
+    if not prob_evidence_subtypes or prob_evidence_subtypes == {"prevalence_survey"}:
+        prob_evidence_type = "prevalence_survey"
+    elif prob_evidence_subtypes == {"frequency_rate"}:
+        prob_evidence_type = "frequency_rate"
+    else:
+        prob_evidence_type = "mixed"
+
     fin_result = {
         "vacr_figure_usd": vacr_usd,
         "verdict": fin_verdict,
+        "verdict_confidence": fin_confidence,
         "benchmark_range_usd": fin_range,
         "registered_sources": fin_registered_out,
         "new_sources": fin_new_out,
-        "recommendation": "",
     }
     prob_result = {
         "vacr_probability_pct": vacr_pct,
         "verdict": prob_verdict,
+        "verdict_confidence": prob_confidence,
+        "evidence_type": prob_evidence_type,
         "benchmark_range_pct": prob_range,
         "registered_sources": prob_registered_out,
         "new_sources": prob_new_out,
-        "recommendation": "",
     }
 
     recommendation = _build_recommendation_sonnet(scenario, register, fin_result, prob_result)
-    fin_result["recommendation"] = recommendation
-    prob_result["recommendation"] = recommendation
 
     return {
         "scenario_id": scenario["scenario_id"],
         "scenario_name": scenario["scenario_name"],
         "asset_context_note": asset_context_note,
+        "recommendation": recommendation,
         "financial": fin_result,
         "probability": prob_result,
     }
@@ -640,6 +724,7 @@ def validate_scenario(
 # ---------------------------------------------------------------------------
 
 def main():
+    OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     register = load_active_register()
     conn = sqlite3.connect(str(DB_PATH))
 
