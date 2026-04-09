@@ -226,14 +226,33 @@ _SCENARIO_QUERY_PHRASES = {
 }
 
 
+# Evidence specificity tiers — lower = more specific
+EVIDENCE_TIER_ASSET_SPECIFIC      = 1   # Named wind farm / asset-class incident data
+EVIDENCE_TIER_SECTOR_SPECIFIC     = 2   # Energy utility sector benchmarks
+EVIDENCE_TIER_TECHNOLOGY_SPECIFIC = 3   # OT/ICS technology class (no sector filter)
+EVIDENCE_TIER_GENERAL             = 4   # Cross-industry (IBM CoDB, Verizon DBIR, etc.)
+
+_EVIDENCE_TIER_LABELS = {
+    1: "Asset-specific evidence",
+    2: "Sector-specific evidence",
+    3: "OT/technology evidence",
+    4: "General industry evidence",
+}
+
+
+def _tier_entry(query: str, tier: int) -> dict:
+    return {"query": query, "tier": tier, "tier_label": _EVIDENCE_TIER_LABELS[tier]}
+
+
 def build_register_queries(scenario: dict, register: dict) -> dict:
     """
     Build up to _PHASE2_QUERY_CAP financial queries and _PHASE2_QUERY_CAP probability
-    queries per scenario. OT/SCADA branches added when search_tags indicate ICS exposure.
+    queries per scenario. Each entry is {"query": str, "tier": int, "tier_label": str}.
+    Ordered most-specific first (lowest tier number first).
 
     Returns:
-        {"financial": [str, ...], "probability": [str, ...]}
-        Each list has 1-3 entries, ordered most-specific first.
+        {"financial": [{"query", "tier", "tier_label"}, ...],
+         "probability": [{"query", "tier", "tier_label"}, ...]}
     """
     name = scenario["scenario_name"]
     query_phrase = _SCENARIO_QUERY_PHRASES.get(name, name)
@@ -242,35 +261,60 @@ def build_register_queries(scenario: dict, register: dict) -> dict:
     is_ot = bool(tags & {"ot_systems", "scada", "wind_turbine", "ics", "industrial_control"})
     is_wind = "wind" in context.lower() or "wind_turbine" in tags
 
+    financial: list[dict] = []
+    probability: list[dict] = []
+
+    # Tier 1 — asset-specific: wind farm named incident data
+    if is_wind:
+        financial.append(_tier_entry(
+            f'wind farm cyber incident cost "{name}" OR "wind turbine" USD 2022 2023 2024 2025',
+            EVIDENCE_TIER_ASSET_SPECIFIC,
+        ))
+        probability.append(_tier_entry(
+            f'wind farm "{name}" incident frequency rate annual 2023 2024 2025',
+            EVIDENCE_TIER_ASSET_SPECIFIC,
+        ))
+
+    # Tier 3 — OT/technology-specific: ICS/SCADA when relevant tags present
+    if is_ot:
+        financial.append(_tier_entry(
+            f'{query_phrase} OT ICS SCADA operational technology cost USD 2024 2025 energy',
+            EVIDENCE_TIER_TECHNOLOGY_SPECIFIC,
+        ))
+        probability.append(_tier_entry(
+            f'{query_phrase} ICS OT incident frequency 2024 Dragos OR CISA OR ICS-CERT energy operator',
+            EVIDENCE_TIER_TECHNOLOGY_SPECIFIC,
+        ))
+
+    # Tier 2 — sector-specific: energy sector benchmarks
     if is_wind:
         sector = "wind power energy operator"
     elif "manufacturing" in context.lower():
         sector = "manufacturing energy sector"
     else:
         sector = "energy sector"
+    financial.append(_tier_entry(
+        f'{query_phrase} financial cost impact {sector} USD 2024 2025',
+        EVIDENCE_TIER_SECTOR_SPECIFIC,
+    ))
+    probability.append(_tier_entry(
+        f'{query_phrase} cyber incident rate frequency annual {sector} 2024 2025',
+        EVIDENCE_TIER_SECTOR_SPECIFIC,
+    ))
 
-    financial: list[str] = []
-    probability: list[str] = []
+    # Tier 4 — general: cross-industry (always appended as fallback)
+    financial.append(_tier_entry(
+        f'{query_phrase} financial cost impact USD 2024 2025 annual report',
+        EVIDENCE_TIER_GENERAL,
+    ))
+    probability.append(_tier_entry(
+        f'{query_phrase} incident probability annual rate 2024 2025 global report',
+        EVIDENCE_TIER_GENERAL,
+    ))
 
-    # Base: broad sector query (always included)
-    financial.append(f'{query_phrase} financial cost impact {sector} USD 2024 2025')
-    probability.append(f'{query_phrase} cyber incident rate frequency annual {sector} 2024 2025')
-
-    # OT branch: ICS-specific queries when relevant tags present
-    if is_ot:
-        financial.append(
-            f'{query_phrase} OT ICS SCADA operational technology cost USD 2024 2025 energy'
-        )
-        probability.append(
-            f'{query_phrase} ICS OT incident frequency 2024 Dragos OR CISA OR ICS-CERT energy operator'
-        )
-
-    # Wind-specific: named incident cost data
-    if is_wind:
-        financial.append(
-            f'wind farm cyber incident cost "system intrusion" OR "ransomware" USD 2022 2023 2024'
-        )
-
+    # Sort by tier ascending (most specific first), then cap
+    financial.sort(key=lambda e: e["tier"])
+    probability.sort(key=lambda e: e["tier"])
     return {
         "financial": financial[:_PHASE2_QUERY_CAP],
         "probability": probability[:_PHASE2_QUERY_CAP],
@@ -347,31 +391,37 @@ def phase2_osint_search(
 ) -> tuple[list[dict], list[dict]]:
     """
     Phase 2: Register-contextualized OSINT.
-    Iterates all queries from build_register_queries (up to _PHASE2_QUERY_CAP each).
-    Returns (fin_figures, prob_figures) — each item has phase=2.
+    Each query dict has {query, tier, tier_label}. Extracted figures are tagged with evidence_tier.
+    Returns (fin_figures, prob_figures) — each item has phase=2 and evidence_tier.
     """
     queries = build_register_queries(scenario, register)
     fin_figures, prob_figures = [], []
 
-    for query in queries["financial"]:
-        print(f"[register_validator] Phase 2 fin -- {query[:80]}", file=sys.stderr)
+    for q_entry in queries["financial"]:
+        query = q_entry["query"]
+        tier = q_entry["tier"]
+        print(f"[register_validator] Phase 2 fin (tier {tier}) -- {query[:80]}", file=sys.stderr)
         results = _search_web(query, max_results=4)
         for r in results:
             content = r.get("content", "")
             src_name = r.get("title") or r.get("url", "")
             for fig in _extract_financial_figures(content, src_name):
                 fig["phase"] = 2
+                fig["evidence_tier"] = tier
                 fig["source_url"] = r.get("url", "")
                 fin_figures.append(fig)
 
-    for query in queries["probability"]:
-        print(f"[register_validator] Phase 2 prob -- {query[:80]}", file=sys.stderr)
+    for q_entry in queries["probability"]:
+        query = q_entry["query"]
+        tier = q_entry["tier"]
+        print(f"[register_validator] Phase 2 prob (tier {tier}) -- {query[:80]}", file=sys.stderr)
         results = _search_web(query, max_results=4)
         for r in results:
             content = r.get("content", "")
             src_name = r.get("title") or r.get("url", "")
             for fig in _extract_probability_figures(content, src_name):
                 fig["phase"] = 2
+                fig["evidence_tier"] = tier
                 fig["source_url"] = r.get("url", "")
                 prob_figures.append(fig)
 
@@ -593,6 +643,22 @@ def compute_verdict_confidence(sources: list[dict]) -> str:
     if any(t == "company_scale" for t in tags):
         return "medium"
     return "low"
+
+
+def compute_evidence_ceiling(sources: list[dict]) -> tuple[int, str]:
+    """
+    Deterministic evidence ceiling from a list of source dicts.
+    Returns (best_tier: int, label: str) — best_tier is the lowest tier number found.
+    Returns (4, "General industry evidence") when sources is empty.
+    """
+    if not sources:
+        return EVIDENCE_TIER_GENERAL, _EVIDENCE_TIER_LABELS[EVIDENCE_TIER_GENERAL]
+    best = min(
+        s.get("evidence_tier", EVIDENCE_TIER_GENERAL)
+        for s in sources
+    )
+    best = max(1, min(4, int(best)))
+    return best, _EVIDENCE_TIER_LABELS[best]
 
 
 # ---------------------------------------------------------------------------
@@ -969,6 +1035,7 @@ def validate_scenario(
                 "raw_quote": f.get("raw_quote", ""),
                 "phase": f.get("phase", 2),
                 "context_tag": f.get("context_tag", "general"),
+                "evidence_tier": f.get("evidence_tier", EVIDENCE_TIER_GENERAL),
                 "smb_scale_flag": (f.get("cost_median_usd") or 0) < scale_floor,
             }
             if f.get("phase") == 1:
@@ -988,6 +1055,7 @@ def validate_scenario(
                 "raw_quote": f.get("raw_quote", ""),
                 "phase": f.get("phase", 2),
                 "context_tag": f.get("context_tag", "general"),
+                "evidence_tier": f.get("evidence_tier", EVIDENCE_TIER_GENERAL),
                 "smb_scale_flag": False,
             }
             if f.get("phase") == 1:
@@ -1016,6 +1084,14 @@ def validate_scenario(
     fin_confidence = compute_verdict_confidence(fin_registered_out + fin_new_out)
     prob_confidence = compute_verdict_confidence(prob_registered_out + prob_new_out)
 
+    fin_all_src = fin_registered_out + fin_new_out
+    prob_all_src = prob_registered_out + prob_new_out
+    fin_ceiling_tier, fin_ceiling_label = compute_evidence_ceiling(fin_all_src)
+    prob_ceiling_tier, prob_ceiling_label = compute_evidence_ceiling(prob_all_src)
+    baseline = scenario.get("analyst_baseline")
+    fin_load_bearing = (fin_ceiling_tier == EVIDENCE_TIER_GENERAL and not (baseline and baseline.get("fin")))
+    prob_load_bearing = (prob_ceiling_tier == EVIDENCE_TIER_GENERAL and not (baseline and baseline.get("prob")))
+
     # Probability evidence type: derived from what Haiku found
     prob_evidence_subtypes = {
         f.get("evidence_subtype", "unknown")
@@ -1033,6 +1109,8 @@ def validate_scenario(
         "vacr_figure_usd": vacr_usd,
         "verdict": fin_verdict,
         "verdict_confidence": fin_confidence,
+        "evidence_ceiling_label": fin_ceiling_label,
+        "analyst_baseline_load_bearing": fin_load_bearing,
         "benchmark_range_usd": fin_range,
         "registered_sources": fin_registered_out,
         "new_sources": fin_new_out,
@@ -1041,6 +1119,8 @@ def validate_scenario(
         "vacr_probability_pct": vacr_pct,
         "verdict": prob_verdict,
         "verdict_confidence": prob_confidence,
+        "evidence_ceiling_label": prob_ceiling_label,
+        "analyst_baseline_load_bearing": prob_load_bearing,
         "evidence_type": prob_evidence_type,
         "benchmark_range_pct": prob_range,
         "registered_sources": prob_registered_out,
@@ -1048,7 +1128,6 @@ def validate_scenario(
     }
 
     # --- analyst baseline pass-through + alignment ---
-    baseline = scenario.get("analyst_baseline")
     alignment = {
         "fin":  compute_baseline_alignment(baseline.get("fin") if baseline else None,
                                            fin_range, kind="fin"),

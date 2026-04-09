@@ -2539,6 +2539,41 @@ function showUnsavedModal(onConfirm) {
 
 // ── Section: Validate Tab ──────────────────────────────────────────────
 
+// ── Risk Register: resizable divider ─────────────────────────────────
+(function () {
+  let dragging = false, startX = 0, startW = 0;
+  document.addEventListener('mousedown', function (e) {
+    const divider = document.getElementById('rr-divider');
+    if (!divider || e.target !== divider) return;
+    dragging = true;
+    window._rrDragging = true;
+    startX = e.clientX;
+    startW = document.getElementById('rr-scenario-list').offsetWidth;
+    divider.style.background = '#1f6feb';
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', function (e) {
+    if (!dragging) return;
+    const list = document.getElementById('rr-scenario-list');
+    const body = document.getElementById('rr-body');
+    if (!list || !body) return;
+    const delta = e.clientX - startX;
+    const newW = Math.min(Math.max(startW + delta, 160), body.offsetWidth * 0.75);
+    list.style.width = newW + 'px';
+  });
+  document.addEventListener('mouseup', function () {
+    if (!dragging) return;
+    dragging = false;
+    window._rrDragging = false;
+    const divider = document.getElementById('rr-divider');
+    if (divider) divider.style.background = '#161b22';
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  });
+})();
+
 // ── Section: Risk Register Tab ────────────────────────────────────────
 
 async function renderRiskRegisterTab() {
@@ -2632,75 +2667,92 @@ function _renderScenarioDetail(scenario, valScenario) {
   const el = $('rr-scenario-detail');
   if (!el) return;
   if (!scenario) {
-    el.innerHTML = `<div style="padding:20px;color:#484f58;font-size:10px">Select a scenario.</div>`;
+    el.innerHTML = `<div style="padding:24px;color:#484f58;font-size:10px;font-family:'IBM Plex Mono',monospace">Select a scenario.</div>`;
     return;
   }
 
   const vacr = scenario.value_at_cyber_risk_usd != null
     ? `$${Number(scenario.value_at_cyber_risk_usd).toLocaleString('en-US')}` : '—';
   const prob = scenario.probability_pct != null ? `${scenario.probability_pct}%` : '—';
+  const probNum = scenario.probability_pct != null ? scenario.probability_pct : 0;
 
   // Numbers zone
   const numbersZone = `<div id="rr-numbers-zone" style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid #21262d">
-    <div style="padding:14px 16px;border-right:1px solid #161b22">
-      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Value at Cyber Risk</div>
-      <div style="font-size:22px;font-weight:600;color:#3fb950;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.02em">${vacr}</div>
+    <div style="padding:16px 20px;border-right:1px solid #0d1117;position:relative">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Value at Cyber Risk</div>
+      <div style="font-size:26px;font-weight:600;color:#3fb950;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.03em;line-height:1">${vacr}</div>
+      <button onclick="_renderEditZone('${esc(scenario.scenario_id)}')"
+        title="Edit"
+        style="position:absolute;top:10px;right:10px;background:transparent;border:1px solid #21262d;color:#484f58;border-radius:2px;padding:2px 6px;font-size:9px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:border-color 0.1s,color 0.1s"
+        onmouseover="this.style.borderColor='#388bfd';this.style.color='#58a6ff'"
+        onmouseout="this.style.borderColor='#21262d';this.style.color='#484f58'">✎</button>
     </div>
-    <div style="padding:14px 16px">
-      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Probability</div>
-      <div style="font-size:22px;font-weight:600;color:#8b949e;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.02em">${prob}</div>
+    <div style="padding:16px 20px;position:relative">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Annual Probability</div>
+      <div style="font-size:26px;font-weight:600;color:#8b949e;font-family:'IBM Plex Mono',monospace;letter-spacing:-0.03em;line-height:1">${prob}</div>
+      <div style="margin-top:8px;height:3px;background:#161b22;border-radius:2px;overflow:hidden">
+        <div style="height:100%;width:${Math.min(probNum, 100)}%;background:linear-gradient(90deg,#1f6feb,#388bfd);border-radius:2px;transition:width 0.3s ease"></div>
+      </div>
     </div>
   </div>`;
 
   // Validation zone
   let validationZone;
   if (!valScenario) {
-    validationZone = `<div style="padding:16px 14px;color:#484f58;font-size:10px">No validation data — click &#9654; RUN to validate this register.</div>`;
+    validationZone = `<div style="padding:20px;color:#484f58;font-size:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.02em">No validation data — click ▶ RUN to validate.</div>`;
   } else {
     const versionChecks = state.validationData?.version_checks || [];
     const finHtml = _renderRegValDimension(scenario.scenario_id, 'financial', valScenario.financial, versionChecks, scenario.analyst_baseline);
     const probHtml = _renderRegValDimension(scenario.scenario_id, 'probability', valScenario.probability, versionChecks, scenario.analyst_baseline);
     const noteHtml = valScenario.asset_context_note
-      ? `<div style="padding:0 12px 8px 12px;font-size:10px;color:#6e7681;font-style:italic">${esc(valScenario.asset_context_note)}</div>`
+      ? `<div style="margin-bottom:8px;font-size:10px;color:#6e7681;font-style:italic;line-height:1.6;padding:0 2px">${esc(valScenario.asset_context_note)}</div>`
       : '';
-    validationZone = `<div style="padding:8px 0">${finHtml}${probHtml}${noteHtml}</div>`;
+    validationZone = `<div style="padding:12px 14px">${noteHtml}${finHtml}${probHtml}</div>`;
   }
 
   const descText = scenario.description || '';
-  const descZone = `<div id="rr-desc-zone" style="padding:10px 16px;border-bottom:1px solid #21262d;background:#080c10">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-      <div style="font-size:10px;color:#8b949e;line-height:1.6;font-family:'IBM Plex Sans',sans-serif;flex:1">${descText ? esc(descText) : '<span style="color:#484f58;font-style:italic">No description</span>'}</div>
+  const descZone = `<div id="rr-desc-zone" style="padding:10px 20px 12px 20px;border-bottom:1px solid #21262d;background:#060a0e">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="font-size:10px;color:#6e7681;line-height:1.7;font-family:'IBM Plex Sans',sans-serif;flex:1">${descText ? esc(descText) : '<span style="color:#30363d;font-style:italic">No description</span>'}</div>
       <button onclick="_editDescription('${esc(scenario.scenario_id)}')"
-        style="flex-shrink:0;background:transparent;border:1px solid #21262d;color:#484f58;border-radius:2px;padding:2px 8px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎</button>
+        style="flex-shrink:0;background:transparent;border:1px solid #21262d;color:#484f58;border-radius:2px;padding:2px 7px;font-size:9px;cursor:pointer;font-family:'IBM Plex Mono',monospace;transition:border-color 0.1s,color 0.1s"
+        onmouseover="this.style.borderColor='#388bfd';this.style.color='#58a6ff'"
+        onmouseout="this.style.borderColor='#21262d';this.style.color='#484f58'">✎</button>
     </div>
   </div>`;
 
   const recommendationZone = valScenario?.recommendation
-    ? `<div style="margin:0 12px 14px 12px;padding:10px 12px;background:#080c10;border:1px solid #21262d;border-radius:3px">
-        <div style="font-size:8px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#484f58;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Analyst Note</div>
-        <div style="font-size:10px;color:#8b949e;line-height:1.7;font-family:'IBM Plex Sans',sans-serif">${esc(valScenario.recommendation)}</div>
-      </div>`
+    ? (function() {
+        // Strip leading **Analyst Note** header line, clean markdown bold
+        let txt = valScenario.recommendation
+          .replace(/^\s*\*\*Analyst Note\*\*\s*\n?/i, '')
+          .trim();
+        // Convert **bold** → <strong>
+        txt = esc(txt).replace(/\*\*(.+?)\*\*/g, '<strong style="color:#c9d1d9">$1</strong>');
+        return `<div style="margin:12px 14px;padding:11px 14px;background:#080c10;border-left:3px solid #e3b341;border-top:1px solid #21262d;border-right:1px solid #21262d;border-bottom:1px solid #21262d;border-radius:3px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#e3b341;margin-bottom:7px;font-family:'IBM Plex Mono',monospace">Analyst Note</div>
+        <div style="font-size:10px;color:#8b949e;line-height:1.8;font-family:'IBM Plex Sans',sans-serif">${txt}</div>
+      </div>`;
+      })()
     : '';
 
-  // Analyst baseline editor (Task 17)
+  // Analyst baseline editor
   const registerId = (window._activeRegisterId) || (state.activeRegister?.register_id) || '';
   const scenarioIndex = (window._activeScenarioIndex != null) ? window._activeScenarioIndex : 0;
   const baselineHtml = renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex);
 
   el.innerHTML = `
-    <div style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center;background:#080c10">
+    <div style="padding:14px 20px 12px 20px;border-bottom:1px solid #21262d;background:#060a0e;display:flex;align-items:baseline;justify-content:space-between;gap:12px">
       <div>
-        <div style="font-size:13px;font-weight:600;color:#e6edf3;font-family:'IBM Plex Sans',sans-serif">${esc(scenario.scenario_name)}</div>
-        <div style="font-size:9px;color:#484f58;margin-top:3px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.02em">${esc(scenario.scenario_id)}</div>
+        <div style="font-size:15px;font-weight:600;color:#e6edf3;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-0.01em">${esc(scenario.scenario_name)}</div>
+        <div style="font-size:9px;color:#30363d;margin-top:3px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em">${esc(scenario.scenario_id)}</div>
       </div>
-      <button onclick="_renderEditZone('${esc(scenario.scenario_id)}')"
-        style="background:transparent;border:1px solid #21262d;color:#6e7681;border-radius:2px;padding:3px 10px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎ Edit</button>
     </div>
     ${descZone}
-    <div style="padding:0 12px">${baselineHtml}</div>
     ${numbersZone}
-    ${validationZone}
-    ${recommendationZone}`;
+    ${recommendationZone}
+    <div style="padding:0 14px">${baselineHtml}</div>
+    ${validationZone}`;
 }
 
 function _renderEditZone(scenarioId) {
@@ -2709,21 +2761,23 @@ function _renderEditZone(scenarioId) {
   const zone = $('rr-numbers-zone');
   if (!zone) return;
   zone.innerHTML = `
-    <div>
-      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Value at Cyber Risk (USD)</div>
+    <div style="padding:14px 20px">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Value at Cyber Risk (USD)</div>
       <input id="rr-edit-vacr" type="number" value="${scenario.value_at_cyber_risk_usd || 0}"
-        style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:14px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none;font-family:monospace" />
+        style="width:100%;background:#0d1117;border:1px solid #30363d;color:#3fb950;font-size:20px;padding:6px 10px;border-radius:2px;box-sizing:border-box;outline:none;font-family:'IBM Plex Mono',monospace;font-weight:600"
+        onfocus="this.style.borderColor='#238636'" onblur="this.style.borderColor='#30363d'" />
     </div>
-    <div>
-      <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:4px">Probability (%)</div>
+    <div style="padding:14px 20px;border-left:1px solid #0d1117">
+      <div style="font-size:8px;letter-spacing:0.12em;text-transform:uppercase;color:#484f58;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">Annual Probability (%)</div>
       <input id="rr-edit-prob" type="number" step="0.1" min="0" max="100" value="${scenario.probability_pct || 0}"
-        style="width:100%;background:#161b22;border:1px solid #30363d;color:#e6edf3;font-size:14px;padding:4px 8px;border-radius:2px;box-sizing:border-box;outline:none;font-family:monospace" />
+        style="width:100%;background:#0d1117;border:1px solid #30363d;color:#8b949e;font-size:20px;padding:6px 10px;border-radius:2px;box-sizing:border-box;outline:none;font-family:'IBM Plex Mono',monospace;font-weight:600"
+        onfocus="this.style.borderColor='#388bfd'" onblur="this.style.borderColor='#30363d'" />
     </div>
-    <div style="grid-column:1/-1;display:flex;gap:6px;margin-top:4px">
+    <div style="grid-column:1/-1;display:flex;gap:8px;padding:10px 20px;border-top:1px solid #21262d;background:#060a0e">
       <button onclick="saveScenarioEdit('${esc(scenarioId)}')"
-        style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:3px 12px;border-radius:2px;cursor:pointer">Save</button>
+        style="font-size:10px;color:#3fb950;background:#0a1a0a;border:1px solid #238636;padding:4px 14px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-weight:600;letter-spacing:0.05em">Save</button>
       <button onclick="_selectScenario('${esc(scenarioId)}')"
-        style="font-size:10px;color:#6e7681;background:none;border:1px solid #30363d;padding:3px 12px;border-radius:2px;cursor:pointer">Cancel</button>
+        style="font-size:10px;color:#6e7681;background:none;border:1px solid #21262d;padding:4px 14px;border-radius:2px;cursor:pointer;font-family:'IBM Plex Mono',monospace">Cancel</button>
     </div>`;
 }
 
@@ -3178,7 +3232,7 @@ function _renderSourceRow(src, versionChecks) {
   return `
     <div class="rr-source-row">
       <div class="rr-source-row-main">
-        <div class="rr-source-name">${nameHtml}${ctxBadge}${smbFlag}${newEditionBadge}</div>
+        <div class="rr-source-name">${nameHtml}&nbsp;${ctxBadge}${smbFlag}${newEditionBadge}</div>
         ${fig}${note}${quote}
       </div>
     </div>`;
@@ -3205,13 +3259,20 @@ function _renderRegValDimension(scenId, dim, d, versionChecks, baseline) {
     if (dim === 'financial' && baseline.fin) {
       const b = baseline.fin;
       const fmt = (x) => `$${(x/1_000_000).toFixed(1)}M`;
-      baselineRow = `<div style="padding:4px 10px;color:#e3b341;font-size:11px;background:#14100a;border-bottom:1px solid #21262d">
-        Baseline (you): ${fmt(b.value_usd)} [${fmt(b.low_usd)}–${fmt(b.high_usd)}] ◆
+      baselineRow = `<div style="padding:5px 12px;color:#e3b341;font-size:10px;background:#100d04;border-bottom:1px solid #2a1f00;display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace">
+        <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#7a6020;text-transform:uppercase">Your Baseline</span>
+        <span style="font-weight:600">${fmt(b.value_usd)}</span>
+        <span style="color:#5a4a10;font-size:9px">[${fmt(b.low_usd)} – ${fmt(b.high_usd)}]</span>
+        <span style="margin-left:auto;color:#5a4a10;font-size:9px">◆</span>
       </div>`;
     } else if (dim === 'probability' && baseline.prob) {
       const b = baseline.prob;
-      baselineRow = `<div style="padding:4px 10px;color:#e3b341;font-size:11px;background:#14100a;border-bottom:1px solid #21262d">
-        Baseline (you): ${(b.annual_rate*100).toFixed(1)}% [${(b.low*100).toFixed(1)}%–${(b.high*100).toFixed(1)}%] ◆ <span style="color:#6e7681;font-size:10px">(${b.evidence_type})</span>
+      baselineRow = `<div style="padding:5px 12px;color:#e3b341;font-size:10px;background:#100d04;border-bottom:1px solid #2a1f00;display:flex;align-items:center;gap:8px;font-family:'IBM Plex Mono',monospace">
+        <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#7a6020;text-transform:uppercase">Your Baseline</span>
+        <span style="font-weight:600">${(b.annual_rate*100).toFixed(1)}%</span>
+        <span style="color:#5a4a10;font-size:9px">[${(b.low*100).toFixed(1)}% – ${(b.high*100).toFixed(1)}%]</span>
+        <span style="color:#484f58;font-size:9px">${b.evidence_type}</span>
+        <span style="margin-left:auto;color:#5a4a10;font-size:9px">◆</span>
       </div>`;
     }
   }
@@ -3229,6 +3290,16 @@ function _renderRegValDimension(scenId, dim, d, versionChecks, baseline) {
 
   const confLabel = {high: 'OT DATA', medium: 'SECTOR', low: 'GENERAL'}[d.verdict_confidence] || 'GENERAL';
   const confClass = {high: 'rr-conf-high', medium: 'rr-conf-medium', low: 'rr-conf-low'}[d.verdict_confidence] || 'rr-conf-low';
+
+  const ceilLabel = d.evidence_ceiling_label || 'General industry evidence';
+  const ceilTier = {'Asset-specific evidence': 1, 'Sector-specific evidence': 2, 'OT/technology evidence': 3, 'General industry evidence': 4}[ceilLabel] || 4;
+  const _ceilColors  = ['', '#3fb950', '#58a6ff', '#e3b341', '#6e7681'];
+  const _ceilBg      = ['', '#0a1f0a', '#0a1628', '#1f1700', '#0d1117'];
+  const _ceilBorders = ['', '#1a4d1a', '#1a3a5c', '#4a3800', '#21262d'];
+  const ceilBadge = `<span style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:${_ceilColors[ceilTier]};background:${_ceilBg[ceilTier]};border:1px solid ${_ceilBorders[ceilTier]};border-radius:2px;padding:1px 5px;white-space:nowrap">${ceilLabel.toUpperCase()}</span>`;
+  const loadBearingBadge = d.analyst_baseline_load_bearing
+    ? `<span style="font-size:8px;font-family:'IBM Plex Mono',monospace;color:#ff7b72;background:#1f0a0a;border:1px solid #5c1a1a;border-radius:2px;padding:1px 5px;white-space:nowrap">BASELINE REQUIRED</span>`
+    : '';
 
   const evidenceCaveat = isProb
     ? ({
@@ -3253,18 +3324,20 @@ function _renderRegValDimension(scenId, dim, d, versionChecks, baseline) {
     ? `<div class="rr-sources-section">${regSourcesHtml}${newSourcesHtml}</div>`
     : `<div style="color:#484f58;font-size:10px">No sources found.</div>`;
 
+  const verdictClass = {supports: 'verdict-supports', challenges: 'verdict-challenges', insufficient: 'verdict-insufficient'}[d.verdict] || 'verdict-insufficient';
+
   return `
-  <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:3px;overflow:hidden">
+  <div class="rr-dim-card ${verdictClass}">
     ${baselineRow}
     <div onclick="toggleRegValRow('${expandId}')" class="rr-dim-header">
       <span class="rr-dim-label">${label}</span>
       <span class="rr-dim-value">${vacr}</span>
       <span class="rr-dim-sep">·</span>
       <span class="rr-dim-bench-label">benchmark</span>
-      <span class="rr-dim-bench-val">${range}</span>
-      <span class="rr-dim-right">${_regValVerdictBadge('', d.verdict)}<span class="${confClass}">${confLabel}</span><span class="rr-src-count">${allSources.length} src</span></span>
+      <span class="rr-dim-bench-val">&nbsp;${range}</span>
+      <span class="rr-dim-right">${_regValVerdictBadge('', d.verdict)}<span class="${confClass}">${confLabel}</span>${ceilBadge}${loadBearingBadge}<span class="rr-src-count">${allSources.length} src</span></span>
     </div>
-    <div id="${expandId}" style="display:block;background:#060a0f;padding:8px 10px;border-top:1px solid #0d1117">
+    <div id="${expandId}" class="rr-dim-body" style="display:none">
       ${isProb && evidenceCaveat ? `<div style="margin-bottom:8px;font-size:9px;color:#6e7681;font-family:'IBM Plex Sans',sans-serif">Evidence type: ${evidenceCaveat}</div>` : ''}
       ${sourcesHtml}
     </div>
@@ -3896,15 +3969,18 @@ function _renderBenchmarkList(data, showAll) {
     const cited = (s.cited_in_current_run || []).length > 0
       ? (s.cited_in_current_run || []).map(c => esc(c.scenario)).join(', ')
       : '<span style="color:#484f58">—</span>';
+    const fin  = s.fin_range_usd;
+    const prob = s.prob_range_pct;
+    const finStr  = fin  ? `$${(fin[0]/1e6).toFixed(1)}M – $${(fin[1]/1e6).toFixed(1)}M` : '<span style="color:#484f58">—</span>';
+    const probStr = prob ? `${prob[0]}% – ${prob[1]}%` : '<span style="color:#484f58">—</span>';
     return `<tr style="border-bottom:1px solid #21262d;font-size:11px">
       <td style="padding:6px 8px;color:#6e7681">${i + 1}</td>
       <td style="padding:6px 8px;color:#c9d1d9">${esc(s.name)}${provBadge}</td>
       <td style="padding:6px 8px">${_tierBadge(s.reliability)}</td>
       <td style="padding:6px 8px;color:#8b949e">${s.edition_year || '—'}</td>
-      <td style="padding:6px 8px;color:#8b949e">${esc(s.cadence || '—')}</td>
-      <td style="padding:6px 8px;color:#8b949e">${esc((s.sector_tags || []).join(', ') || '—')}</td>
+      <td style="padding:6px 8px;color:#3fb950;font-family:'IBM Plex Mono',monospace;font-size:10px">${finStr}</td>
+      <td style="padding:6px 8px;color:#d29922;font-family:'IBM Plex Mono',monospace;font-size:10px">${probStr}</td>
       <td style="padding:6px 8px;color:#c9d1d9">${esc(scenList.join(', ') || '—')}</td>
-      <td style="padding:6px 8px;color:#8b949e">${s.last_checked ? s.last_checked.slice(0, 10) : '—'}</td>
       <td style="padding:6px 8px;color:#c9d1d9">${cited}</td>
     </tr>`;
   }).join('');
@@ -3914,8 +3990,8 @@ function _renderBenchmarkList(data, showAll) {
       <tr style="text-align:left;color:#6e7681;font-size:10px;text-transform:uppercase;letter-spacing:0.05em;border-bottom:1px solid #30363d">
         <th style="padding:8px">#</th><th style="padding:8px">Source</th>
         <th style="padding:8px">Reliability</th><th style="padding:8px">Edition</th>
-        <th style="padding:8px">Cadence</th><th style="padding:8px">Sectors</th>
-        <th style="padding:8px">${scenColHeader}</th><th style="padding:8px">Last checked</th>
+        <th style="padding:8px">Financial range</th><th style="padding:8px">Prob range</th>
+        <th style="padding:8px">${scenColHeader}</th>
         <th style="padding:8px">Cited in current run</th>
       </tr>
     </thead>
@@ -4022,6 +4098,13 @@ window.openAddBenchmarkSourceModal = function (opts) {
       <label>Cadence <input id="sl-as-cad" value="annual" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
       <label>Scenario tags (comma-separated) <input id="sl-as-scen" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
       <label>Sector tags (comma-separated) <input id="sl-as-sect" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      <div style="color:#8b949e;font-size:10px;margin-top:4px;margin-bottom:-2px;text-transform:uppercase;letter-spacing:0.05em">Benchmark ranges (optional)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <label>Financial low (USD) <input id="sl-as-fin-lo" type="number" placeholder="e.g. 1000000" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+        <label>Financial high (USD) <input id="sl-as-fin-hi" type="number" placeholder="e.g. 8000000" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+        <label>Probability low (%) <input id="sl-as-prob-lo" type="number" step="0.1" placeholder="e.g. 8" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+        <label>Probability high (%) <input id="sl-as-prob-hi" type="number" step="0.1" placeholder="e.g. 20" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 6px"></label>
+      </div>
     </div>`;
   modal.style.display = 'flex';
 };
@@ -4043,6 +4126,12 @@ async function submitAddBenchmarkSource() {
     sector_tags:   (document.getElementById('sl-as-sect')?.value || '').split(',').map(x => x.trim()).filter(Boolean),
     provenance: 'analyst',
   };
+  const finLo  = parseFloat(document.getElementById('sl-as-fin-lo')?.value  || '');
+  const finHi  = parseFloat(document.getElementById('sl-as-fin-hi')?.value  || '');
+  const probLo = parseFloat(document.getElementById('sl-as-prob-lo')?.value || '');
+  const probHi = parseFloat(document.getElementById('sl-as-prob-hi')?.value || '');
+  if (!isNaN(finLo)  && !isNaN(finHi))  body.fin_range_usd  = [finLo, finHi];
+  if (!isNaN(probLo) && !isNaN(probHi)) body.prob_range_pct = [probLo, probHi];
   if (!body.name || !body.url) {
     alert('Name and URL are required');
     return;
@@ -4092,8 +4181,10 @@ function renderRunSummary(s) {
   const bu = s.baseline_usage || {};
   const evi = s.evidence || {};
   const src = s.sources || {};
-  const newHtml = (src.new_this_run || []).map(n => esc(n.name)).join(', ') || '—';
-  const dropHtml = (src.dropped_this_run || []).map(n => esc(n.name)).join(', ') || '—';
+  const newCount  = (src.new_this_run  || []).length;
+  const dropCount = (src.dropped_this_run || []).length;
+  const newHtml  = newCount  ? `+${newCount} new`  : '—';
+  const dropHtml = dropCount ? `−${dropCount} dropped` : '—';
   const byTier = Object.entries(src.by_tier || {}).map(([t, n]) => `${t}:${n}`).join(' · ');
 
   const dateLabel = s.run_id ? s.run_id.replace('T', ' ').replace('Z', '') : '—';
@@ -4192,13 +4283,14 @@ function renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex) 
     ? _baselineDraft : { key: _baselineKey(registerId, scenarioIndex), fin: existing?.fin || null, prob: existing?.prob || null };
   _baselineDraft = draft;
 
-  const expanded = !!existing;
+  const expanded = false;
   const finB = draft.fin || {};
   const probB = draft.prob || {};
 
   return `<div id="bl-editor-wrap" style="margin:10px 0;border:1px solid #21262d;border-radius:3px">
-    <div onclick="_toggleBaselineEditor()" style="cursor:pointer;padding:6px 10px;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.05em;background:#161b22">
-      Analyst Baseline ${existing ? '◆' : ''} <span id="bl-toggle-arrow">${expanded ? '▾' : '▸'}</span>
+    <div onclick="_toggleBaselineEditor()" style="cursor:pointer;padding:6px 10px;background:#161b22;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.05em">Analyst Baseline ${existing ? '◆' : ''} <span id="bl-toggle-arrow">${expanded ? '▾' : '▸'}</span></span>
+      <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace">Saving updates VaCR ↑</span>
     </div>
     <div id="bl-editor-body" style="display:${expanded ? 'block' : 'none'};padding:10px 12px;font-size:11px">
 
@@ -4209,7 +4301,7 @@ function renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex) 
         <label style="font-size:10px;color:#6e7681">High<input id="bl-fin-hi"  type="number" value="${finB.high_usd  || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
       </div>
       <div id="bl-fin-sources" style="margin-bottom:4px">${_renderBaselineSourceChips(finB.source_ids || [], 'fin')}</div>
-      <button onclick="_openBaselineSourcePicker('fin')" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
+      <button onclick="_openBaselineSourcePicker('fin', this)" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
       <input id="bl-fin-notes" placeholder="Notes…" value="${esc(finB.notes || '')}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px;margin:6px 0">
 
       <div style="color:#8b949e;font-size:10px;margin-top:10px;margin-bottom:4px">Probability (annual, 0..1)</div>
@@ -4225,7 +4317,7 @@ function renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex) 
         </select>
       </label>
       <div id="bl-prob-sources" style="margin:6px 0 4px 0">${_renderBaselineSourceChips(probB.source_ids || [], 'prob')}</div>
-      <button onclick="_openBaselineSourcePicker('prob')" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
+      <button onclick="_openBaselineSourcePicker('prob', this)" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
       <input id="bl-prob-notes" placeholder="Notes…" value="${esc(probB.notes || '')}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px;margin:6px 0">
 
       <div style="display:flex;gap:8px;margin-top:10px">
@@ -4257,20 +4349,95 @@ function _toggleBaselineEditor() {
   if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
 }
 
-function _openBaselineSourcePicker(dim) {
+function _openBaselineSourcePicker(dim, btn) {
+  // Remove any open picker first (toggle)
+  const existing = document.getElementById('bl-source-picker');
+  if (existing) { existing.remove(); return; }
+
   fetchJSON('/api/validation/sources').then(data => {
     const sources = (data && data.sources) || [];
-    const options = sources.map(s => `${s.id} — ${s.name}`).join('\n');
-    const picked = prompt(
-      `Paste a source ID from the list below, or type "+" to add a new source:\n\n${options}`,
-      ''
-    );
-    if (!picked) return;
-    if (picked === '+') {
-      window.openAddBenchmarkSourceModal({ onSave: (newId) => _addBaselineSource(newId, dim) });
-      return;
-    }
-    _addBaselineSource(picked.trim(), dim);
+
+    const picker = document.createElement('div');
+    picker.id = 'bl-source-picker';
+    Object.assign(picker.style, {
+      position: 'fixed', zIndex: '9999',
+      background: '#161b22', border: '1px solid #30363d', borderRadius: '4px',
+      padding: '8px', minWidth: '340px', maxHeight: '320px', overflowY: 'auto',
+      boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
+    });
+
+    const search = document.createElement('input');
+    search.placeholder = 'Search sources…';
+    search.style.cssText = 'width:100%;box-sizing:border-box;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:4px 8px;font-size:10px;margin-bottom:6px;outline:none';
+
+    const list = document.createElement('div');
+
+    const tierColor = { A: '#3fb950', B: '#d29922', C: '#8b949e' };
+    const renderList = (q = '') => {
+      const lq = q.toLowerCase();
+      const filtered = sources.filter(s =>
+        !lq || s.id.toLowerCase().includes(lq) || (s.name || '').toLowerCase().includes(lq)
+          || (s.scenario_tags || []).some(t => t.toLowerCase().includes(lq))
+      );
+      list.innerHTML = filtered.length
+        ? filtered.map(s => {
+          const tier = s.admiralty_reliability || '?';
+          const year = s.edition_year ? ` ${s.edition_year}` : '';
+          const tags = (s.scenario_tags || []).map(t =>
+            `<span style="display:inline-block;background:#21262d;color:#8b949e;border:1px solid #30363d;border-radius:2px;padding:0 4px;font-size:9px;margin:1px 2px 1px 0;white-space:nowrap">${esc(t)}</span>`
+          ).join('');
+          const fin = s.fin_range_usd;
+          const prob = s.prob_range_pct;
+          const finStr = fin ? `$${(fin[0]/1e6).toFixed(1)}M – $${(fin[1]/1e6).toFixed(1)}M` : null;
+          const probStr = prob ? `${prob[0]}% – ${prob[1]}%` : null;
+          const rangeHtml = (finStr || probStr)
+            ? `<div style="margin-top:3px;font-size:9px;font-family:'IBM Plex Mono',monospace">
+                ${finStr ? `<span style="color:#3fb950;margin-right:10px">$$ ${finStr}</span>` : ''}
+                ${probStr ? `<span style="color:#d29922">~ ${probStr}</span>` : ''}
+               </div>`
+            : '';
+          return `<div data-id="${esc(s.id)}"
+              style="padding:7px 8px;cursor:pointer;border-radius:2px;border-bottom:1px solid #21262d"
+              onmouseenter="this.style.background='#21262d'" onmouseleave="this.style.background=''">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+                <span style="font-family:monospace;font-size:10px;color:#58a6ff">${esc(s.id)}</span>
+                <span style="font-size:9px;font-weight:700;color:${tierColor[tier]||'#8b949e'};border:1px solid currentColor;border-radius:2px;padding:0 4px;line-height:1.4">${tier}${year}</span>
+              </div>
+              <div style="font-size:10px;color:#c9d1d9;margin-bottom:3px">${esc(s.name || '')}</div>
+              ${rangeHtml}
+              ${tags ? `<div style="margin-top:2px">${tags}</div>` : ''}
+            </div>`;
+        }).join('')
+        : '<div style="color:#484f58;font-size:10px;padding:4px 8px">No matches</div>';
+      list.querySelectorAll('[data-id]').forEach(el => {
+        el.addEventListener('click', () => {
+          _addBaselineSource(el.dataset.id, dim);
+          picker.remove();
+        });
+      });
+    };
+
+    search.addEventListener('input', () => renderList(search.value));
+    renderList();
+
+    picker.appendChild(search);
+    picker.appendChild(list);
+    document.body.appendChild(picker);
+
+    // Position below the button
+    const rect = btn.getBoundingClientRect();
+    picker.style.top = (rect.bottom + 4) + 'px';
+    picker.style.left = Math.min(rect.left, window.innerWidth - 350) + 'px';
+    search.focus();
+
+    // Close on outside click
+    const close = (e) => {
+      if (!picker.contains(e.target) && e.target !== btn) {
+        picker.remove();
+        document.removeEventListener('mousedown', close);
+      }
+    };
+    setTimeout(() => document.addEventListener('mousedown', close), 0);
   });
 }
 
@@ -4328,6 +4495,21 @@ async function saveBaseline(registerId, scenarioIndex) {
     alert('Save failed: ' + (err.error || res.status));
     return;
   }
+
+  // Sync baseline mid values → VaCR + probability_pct on the scenario
+  const syncBody = {};
+  if (body.fin) syncBody.value_at_cyber_risk_usd = body.fin.value_usd;
+  if (body.prob) syncBody.probability_pct = +(body.prob.annual_rate * 100).toFixed(4);
+  if (Object.keys(syncBody).length) {
+    const scenario = state.activeRegister?.scenarios?.[scenarioIndex];
+    if (scenario) {
+      await fetch(
+        `/api/registers/${encodeURIComponent(registerId)}/scenarios/${encodeURIComponent(scenario.scenario_id)}`,
+        { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(syncBody) }
+      ).catch(() => null); // non-fatal — register reload will show correct state
+    }
+  }
+
   _baselineDraft = null;
   if (typeof loadRegister === 'function') loadRegister(registerId);
 }
