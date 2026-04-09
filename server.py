@@ -4,13 +4,14 @@ import asyncio
 import datetime
 import json
 import logging
+import os
 import re
 import sqlite3
 import time
 from pathlib import Path
 from typing import Literal, Optional
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, Query, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
@@ -1109,8 +1110,12 @@ async def get_validation_flags():
 
 @app.get("/api/validation/sources")
 async def get_validation_sources():
-    path = BASE / "data" / "validation_sources.json"
+    path = _validation_sources_path()
     data = _read_json(path)
+    # Lazy-default provenance on read
+    if data and data.get("sources"):
+        for s in data["sources"]:
+            s.setdefault("provenance", "vendor")
     return data or {"sources": []}
 
 
@@ -1129,7 +1134,7 @@ async def add_validation_source(body: dict):
     if not url or not name:
         return JSONResponse({"error": "url and name required"}, status_code=400)
 
-    sources_path = BASE / "data" / "validation_sources.json"
+    sources_path = _validation_sources_path()
     sources_data = json.loads(sources_path.read_text(encoding="utf-8")) if sources_path.exists() else {"sources": []}
     if any(s["url"] == url for s in sources_data.get("sources", [])):
         return JSONResponse({"error": "Source URL already in registry"}, status_code=409)
@@ -1140,9 +1145,11 @@ async def add_validation_source(body: dict):
         "name": name,
         "url": url,
         "cadence": body.get("cadence", "annual"),
-        "admiralty_reliability": "C",
+        "admiralty_reliability": body.get("admiralty_reliability", "C"),
+        "edition_year": body.get("edition_year"),
         "sector_tags": body.get("sector_tags", []),
         "scenario_tags": body.get("scenario_tags", []),
+        "provenance": body.get("provenance", "analyst"),
         "last_checked": None,
         "last_new_content": None,
     }
@@ -1153,7 +1160,7 @@ async def add_validation_source(body: dict):
 
 @app.delete("/api/validation/sources/{source_id}")
 async def delete_validation_source(source_id: str):
-    sources_path = BASE / "data" / "validation_sources.json"
+    sources_path = _validation_sources_path()
     if not sources_path.exists():
         return JSONResponse({"error": "No sources file"}, status_code=404)
     sources_data = json.loads(sources_path.read_text(encoding="utf-8"))
@@ -1307,6 +1314,91 @@ async def run_register_validation():
         )
     data = _read_json(VALIDATION / "register_validation.json")
     return data or {"status": "no_data"}
+
+
+# ── API: Analyst Baseline ───────────────────────────────────────────────
+_VALID_EVIDENCE_TYPES = {"frequency_rate", "prevalence_survey", "mixed", "expert_estimate", "unknown"}
+
+
+def _registers_dir() -> Path:
+    # allow tests to override via env var
+    override = os.environ.get("CRQ_REGISTERS_DIR")
+    return Path(override) if override else (BASE / "data" / "registers")
+
+
+def _validate_baseline_block(body: dict | None) -> tuple[bool, str]:
+    """Returns (ok, error_message). body may be None (clear)."""
+    if body is None:
+        return True, ""
+    if not isinstance(body, dict):
+        return False, "body must be object or null"
+    fin = body.get("fin")
+    prob = body.get("prob")
+    if fin is None and prob is None:
+        return False, "at least one of fin or prob must be present (send null to clear)"
+    if fin is not None:
+        for k in ("value_usd", "low_usd", "high_usd"):
+            v = fin.get(k)
+            if v is None or not isinstance(v, (int, float)) or v < 0:
+                return False, f"fin.{k} must be a non-negative number"
+        if not (fin["low_usd"] <= fin["value_usd"] <= fin["high_usd"]):
+            return False, "fin: low_usd <= value_usd <= high_usd required"
+        if len((fin.get("notes") or "")) > 1000:
+            return False, "fin.notes exceeds 1000 chars"
+    if prob is not None:
+        for k in ("annual_rate", "low", "high"):
+            v = prob.get(k)
+            if v is None or not isinstance(v, (int, float)) or not (0 <= v <= 1):
+                return False, f"prob.{k} must be a number in [0, 1]"
+        if not (prob["low"] <= prob["annual_rate"] <= prob["high"]):
+            return False, "prob: low <= annual_rate <= high required"
+        if (prob.get("evidence_type") or "unknown") not in _VALID_EVIDENCE_TYPES:
+            return False, f"prob.evidence_type must be one of {sorted(_VALID_EVIDENCE_TYPES)}"
+        if len((prob.get("notes") or "")) > 1000:
+            return False, "prob.notes exceeds 1000 chars"
+    return True, ""
+
+
+@app.patch("/api/registers/{register_id}/scenarios/{scenario_index}/baseline")
+async def patch_analyst_baseline(register_id: str, scenario_index: int, request: Request):
+    from datetime import date
+    # Parse body — allow explicit null
+    try:
+        raw = await request.body()
+        body = json.loads(raw.decode("utf-8")) if raw else None
+    except Exception:
+        return JSONResponse({"error": "invalid JSON body"}, status_code=422)
+
+    ok, err = _validate_baseline_block(body)
+    if not ok:
+        return JSONResponse({"error": err}, status_code=422)
+
+    reg_path = _registers_dir() / f"{register_id}.json"
+    if not reg_path.exists():
+        return JSONResponse({"error": f"register not found: {register_id}"}, status_code=404)
+    register = json.loads(reg_path.read_text(encoding="utf-8"))
+    scenarios = register.get("scenarios", [])
+    if not (0 <= scenario_index < len(scenarios)):
+        return JSONResponse({"error": "scenario_index out of range"}, status_code=404)
+
+    today = date.today().isoformat()
+    if body is None:
+        scenarios[scenario_index]["analyst_baseline"] = None
+    else:
+        stamped: dict = {}
+        for dim in ("fin", "prob"):
+            block = body.get(dim)
+            if block is not None:
+                block = dict(block)
+                block["updated"] = today
+                block["updated_by"] = "analyst"
+                block.setdefault("source_ids", [])
+                block.setdefault("notes", "")
+                stamped[dim] = block
+        scenarios[scenario_index]["analyst_baseline"] = stamped
+
+    _write_json_atomic(reg_path, register)
+    return scenarios[scenario_index]
 
 
 # ── API: Risk Register — Regional Scenarios ──────────────────────────────
@@ -1514,6 +1606,259 @@ async def _run_research():
         await _emit("research", {"status": "error", "message": str(exc)})
     finally:
         research_state.update(running=False)
+
+
+# ── API: Source Library (OSINT) ─────────────────────────────────────────
+
+def _sources_db_path() -> Path:
+    override = os.environ.get("CRQ_SOURCES_DB")
+    return Path(override) if override else (BASE / "data" / "sources.db")
+
+
+def _osint_run_identity(conn: sqlite3.Connection) -> tuple[str | None, str | None, list[str]]:
+    """
+    Returns (current_run_ts, previous_run_ts, recent_run_days_desc[:3]) per spec §3.
+    Uses MAX(run_timestamp) globally; distinct run-days drive "<=3 runs" lifecycle.
+    """
+    rows = conn.execute(
+        "SELECT DISTINCT substr(run_timestamp, 1, 10) AS run_day "
+        "FROM source_appearances ORDER BY run_day DESC LIMIT 3"
+    ).fetchall()
+    run_days = [r[0] for r in rows]
+    current_ts = conn.execute(
+        "SELECT MAX(run_timestamp) FROM source_appearances"
+    ).fetchone()[0]
+    prev_ts = None
+    if len(run_days) >= 2:
+        prev_ts = conn.execute(
+            "SELECT MAX(run_timestamp) FROM source_appearances "
+            "WHERE substr(run_timestamp, 1, 10) = ?",
+            (run_days[1],),
+        ).fetchone()[0]
+    return current_ts, prev_ts, run_days
+
+
+@app.get("/api/source-library/osint")
+async def get_source_library_osint(
+    region: str | None = None,
+    tier: str | None = None,
+    pillar: str | None = None,
+    lifecycle: str | None = None,
+    search: str | None = None,
+):
+    import sqlite3 as _sq
+    db_path = _sources_db_path()
+    if not db_path.exists():
+        return {"total": 0, "filtered": 0, "current_run_id": None,
+                "previous_run_id": None, "sources": []}
+    conn = _sq.connect(str(db_path))
+    try:
+        current_ts, prev_ts, recent_days = _osint_run_identity(conn)
+        rows = conn.execute("""
+            SELECT sr.id, sr.name, sr.domain, sr.tier, sr.type, sr.blocked,
+                   COUNT(sa.rowid) AS appearances,
+                   SUM(CASE WHEN sa.cited=1 THEN 1 ELSE 0 END) AS cited_count,
+                   MIN(sa.run_timestamp) AS first_seen,
+                   MAX(sa.run_timestamp) AS last_seen,
+                   GROUP_CONCAT(DISTINCT sa.region) AS regions,
+                   GROUP_CONCAT(DISTINCT sa.pillar) AS pillars
+              FROM sources_registry sr
+              LEFT JOIN source_appearances sa ON sa.source_id = sr.id
+             WHERE COALESCE(sr.collection_type, 'osint') = 'osint'
+             GROUP BY sr.id
+        """).fetchall()
+    finally:
+        conn.close()
+
+    def _collapse_pillar(raw: str | None) -> str:
+        if not raw:
+            return "none"
+        parts = {p for p in raw.split(",") if p}
+        if parts == {"geo"}:  return "geo"
+        if parts == {"cyber"}: return "cyber"
+        return "both"
+
+    def _lifecycle(last_seen: str | None, blocked: int) -> str:
+        if blocked:
+            return "blocked"
+        if not last_seen or not recent_days:
+            return "stale"
+        return "active" if last_seen[:10] in recent_days else "stale"
+
+    sources = []
+    for row in rows:
+        (sid, name, domain, tier_v, type_v, blocked,
+         appearances, cited, first_seen, last_seen, regions_raw, pillars_raw) = row
+        appearances = appearances or 0
+        cited = cited or 0
+        cited_rate = (cited / appearances) if appearances else None
+        regions_list = sorted(set((regions_raw or "").split(","))) if regions_raw else []
+        regions_list = [r for r in regions_list if r]
+
+        # run_delta: count in current run-day minus count in previous run-day
+        run_delta = None
+        if current_ts and prev_ts:
+            cur_day, prev_day = current_ts[:10], prev_ts[:10]
+            c2 = _sq.connect(str(db_path))
+            try:
+                cur_n = c2.execute(
+                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(run_timestamp,1,10)=?",
+                    (sid, cur_day),
+                ).fetchone()[0]
+                prev_n = c2.execute(
+                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(run_timestamp,1,10)=?",
+                    (sid, prev_day),
+                ).fetchone()[0]
+                run_delta = cur_n - prev_n
+            finally:
+                c2.close()
+
+        sources.append({
+            "id": sid,
+            "name": name,
+            "domain": domain,
+            "tier": tier_v or "C",
+            "type": type_v or "news",
+            "pillar": _collapse_pillar(pillars_raw),
+            "regions": regions_list,
+            "appearance_count": appearances,
+            "cited_count": cited,
+            "cited_rate": cited_rate,
+            "first_seen": first_seen,
+            "last_seen": last_seen,
+            "lifecycle": _lifecycle(last_seen, blocked),
+            "run_delta": run_delta,
+            "blocked": bool(blocked),
+        })
+
+    total = len(sources)
+    # Server-side filters
+    def _keep(s: dict) -> bool:
+        if region and region not in s["regions"]: return False
+        if tier and (s["tier"] or "").upper() != tier.upper(): return False
+        if pillar and s["pillar"] != pillar: return False
+        if lifecycle and s["lifecycle"] != lifecycle: return False
+        if search:
+            q = search.lower()
+            if q not in (s["name"] or "").lower() and q not in (s["domain"] or "").lower():
+                return False
+        return True
+
+    filtered = [s for s in sources if _keep(s)]
+    filtered.sort(key=lambda s: (-(s["cited_rate"] or 0), -(s["appearance_count"] or 0)))
+
+    return {
+        "total": total,
+        "filtered": len(filtered),
+        "current_run_id": current_ts,
+        "previous_run_id": prev_ts,
+        "sources": filtered,
+    }
+
+
+# ── API: Source Library (Benchmarks) ────────────────────────────────────
+
+def _validation_sources_path() -> Path:
+    override = os.environ.get("CRQ_VALIDATION_SOURCES")
+    return Path(override) if override else (BASE / "data" / "validation_sources.json")
+
+
+def _provenance_default(src: dict) -> str:
+    return src.get("provenance") or "vendor"
+
+
+@app.get("/api/source-library/benchmarks")
+async def get_source_library_benchmarks(register: str | None = None, show_all: bool = False):
+    reg_dir = _registers_dir()
+    reg_path = reg_dir / f"{register}.json" if register else None
+    register_obj = None
+    register_scenario_tags: set[str] = set()
+    scenario_names: list[str] = []
+    if reg_path and reg_path.exists():
+        register_obj = json.loads(reg_path.read_text(encoding="utf-8"))
+        for sc in register_obj.get("scenarios", []):
+            tag = sc.get("search_tag") or sc.get("scenario_name")
+            if tag:
+                register_scenario_tags.add(tag)
+                scenario_names.append(tag)
+
+    vs_path = _validation_sources_path()
+    raw = json.loads(vs_path.read_text(encoding="utf-8")) if vs_path.exists() else {"sources": []}
+    all_sources = raw.get("sources", [])
+
+    # Filter sources by register intersection unless show_all
+    def _intersects(src: dict) -> bool:
+        tags = set(src.get("scenario_tags") or [])
+        return bool(tags & register_scenario_tags)
+
+    filtered = all_sources if show_all else [s for s in all_sources if _intersects(s)]
+
+    # Shape each source
+    shaped = []
+    for s in filtered:
+        shaped.append({
+            "id": s.get("id"),
+            "name": s.get("name"),
+            "url": s.get("url"),
+            "reliability": s.get("admiralty_reliability") or s.get("tier") or "C",
+            "edition_year": s.get("edition_year"),
+            "cadence": s.get("cadence"),
+            "sector_tags": s.get("sector_tags", []),
+            "scenario_tags": s.get("scenario_tags", []),
+            "provenance": _provenance_default(s),
+            "covered_scenarios": sorted(set(s.get("scenario_tags") or []) & register_scenario_tags),
+            "last_checked": s.get("last_checked"),
+            "cited_in_current_run": [],  # populated from register_validation.json below
+        })
+
+    # Attach cited_in_current_run from the most recent register_validation.json
+    val_path = BASE / "output" / "validation" / "register_validation.json"
+    if val_path.exists():
+        try:
+            val = json.loads(val_path.read_text(encoding="utf-8"))
+            val_reg_id = val.get("register_id")
+            run_id = (val.get("run_summary") or {}).get("run_id")
+            for r in val.get("scenarios", []):
+                scen = r.get("scenario_name")
+                for dim in ("financial", "probability"):
+                    for bucket in ("registered_sources", "new_sources"):
+                        for used in r.get(dim, {}).get(bucket, []) or []:
+                            used_name = (used.get("name") or "").strip()
+                            for sh in shaped:
+                                if sh["name"] and used_name.lower().startswith(sh["name"].lower()[:20]):
+                                    sh["cited_in_current_run"].append({
+                                        "register_id": val_reg_id,
+                                        "scenario": scen,
+                                        "run_id": run_id,
+                                    })
+        except Exception:
+            pass
+
+    # Coverage matrix (scenarios × sources), scoped to the active register
+    matrix = {
+        scen_tag: {s["id"]: scen_tag in (s.get("scenario_tags") or []) for s in filtered}
+        for scen_tag in scenario_names
+    }
+
+    response: dict = {
+        "register_id": register,
+        "register_name": (register_obj or {}).get("display_name"),
+        "scenarios": scenario_names,
+        "sources": shaped,
+        "matrix": matrix,
+    }
+
+    if not show_all and register_scenario_tags:
+        with_zero = [t for t in scenario_names if not any(matrix[t].values())]
+        with_one  = [t for t in scenario_names if sum(1 for v in matrix[t].values() if v) == 1]
+        response["coverage_summary"] = {
+            "scenarios_with_zero_sources": with_zero,
+            "scenarios_with_one_source":  with_one,
+            "uncovered_count": len(with_zero),
+            "thinly_covered_count": len(with_one),
+        }
+
+    return response
 
 
 # ── API: Source Registry ─────────────────────────────────────────────────

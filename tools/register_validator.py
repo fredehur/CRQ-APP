@@ -14,6 +14,8 @@ import json
 import re
 import sqlite3
 import sys
+import time
+from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
@@ -33,6 +35,18 @@ _PHASE2_QUERY_CAP = 3   # max queries per dimension per scenario in Phase 2
 
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
 SONNET_MODEL = "claude-sonnet-4-6"
+
+
+@dataclass
+class RunCounters:
+    """Mutable counters shared across scenario validation to build run_summary.evidence."""
+    fin_extracted: int = 0
+    prob_extracted: int = 0
+    fin_after_iqr_filter: int = 0
+    prob_after_iqr_filter: int = 0
+    outliers_removed: int = 0
+    queried_source_ids: set = field(default_factory=set)
+    matched_source_ids: set = field(default_factory=set)
 
 
 def _compute_scale_floor(register: dict) -> float:
@@ -250,7 +264,7 @@ def build_register_queries(scenario: dict, register: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 def phase1_refresh_known_sources(
-    conn: sqlite3.Connection, scenario: dict
+    conn: sqlite3.Connection, scenario: dict, counters: "RunCounters"
 ) -> tuple[list[dict], list[dict]]:
     """
     Phase 1: For each known validated source in sources.db matching this scenario's tags,
@@ -275,6 +289,8 @@ def phase1_refresh_known_sources(
     for source in relevant[:_PHASE1_SOURCE_CAP]:
         name = source["name"]
         url = source["url"]
+        source_id = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-") or name
+        counters.queried_source_ids.add(source_id)
         domain = urlparse(url).netloc if url else ""
 
         if domain:
@@ -284,6 +300,8 @@ def phase1_refresh_known_sources(
 
         print(f"[register_validator] Phase 1 -- {name[:50]}: {query[:70]}", file=sys.stderr)
         results = _search_web(query, max_results=3)
+        if any(r.get("content", "").strip() for r in results):
+            counters.matched_source_ids.add(source_id)
         for r in results:
             content = r.get("content", "")
             src_name = r.get("title") or name
@@ -367,6 +385,23 @@ def filter_outliers(values: list[float]) -> list[float]:
     return filtered if filtered else values
 
 
+def filter_outliers_with_counter(values: list[float], counters: "RunCounters", dim: str) -> list[float]:
+    """IQR filter that updates counters. `dim` is 'fin' or 'prob'."""
+    incoming = len(values)
+    if dim == "fin":
+        counters.fin_extracted += incoming
+    elif dim == "prob":
+        counters.prob_extracted += incoming
+    filtered = filter_outliers(values)
+    kept = len(filtered)
+    if dim == "fin":
+        counters.fin_after_iqr_filter += kept
+    elif dim == "prob":
+        counters.prob_after_iqr_filter += kept
+    counters.outliers_removed += (incoming - kept)
+    return filtered
+
+
 # ---------------------------------------------------------------------------
 # Sonnet recommendation
 # ---------------------------------------------------------------------------
@@ -402,7 +437,18 @@ Write a concise analyst note (2-3 sentences) addressing:
 2. What the probability evidence type means for the reliability of that verdict.
 3. If either verdict is "insufficient", what specific source types would strengthen this.
 
-Tone: direct, no jargon, no financial advice language. Plain text only."""
+Tone: direct, no jargon, no financial advice language. Plain text only.
+
+ANALYST BASELINE (optional, may be "none"):
+  fin:  {baseline_fin_summary}
+  prob: {baseline_prob_summary}
+  alignment_fin:  {baseline_fin_alignment}
+  alignment_prob: {baseline_prob_alignment}
+
+If a baseline is present, your recommendation MUST acknowledge it explicitly:
+- If baseline aligns with OSINT: cite the analyst's number as a corroborating signal.
+- If baseline diverges from OSINT: name the divergence and which range you weight higher (with reason).
+- Never silently override the baseline — the analyst put it there deliberately."""
 
 
 def _build_recommendation_sonnet(
@@ -410,6 +456,8 @@ def _build_recommendation_sonnet(
     register: dict,
     fin: dict,
     prob: dict,
+    baseline: dict | None = None,
+    alignment: dict | None = None,
 ) -> str:
     """Generate a Sonnet analyst recommendation paragraph for this scenario."""
     def _fmt_fin_range(r):
@@ -424,6 +472,11 @@ def _build_recommendation_sonnet(
 
     all_sources = fin.get("registered_sources", []) + fin.get("new_sources", [])
     prob_all_sources = prob.get("registered_sources", []) + prob.get("new_sources", [])
+
+    baseline = baseline or {}
+    alignment = alignment or {"fin": "n/a", "prob": "n/a"}
+    baseline_fin_summary = format_baseline_summary(baseline.get("fin"), kind="fin")
+    baseline_prob_summary = format_baseline_summary(baseline.get("prob"), kind="prob")
 
     prompt = _RECOMMENDATION_PROMPT.format(
         company_context=register.get("company_context", ""),
@@ -440,6 +493,10 @@ def _build_recommendation_sonnet(
         prob_confidence=prob.get("verdict_confidence", "low"),
         prob_source_count=len(prob_all_sources),
         prob_evidence_type=prob.get("evidence_type", "prevalence_survey"),
+        baseline_fin_summary=baseline_fin_summary,
+        baseline_prob_summary=baseline_prob_summary,
+        baseline_fin_alignment=alignment.get("fin", "n/a"),
+        baseline_prob_alignment=alignment.get("prob", "n/a"),
     )
     try:
         client = anthropic.Anthropic()
@@ -521,6 +578,72 @@ def compute_verdict_confidence(sources: list[dict]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Analyst baseline helpers (pure code, no agent)
+# ---------------------------------------------------------------------------
+
+def compute_baseline_alignment(baseline: dict | None, osint_range: list, kind: str) -> str:
+    """
+    Range-overlap test.
+    kind='fin':  baseline uses low_usd / high_usd, osint_range is [min, max] in USD.
+    kind='prob': baseline uses low / high (0..1 fraction), osint_range is [min, max] in percent.
+    """
+    if not baseline:
+        return "n/a"
+    if not osint_range or len(osint_range) < 2:
+        return "n/a"
+    try:
+        if kind == "fin":
+            b_low = float(baseline.get("low_usd") or baseline.get("value_usd") or 0)
+            b_high = float(baseline.get("high_usd") or baseline.get("value_usd") or 0)
+        else:  # prob
+            # Convert baseline fraction -> percent for comparison
+            b_low = float(baseline.get("low") or baseline.get("annual_rate") or 0) * 100.0
+            b_high = float(baseline.get("high") or baseline.get("annual_rate") or 0) * 100.0
+        o_low, o_high = float(osint_range[0]), float(osint_range[1])
+    except (TypeError, ValueError):
+        return "n/a"
+    if b_low > b_high or o_low > o_high:
+        return "n/a"
+    return "aligned" if max(b_low, o_low) <= min(b_high, o_high) else "diverged"
+
+
+def format_baseline_summary(baseline: dict | None, kind: str) -> str:
+    if not baseline:
+        return "none"
+    n_sources = len(baseline.get("source_ids") or [])
+    src_word = "source" if n_sources == 1 else "sources"
+    if kind == "fin":
+        val = float(baseline.get("value_usd") or 0)
+        lo = float(baseline.get("low_usd") or 0)
+        hi = float(baseline.get("high_usd") or 0)
+        def _m(x):
+            return f"${x/1_000_000:.1f}M"
+        return f"{_m(val)} [low {_m(lo)}, high {_m(hi)}], {n_sources} {src_word}"
+    # prob
+    rate = float(baseline.get("annual_rate") or 0)
+    lo = float(baseline.get("low") or 0)
+    hi = float(baseline.get("high") or 0)
+    etype = baseline.get("evidence_type") or "unknown"
+    return f"{rate:.2f}/yr [{lo:.2f}-{hi:.2f}], {etype}, {n_sources} {src_word}"
+
+
+def resolve_baseline_orphans(scenario_name: str, baseline: dict, val_sources_by_id: dict) -> list[dict]:
+    """Return a list of orphan warning dicts (empty list if all source IDs resolve)."""
+    orphans = []
+    for dim_name, dim_key in (("fin", "fin"), ("prob", "prob")):
+        block = baseline.get(dim_name) or {}
+        for sid in block.get("source_ids") or []:
+            if sid not in val_sources_by_id:
+                orphans.append({
+                    "type": "baseline_orphan_source",
+                    "scenario": scenario_name,
+                    "dim": dim_key,
+                    "source_id": sid,
+                })
+    return orphans
+
+
+# ---------------------------------------------------------------------------
 # Track 3: check source versions
 # ---------------------------------------------------------------------------
 
@@ -568,6 +691,188 @@ def check_source_versions(sources: list, web_search_fn) -> list:
 
 
 # ---------------------------------------------------------------------------
+# Run summary post-pass (pure code, no agent)
+# ---------------------------------------------------------------------------
+
+_VERDICT_NORMALIZE = {
+    "supports": "support",
+    "support": "support",
+    "challenges": "challenge",
+    "challenge": "challenge",
+    "insufficient": "insufficient",
+}
+
+
+def _normalize_verdict(v: str) -> str:
+    return _VERDICT_NORMALIZE.get((v or "").lower(), "insufficient")
+
+
+def _tally_verdicts(results: list[dict]) -> dict:
+    tally = {"support": 0, "challenge": 0, "insufficient": 0}
+    for r in results:
+        tally[_normalize_verdict(r.get("financial", {}).get("verdict"))] += 1
+        tally[_normalize_verdict(r.get("probability", {}).get("verdict"))] += 1
+    return tally
+
+
+def _collect_cited_source_ids(results: list[dict]) -> set[str]:
+    """Return the set of source IDs cited across all scenario results."""
+    cited = set()
+    for r in results:
+        for dim in ("financial", "probability"):
+            for bucket in ("registered_sources", "new_sources"):
+                for s in r.get(dim, {}).get(bucket, []) or []:
+                    # existing schema uses `name`; slug it to an ID
+                    name = (s.get("name") or "").strip()
+                    if name:
+                        cited.add(re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-"))
+    return cited
+
+
+def build_run_summary(
+    register: dict,
+    current_results: list[dict],
+    previous_path,
+    counters: RunCounters,
+    duration_seconds: int,
+    val_sources: list[dict],
+    orphan_source_warnings: list[dict],
+) -> dict:
+    """Deterministic post-validation run summary — no LLM calls."""
+    run_id = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # --- previous run ---
+    prior = None
+    previous_run_id = None
+    if previous_path:
+        try:
+            p = Path(previous_path) if not isinstance(previous_path, Path) else previous_path
+            if p.exists():
+                prior = json.loads(p.read_text(encoding="utf-8"))
+                previous_run_id = (prior.get("run_summary") or {}).get("run_id")
+        except Exception:
+            prior = None
+
+    # --- verdicts ---
+    current_tally = _tally_verdicts(current_results)
+    previous_tally = None
+    deltas = []
+    if prior and prior.get("scenarios"):
+        previous_tally = _tally_verdicts(prior["scenarios"])
+        prior_by_scen = {s.get("scenario_name"): s for s in prior["scenarios"]}
+        for r in current_results:
+            name = r.get("scenario_name")
+            prev = prior_by_scen.get(name, {})
+            for dim, code in (("financial", "fin"), ("probability", "prob")):
+                cur_v = _normalize_verdict(r.get(dim, {}).get("verdict"))
+                prv_v = _normalize_verdict(prev.get(dim, {}).get("verdict")) if prev else None
+                if prv_v and prv_v != cur_v:
+                    improved = ["insufficient", "challenge", "support"]
+                    direction = "improved" if improved.index(cur_v) > improved.index(prv_v) else "weakened"
+                    deltas.append({
+                        "scenario": name, "dim": code,
+                        "from": prv_v, "to": cur_v, "direction": direction,
+                    })
+
+    # --- sources ---
+    matched_ids = sorted(counters.matched_source_ids)
+    val_sources_by_id = {s.get("id"): s for s in val_sources}
+
+    def _src_tier(sid: str) -> str:
+        s = val_sources_by_id.get(sid, {})
+        return (s.get("admiralty_reliability") or s.get("tier") or "C").upper()
+
+    def _src_name(sid: str) -> str:
+        return val_sources_by_id.get(sid, {}).get("name", sid)
+
+    prior_cited_ids = set()
+    if prior:
+        prior_cited_ids = set((prior.get("run_summary", {}) or {}).get("sources", {}).get("matched_ids") or [])
+        if not prior_cited_ids:
+            prior_cited_ids = _collect_cited_source_ids(prior.get("scenarios", []))
+
+    current_cited_ids = _collect_cited_source_ids(current_results) | set(matched_ids)
+    new_this_run = [
+        {"id": sid, "name": _src_name(sid), "tier": _src_tier(sid)}
+        for sid in sorted(current_cited_ids - prior_cited_ids)
+    ] if prior else []
+    dropped_this_run = [
+        {"id": sid, "name": _src_name(sid) or sid, "reason": "not_cited"}
+        for sid in sorted(prior_cited_ids - current_cited_ids)
+    ] if prior else []
+
+    by_tier: dict[str, int] = {}
+    for sid in matched_ids:
+        t = _src_tier(sid)
+        by_tier[t] = by_tier.get(t, 0) + 1
+
+    # --- coverage gaps (scenarios with verdict=insufficient AND source count <= 1) ---
+    coverage_gaps = []
+    for r in current_results:
+        total_fin = len(r.get("financial", {}).get("registered_sources", []) or []) + \
+                    len(r.get("financial", {}).get("new_sources", []) or [])
+        total_prob = len(r.get("probability", {}).get("registered_sources", []) or []) + \
+                     len(r.get("probability", {}).get("new_sources", []) or [])
+        worst_total = min(total_fin, total_prob)
+        if _normalize_verdict(r.get("financial", {}).get("verdict")) == "insufficient" and total_fin <= 1:
+            coverage_gaps.append({
+                "scenario": r.get("scenario_name"),
+                "issue": "no benchmark sources tagged" if total_fin == 0 else "only 1 source — confidence LOW",
+            })
+
+    # --- baseline usage ---
+    scenarios_with_baseline = sum(1 for r in current_results if r.get("analyst_baseline"))
+    aligned = sum(
+        1 for r in current_results
+        if r.get("analyst_baseline") and r.get("baseline_alignment", {}).get("aggregate") == "aligned"
+    )
+    diverged = sum(
+        1 for r in current_results
+        if r.get("analyst_baseline") and r.get("baseline_alignment", {}).get("aggregate") == "diverged"
+    )
+
+    return {
+        "run_id": run_id,
+        "previous_run_id": previous_run_id,
+        "register_id": register.get("register_id"),
+        "register_name": register.get("display_name") or register.get("register_id"),
+        "duration_seconds": int(duration_seconds),
+        "scenarios": {
+            "total": len(register.get("scenarios", [])),
+            "validated": len(current_results),
+            "skipped": len(register.get("scenarios", [])) - len(current_results),
+        },
+        "verdicts": {
+            "current": current_tally,
+            "previous": previous_tally,
+            "deltas": deltas,
+        },
+        "sources": {
+            "queried": len(counters.queried_source_ids),
+            "matched": len(counters.matched_source_ids),
+            "matched_ids": matched_ids,  # internal use for next-run delta
+            "new_this_run": new_this_run,
+            "dropped_this_run": dropped_this_run,
+            "by_tier": by_tier,
+        },
+        "evidence": {
+            "fin_extracted": counters.fin_extracted,
+            "prob_extracted": counters.prob_extracted,
+            "fin_after_iqr_filter": counters.fin_after_iqr_filter,
+            "prob_after_iqr_filter": counters.prob_after_iqr_filter,
+            "outliers_removed": counters.outliers_removed,
+        },
+        "coverage_gaps": coverage_gaps,
+        "baseline_usage": {
+            "scenarios_with_baseline": scenarios_with_baseline,
+            "baseline_aligned_with_osint": aligned,
+            "baseline_diverged_from_osint": diverged,
+        },
+        "errors": list(orphan_source_warnings),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Validate one scenario
 # ---------------------------------------------------------------------------
 
@@ -575,6 +880,7 @@ def validate_scenario(
     conn: sqlite3.Connection,
     scenario: dict,
     register: dict,
+    counters: RunCounters,
 ) -> dict:
     """
     Full two-phase validation for one scenario.
@@ -590,7 +896,7 @@ def validate_scenario(
     )
     fin_cap = max(max_vacr * 50, 500_000_000)  # floor cap at $500M
 
-    p1_fin, p1_prob = phase1_refresh_known_sources(conn, scenario)
+    p1_fin, p1_prob = phase1_refresh_known_sources(conn, scenario, counters)
     p2_fin, p2_prob = phase2_osint_search(scenario, register)
 
     all_fin_figs = p1_fin + p2_fin
@@ -618,8 +924,8 @@ def validate_scenario(
         if val and float(val) <= 100.0:  # sanity cap
             prob_values.append(float(val))
 
-    fin_values = filter_outliers(fin_values)
-    prob_values = filter_outliers(prob_values)
+    fin_values = filter_outliers_with_counter(fin_values, counters, dim="fin")
+    prob_values = filter_outliers_with_counter(prob_values, counters, dim="prob")
 
     vacr_usd = scenario.get("value_at_cyber_risk_usd")
     vacr_pct = scenario.get("probability_pct")
@@ -722,7 +1028,28 @@ def validate_scenario(
         "new_sources": prob_new_out,
     }
 
-    recommendation = _build_recommendation_sonnet(scenario, register, fin_result, prob_result)
+    # --- analyst baseline pass-through + alignment ---
+    baseline = scenario.get("analyst_baseline")
+    alignment = {
+        "fin":  compute_baseline_alignment(baseline.get("fin") if baseline else None,
+                                           fin_range, kind="fin"),
+        "prob": compute_baseline_alignment(baseline.get("prob") if baseline else None,
+                                           prob_range, kind="prob"),
+    }
+    # Aggregate: "aligned" if neither diverged AND at least one aligned; "diverged" if any diverged
+    dims = [alignment["fin"], alignment["prob"]]
+    if "diverged" in dims:
+        agg = "diverged"
+    elif "aligned" in dims:
+        agg = "aligned"
+    else:
+        agg = "n/a"
+    alignment["aggregate"] = agg
+
+    recommendation = _build_recommendation_sonnet(
+        scenario, register, fin_result, prob_result,
+        baseline=baseline, alignment=alignment,
+    )
 
     return {
         "scenario_id": scenario["scenario_id"],
@@ -731,6 +1058,8 @@ def validate_scenario(
         "recommendation": recommendation,
         "financial": fin_result,
         "probability": prob_result,
+        "analyst_baseline": baseline,          # passthrough (may be None)
+        "baseline_alignment": alignment,       # {fin, prob, aggregate}
     }
 
 
@@ -742,6 +1071,9 @@ def main():
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     register = load_active_register()
     conn = sqlite3.connect(str(DB_PATH))
+
+    counters = RunCounters()
+    run_started_monotonic = time.monotonic()
 
     print(f"[register_validator] Active register: {register['register_id']}")
     print(f"[register_validator] Context: {register.get('company_context', '')[:80]}")
@@ -759,7 +1091,7 @@ def main():
     scenario_results = []
     for scenario in register["scenarios"]:
         print(f"[register_validator] Validating: {scenario['scenario_id']} - {scenario['scenario_name']}")
-        result = validate_scenario(conn, scenario, register)
+        result = validate_scenario(conn, scenario, register, counters)
         scenario_results.append(result)
         fin_v = result["financial"]["verdict"]
         prob_v = result["probability"]["verdict"]
@@ -768,9 +1100,32 @@ def main():
     # Track 3: version checks on known sources
     version_checks = check_source_versions(all_val_sources, _search_web)
 
+    # Collect orphan baseline source warnings
+    val_sources_by_id = {s.get("id"): s for s in all_val_sources}
+    orphan_warnings: list[dict] = []
+    for scenario in register["scenarios"]:
+        b = scenario.get("analyst_baseline")
+        if b:
+            orphan_warnings.extend(
+                resolve_baseline_orphans(scenario["scenario_name"], b, val_sources_by_id)
+            )
+
+    duration = int(time.monotonic() - run_started_monotonic)
+
+    run_summary = build_run_summary(
+        register=register,
+        current_results=scenario_results,
+        previous_path=OUTPUT_PATH,
+        counters=counters,
+        duration_seconds=duration,
+        val_sources=all_val_sources,
+        orphan_source_warnings=orphan_warnings,
+    )
+
     output = {
         "register_id": register["register_id"],
         "validated_at": datetime.now(timezone.utc).isoformat(),
+        "run_summary": run_summary,
         "version_checks": version_checks,
         "scenarios": scenario_results,
     }
@@ -781,6 +1136,8 @@ def main():
     reg_path.write_text(json.dumps(register, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(f"[register_validator] Done -> {OUTPUT_PATH}")
+    print(f"[register_validator] Run summary: {run_summary['scenarios']['validated']} scenarios, "
+          f"{run_summary['sources']['matched']} sources matched, {len(orphan_warnings)} baseline orphans")
     conn.close()
 
 
