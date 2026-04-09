@@ -493,7 +493,7 @@ def _parse_pct(figure_str: str | None) -> float | None:
 
 
 def compute_verdict(vacr_value: float | None, benchmark_values: list[float]) -> tuple[str, list[float]]:
-    if not benchmark_values or len(benchmark_values) < 2:
+    if not benchmark_values:
         return "insufficient", []
     lo, hi = min(benchmark_values), max(benchmark_values)
     if vacr_value is None:
@@ -583,6 +583,13 @@ def validate_scenario(
     """
     scale_floor = _compute_scale_floor(register)
 
+    # Dynamic cap: figures above 50x the register's highest VaCR are sector-wide aggregates
+    max_vacr = max(
+        (s.get("value_at_cyber_risk_usd") or 0 for s in register.get("scenarios", [])),
+        default=10_000_000,
+    )
+    fin_cap = max(max_vacr * 50, 500_000_000)  # floor cap at $500M
+
     p1_fin, p1_prob = phase1_refresh_known_sources(conn, scenario)
     p2_fin, p2_prob = phase2_osint_search(scenario, register)
 
@@ -591,18 +598,24 @@ def validate_scenario(
 
     fin_values: list[float] = []
     for f in all_fin_figs:
+        # Exclude enterprise/sector-wide aggregate figures — not per-site benchmarks
+        if f.get("context_tag") == "company_scale":
+            continue
         val = f.get("cost_median_usd")
         if not val:
             lo = f.get("cost_low_usd") or 0
             hi = f.get("cost_high_usd") or 0
             val = (lo + hi) / 2 if (lo or hi) else None
-        if val:
+        if val and float(val) <= fin_cap:
             fin_values.append(float(val))
 
     prob_values: list[float] = []
     for f in all_prob_figs:
+        # Exclude policy-prevalence and non-incident stats from probability benchmarks
+        if f.get("evidence_subtype") not in (None, "prevalence_survey", "frequency_rate", "expert_estimate", "unknown"):
+            continue
         val = f.get("probability_pct")
-        if val:
+        if val and float(val) <= 100.0:  # sanity cap
             prob_values.append(float(val))
 
     fin_values = filter_outliers(fin_values)
@@ -670,8 +683,10 @@ def validate_scenario(
     total_prob_sources = len(prob_registered_out) + len(prob_new_out)
     if total_fin_sources < 2 and fin_verdict != "insufficient":
         fin_verdict = "insufficient"
+        fin_range = []
     if total_prob_sources < 2 and prob_verdict != "insufficient":
         prob_verdict = "insufficient"
+        prob_range = []
 
     fin_confidence = compute_verdict_confidence(fin_registered_out + fin_new_out)
     prob_confidence = compute_verdict_confidence(prob_registered_out + prob_new_out)
