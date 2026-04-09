@@ -2565,9 +2565,9 @@ async function renderRiskRegisterTab() {
   // Load validation results (will re-render list + detail when done)
   loadRegisterValidationResults();
 
-  // Pre-load source registry data
-  loadValSources();
-  loadValCandidates();
+  // Load run summary card (Task 16) + baseline known IDs (Task 18)
+  refreshBaselineKnownIds();
+  loadAndRenderRunSummary();
 }
 
 function _renderScenarioList() {
@@ -2616,8 +2616,15 @@ function _selectScenario(id) {
   state.selectedScenarioId = id;
   _renderScenarioList(); // refresh highlight
 
-  const scenario = (state.activeRegister?.scenarios || []).find(s => s.scenario_id === id);
+  const scenarios = state.activeRegister?.scenarios || [];
+  const scenario = scenarios.find(s => s.scenario_id === id);
+  const scenarioIndex = scenarios.findIndex(s => s.scenario_id === id);
   const valScenario = state.validationData?.scenarios?.find(s => s.scenario_id === id) || null;
+
+  // Track active register + scenario index for baseline editor PATCH endpoints
+  window._activeRegisterId = state.activeRegister?.register_id || '';
+  window._activeScenarioIndex = scenarioIndex >= 0 ? scenarioIndex : 0;
+
   _renderScenarioDetail(scenario, valScenario);
 }
 
@@ -2651,8 +2658,8 @@ function _renderScenarioDetail(scenario, valScenario) {
     validationZone = `<div style="padding:16px 14px;color:#484f58;font-size:10px">No validation data — click &#9654; RUN to validate this register.</div>`;
   } else {
     const versionChecks = state.validationData?.version_checks || [];
-    const finHtml = _renderRegValDimension(scenario.scenario_id, 'financial', valScenario.financial, versionChecks);
-    const probHtml = _renderRegValDimension(scenario.scenario_id, 'probability', valScenario.probability, versionChecks);
+    const finHtml = _renderRegValDimension(scenario.scenario_id, 'financial', valScenario.financial, versionChecks, scenario.analyst_baseline);
+    const probHtml = _renderRegValDimension(scenario.scenario_id, 'probability', valScenario.probability, versionChecks, scenario.analyst_baseline);
     const noteHtml = valScenario.asset_context_note
       ? `<div style="padding:0 12px 8px 12px;font-size:10px;color:#6e7681;font-style:italic">${esc(valScenario.asset_context_note)}</div>`
       : '';
@@ -2675,6 +2682,11 @@ function _renderScenarioDetail(scenario, valScenario) {
       </div>`
     : '';
 
+  // Analyst baseline editor (Task 17)
+  const registerId = (window._activeRegisterId) || (state.activeRegister?.register_id) || '';
+  const scenarioIndex = (window._activeScenarioIndex != null) ? window._activeScenarioIndex : 0;
+  const baselineHtml = renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex);
+
   el.innerHTML = `
     <div style="padding:10px 16px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;align-items:center;background:#080c10">
       <div>
@@ -2685,6 +2697,7 @@ function _renderScenarioDetail(scenario, valScenario) {
         style="background:transparent;border:1px solid #21262d;color:#6e7681;border-radius:2px;padding:3px 10px;font-size:9px;font-weight:600;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">✎ Edit</button>
     </div>
     ${descZone}
+    <div style="padding:0 12px">${baselineHtml}</div>
     ${numbersZone}
     ${validationZone}
     ${recommendationZone}`;
@@ -2855,22 +2868,6 @@ async function saveNewScenario() {
   _selectScenario(newScenario.scenario_id);
 }
 
-function toggleSourceRegistry() {
-  const body = $('rr-src-body');
-  const toggle = $('rr-src-toggle');
-  if (!body) return;
-  const isOpen = body.style.display !== 'none';
-  body.style.display = isOpen ? 'none' : 'block';
-  if (toggle) toggle.innerHTML = isOpen ? '&#9654; Show' : '&#9660; Hide';
-  if (!isOpen) {
-    loadValSources();
-    loadValCandidates();
-  }
-}
-
-
-
-
 
 
 
@@ -2885,171 +2882,6 @@ function applyRegionFilterAndSwitch(region) {
   if (sel) { sel.value = region; applySourceFilters(); }
 }
 
-
-
-
-async function loadValSources() {
-  const el = $('val-sources');
-  const MASTER_SCENARIOS = ['System intrusion','Ransomware','Accidental disclosure','Physical threat','Insider misuse','DoS attack','Scam or fraud','Defacement','System failure'];
-  const scenarioCheckboxes = MASTER_SCENARIOS.map(s =>
-    `<label style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:#8b949e;margin-right:8px;cursor:pointer">
-      <input type="checkbox" value="${s}" style="accent-color:#3fb950"> ${s}
-    </label>`
-  ).join('');
-
-  const addForm = `<div id="val-add-source-form" style="padding:10px 12px;border-bottom:1px solid #21262d;background:#0d1117">
-    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">Add Source</div>
-    <div style="display:flex;gap:8px;margin-bottom:6px">
-      <input id="val-src-url" type="text" placeholder="https://..." style="flex:2;background:#161b22;border:1px solid #21262d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;outline:none" />
-      <input id="val-src-name" type="text" placeholder="Source name" style="flex:2;background:#161b22;border:1px solid #21262d;color:#e6edf3;font-size:11px;padding:4px 8px;border-radius:2px;outline:none" />
-      <select id="val-src-cadence" style="background:#161b22;border:1px solid #21262d;color:#8b949e;font-size:11px;padding:4px 6px;border-radius:2px">
-        <option value="annual">Annual</option>
-        <option value="quarterly">Quarterly</option>
-        <option value="biannual">Biannual</option>
-        <option value="unknown">Unknown</option>
-      </select>
-      <button onclick="submitAddSource()" style="font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 12px;border-radius:2px;cursor:pointer;white-space:nowrap">+ Add</button>
-    </div>
-    <div style="display:flex;flex-wrap:wrap;gap:2px">${scenarioCheckboxes}</div>
-    <div id="val-add-source-err" style="font-size:10px;color:#f85149;margin-top:4px;display:none"></div>
-  </div>`;
-
-  try {
-    const data = await fetch('/api/validation/sources').then(r => r.json());
-    const sources = data.sources || [];
-    if (!sources.length) {
-      el.innerHTML = addForm + '<div style="color:#6e7681;font-size:11px;padding:12px">No sources registered.</div>';
-      return;
-    }
-    const header = `<div style="display:flex;padding:5px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#484f58">
-      <span style="width:220px;flex-shrink:0">Source</span>
-      <span style="width:40px;flex-shrink:0">Adm.</span>
-      <span style="width:80px;flex-shrink:0">Cadence</span>
-      <span style="width:90px;flex-shrink:0">Checked</span>
-      <span style="flex:1">Scenarios</span>
-    </div>`;
-    const rows = sources.map(s => {
-      const admColor = s.admiralty_reliability === 'A' ? '#3fb950' : s.admiralty_reliability === 'B' ? '#58a6ff' : '#6e7681';
-      const checked = s.last_checked ? s.last_checked.slice(0,10) : 'Never';
-      const scenarios = (s.scenario_tags||[]).join(', ');
-      return `<div style="display:flex;align-items:center;padding:7px 12px;border-bottom:1px solid #21262d;font-size:11px">
-        <span style="color:#e6edf3;width:220px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${s.name}">${s.name}</span>
-        <span style="color:${admColor};width:40px;flex-shrink:0;font-family:monospace;font-weight:700">${s.admiralty_reliability}</span>
-        <span style="color:#8b949e;width:80px;flex-shrink:0;text-transform:capitalize">${s.cadence||'—'}</span>
-        <span style="color:#6e7681;width:90px;flex-shrink:0">${checked}</span>
-        <span style="color:#484f58;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${scenarios}</span>
-        <a href="${s.url}" target="_blank" rel="noopener" title="Open source" style="flex-shrink:0;margin-left:8px;color:#6e7681;text-decoration:none;font-size:12px;opacity:0.6" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">&#8599;</a>
-        <button onclick="deleteValSource('${s.id}')" title="Delete source" style="flex-shrink:0;margin-left:6px;background:none;border:none;color:#6e7681;font-size:12px;cursor:pointer;opacity:0.5;padding:0 2px" onmouseover="this.style.opacity='1';this.style.color='#f85149'" onmouseout="this.style.opacity='0.5';this.style.color='#6e7681'">&#10005;</button>
-      </div>`;
-    }).join('');
-    el.innerHTML = addForm + header + rows;
-  } catch {
-    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load sources.</div>';
-  }
-}
-
-async function submitAddSource() {
-  const url = $('val-src-url').value.trim();
-  const name = $('val-src-name').value.trim();
-  const cadence = $('val-src-cadence').value;
-  const errEl = $('val-add-source-err');
-  errEl.style.display = 'none';
-
-  if (!url || !name) { errEl.textContent = 'URL and name are required.'; errEl.style.display = 'block'; return; }
-
-  const checkedBoxes = document.querySelectorAll('#val-add-source-form input[type=checkbox]:checked');
-  const scenario_tags = Array.from(checkedBoxes).map(cb => cb.value);
-
-  try {
-    const r = await fetch('/api/validation/sources/add', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url, name, cadence, scenario_tags}),
-    });
-    const data = await r.json();
-    if (!r.ok) { errEl.textContent = data.error || 'Add failed'; errEl.style.display = 'block'; return; }
-    await loadValSources();
-  } catch {
-    errEl.textContent = 'Server error'; errEl.style.display = 'block';
-  }
-}
-
-async function deleteValSource(sourceId) {
-  if (!confirm(`Delete source "${sourceId}" from registry?`)) return;
-  try {
-    const r = await fetch(`/api/validation/sources/${encodeURIComponent(sourceId)}`, {method: 'DELETE'});
-    const data = await r.json();
-    if (!r.ok) { alert(data.error || 'Delete failed'); return; }
-    await loadValSources();
-  } catch {
-    alert('Server error');
-  }
-}
-
-async function loadValCandidates() {
-  const el = $('val-candidates');
-  const countEl = $('val-candidate-count');
-  try {
-    const data = await fetch('/api/validation/candidates').then(r => r.json());
-    const pending = (data.candidates||[]).filter(c => c.status === 'pending_review');
-    countEl.textContent = pending.length ? `(${pending.length} pending)` : '';
-    if (!pending.length) {
-      el.innerHTML = '<div style="color:#6e7681;font-size:11px;padding:12px">No pending candidates.</div>';
-      return;
-    }
-    const rows = pending.map(c => {
-      const year = c.estimated_year || '—';
-      const hasDollar = c.has_dollar_figure ? '<span style="color:#3fb950">$</span>' : '<span style="color:#484f58">—</span>';
-      const scenarios = (c.scenario_tags||[]).join(', ');
-      const title = (c.title||c.url||'').slice(0,60);
-      const snippet = (c.snippet||'').slice(0,100);
-      return `<div style="padding:8px 12px;border-bottom:1px solid #21262d;font-size:11px">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="flex:1;min-width:0">
-            <div style="color:#e6edf3;margin-bottom:2px">${title}</div>
-            <div style="color:#484f58;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.url||''}</div>
-            <div style="color:#6e7681;font-size:10px;margin-top:2px">${snippet}</div>
-            <div style="margin-top:4px;font-size:10px;color:#6e7681">${year} · ${hasDollar} dollar figure · ${scenarios}</div>
-          </div>
-          <button onclick="promoteCandidate('${encodeURIComponent(c.url||'')}')"
-            style="flex-shrink:0;font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer;white-space:nowrap">
-            Promote
-          </button>
-          <button onclick="dismissCandidate('${encodeURIComponent(c.url||'')}')"
-            style="flex-shrink:0;font-size:10px;color:#6e7681;background:#0d1117;border:1px solid #21262d;padding:2px 10px;border-radius:2px;cursor:pointer">
-            Dismiss
-          </button>
-        </div>
-      </div>`;
-    }).join('');
-    el.innerHTML = rows;
-  } catch {
-    el.innerHTML = '<div style="color:#f85149;font-size:11px;padding:12px">Failed to load candidates.</div>';
-  }
-}
-
-async function promoteCandidate(encodedUrl) {
-  const url = decodeURIComponent(encodedUrl);
-  try {
-    const r = await fetch('/api/validation/promote', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({url}),
-    });
-    const data = await r.json();
-    if (!r.ok) { alert(data.error || 'Promote failed'); return; }
-    await loadValCandidates();
-    await loadValSources();
-  } catch {
-    alert('Promote failed — server error');
-  }
-}
-
-async function dismissCandidate(encodedUrl) {
-  // Mark as dismissed in candidates file via a simple promote-like endpoint
-  // For now, just reload — the candidate will be filtered on next discovery run
-  await loadValCandidates();
-}
 
 
 
@@ -3362,10 +3194,28 @@ function _renderSourcesBox(title, sources, versionChecks, extraHeaderHtml) {
     </div>`;
 }
 
-function _renderRegValDimension(scenId, dim, d, versionChecks) {
+function _renderRegValDimension(scenId, dim, d, versionChecks, baseline) {
   if (!d) return '';
   const isFinancial = dim === 'financial';
   const isProb = dim === 'probability';
+
+  // Analyst baseline row (Task 18)
+  let baselineRow = '';
+  if (baseline) {
+    if (dim === 'financial' && baseline.fin) {
+      const b = baseline.fin;
+      const fmt = (x) => `$${(x/1_000_000).toFixed(1)}M`;
+      baselineRow = `<div style="padding:4px 10px;color:#e3b341;font-size:11px;background:#14100a;border-bottom:1px solid #21262d">
+        Baseline (you): ${fmt(b.value_usd)} [${fmt(b.low_usd)}–${fmt(b.high_usd)}] ◆
+      </div>`;
+    } else if (dim === 'probability' && baseline.prob) {
+      const b = baseline.prob;
+      baselineRow = `<div style="padding:4px 10px;color:#e3b341;font-size:11px;background:#14100a;border-bottom:1px solid #21262d">
+        Baseline (you): ${(b.annual_rate*100).toFixed(1)}% [${(b.low*100).toFixed(1)}%–${(b.high*100).toFixed(1)}%] ◆ <span style="color:#6e7681;font-size:10px">(${b.evidence_type})</span>
+      </div>`;
+    }
+  }
+
   const label = isFinancial ? 'FINANCIAL' : 'PROBABILITY';
   const vacr = isFinancial
     ? (d.vacr_figure_usd != null ? `$${Number(d.vacr_figure_usd).toLocaleString('en-US')}` : '—')
@@ -3405,6 +3255,7 @@ function _renderRegValDimension(scenId, dim, d, versionChecks) {
 
   return `
   <div style="margin:0 12px 6px 12px;border:1px solid ${borderColor};border-radius:3px;overflow:hidden">
+    ${baselineRow}
     <div onclick="toggleRegValRow('${expandId}')" class="rr-dim-header">
       <span class="rr-dim-label">${label}</span>
       <span class="rr-dim-value">${vacr}</span>
@@ -4209,6 +4060,291 @@ async function submitAddBenchmarkSource() {
   closeAddBenchmarkSourceModal();
   if (_slActiveSubtab === 'benchmarks') loadSourceLibraryBenchmarks();
   if (_slAddSourceOnSave) _slAddSourceOnSave(newId);
+}
+
+// ── Risk Register: run summary card ───────────────────────────
+async function loadAndRenderRunSummary() {
+  const data = await fetchJSON('/api/register-validation/results');
+  const slot = document.getElementById('rr-run-summary-card');
+  if (!slot) return;
+  if (!data || !data.run_summary) { slot.innerHTML = ''; return; }
+  renderRunSummary(data.run_summary);
+}
+
+function _runSummaryDeltaSign(cur, prev) {
+  if (prev == null) return '';
+  const d = (cur || 0) - (prev || 0);
+  if (d === 0) return `<span style="color:#6e7681">(–)</span>`;
+  const c = d > 0 ? '#3fb950' : '#f85149';
+  return `<span style="color:${c}">(${d > 0 ? '+' : ''}${d})</span>`;
+}
+
+function renderRunSummary(s) {
+  const slot = document.getElementById('rr-run-summary-card');
+  if (!slot) return;
+  const collapsedKey = 'rr-run-summary-collapsed';
+  const isCollapsed = localStorage.getItem(collapsedKey) === 'true';
+
+  const cur = s.verdicts?.current || {};
+  const prev = s.verdicts?.previous || null;
+  const deltas = s.verdicts?.deltas || [];
+  const gaps = s.coverage_gaps || [];
+  const bu = s.baseline_usage || {};
+  const evi = s.evidence || {};
+  const src = s.sources || {};
+  const newHtml = (src.new_this_run || []).map(n => esc(n.name)).join(', ') || '—';
+  const dropHtml = (src.dropped_this_run || []).map(n => esc(n.name)).join(', ') || '—';
+  const byTier = Object.entries(src.by_tier || {}).map(([t, n]) => `${t}:${n}`).join(' · ');
+
+  const dateLabel = s.run_id ? s.run_id.replace('T', ' ').replace('Z', '') : '—';
+  const durLabel = s.duration_seconds ? `${Math.floor(s.duration_seconds / 60)}m ${s.duration_seconds % 60}s` : '';
+
+  if (isCollapsed) {
+    slot.innerHTML = `<div onclick="_toggleRunSummaryCard()" style="cursor:pointer;background:#0d1117;border:1px solid #21262d;padding:8px 14px;font-size:11px;color:#8b949e;border-radius:4px">
+      Last run ${dateLabel} — ${cur.support || 0} SUPPORT, ${cur.challenge || 0} CHALLENGE, ${cur.insufficient || 0} INSUF · ${deltas.length} changes · ${gaps.length} gaps · ▸
+    </div>`;
+    return;
+  }
+
+  const deltaRows = deltas.map(d => {
+    const arrow = d.direction === 'improved' ? '↑' : '↓';
+    const color = d.direction === 'improved' ? '#3fb950' : '#f85149';
+    return `<div onclick="_scrollToScenario('${esc(d.scenario)}')" style="cursor:pointer;color:${color};font-size:10px">${arrow} ${esc(d.scenario)} (${d.dim}): ${d.from} → ${d.to.toUpperCase()}</div>`;
+  }).join('') || '<div style="color:#484f58;font-size:10px">No verdict changes.</div>';
+
+  const gapRows = gaps.map(g =>
+    `<div onclick="_jumpToCoverageMatrix('${esc(g.scenario)}')" style="cursor:pointer;color:#e3b341;font-size:10px">⚠ ${esc(g.scenario)} — ${esc(g.issue)}</div>`
+  ).join('') || '<div style="color:#484f58;font-size:10px">No gaps.</div>';
+
+  slot.innerHTML = `<div style="background:#0d1117;border:1px solid #21262d;border-radius:4px">
+    <div onclick="_toggleRunSummaryCard()" style="cursor:pointer;display:flex;justify-content:space-between;padding:8px 14px;border-bottom:1px solid #21262d">
+      <span style="font-size:11px;color:#c9d1d9;font-weight:600">Last validation run</span>
+      <span style="font-size:10px;color:#6e7681">${dateLabel} ${durLabel ? '· ' + durLabel : ''} ▾</span>
+    </div>
+    <div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:11px">
+      <div>
+        <div style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Verdicts</div>
+        <div style="color:#3fb950">SUPPORT <strong>${cur.support || 0}</strong> ${_runSummaryDeltaSign(cur.support, prev?.support)}</div>
+        <div style="color:#f85149">CHALLENGE <strong>${cur.challenge || 0}</strong> ${_runSummaryDeltaSign(cur.challenge, prev?.challenge)}</div>
+        <div style="color:#8b949e">INSUF. <strong>${cur.insufficient || 0}</strong> ${_runSummaryDeltaSign(cur.insufficient, prev?.insufficient)}</div>
+      </div>
+      <div>
+        <div style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Sources</div>
+        <div style="color:#c9d1d9">${src.matched || 0}/${src.queried || 0} matched</div>
+        <div style="color:#8b949e;font-size:10px">${byTier || '—'}</div>
+        <div style="color:#8b949e;font-size:10px">+ ${newHtml} · − ${dropHtml}</div>
+      </div>
+      <div>
+        <div style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Evidence</div>
+        <div style="color:#c9d1d9">Fin: ${evi.fin_after_iqr_filter || 0}/${evi.fin_extracted || 0}</div>
+        <div style="color:#c9d1d9">Prob: ${evi.prob_after_iqr_filter || 0}/${evi.prob_extracted || 0}</div>
+        <div style="color:#8b949e;font-size:10px">${evi.outliers_removed || 0} outliers cut</div>
+      </div>
+    </div>
+    <div style="padding:10px 14px;border-top:1px solid #21262d;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div>
+        <div style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Gaps</div>
+        ${gapRows}
+      </div>
+      <div>
+        <div style="color:#6e7681;font-size:9px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px">Changes</div>
+        ${deltaRows}
+      </div>
+    </div>
+    <div style="padding:8px 14px;border-top:1px solid #21262d;font-size:10px;color:#8b949e">
+      Baseline: ${bu.scenarios_with_baseline || 0} scenarios · ${bu.baseline_aligned_with_osint || 0} aligned · ${bu.baseline_diverged_from_osint || 0} diverged
+    </div>
+  </div>`;
+}
+
+function _toggleRunSummaryCard() {
+  const k = 'rr-run-summary-collapsed';
+  localStorage.setItem(k, localStorage.getItem(k) === 'true' ? 'false' : 'true');
+  loadAndRenderRunSummary();
+}
+
+function _scrollToScenario(name) {
+  const rows = document.querySelectorAll('#rr-scenario-list [data-scenario-name]');
+  for (const el of rows) {
+    if (el.getAttribute('data-scenario-name') === name) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.click();
+      return;
+    }
+  }
+}
+
+function _jumpToCoverageMatrix(scenarioName) {
+  switchTab('sources');
+  switchSourceLibrarySubtab('benchmarks');
+  _slBenchView = 'matrix';
+  loadSourceLibraryBenchmarks();
+}
+
+// ── Baseline editor ─────────────────────────────────────────────
+let _baselineDraft = null;  // { key, fin, prob }
+
+function _baselineKey(regId, idx) { return `${regId}::${idx}`; }
+
+function renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex) {
+  const existing = scenario.analyst_baseline || null;
+  const draft = (_baselineDraft && _baselineDraft.key === _baselineKey(registerId, scenarioIndex))
+    ? _baselineDraft : { key: _baselineKey(registerId, scenarioIndex), fin: existing?.fin || null, prob: existing?.prob || null };
+  _baselineDraft = draft;
+
+  const expanded = !!existing;
+  const finB = draft.fin || {};
+  const probB = draft.prob || {};
+
+  return `<div id="bl-editor-wrap" style="margin:10px 0;border:1px solid #21262d;border-radius:3px">
+    <div onclick="_toggleBaselineEditor()" style="cursor:pointer;padding:6px 10px;font-size:10px;color:#8b949e;text-transform:uppercase;letter-spacing:0.05em;background:#161b22">
+      Analyst Baseline ${existing ? '◆' : ''} <span id="bl-toggle-arrow">${expanded ? '▾' : '▸'}</span>
+    </div>
+    <div id="bl-editor-body" style="display:${expanded ? 'block' : 'none'};padding:10px 12px;font-size:11px">
+
+      <div style="color:#8b949e;font-size:10px;margin-bottom:4px">Impact (USD)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+        <label style="font-size:10px;color:#6e7681">Mid <input id="bl-fin-val" type="number" value="${finB.value_usd || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+        <label style="font-size:10px;color:#6e7681">Low <input id="bl-fin-lo"  type="number" value="${finB.low_usd   || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+        <label style="font-size:10px;color:#6e7681">High<input id="bl-fin-hi"  type="number" value="${finB.high_usd  || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+      </div>
+      <div id="bl-fin-sources" style="margin-bottom:4px">${_renderBaselineSourceChips(finB.source_ids || [], 'fin')}</div>
+      <button onclick="_openBaselineSourcePicker('fin')" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
+      <input id="bl-fin-notes" placeholder="Notes…" value="${esc(finB.notes || '')}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px;margin:6px 0">
+
+      <div style="color:#8b949e;font-size:10px;margin-top:10px;margin-bottom:4px">Probability (annual, 0..1)</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px">
+        <label style="font-size:10px;color:#6e7681">Mid <input id="bl-prob-val" type="number" step="0.01" value="${probB.annual_rate || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+        <label style="font-size:10px;color:#6e7681">Low <input id="bl-prob-lo"  type="number" step="0.01" value="${probB.low || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+        <label style="font-size:10px;color:#6e7681">High<input id="bl-prob-hi"  type="number" step="0.01" value="${probB.high || ''}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px"></label>
+      </div>
+      <label style="font-size:10px;color:#6e7681">Evidence type
+        <select id="bl-prob-evt" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px">
+          ${['frequency_rate','prevalence_survey','mixed','expert_estimate','unknown']
+            .map(v => `<option value="${v}" ${probB.evidence_type===v?'selected':''}>${v}</option>`).join('')}
+        </select>
+      </label>
+      <div id="bl-prob-sources" style="margin:6px 0 4px 0">${_renderBaselineSourceChips(probB.source_ids || [], 'prob')}</div>
+      <button onclick="_openBaselineSourcePicker('prob')" style="font-size:10px;padding:3px 10px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">+ Add from library</button>
+      <input id="bl-prob-notes" placeholder="Notes…" value="${esc(probB.notes || '')}" style="width:100%;background:#0d1117;color:#c9d1d9;border:1px solid #30363d;padding:3px 5px;font-size:11px;margin:6px 0">
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button onclick="saveBaseline('${esc(registerId)}', ${scenarioIndex})" style="padding:5px 12px;font-size:11px;background:#1a3a1a;color:#3fb950;border:1px solid #238636;border-radius:2px;cursor:pointer">Save baseline</button>
+        <button onclick="clearBaseline('${esc(registerId)}', ${scenarioIndex})" style="padding:5px 12px;font-size:11px;background:#161b22;color:#8b949e;border:1px solid #30363d;border-radius:2px;cursor:pointer">Clear</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function _renderBaselineSourceChips(sourceIds, dim) {
+  if (!sourceIds.length) return '<span style="color:#484f58;font-size:10px">No sources</span>';
+  return sourceIds.map(id => {
+    const known = (window._baselineKnownIds || new Set()).has(id);
+    const style = known
+      ? 'background:#161b22;color:#c9d1d9;border:1px solid #30363d'
+      : 'background:#2a0a0a;color:#8b949e;border:1px solid #6b2222;text-decoration:line-through';
+    const warn = known ? '' : ' <span style="color:#f85149;font-size:9px">(missing)</span>';
+    return `<span style="${style};padding:2px 6px;border-radius:2px;font-size:10px;margin-right:4px;cursor:pointer" onclick="_removeBaselineSource('${esc(id)}', '${dim}')">${esc(id)}${warn} ×</span>`;
+  }).join('');
+}
+
+function _toggleBaselineEditor() {
+  const body = document.getElementById('bl-editor-body');
+  const arrow = document.getElementById('bl-toggle-arrow');
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  if (arrow) arrow.textContent = isOpen ? '▸' : '▾';
+}
+
+function _openBaselineSourcePicker(dim) {
+  fetchJSON('/api/validation/sources').then(data => {
+    const sources = (data && data.sources) || [];
+    const options = sources.map(s => `${s.id} — ${s.name}`).join('\n');
+    const picked = prompt(
+      `Paste a source ID from the list below, or type "+" to add a new source:\n\n${options}`,
+      ''
+    );
+    if (!picked) return;
+    if (picked === '+') {
+      window.openAddBenchmarkSourceModal({ onSave: (newId) => _addBaselineSource(newId, dim) });
+      return;
+    }
+    _addBaselineSource(picked.trim(), dim);
+  });
+}
+
+function _addBaselineSource(id, dim) {
+  if (!_baselineDraft) return;
+  _baselineDraft[dim] = _baselineDraft[dim] || {};
+  const ids = _baselineDraft[dim].source_ids || [];
+  if (!ids.includes(id)) ids.push(id);
+  _baselineDraft[dim].source_ids = ids;
+  const el = document.getElementById(`bl-${dim}-sources`);
+  if (el) el.innerHTML = _renderBaselineSourceChips(ids, dim);
+}
+
+function _removeBaselineSource(id, dim) {
+  if (!_baselineDraft || !_baselineDraft[dim]) return;
+  _baselineDraft[dim].source_ids = (_baselineDraft[dim].source_ids || []).filter(x => x !== id);
+  const el = document.getElementById(`bl-${dim}-sources`);
+  if (el) el.innerHTML = _renderBaselineSourceChips(_baselineDraft[dim].source_ids, dim);
+}
+
+async function saveBaseline(registerId, scenarioIndex) {
+  const finVal = parseFloat(document.getElementById('bl-fin-val')?.value || '');
+  const finLo  = parseFloat(document.getElementById('bl-fin-lo')?.value  || '');
+  const finHi  = parseFloat(document.getElementById('bl-fin-hi')?.value  || '');
+  const probVal = parseFloat(document.getElementById('bl-prob-val')?.value || '');
+  const probLo  = parseFloat(document.getElementById('bl-prob-lo')?.value  || '');
+  const probHi  = parseFloat(document.getElementById('bl-prob-hi')?.value  || '');
+
+  const body = {};
+  if (!isNaN(finVal) && !isNaN(finLo) && !isNaN(finHi)) {
+    if (!(finLo <= finVal && finVal <= finHi)) { alert('Fin: low ≤ mid ≤ high required'); return; }
+    body.fin = {
+      value_usd: finVal, low_usd: finLo, high_usd: finHi,
+      source_ids: _baselineDraft?.fin?.source_ids || [],
+      notes: document.getElementById('bl-fin-notes')?.value || '',
+    };
+  }
+  if (!isNaN(probVal) && !isNaN(probLo) && !isNaN(probHi)) {
+    if (!(0 <= probLo && probHi <= 1)) { alert('Prob: values must be in [0, 1]'); return; }
+    if (!(probLo <= probVal && probVal <= probHi)) { alert('Prob: low ≤ mid ≤ high required'); return; }
+    body.prob = {
+      annual_rate: probVal, low: probLo, high: probHi,
+      evidence_type: document.getElementById('bl-prob-evt')?.value || 'unknown',
+      source_ids: _baselineDraft?.prob?.source_ids || [],
+      notes: document.getElementById('bl-prob-notes')?.value || '',
+    };
+  }
+  if (!body.fin && !body.prob) { alert('Enter at least one of fin or prob'); return; }
+
+  const res = await fetch(`/api/registers/${registerId}/scenarios/${scenarioIndex}/baseline`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    alert('Save failed: ' + (err.error || res.status));
+    return;
+  }
+  _baselineDraft = null;
+  if (typeof loadRegister === 'function') loadRegister(registerId);
+}
+
+async function clearBaseline(registerId, scenarioIndex) {
+  if (!confirm('Clear baseline for this scenario?')) return;
+  const res = await fetch(`/api/registers/${registerId}/scenarios/${scenarioIndex}/baseline`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(null),
+  });
+  if (!res.ok) { alert('Clear failed'); return; }
+  _baselineDraft = null;
+  if (typeof loadRegister === 'function') loadRegister(registerId);
+}
+
+async function refreshBaselineKnownIds() {
+  const data = await fetchJSON('/api/validation/sources');
+  window._baselineKnownIds = new Set(((data && data.sources) || []).map(s => s.id));
 }
 
 // ── Init ──────────────────────────────────────────────────────────────

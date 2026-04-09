@@ -1091,6 +1091,9 @@
     <button onclick="runRegisterValidation()" style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:0.08em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">▶ Run</button>
   </div>
 
+  <!-- Run summary card (last validation run) -->
+  <div id="rr-run-summary-card" style="flex-shrink:0;margin:0 16px 10px 16px"></div>
+
   <!-- Progress line (hidden until running) -->
   <div id="val-progress" style="display:none;flex-shrink:0;font-size:10px;color:#6e7681;padding:5px 16px;background:#161b22;border-bottom:1px solid #21262d"></div>
 
@@ -1100,26 +1103,6 @@
     <div id="rr-scenario-list" style="overflow-y:auto;border-right:1px solid #21262d"></div>
     <!-- Right panel: Scenario detail -->
     <div id="rr-scenario-detail" style="overflow-y:auto"></div>
-  </div>
-
-  <!-- Source Registry (full-width, collapsed by default) -->
-  <div style="flex-shrink:0;border-top:1px solid #21262d">
-    <div onclick="toggleSourceRegistry()" style="display:flex;justify-content:space-between;align-items:center;padding:7px 16px;cursor:pointer">
-      <span style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">Source Registry</span>
-      <span id="rr-src-toggle" style="font-size:10px;color:#484f58">&#9654; Show</span>
-    </div>
-    <div id="rr-src-body" style="display:none;max-height:45vh;overflow-y:auto;border-top:1px solid #21262d">
-      <div style="display:grid;grid-template-columns:1fr 1fr">
-        <div style="border-right:1px solid #21262d;padding:12px 14px">
-          <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">Registered Sources</div>
-          <div id="val-sources"><div style="color:#6e7681;font-size:11px;padding:8px">Loading...</div></div>
-        </div>
-        <div style="padding:12px 14px">
-          <div style="font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681;margin-bottom:8px">New Sources <span id="val-candidate-count" style="color:#e3b341"></span></div>
-          <div id="val-candidates"><div style="color:#6e7681;font-size:11px;padding:8px">No candidates.</div></div>
-        </div>
-      </div>
-    </div>
   </div>
 
 </div>
