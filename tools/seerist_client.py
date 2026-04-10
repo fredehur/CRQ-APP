@@ -1,300 +1,341 @@
 #!/usr/bin/env python3
-"""Seerist geopolitical risk intelligence client.
+"""Seerist API client — all endpoints under https://app.seerist.com/hyperionapi/.
 
-Seerist (formerly Geospark Analytics) is an API-first, AI-powered geopolitical
-risk intelligence platform backed by Control Risks. It delivers structured
-intelligence objects — not search results — covering every country globally.
+Auth: x-api-key header. Responses are GeoJSON. This client normalizes
+features[].properties into pipeline signal schemas.
 
-Activation: set SEERIST_API_KEY in .env
-Optional:   set SEERIST_CYBER_ADDON=true to enable +Cyber endpoints (separate license)
-
-All methods return None if SEERIST_API_KEY is not set. The pipeline degrades
-gracefully — osint_search.py (Tavily/DDG) handles the load when Seerist is absent.
-
-API contract (REST, JSON responses):
-  Base URL: TODO — confirm with Seerist (no public developer portal)
-  Auth:     Authorization: Bearer {SEERIST_API_KEY}  (confirm header name with Seerist)
-
-Seerist intelligence engines covered here:
-  PulseAI         — 0–100 country stability score, 29 sub-category risk ratings, daily cadence
-  EventsAI        — AI-classified event feed (8 categories), updated every 6 hours, 6.8M+ sources
-  Verified Events — human-curated historical event DB (2008–present), war/terrorism/unrest/crime
-  HotspotsAI      — anomaly detection, flags deviations before media coverage
-  ScribeAI        — auto-generated written risk/threat assessment reports (on-demand)
-  +Cyber          — country-level cyber risk ratings + threat actor profiles (add-on license)
+Reference: memory/reference-seerist-api.md
 """
-
+import json
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
 
-# TODO: confirm base URL with Seerist (provided under commercial contract)
-SEERIST_BASE_URL = os.environ.get("SEERIST_BASE_URL", "https://api.seerist.com/v1")
+BASE_URL = "https://app.seerist.com/hyperionapi/"
 
-# Region → ISO country codes mapping for Seerist queries
-REGION_COUNTRIES = {
-    "APAC":  ["CN", "AU", "TW", "JP", "SG", "KR", "IN"],
-    "AME":   ["US", "CA", "MX"],
-    "LATAM": ["BR", "CL", "CO", "AR", "PE"],
-    "MED":   ["IT", "ES", "GR", "TR", "MA", "EG"],
-    "NCE":   ["DE", "PL", "DK", "SE", "NO", "FI"],
+# CRQ region → Seerist Area of Interest code
+REGION_AOI_MAP = {
+    "APAC": "APAC",
+    "AME": "AMER",
+    "LATAM": "AMER",
+    "MED": "MENA",
+    "NCE": "EURC",
 }
 
-# EventsAI 8 top-level categories
-EVENTS_AI_CATEGORIES = ["Conflict", "Terrorism", "Unrest", "Disasters", "Crime", "Health", "Travel Safety", "Transportation"]
+# CRQ region → ISO country codes (for Pulse, Scribe, Risk Ratings — per-country endpoints)
+REGION_COUNTRIES = {
+    "APAC": ["CN", "AU", "TW", "JP", "SG", "KR", "IN"],
+    "AME": ["US", "CA", "MX"],
+    "LATAM": ["BR", "CL", "CO", "AR", "PE"],
+    "MED": ["IT", "ES", "GR", "TR", "MA", "EG"],
+    "NCE": ["DE", "PL", "DK", "SE", "NO", "FI"],
+}
 
-# PulseAI 29 sub-category domains (full list not publicly enumerated — confirm with Seerist)
-PULSE_DOMAINS = ["political", "operational", "security", "cyber", "maritime"]
-
-
-def _get_client() -> httpx.Client | None:
-    """Return authenticated httpx client, or None if no API key is set."""
-    api_key = os.environ.get("SEERIST_API_KEY")
-    if not api_key:
-        return None
-    return httpx.Client(
-        base_url=SEERIST_BASE_URL,
-        headers={
-            # TODO: confirm auth header name with Seerist
-            "Authorization": f"Bearer {api_key}",
-            "Accept": "application/json",
-        },
-        timeout=20,
-    )
+# LATAM/MED/NCE share AoI with AME/MENA/EURC — filter by country
+REGION_COUNTRY_FILTER = {
+    "LATAM": {"BR", "CL", "CO", "AR", "PE"},
+    "MED": {"IT", "ES", "GR", "TR", "MA", "EG"},
+    "NCE": {"DE", "PL", "DK", "SE", "NO", "FI"},
+}
 
 
-def get_pulse_stability(region: str) -> dict | None:
-    """PulseAI — 0–100 country stability score + 29 sub-category risk ratings.
+def _normalize_event(feature: dict, region: str, seq: int, *, verified: bool = False) -> dict:
+    """Normalize a GeoJSON feature into pipeline event schema."""
+    props = feature.get("properties", {})
+    geom = feature.get("geometry", {})
+    coords = geom.get("coordinates", [0, 0])  # [lon, lat]
 
-    Updated daily. Covers every country, ~8,000 sub-national regions, 1,200+ cities.
-    Bloomberg ingests this data for company-level geopolitical risk scores.
-
-    Expected response shape (TODO: confirm field names with Seerist):
-    {
-        "stability_score": 42,          # 0–100, higher = more stable
-        "security_risk": "High",        # Control Risks expert rating
-        "political_risk": "Medium",
-        "operational_risk": "Medium",
-        "sub_categories": {             # 29 sub-category ratings
-            "political_violence": "Low",
-            "border_tension": "High",
-            # ... (full list to be confirmed with Seerist)
-        },
-        "forecast_horizon_years": 5,
-        "last_updated": "2026-03-14T00:00:00Z"
-    }
-
-    TODO: confirm endpoint path — likely GET /pulse/regions/{region} or GET /pulse/countries?codes=US,CA
-    """
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    if not countries:
-        return None
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.get(f"/pulse/regions/{region.upper()}", params={"countries": ",".join(countries)})
-            resp.raise_for_status()
-            return resp.json()
-    except Exception as e:
-        print(f"[seerist] PulseAI error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_events_ai(region: str, days: int = 30) -> list[dict] | None:
-    """EventsAI — AI-classified event feed updated every 6 hours.
-
-    Ingests 6.8M+ OSINT sources in 100+ languages. Events are accurately
-    geolocated with metadata. 8 categories: Conflict, Terrorism, Unrest,
-    Disasters, Crime, Health, Travel Safety, Transportation.
-
-    Each event shape (TODO: confirm field names with Seerist):
-    {
-        "event_id": "...",
-        "category": "Unrest",           # one of EVENTS_AI_CATEGORIES
-        "severity": 3,                  # TODO: confirm severity scale (1–5? 1–10?)
-        "title": "...",
-        "description": "...",
-        "location": {"name": "...", "lat": 0.0, "lon": 0.0, "country_code": "TW"},
-        "timestamp": "2026-03-13T18:00:00Z",
-        "source_count": 12,
-        "verified": false               # true = from Verified Events DB (human-curated)
-    }
-
-    Available as Esri hosted Feature Service AND via REST API — confirm preferred endpoint.
-    TODO: confirm endpoint path — likely GET /events?region=APAC&days=30&categories=Conflict,Terrorism,Unrest
-    """
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.get(
-                "/events",
-                params={
-                    "countries": ",".join(countries),
-                    "days": days,
-                    "categories": ",".join(["Conflict", "Terrorism", "Unrest", "Crime"]),
-                },
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("events", data) if isinstance(data, dict) else data
-    except Exception as e:
-        print(f"[seerist] EventsAI error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_verified_events(region: str, days: int = 90) -> list[dict] | None:
-    """Verified Events — human-curated historical event database (2008–present).
-
-    Covers: war, terrorism, unrest, violent/organized crime.
-    Each event accurately geolocated with extensive metadata.
-    Use for: event-vs-trend classification (signal_type field in data.json).
-    A cluster of verified events = trend; a single recent event = event.
-
-    TODO: confirm endpoint path — likely GET /verified-events?region=APAC&from=2026-01-01
-    """
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.get(
-                "/verified-events",
-                params={"countries": ",".join(countries), "days": days},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("events", data) if isinstance(data, dict) else data
-    except Exception as e:
-        print(f"[seerist] VerifiedEvents error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_hotspots(region: str) -> list[dict] | None:
-    """HotspotsAI — anomaly detection, surfaces deviations before media coverage.
-
-    Detects abnormal activity against location-specific baseline norms.
-    Use as an early-warning signal: a hotspot with no media coverage is a
-    pre-event indicator — raise admiralty credibility hint if present.
-
-    Each hotspot shape (TODO: confirm with Seerist):
-    {
-        "hotspot_id": "...",
-        "location": {"name": "...", "country_code": "CN"},
-        "deviation_score": 0.87,        # TODO: confirm scale
-        "baseline_comparison": "...",
-        "detected_at": "2026-03-14T06:00:00Z",
-        "category_hint": "Unrest"
-    }
-
-    TODO: confirm endpoint path — likely GET /hotspots?region=APAC
-    """
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.get("/hotspots", params={"countries": ",".join(countries)})
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("hotspots", data) if isinstance(data, dict) else data
-    except Exception as e:
-        print(f"[seerist] HotspotsAI error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_scribe_assessment(region: str) -> str | None:
-    """ScribeAI — auto-generated written risk/threat assessment report (on-demand).
-
-    Synthesizes PulseAI scores + EventsAI events into a narrative assessment.
-    Returns plain text or markdown. Regional analyst can cite this directly.
-
-    TODO: confirm endpoint path — likely POST /scribe/assess with region/country payload
-    TODO: confirm whether ScribeAI is a separate licensed add-on or included in base
-    """
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.post(
-                "/scribe/assess",
-                json={"countries": countries, "region": region.upper()},
-            )
-            resp.raise_for_status()
-            data = resp.json()
-            return data.get("assessment") or data.get("report") or str(data)
-    except Exception as e:
-        print(f"[seerist] ScribeAI error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_cyber_risk(region: str) -> dict | None:
-    """+Cyber add-on — country-level cyber risk ratings + threat actor profiles.
-
-    Requires SEERIST_CYBER_ADDON=true in .env (separate license tier).
-    Use in cyber_collector.py to provide a quantified country cyber posture
-    rather than a keyword-inferred dominant_pillar.
-
-    Expected shape (TODO: confirm with Seerist):
-    {
-        "cyber_risk_rating": "High",    # country-level
-        "threat_actor_profiles": [
-            {"name": "...", "type": "state-sponsored|criminal", "active": true}
-        ],
-        "historical_incidents": 47,     # count over 12 months
-        "last_updated": "2026-03-14"
-    }
-
-    TODO: confirm endpoint path — likely GET /cyber/risk?countries=CN,TW
-    TODO: confirm whether +Cyber is queried per-country or per-region
-    """
-    cyber_addon = os.environ.get("SEERIST_CYBER_ADDON", "").lower() == "true"
-    if not cyber_addon:
-        return None
-    client = _get_client()
-    if client is None:
-        return None
-    countries = REGION_COUNTRIES.get(region.upper(), [])
-    try:
-        with client:
-            # TODO: replace with confirmed endpoint
-            resp = client.get("/cyber/risk", params={"countries": ",".join(countries)})
-            resp.raise_for_status()
-            return resp.json()
-    except Exception as e:
-        print(f"[seerist] +Cyber error for {region}: {e}", file=sys.stderr)
-        return None
-
-
-def get_full_intelligence(region: str) -> dict:
-    """Convenience aggregator — calls all available engines for a region.
-
-    Returns dict with keys: pulse, events, verified_events, hotspots, scribe, cyber.
-    Any engine that fails or is unlicensed returns None for that key.
-    The caller (geo_collector.py) merges non-None values into geo_signals.json.
-    """
+    prefix = "seerist:verified" if verified else "seerist:events_ai"
     return {
-        "pulse": get_pulse_stability(region),
-        "events": get_events_ai(region),
-        "verified_events": get_verified_events(region),
-        "hotspots": get_hotspots(region),
-        "scribe": get_scribe_assessment(region),
-        "cyber": get_cyber_risk(region),
+        "signal_id": f"{prefix}:{region.lower()}-{seq:03d}",
+        "title": props.get("name", ""),
+        "category": props.get("eventType", "Unknown"),
+        "severity": props.get("severity", 0),
+        "location": {
+            "lat": coords[1] if len(coords) > 1 else 0,
+            "lon": coords[0] if coords else 0,
+            "name": props.get("locationName", ""),
+            "country_code": props.get("countryCode", ""),
+        },
+        "source_reliability": props.get("sourceMetadataReliability", "medium"),
+        "source_count": props.get("sourcesCount", 0),
+        "timestamp": props.get("publishDate", ""),
+        "verified": verified,
     }
+
+
+def _normalize_hotspot(feature: dict, region: str, seq: int) -> dict:
+    """Normalize a hotspot GeoJSON feature."""
+    props = feature.get("properties", {})
+    geom = feature.get("geometry", {})
+    coords = geom.get("coordinates", [0, 0])
+    return {
+        "signal_id": f"seerist:hotspot:{region.lower()}-{seq:03d}",
+        "location": {
+            "name": props.get("locationName", ""),
+            "lat": coords[1] if len(coords) > 1 else 0,
+            "lon": coords[0] if coords else 0,
+        },
+        "deviation_score": props.get("deviationScore", 0.0),
+        "category_hint": props.get("eventType", ""),
+        "detected_at": props.get("publishDate", ""),
+        "anomaly_flag": props.get("deviationScore", 0) > 0.7,
+        "cluster_ids": props.get("clusterIds", []),
+    }
+
+
+def _date_range(days: int) -> tuple[str, str]:
+    """Return (start_iso, end_iso) for the last N days."""
+    end = datetime.now(timezone.utc)
+    start = end - timedelta(days=days)
+    return start.strftime("%Y-%m-%dT%H:%M:%S.000Z"), end.strftime("%Y-%m-%dT%H:%M:%S.000Z")
+
+
+def _filter_by_country(features: list, region: str) -> list:
+    """For shared AoIs (LATAM/MED/NCE), filter features to region's countries."""
+    country_filter = REGION_COUNTRY_FILTER.get(region)
+    if not country_filter:
+        return features
+    return [f for f in features
+            if f.get("properties", {}).get("countryCode", "").upper() in country_filter]
+
+
+class SeeristClient:
+    """Seerist API client with typed methods per data type."""
+
+    def __init__(self):
+        api_key = os.environ.get("SEERIST_API_KEY", "")
+        self._client = httpx.Client(
+            base_url=BASE_URL,
+            headers={"x-api-key": api_key, "Accept": "application/json"},
+            timeout=30,
+        )
+
+    @classmethod
+    def create(cls) -> "SeeristClient | None":
+        """Factory — returns None if no API key is set."""
+        if not os.environ.get("SEERIST_API_KEY"):
+            return None
+        return cls()
+
+    def close(self):
+        self._client.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *args):
+        self.close()
+
+    # --- Tier 1 data type methods ---
+
+    def get_events(self, region: str, days: int = 7) -> list[dict]:
+        """Events AI — clustered events. GET /v2/clusters/{categories}."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        categories = "Conflict,Terrorism,Unrest,Crime,Health,Transportation"
+        resp = self._client.get(
+            f"/v2/clusters/{categories}",
+            params={"aoiId": aoi, "start": start, "end": end,
+                    "severityMin": "2", "pageSize": "50"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        return [_normalize_event(f, region, i + 1) for i, f in enumerate(features)]
+
+    def get_verified_events(self, region: str, days: int = 90) -> list[dict]:
+        """Verified Events — human-confirmed. GET /v1/wod with political/maritime sources."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        resp = self._client.get(
+            "/v1/wod",
+            params={"aoiId": aoi, "sources": "political,maritime",
+                    "start": start, "end": end, "pageSize": "25"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        return [_normalize_event(f, region, i + 1, verified=True) for i, f in enumerate(features)]
+
+    def get_hotspots(self, region: str, days: int = 7) -> list[dict]:
+        """Hotspots AI — anomaly detection. GET /v1/hotspots."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        resp = self._client.get(
+            "/v1/hotspots",
+            params={"aoiId": aoi, "start": start, "end": end, "pageSize": "20"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        return [_normalize_hotspot(f, region, i + 1) for i, f in enumerate(features)]
+
+    def get_pulse(self, countries: list[str]) -> dict:
+        """Pulse AI — country stability. GET /v2/pulse/country/{code} per country."""
+        result = {}
+        for code in countries[:3]:  # cap at 3 per region
+            try:
+                resp = self._client.get(
+                    f"/v2/pulse/country/{code.lower()}",
+                    params={"includeForecast": "true"},
+                )
+                resp.raise_for_status()
+                data = resp.json()
+                props = data.get("features", [{}])[0].get("properties", {}) if data.get("features") else data
+                result[code] = {
+                    "score": props.get("score", 0),
+                    "color": props.get("color", ""),
+                    "delta": props.get("delta", 0),
+                    "forecast": props.get("forecast", 0),
+                }
+            except Exception as e:
+                print(f"[seerist] Pulse error for {code}: {e}", file=sys.stderr)
+                result[code] = {"score": 0, "color": "grey", "delta": 0, "forecast": 0}
+        return result
+
+    def get_risk_ratings(self, countries: list[str]) -> dict:
+        """Risk Ratings — GET /v1/wod/risk-rating/{code} per country."""
+        result = {}
+        for code in countries[:3]:
+            try:
+                resp = self._client.get(f"/v1/wod/risk-rating/{code.lower()}")
+                resp.raise_for_status()
+                data = resp.json()
+                props = data.get("features", [{}])[0].get("properties", {}) if data.get("features") else data
+                result[code] = {
+                    "overall": props.get("overall", "Unknown"),
+                    "political": props.get("political", "Unknown"),
+                    "security": props.get("security", "Unknown"),
+                    "operational": props.get("operational", "Unknown"),
+                }
+            except Exception as e:
+                print(f"[seerist] Risk rating error for {code}: {e}", file=sys.stderr)
+        return result
+
+    def get_analysis_reports(self, region: str, days: int = 30) -> list[dict]:
+        """Analysis Reports — GET /v1/wod with sources=analysis."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        resp = self._client.get(
+            "/v1/wod",
+            params={"aoiId": aoi, "sources": "analysis",
+                    "start": start, "end": end, "pageSize": "10"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        result = []
+        for i, f in enumerate(features):
+            props = f.get("properties", {})
+            result.append({
+                "signal_id": f"seerist:analysis:{region.lower()}-{i + 1:03d}",
+                "title": props.get("name", ""),
+                "summary": props.get("description", ""),
+                "source": props.get("source", ""),
+                "published_at": props.get("publishDate", ""),
+            })
+        return result
+
+    def get_scribe_summary(self, country_code: str, date: str) -> dict:
+        """Scribe AI — country summary. GET /v2/auto-summary/{code}/country."""
+        resp = self._client.get(
+            f"/v2/auto-summary/{country_code.lower()}/country",
+            params={"date": date},
+        )
+        resp.raise_for_status()
+        return resp.json()
+
+    def get_breaking_events(self, region: str) -> list[dict]:
+        """Breaking News. GET /v1/wod/breaking-events."""
+        aoi = REGION_AOI_MAP[region]
+        resp = self._client.get(
+            "/v1/wod/breaking-events",
+            params={"aoiId": aoi, "pageSize": "10"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        result = []
+        for i, f in enumerate(features):
+            props = f.get("properties", {})
+            result.append({
+                "signal_id": f"seerist:breaking:{region.lower()}-{i + 1:03d}",
+                "title": props.get("name", ""),
+                "status": props.get("status", "developing"),
+                "severity": props.get("severity", 0),
+                "timestamp": props.get("publishDate", ""),
+            })
+        return result
+
+    def get_news(self, region: str, days: int = 7) -> list[dict]:
+        """News — curated coverage. GET /v1/wod with sources=news."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        resp = self._client.get(
+            "/v1/wod",
+            params={"aoiId": aoi, "sources": "news", "start": start, "end": end,
+                    "sourceMetadataReliability": "high,medium", "pageSize": "15"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        result = []
+        for i, f in enumerate(features):
+            props = f.get("properties", {})
+            result.append({
+                "signal_id": f"seerist:news:{region.lower()}-{i + 1:03d}",
+                "title": props.get("name", ""),
+                "source": props.get("source", ""),
+                "source_type": props.get("sourceType", "journalistic"),
+                "source_reliability": props.get("sourceMetadataReliability", "medium"),
+                "timestamp": props.get("publishDate", ""),
+            })
+        return result
+
+    def search_wod(self, region: str, query: str, days: int = 7) -> dict:
+        """WoD Search — Lucene syntax. GET /v1/wod with search param."""
+        aoi = REGION_AOI_MAP[region]
+        start, end = _date_range(days)
+        resp = self._client.get(
+            "/v1/wod",
+            params={"aoiId": aoi, "search": query,
+                    "sources": "news,twitter,telegram",
+                    "severityMin": "3", "start": start, "end": end,
+                    "sourceMetadataReliability": "high,medium", "pageSize": "10"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        top_results = []
+        for f in features[:10]:
+            props = f.get("properties", {})
+            top_results.append({
+                "title": props.get("name", ""),
+                "source": props.get("source", ""),
+                "severity": props.get("severity", 0),
+                "timestamp": props.get("publishDate", ""),
+                "source_reliability": props.get("sourceMetadataReliability", "medium"),
+            })
+        return {"result_count": len(features), "top_results": top_results}
+
+    def search_poi(self, pois: list[list[float]], days: int = 7) -> list[dict]:
+        """POI Search — events near facility coordinates. GET /v1/wod with pois param."""
+        start, end = _date_range(days)
+        pois_str = json.dumps(pois)
+        resp = self._client.get(
+            "/v1/wod",
+            params={"pois": pois_str, "poisDistUnits": "km",
+                    "start": start, "end": end, "pageSize": "20"},
+        )
+        resp.raise_for_status()
+        return resp.json().get("features", [])
+
+    def get_events_since(self, region: str, timestamp: str) -> list[dict]:
+        """Delta collection — events since last run. GET /v1/wod with since param."""
+        aoi = REGION_AOI_MAP[region]
+        resp = self._client.get(
+            "/v1/wod",
+            params={"aoiId": aoi, "since": timestamp, "pageSize": "50"},
+        )
+        resp.raise_for_status()
+        features = _filter_by_country(resp.json().get("features", []), region)
+        return [_normalize_event(f, region, i + 1) for i, f in enumerate(features)]
