@@ -75,26 +75,32 @@ Set `bullets` to the value in the `bullets` column corresponding to your `paragr
 
 ## STEP 1 — LOAD CONTEXT
 
-Read all of the following before writing anything:
+Read all inputs in this exact order. The order matters: Seerist establishes the intelligence picture; everything else layers on top.
 
-1. `data/company_profile.json` — AeroGrid's crown jewels, industry, global footprint, what the business actually cares about protecting
-2. `data/master_scenarios.json` — the full CRQ scenario register with `financial_rank`, `frequency_rank`, `records_affected_rank`, and scenario descriptions
-3. `output/regional/{region_lower}/osint_signals.json` — unified OSINT signals (geo + cyber pillars). Each indicator has a `pillar` field ("geo" or "cyber") and a `signal_id`. If a `sources` field is present (`[{name, url}]`), use those names for inline citations.
-4. `output/regional/{region_lower}/seerist_signals.json` — Seerist intelligence: situational events, pulse scores, Scribe AI country assessments, WoD search results.
-5. `output/regional/{region_lower}/youtube_signals.json` (if present) — analyst opinion from curated YouTube channels. Treat as corroborating evidence, not primary source. Cite channel names (not URLs) when referencing. If absent or `lead_indicators` is empty, note signal absence — do not fabricate.
-6. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
-7. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
-8. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
-9. `output/regional/{region_lower}/osint_scratchpad.json` (if present — live mode only)
-10. `output/regional/{region_lower}/context_block.txt` (if present) —
-   AeroGrid's physical footprint in this region: sites, headcount,
-   crown jewels, supply chain dependencies, key contracts.
-   Use ONLY in the So What paragraph. Do not reference these assets in Why or How.
-   If absent, proceed without it — do not fabricate footprint data.
-   - `working_theory.hypothesis`: the collection hypothesis that drove OSINT. Use as an analytical starting frame — not a conclusion.
-   - `conclusion.signal_type`: the collector's suggested classification (event/trend/mixed). Validate it against your own reading of the signal files.
-   - `collection.gap_assessment` + `collection.gaps_identified`: what the collector could not find. Reference remaining gaps in your brief's forward-looking closing statement.
-   - If absent: proceed as normal.
+**Step 1a — Read `output/regional/{region_lower}/seerist_signals.json` FIRST.**
+This is the established intelligence picture. Before reading anything else, build your understanding from:
+- `situational.verified_events` → confirmed regional incidents (highest confidence)
+- `analytical.hotspots` where `anomaly_flag=True` → live geospatial anomalies
+- `analytical.pulse` (`delta`, `trend_direction`) → directional risk trajectory
+- `situational.events` (unverified) → situational awareness, lower confidence
+- `analytical.risk_ratings` → country-level assessments
+
+**Step 1b — Read `analytical.scribe` from seerist_signals.json.**
+Seerist Scribe is an AI synthesis of Seerist's own data — not an independent source. Use it for country context and Why paragraph framing. Claims citing Scribe use `signal_id` format `seerist:scribe:NNN` and confidence "Assessed". Do not treat Scribe as corroboration of itself.
+
+**Step 1c — Read `output/regional/{region_lower}/collection_quality.json`.**
+Read `seerist_strength` and `collection_lag` fields. These are pre-computed by collection_gate.py.
+- If `collection_lag.detected = true`: your So What paragraph must close with the collection_lag caveat (see Step 5).
+
+**Step 1d — Read `output/regional/{region_lower}/osint_signals.json`.**
+Layer recency and named specifics on top of the Seerist picture:
+- Named threat actors, court cases, publication statistics
+- Events from the last 24–72h not yet absorbed by Seerist
+OSINT extends the established picture. It does not anchor it. Each indicator has a `pillar` field ("geo" or "cyber") and a `signal_id`. If a `sources` field is present (`[{name, url}]`), use those names for inline citations.
+
+Then read: `data/company_profile.json`, `data/master_scenarios.json`, `output/regional/{region_lower}/youtube_signals.json` (if present — analyst opinion from curated YouTube channels; treat as corroborating evidence, not primary source; cite channel names not URLs; if absent or `lead_indicators` is empty, note signal absence), `output/regional/{region_lower}/scenario_map.json`, `output/regional/{region_lower}/gatekeeper_decision.json`, `data/osint_topics.json`, `output/regional/{region_lower}/osint_scratchpad.json` (if present — live mode only), `output/regional/{region_lower}/context_block.txt` (if present — AeroGrid physical footprint; use ONLY in So What; if absent proceed without it).
+
+From `context_block.txt` if present: `working_theory.hypothesis` as analytical starting frame; `conclusion.signal_type` to validate; `collection.gap_assessment` + `collection.gaps_identified` to reference in closing statement.
 
 ## STEP 1b — CONVERGENCE / DIVERGENCE ASSESSMENT
 
@@ -200,11 +206,17 @@ Example: `**Intelligence Assessment:** B2 — Corroborated indicators, probably 
 **Paragraph 1 — `## Why — Geopolitical Driver`**
 What is happening in the world that makes this sector a target right now? Lead with the observable: a specific event, a policy shift, a state actor's documented behaviour, a structural economic change. Name actors, dates, and geographies where the signals support it. Do NOT open with the client's name or business exposure — that belongs in So What. The client's name must not appear in this paragraph. Write as if briefing a government analyst or a Reuters journalist who needs to understand what is happening, not what it means for one company.
 
+> **Source rule:** The Why paragraph opens with what Seerist is showing. Your first Why claim must cite a `seerist:event:*`, `seerist:hotspot:*`, or `seerist:pulse:*` signal_id when `seerist_strength` is high or low. Use OSINT to name actors, cite cases, and add specificity after the Seerist anchor.
+
 **Paragraph 2 — `## How — Cyber Vector`**
 How has this geopolitical condition translated into observed or assessed threat activity against this sector? Describe what adversaries have been seen doing — confirmed incidents at peer organisations, documented intrusion tradecraft, sector-specific attack patterns. Use real incidents from the signals. Do NOT name AeroGrid's assets, sites, or systems in this paragraph — those belong in So What. Do NOT fabricate operational findings (anomalous access patterns, detected reconnaissance, observed lateral movement) unless they appear explicitly in your signal files. If the cyber signals are thin, say so plainly — state the assessment is inferred from geopolitical conditions and sector precedent, not from confirmed cyber indicators. Clearly distinguish evidenced facts (cite source) from analytical assessments ("assessed," "consistent with," "likely").
 
+> **Source rule:** If Seerist has verified events or hotspot anomalies relevant to cyber activity, those lead. OSINT provides named threat actors and historical precedent. If Seerist is silent on cyber, state it plainly — then use OSINT as best available evidence with explicit caveats.
+
 **Paragraph 3 — `## So What — Business Impact`**
 This is the only paragraph where AeroGrid appears by name. What does this threat environment mean for this organisation specifically? Name the specific assets, sites, and contracts at risk (from `context_block.txt`). State the VaCR figure exactly. Name the CRQ scenario and its financial rank. If the signal is a Trend, describe direction and trajectory. Close with 2–3 specific watch indicators: observable events that would confirm the threat is materialising. These should be concrete and actionable — not a summary of what was already said.
+
+> **collection_lag caveat:** If `collection_lag.detected = true` (from collection_quality.json), close So What with: "Note: current Seerist data does not yet corroborate these OSINT signals. Treat as early indicators pending Seerist confirmation."
 
 ### QUALITY STANDARD
 
@@ -254,3 +266,6 @@ Before exiting, verify:
 - [ ] All source citations in prose use real named publications — no generic labels
 - [ ] No `fact` claim has empty `signal_ids`
 - [ ] So What closing contains 2–3 concrete watch indicators mapped to `"paragraph": "watch"` claims in claims.json
+- [ ] First `paragraph='why'` claim cites a `seerist:event:*`, `seerist:hotspot:*`, or `seerist:pulse:*` signal_id when `seerist_strength` is high or low
+- [ ] Every hotspot with `anomaly_flag=True` has a corresponding claim citing its `signal_id`
+- [ ] collection_lag caveat present in So What when `collection_lag.detected = true`
