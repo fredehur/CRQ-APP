@@ -21,114 +21,127 @@ Normalize to uppercase. If the region is invalid or missing, stop and report: "V
 
 ## PIPELINE
 
-Run each step in sequence. Use the region name where `{REGION}` appears (uppercase) and `{region}` (lowercase).
+Run each step in sequence. Use `{REGION}` (uppercase) and `{region}` (lowercase) where shown.
 
-**Step 0 — Load regional data + determine window**
+**Step 0 — Initialize**
 
 Read `data/mock_crq_database.json` to get the critical assets and VaCR for this region.
 
-**Determine WINDOW:**
+**Determine WINDOW and OSINT_FLAG:**
 Parse `--window` from the invocation arguments. Valid values: `1d`, `7d`, `30d`, `90d`, `all`.
-- If `--window` is provided: store as `WINDOW`. Skip the prompt.
+- If `--window` provided: store as `WINDOW`. Skip the prompt.
 - If omitted: use `AskUserQuestion` to present:
-
   ```
   How far back should we collect OSINT signals?
-    1) 1 day    — today's signals (daily ops)
-    2) 1 week   — 7 days
-    3) 1 month  — 30 days
-    4) 3 months — 90 days
-    5) All      — no date filter (baseline sweep)
+    1) 1 day  2) 1 week  3) 1 month  4) 3 months  5) All
   ```
+  Map: `1`→`1d`, `2`→`7d`, `3`→`30d`, `4`→`90d`, `5`→`all`
 
-  Map: `1`→`1d`, `2`→`7d`, `3`→`30d`, `4`→`90d`, `5`→`all`.
-
-**Write run_config.json** — substitute the actual resolved `WINDOW` value for `WINDOW_VALUE` when running:
+Determine OSINT_FLAG: run `python -c "from dotenv import load_dotenv; import os; load_dotenv(); print('live' if os.environ.get('OSINT_LIVE','').lower()=='true' else 'mock')"`. If `mock`: set `OSINT_FLAG=--mock`. If `live`: set `OSINT_FLAG=`.
 
 ```bash
-python -c "
-import json
-from pathlib import Path
-from datetime import datetime, timezone
-Path('output/pipeline').mkdir(parents=True, exist_ok=True)
-config = {
-    'window': 'WINDOW_VALUE',
-    'osint_mode': 'mock',
-    'written_at': datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')
-}
-Path('output/pipeline/run_config.json').write_text(json.dumps(config, indent=2), encoding='utf-8')
-print('run_config.json written — window=WINDOW_VALUE')
-"
+uv run python tools/pipeline_runner.py init --window {WINDOW} {OSINT_FLAG}
 ```
 
-Log start: `uv run python tools/audit_logger.py PIPELINE_START "crq-region: {REGION} pipeline initiated — window={WINDOW}"`
+Log: `uv run python tools/audit_logger.py PIPELINE_START "crq-region: {REGION} initiated — window={WINDOW}"`
 
-**Step 1 — Gather intelligence**
+**Step 1a — OSINT collection**
+```bash
+uv run python tools/osint_collector.py {REGION} {OSINT_FLAG} --window {WINDOW}
+# If WINDOW is 'all', omit --window:
+uv run python tools/osint_collector.py {REGION} {OSINT_FLAG}
 ```
+
+**Step 1b — Seerist collection**
+```bash
+uv run python tools/seerist_collector.py {REGION} {OSINT_FLAG}
+```
+
+**Step 2 — Scenario mapping**
+```bash
+uv run python tools/scenario_mapper.py {REGION} {OSINT_FLAG}
+```
+
+**Step 2b — Scribe enrichment (requires scenario_map.json from Step 2)**
+```bash
+uv run python tools/scribe_enrichment.py {REGION}
+```
+
+**Step 3 — Collection quality gate**
+```bash
+uv run python tools/collection_gate.py {REGION}
+```
+
+**Step 4 — Geopolitical context**
+```bash
 uv run python tools/geopolitical_context.py {REGION}
-uv run python tools/regional_search.py {REGION} --mock
 ```
 
-**Step 2 — Gatekeeper assessment**
-Delegate to `gatekeeper-agent`. Provide: region name and the critical assets you loaded in Step 0.
-The agent writes `output/regional/{region}/gatekeeper_decision.json` and returns one word: ESCALATE, MONITOR, or CLEAR.
+**Step 5 — Gatekeeper triage**
+Delegate to `gatekeeper-agent`. Provide: region name and critical assets from Step 0.
+Agent writes `output/regional/{region}/gatekeeper_decision.json` and returns one word.
 
-**Step 3 — Write regional state**
+**Step 6 — Route by decision**
 
 If CLEAR:
-```
+```bash
 uv run python tools/write_region_data.py {REGION} clear
 uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — clear"
 ```
 
 If MONITOR:
-```
+```bash
 uv run python tools/write_region_data.py {REGION} monitor
 uv run python tools/audit_logger.py GATEKEEPER_NO "{REGION} — monitor, watch status"
 ```
 
 If ESCALATE:
-```
+```bash
 uv run python tools/write_region_data.py {REGION} escalated
 uv run python tools/audit_logger.py GATEKEEPER_YES "{REGION} — escalated, proceeding to analysis"
 uv run python tools/threat_scorer.py {REGION}
 ```
-Then delegate to `regional-analyst-agent`. Provide: region, critical assets, VaCR (from Step 0), geopolitical context output, threat feed output, severity score, and Admiralty rating from `output/regional/{region}/gatekeeper_decision.json`. Agent writes `output/regional/{region}/report.md`.
+Read Admiralty rating from `output/regional/{region}/gatekeeper_decision.json`.
+Delegate to `regional-analyst-agent`. Provide: region, critical assets, VaCR, geopolitical context output, severity score, Admiralty rating. Agent writes `claims.json`, `report.md`, updates `data.json`.
 
-Run jargon audit after analyst completes:
-```
+Run jargon audit:
+```bash
 uv run python .claude/hooks/validators/jargon-auditor.py output/regional/{region}/report.md {region}
 ```
-If exit 2 → rewrite the brief and re-run the auditor.
+If exit 2 → rewrite the brief with violation list as context and re-run auditor.
 
-**Step 4 — Patch velocity**
+Run extract_sections (deterministic — builds signal_clusters.json + sections.json from claims.json):
+```bash
+uv run python tools/extract_sections.py {REGION}
 ```
+
+Run enrich clusters:
+```bash
+uv run python tools/enrich_clusters.py {REGION}
+```
+
+**Step 7 — Patch velocity**
+```bash
 uv run python tools/trend_analyzer.py
 ```
 
-**Step 5 — Update manifest**
-```
+**Step 8 — Update manifest**
+```bash
 uv run python tools/write_manifest.py
 ```
 
-**Step 6 — Rebuild dashboard (if global report exists)**
-
-Check if `output/pipeline/global_report.json` exists. If yes:
-```
+**Step 9 — Rebuild dashboard (if global report exists)**
+If `output/pipeline/global_report.json` exists:
+```bash
 uv run python tools/build_dashboard.py
 ```
-If no: skip silently — dashboard requires a full pipeline run first. Note this in the summary line.
+If absent: skip — note in summary.
 
-**Step 7 — Print status**
-```
-uv run python tools/status_report.py
-```
-
-Log completion: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "crq-region: {REGION} pipeline complete"`
+Log: `uv run python tools/audit_logger.py PIPELINE_COMPLETE "crq-region: {REGION} pipeline complete"`
 
 ## OUTPUT
 
-Print a single summary line when complete:
+Print a single summary line:
 `{REGION} pipeline complete — {DECISION} | VaCR: ${amount} | Admiralty: {rating} | Trend: {direction}`
 
 If dashboard was skipped: append ` | dashboard: skipped (run /run-crq first)`
