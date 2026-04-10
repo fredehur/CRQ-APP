@@ -113,13 +113,13 @@ class SourceRegistry:
 
 # ── Load signal sources (geo + cyber) → name → url map ────────────────────────
 def _load_signal_sources(region_lower: str) -> dict[str, str]:
-    """Read geo_signals.json and cyber_signals.json for a region.
+    """Read osint_signals.json for a region.
 
     Returns a dict mapping source name.lower() → url.
-    Returns empty dict if files are absent or the `sources` field is missing.
+    Returns empty dict if file is absent or the `sources` field is missing.
     """
     url_map: dict[str, str] = {}
-    for filename in ("geo_signals.json", "cyber_signals.json"):
+    for filename in ("osint_signals.json",):
         path = Path(OUTPUT_DIR) / "regional" / region_lower / filename
         if not path.exists():
             continue

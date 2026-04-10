@@ -1,6 +1,6 @@
 """Enrich signal_clusters.json with url and credibility_tier from signal files.
 
-Reads geo_signals.json and cyber_signals.json sources arrays, matches by name
+Reads osint_signals.json sources array, matches by name
 (case-insensitive) against cluster source entries, and adds url + credibility_tier.
 
 Usage: python tools/enrich_clusters.py <REGION>
@@ -32,7 +32,7 @@ def _infer_tier(url):
 def _build_source_lookup(region_lower):
     """Build a case-insensitive name -> {name, url} lookup from signal files."""
     lookup = {}
-    for signal_file in ["geo_signals.json", "cyber_signals.json"]:
+    for signal_file in ["osint_signals.json"]:
         path = f"output/regional/{region_lower}/{signal_file}"
         if not os.path.exists(path):
             continue

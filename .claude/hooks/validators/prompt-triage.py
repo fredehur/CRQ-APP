@@ -29,7 +29,7 @@ PIPELINE_KEYWORDS = {
     "global-builder", "global builder",
     "global-validator", "global validator",
     "rsm-formatter", "rsm formatter",
-    "geo_signals", "cyber_signals",
+    "osint_signals", "seerist_signals",
     "scenario_map", "signal_clusters",
     "run-crq", "run crq", "/run-crq",
     "crq-region", "/crq-region",

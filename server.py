@@ -545,9 +545,12 @@ async def get_region_signals(region: str):
     if r not in REGIONS:
         return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
     base = OUTPUT / "regional" / r.lower()
+    osint = _read_json(base / "osint_signals.json") or {}
+    geo_indicators = [i for i in osint.get("lead_indicators", []) if i.get("pillar") == "geo"]
+    cyber_indicators = [i for i in osint.get("lead_indicators", []) if i.get("pillar") == "cyber"]
     return {
-        "geo": _read_json(base / "geo_signals.json"),
-        "cyber": _read_json(base / "cyber_signals.json"),
+        "geo": {**osint, "lead_indicators": geo_indicators},
+        "cyber": {**osint, "lead_indicators": cyber_indicators},
     }
 
 
@@ -575,13 +578,13 @@ async def get_region_sections(region: str):
 
 @app.get("/api/region/{region}/sources")
 async def get_region_sources(region: str):
-    """Aggregate sources from geo_signals.json and cyber_signals.json for a region."""
+    """Aggregate sources from osint_signals.json for a region."""
     r = region.upper()
     if r not in REGIONS:
         return JSONResponse({"error": f"Unknown region: {region}"}, status_code=404)
     base = OUTPUT / "regional" / r.lower()
     sources = []
-    for fname in ("geo_signals.json", "cyber_signals.json"):
+    for fname in ("osint_signals.json",):
         data = _read_json(base / fname)
         if data and isinstance(data.get("sources"), list):
             for s in data["sources"]:

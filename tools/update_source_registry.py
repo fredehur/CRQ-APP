@@ -626,16 +626,10 @@ def main() -> int:
         region_upserted = 0
         region_cited = 0
 
-        # Geo signals
-        geo_path = region_dir / "geo_signals.json"
+        # OSINT signals (unified geo + cyber)
+        osint_path = region_dir / "osint_signals.json"
         region_upserted += ingest_osint_signals(
-            conn, region, run_id, geo_path, "geo", timestamp
-        )
-
-        # Cyber signals
-        cyber_path = region_dir / "cyber_signals.json"
-        region_upserted += ingest_osint_signals(
-            conn, region, run_id, cyber_path, "cyber", timestamp
+            conn, region, run_id, osint_path, "osint", timestamp
         )
 
         # YouTube signals

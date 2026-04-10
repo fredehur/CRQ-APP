@@ -126,9 +126,9 @@ def evaluate(force_weekly: bool = False, check_flash: bool = True) -> dict:
                                 trigger_reason = f"EventsAI {event.get('category')} severity {event.get('severity')}, {loc.get('name', 'unknown')} (no coords)"
                                 break
 
-                # Check cyber_signals.json for direct AeroGrid targeting
+                # Check osint_signals.json for direct AeroGrid targeting
                 if not triggered:
-                    cyber_path = OUTPUT_ROOT / "regional" / region_lower / "cyber_signals.json"
+                    cyber_path = OUTPUT_ROOT / "regional" / region_lower / "osint_signals.json"
                     if cyber_path.exists():
                         try:
                             cyber = json.loads(cyber_path.read_text(encoding="utf-8"))

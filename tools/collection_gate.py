@@ -4,7 +4,7 @@
 Usage:
     uv run python tools/collection_gate.py <REGION>
 
-Reads geo_signals.json and cyber_signals.json for the given region,
+Reads osint_signals.json for the given region,
 counts grounded indicators (those with a non-empty source_url),
 writes collection_quality.json, and logs result to system_trace.log.
 
@@ -60,11 +60,12 @@ def check_collection_quality(region: str, run_id: str | None = None) -> dict:
     cyber_grounded_count, threshold.
     """
     region_lower = region.lower()
-    geo = _load_signal_file(REPO_ROOT / f"output/regional/{region_lower}/geo_signals.json")
-    cyber = _load_signal_file(REPO_ROOT / f"output/regional/{region_lower}/cyber_signals.json")
+    osint = _load_signal_file(REPO_ROOT / f"output/regional/{region_lower}/osint_signals.json")
 
-    geo_grounded = _count_grounded(geo)
-    cyber_grounded = _count_grounded(cyber)
+    # Count grounded indicators by pillar
+    all_indicators = osint.get("lead_indicators", [])
+    geo_grounded = sum(1 for ind in all_indicators if isinstance(ind, dict) and ind.get("source_url") and ind.get("pillar") == "geo")
+    cyber_grounded = sum(1 for ind in all_indicators if isinstance(ind, dict) and ind.get("source_url") and ind.get("pillar") == "cyber")
 
     thin = geo_grounded < COLLECTION_QUALITY_THRESHOLD or cyber_grounded < COLLECTION_QUALITY_THRESHOLD
     result = {

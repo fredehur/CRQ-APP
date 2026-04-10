@@ -55,13 +55,13 @@ Read all of the following before writing anything:
 
 1. `data/company_profile.json` — AeroGrid's crown jewels, industry, global footprint, what the business actually cares about protecting
 2. `data/master_scenarios.json` — the full CRQ scenario register with `financial_rank`, `frequency_rank`, `records_affected_rank`, and scenario descriptions
-3. `output/regional/{region_lower}/geo_signals.json` — geopolitical lead indicators. If a `sources` field is present (`[{name, url}]`), note it — these are the authoritative named sources extracted from actual collected evidence for this region and window. Use these names in inline citations.
-4. `output/regional/{region_lower}/cyber_signals.json` — cyber threat signals. Same: note `sources` field if present.
+3. `output/regional/{region_lower}/osint_signals.json` — unified OSINT signals (geo + cyber pillars). Each indicator has a `pillar` field ("geo" or "cyber") and a `signal_id`. If a `sources` field is present (`[{name, url}]`), use those names for inline citations.
+4. `output/regional/{region_lower}/seerist_signals.json` — Seerist intelligence: situational events, pulse scores, Scribe AI country assessments, WoD search results.
 5. `output/regional/{region_lower}/youtube_signals.json` (if present) — analyst opinion from curated YouTube channels. Treat as corroborating evidence, not primary source. Cite channel names (not URLs) when referencing. If absent or `lead_indicators` is empty, note signal absence — do not fabricate.
 6. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
 6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
 7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
-8. `output/regional/{region_lower}/research_scratchpad.json` (if present — live mode only)
+8. `output/regional/{region_lower}/osint_scratchpad.json` (if present — live mode only)
 9. `output/regional/{region_lower}/context_block.txt` (if present) —
    AeroGrid's physical footprint in this region: sites, headcount,
    crown jewels, supply chain dependencies, key contracts.
@@ -74,7 +74,7 @@ Read all of the following before writing anything:
 
 ## STEP 2 — SCENARIO COUPLING (your analytical judgment)
 
-If `research_scratchpad.json` is present, the working theory provides a starting analytical frame:
+If `osint_scratchpad.json` is present, the working theory provides a starting analytical frame:
 - Hypothesis: `working_theory.hypothesis`
 - Do not accept it uncritically — validate it against the signal files and master_scenarios.json.
 - If the collector's hypothesis conflicts with what the signals actually show, use your judgment and state why.
@@ -104,7 +104,7 @@ Record your classification as `signal_type`. This will appear as a structured fi
 
 Before writing the brief, write `output/regional/{region_lower}/claims.json` using the Write tool.
 
-Read the lead_indicators in geo_signals.json and cyber_signals.json. Each indicator is a dict with a `signal_id` field (format: `{region}-{pillar}-{NNN}`). Use these signal_ids when forming fact claims.
+Read the lead_indicators in osint_signals.json. Each indicator is a dict with a `signal_id` field (format: `osint:tavily:{region}-{pillar}-{NNN}`) and a `pillar` field. Use these signal_ids when forming fact claims. Also read seerist_signals.json — use `signal_id` values from situational events, hotspots, and analytical.scribe entries when citing Seerist data.
 
 Build the claims array:
 - One claim per substantive finding from the signal files.
@@ -167,7 +167,7 @@ Every brief must pass this bar before you write it:
 - [ ] Distinguishes evidenced facts from analytical assessments using explicit signal language
 - [ ] Every "evidenced" claim names its source inline — e.g. "Evidenced by [Mandiant Threat Intelligence]: ..." or "...corroborated by [Reuters, Chatham House]". Source names come from signal_clusters.json. Generic labels ("Cyber Signal", "Geo Signal", "research collection") do not count as named sources and will fail the source attribution audit. Any citation whose name starts with "Cyber Signal", "Geo Signal", or "YouTube Signal" — including variants like "Cyber Signal — AME Live Collection" — is a banned generic label regardless of the suffix.
 - [ ] Zero pipeline language: do not reference internal collection mechanics in prose. Banned phrases: "research collection cycle", "collection effort", "noisy corpus", "research collector", "[N]-source collection", "corpus". Use intelligence language instead: "current collection window", "signals recovered", "identified collection gaps".
-- [ ] When geo_signals.json or cyber_signals.json contains a `sources` field (`[{name, url}]`): inline citation names must come from that list — do not invent names from prose context. If `sources` is absent or empty (mock mode), use names derivable from the indicator text as before.
+- [ ] When osint_signals.json contains a `sources` field (`[{name, url}]`): inline citation names must come from that list — do not invent names from prose context. If `sources` is absent or empty (mock mode), use names derivable from the indicator text as before.
 - [ ] Names the CRQ scenario and financial rank from the master_scenarios register — scenario name is plain text inline, not bold
 - [ ] States whether signal is an event, trend, or mixed in the header line only — do not repeat "The signal is [type]:" in the So What paragraph
 - [ ] Closes with specific, concrete watch indicators — not a summary of what was said
@@ -217,8 +217,8 @@ This is a **terminal artifact consumed only by the dashboard UI**. It is NOT rea
 3. `convergence` = the number of distinct sources supporting that theme cluster.
 4. `sources` = the individual source entries (name + headline) that belong to that cluster.
 5. For **CLEAR regions**: write `"clusters": []`, `"total_signals": 0`, and set `sources_queried` to the actual count of source entries in the signal files (even if signals are empty).
-6. **Source names from signal files:** When geo_signals.json or cyber_signals.json contains a `sources` field, use the `name` values from that list as the `name` in cluster `sources` entries. This keeps cluster source names consistent with the authoritative names extracted at collection time.
-7. **Topic linking (optional):** Check `matched_topics` in `geo_signals.json` and `cyber_signals.json` — these are the topic IDs that were queried during collection. If a cluster's theme directly maps to one of those topic IDs (check labels and keywords in `data/osint_topics.json`), set `"topic_id": "<id>"` on that cluster. If no topic matches, omit the `topic_id` field entirely. Do not invent topic IDs not present in `data/osint_topics.json`.
+6. **Source names from signal files:** When osint_signals.json contains a `sources` field, use the `name` values from that list as the `name` in cluster `sources` entries. This keeps cluster source names consistent with the authoritative names extracted at collection time.
+7. **Topic linking (optional):** Check `matched_topics` in `osint_signals.json` — these are the topic IDs that were queried during collection. If a cluster's theme directly maps to one of those topic IDs (check labels and keywords in `data/osint_topics.json`), set `"topic_id": "<id>"` on that cluster. If no topic matches, omit the `topic_id` field entirely. Do not invent topic IDs not present in `data/osint_topics.json`.
 
 ### Write tool example (AME region)
 

@@ -23,12 +23,12 @@ def load_master():
 
 
 def load_signals(region):
-    geo_path = f"output/regional/{region.lower()}/geo_signals.json"
-    cyber_path = f"output/regional/{region.lower()}/cyber_signals.json"
-    with open(geo_path, encoding="utf-8") as f:
-        geo = json.load(f)
-    with open(cyber_path, encoding="utf-8") as f:
-        cyber = json.load(f)
+    osint_path = f"output/regional/{region.lower()}/osint_signals.json"
+    with open(osint_path, encoding="utf-8") as f:
+        osint = json.load(f)
+    # Split into geo and cyber for backward compat with build_signal_text
+    geo = {"summary": osint.get("summary", ""), "lead_indicators": [i for i in osint.get("lead_indicators", []) if i.get("pillar") == "geo"]}
+    cyber = {"summary": "", "lead_indicators": [i for i in osint.get("lead_indicators", []) if i.get("pillar") == "cyber"]}
     return geo, cyber
 
 

@@ -22,8 +22,7 @@ def build_rsm_inputs(region: str, output_dir: str = "output") -> dict:
         {
             "region": "APAC",
             "required": {
-                "geo_signals":   "/abs/path" | None,
-                "cyber_signals": "/abs/path" | None,
+                "osint_signals": "/abs/path" | None,
                 "data_json":     "/abs/path" | None,
             },
             "optional": {
@@ -53,13 +52,11 @@ def build_rsm_inputs(region: str, output_dir: str = "output") -> dict:
     data_dir = _PROJECT_ROOT / "data"
 
     # ── Required inputs ──────────────────────────────────────────────────────
-    geo_path   = base / "geo_signals.json"
-    cyber_path = base / "cyber_signals.json"
+    osint_path = base / "osint_signals.json"
     data_path  = base / "data.json"
 
     required = {
-        "geo_signals":   str(geo_path)   if geo_path.exists()   else None,
-        "cyber_signals": str(cyber_path) if cyber_path.exists() else None,
+        "osint_signals": str(osint_path) if osint_path.exists() else None,
         "data_json":     str(data_path)  if data_path.exists()  else None,
     }
 
@@ -90,7 +87,7 @@ def build_rsm_inputs(region: str, output_dir: str = "output") -> dict:
     if fallback_flags["seerist_signals"]:
         fallback_instructions["seerist_signals"] = (
             "seerist_signals.json is absent. "
-            "Use geo_signals.json for the PHYSICAL & GEOPOLITICAL section."
+            "Use osint_signals.json for the PHYSICAL & GEOPOLITICAL section."
         )
     if fallback_flags["region_delta"]:
         fallback_instructions["region_delta"] = (

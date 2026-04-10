@@ -213,7 +213,7 @@ def _parse_pillars(text: str) -> tuple[str | None, str | None, str | None]:
 
 _GENERIC_SOURCES = {
     "Cyber Signal", "Geo Signal", "YouTube Signal",
-    "cyber_signals", "geo_signals", "youtube_signals",
+    "osint_signals", "youtube_signals",
 }
 
 

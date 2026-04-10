@@ -43,13 +43,16 @@ RSM path (separate from main pipeline):
 ## File-Passing Contract
 
 ```
-geo_collector.py        → output/regional/{region}/geo_signals.json
-cyber_collector.py      → output/regional/{region}/cyber_signals.json
+osint_collector.py      → output/regional/{region}/osint_signals.json
+seerist_collector.py    → output/regional/{region}/seerist_signals.json
+scribe_enrichment.py    → appends to seerist_signals.json (analytical.scribe + analytical.wod_searches)
 scenario_mapper.py      → output/regional/{region}/scenario_map.json
 gatekeeper-agent        → output/regional/{region}/gatekeeper_decision.json
 write_region_data.py    → output/regional/{region}/data.json  (propagates admiralty, dominant_pillar, rationale)
-regional-analyst-agent  → output/regional/{region}/report.md
-                        → output/regional/{region}/signal_clusters.json  (dashboard UI artifact)
+regional-analyst-agent  → output/regional/{region}/claims.json (with bullets array)
+                        → output/regional/{region}/report.md
+extract_sections.py     → output/regional/{region}/signal_clusters.json  (dashboard UI artifact)
+                        → output/regional/{region}/sections.json
                         → output/regional/{region}/data.json  (adds primary_scenario, financial_rank, signal_type)
 global-builder-agent    → output/pipeline/global_report.json
 write_manifest.py       → output/pipeline/run_manifest.json

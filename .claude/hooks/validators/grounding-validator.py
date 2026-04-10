@@ -11,9 +11,9 @@ Checks:
    If claims.json does not exist at all -> FAIL (for ESCALATED regions).
 1. claims.json exists and is valid JSON.
 2. Every fact claim has non-empty signal_ids.
-3. Every signal_id in claims exists in geo/cyber_signals.json lead_indicators.
-   SKIP this check when research_scratchpad.json is ABSENT (mock mode).
-   Use research_scratchpad.json PRESENCE as the live/mock signal — NOT os.environ.
+3. Every signal_id in claims exists in osint_signals.json or seerist_signals.json lead_indicators.
+   SKIP this check when osint_scratchpad.json is ABSENT (mock mode).
+   Use osint_scratchpad.json PRESENCE as the live/mock signal — NOT os.environ.
 4. At least one claim per paragraph type (why, how, sowhat).
    estimate claims count as valid (they explicitly signal absence).
 5. If ALL claims are estimate AND gatekeeper decision == ESCALATE -> FAIL.
@@ -101,9 +101,9 @@ def validate(region: str) -> tuple[bool, list[str]]:
 
     claims_path = base / "claims.json"
     report_path = base / "report.md"
-    geo_path = base / "geo_signals.json"
-    cyber_path = base / "cyber_signals.json"
-    scratchpad_path = base / "research_scratchpad.json"
+    osint_path = base / "osint_signals.json"
+    seerist_path = base / "seerist_signals.json"
+    scratchpad_path = base / "osint_scratchpad.json"
     gatekeeper_path = base / "gatekeeper_decision.json"
 
     failures = []
@@ -146,12 +146,26 @@ def validate(region: str) -> tuple[bool, list[str]]:
     live_mode = scratchpad_path.exists()
     if live_mode:
         known_ids = set()
-        for sig_path in [geo_path, cyber_path]:
+        # OSINT signals
+        try:
+            sig_data = json.loads(osint_path.read_text(encoding="utf-8"))
+            for ind in sig_data.get("lead_indicators", []):
+                if isinstance(ind, dict) and ind.get("signal_id"):
+                    known_ids.add(ind["signal_id"])
+        except Exception:
+            pass
+        # Seerist signals
+        if seerist_path.exists():
             try:
-                sig_data = json.loads(sig_path.read_text(encoding="utf-8"))
-                for ind in sig_data.get("lead_indicators", []):
-                    if isinstance(ind, dict) and ind.get("signal_id"):
-                        known_ids.add(ind["signal_id"])
+                seerist = json.loads(seerist_path.read_text(encoding="utf-8"))
+                for section in ["events", "verified_events", "breaking_news", "news"]:
+                    for item in seerist.get("situational", {}).get(section, []):
+                        if item.get("signal_id"):
+                            known_ids.add(item["signal_id"])
+                for section in ["hotspots", "scribe", "wod_searches", "analysis_reports"]:
+                    for item in seerist.get("analytical", {}).get(section, []):
+                        if item.get("signal_id"):
+                            known_ids.add(item["signal_id"])
             except Exception:
                 pass
 
@@ -170,6 +184,31 @@ def validate(region: str) -> tuple[bool, list[str]]:
     types = [c.get("claim_type") for c in claims]
     if all(t == "estimate" for t in types):
         failures.append("CHECK 5 FAIL: all claims are estimate for ESCALATED region — no grounded analysis")
+
+    # Check 6: Scribe engagement (when Scribe data exists)
+    if seerist_path.exists():
+        try:
+            seerist = json.loads(seerist_path.read_text(encoding="utf-8"))
+            scribe_entries = seerist.get("analytical", {}).get("scribe", [])
+            if scribe_entries:
+                scribe_ids = {e["signal_id"] for e in scribe_entries if e.get("signal_id")}
+                scribe_citing_claims = [
+                    c for c in claims
+                    if any(sid in scribe_ids for sid in c.get("signal_ids", []))
+                ]
+                if len(scribe_citing_claims) < 2:
+                    failures.append(
+                        f"CHECK 6 FAIL: Only {len(scribe_citing_claims)} claims cite Scribe signal_ids "
+                        f"(minimum 2 required). Scribe IDs: {scribe_ids}"
+                    )
+                scribe_types = {c.get("claim_type") for c in scribe_citing_claims}
+                if scribe_types == {"fact"}:
+                    failures.append(
+                        "CHECK 6 FAIL: All Scribe-citing claims are 'fact' — "
+                        "Scribe is opinion (assessment/estimate), never fact"
+                    )
+        except Exception:
+            pass
 
     return len(failures) == 0, failures
 
@@ -192,15 +231,14 @@ def emit_grounding_score(region: str, claims: list):
 
     # Orphaned signal_ids
     known_ids = set()
-    for pillar in ["geo", "cyber"]:
-        sig_path = Path(f"output/regional/{region_lower}/{pillar}_signals.json")
-        try:
-            sig_data = json.loads(sig_path.read_text(encoding="utf-8"))
-            for ind in sig_data.get("lead_indicators", []):
-                if isinstance(ind, dict) and ind.get("signal_id"):
-                    known_ids.add(ind["signal_id"])
-        except Exception:
-            pass
+    osint_p = Path(f"output/regional/{region_lower}/osint_signals.json")
+    try:
+        sig_data = json.loads(osint_p.read_text(encoding="utf-8"))
+        for ind in sig_data.get("lead_indicators", []):
+            if isinstance(ind, dict) and ind.get("signal_id"):
+                known_ids.add(ind["signal_id"])
+    except Exception:
+        pass
 
     orphaned = known_ids - cited_ids
     if orphaned:
