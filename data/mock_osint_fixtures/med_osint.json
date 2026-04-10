@@ -1,0 +1,59 @@
+{
+  "region": "MED",
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "dominant_pillar": "Cyber",
+  "summary": "Mediterranean wind energy operators face an elevated insider threat risk from privileged access misuse by third-party contractors, compounded by geopolitical uncertainty from North African instability and EU regulatory tightening on component procurement.",
+  "lead_indicators": [
+    {
+      "text": "Mediterranean geopolitical tensions affect energy infrastructure confidence, disputed maritime zones overlap with offshore wind development areas",
+      "signal_id": "osint:tavily:med-geo-001",
+      "source_url": "https://euractiv.com/med-energy-tensions",
+      "source_name": "Euractiv",
+      "pillar": "geo"
+    },
+    {
+      "text": "North Africa instability creates supply chain disruption risk for Mediterranean wind energy operators dependent on cross-Mediterranean logistics",
+      "signal_id": "osint:tavily:med-geo-002",
+      "source_url": "https://lemonde.fr/north-africa-supply-chain",
+      "source_name": "Le Monde",
+      "pillar": "geo"
+    },
+    {
+      "text": "Iran escalation risk raises Strait of Hormuz energy shipping concerns for Mediterranean operators with Gulf logistics exposure",
+      "signal_id": "osint:tavily:med-geo-003",
+      "source_url": "https://lloydslist.com/hormuz-med-operators",
+      "source_name": "Lloyd's List",
+      "pillar": "geo"
+    },
+    {
+      "text": "Insider misuse incident at Mediterranean energy operator — former maintenance contractor retained active system credentials six months post-departure",
+      "signal_id": "osint:tavily:med-cyber-001",
+      "source_url": "https://darkreading.com/med-insider-incident",
+      "source_name": "Dark Reading",
+      "pillar": "cyber"
+    },
+    {
+      "text": "MED region identity and access management audit reveals widespread orphaned credentials held by former employees and contractors with OT system access",
+      "signal_id": "osint:tavily:med-cyber-002",
+      "source_url": "https://scmagazine.com/med-iam-audit",
+      "source_name": "SC Magazine",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Workforce restructuring across European energy operators elevating insider misuse risk from disgruntled employees with system access",
+      "signal_id": "osint:tavily:med-cyber-003",
+      "source_url": "https://cybersecurityinsiders.com/energy-insider-risk",
+      "source_name": "Cybersecurity Insiders",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {"name": "Euractiv", "url": "https://euractiv.com/med-energy-tensions"},
+    {"name": "Le Monde", "url": "https://lemonde.fr/north-africa-supply-chain"},
+    {"name": "Dark Reading", "url": "https://darkreading.com/med-insider-incident"},
+    {"name": "SC Magazine", "url": "https://scmagazine.com/med-iam-audit"}
+  ],
+  "matched_topics": [],
+  "source_provenance": "osint:tavily"
+}

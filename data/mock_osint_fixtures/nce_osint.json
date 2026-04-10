@@ -1,0 +1,52 @@
+{
+  "region": "NCE",
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "dominant_pillar": "Cyber",
+  "summary": "Northern and Central Europe operates in the most stable wind energy environment globally. However, ENISA has flagged ransomware groups expanding from North American targeting patterns into NCE operators, and NIS2/CER compliance deadlines introduce near-term operational pressure.",
+  "lead_indicators": [
+    {
+      "text": "EU CER directive and NIS2 compliance deadlines approaching for NCE wind energy operators — critical infrastructure compliance required by Q3 2026",
+      "signal_id": "osint:tavily:nce-geo-001",
+      "source_url": "https://euractiv.com/nis2-cer-energy-deadline",
+      "source_name": "Euractiv",
+      "pillar": "geo"
+    },
+    {
+      "text": "Germany offshore wind expansion proceeds without geopolitical disruption, Baltic Sea maritime agreements stable",
+      "signal_id": "osint:tavily:nce-geo-002",
+      "source_url": "https://spiegel.de/offshore-wind-stable",
+      "source_name": "Der Spiegel",
+      "pillar": "geo"
+    },
+    {
+      "text": "ENISA warns of ransomware groups expanding energy grid targeting into Northern Europe, consistent with double extortion campaign activity",
+      "signal_id": "osint:tavily:nce-cyber-001",
+      "source_url": "https://enisa.europa.eu/ransomware-nce-warning",
+      "source_name": "ENISA",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Nordic wind operators lead industry in OT/IT segmentation maturity, significantly reducing attack surface",
+      "signal_id": "osint:tavily:nce-cyber-002",
+      "source_url": "https://iec.int/nordic-ot-maturity-report",
+      "source_name": "IEC Report",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Germany BSI reports no material cybersecurity incidents at wind energy operators in Q1 2026",
+      "signal_id": "osint:tavily:nce-cyber-003",
+      "source_url": "https://bsi.bund.de/wind-energy-q1-2026",
+      "source_name": "BSI",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {"name": "Euractiv", "url": "https://euractiv.com/nis2-cer-energy-deadline"},
+    {"name": "ENISA", "url": "https://enisa.europa.eu/ransomware-nce-warning"},
+    {"name": "IEC Report", "url": "https://iec.int/nordic-ot-maturity-report"},
+    {"name": "BSI", "url": "https://bsi.bund.de/wind-energy-q1-2026"}
+  ],
+  "matched_topics": [],
+  "source_provenance": "osint:tavily"
+}

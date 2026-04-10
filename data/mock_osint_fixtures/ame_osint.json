@@ -1,0 +1,59 @@
+{
+  "region": "AME",
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "dominant_pillar": "Cyber",
+  "summary": "Ransomware groups with OT capability are actively targeting North American energy infrastructure, with CISA and FBI issuing coordinated warnings. IRA-driven wind capacity expansion is outpacing security investment, creating exploitable gaps in turbine control networks.",
+  "lead_indicators": [
+    {
+      "text": "US executive order expands critical infrastructure designation to offshore wind, triggering mandatory cybersecurity reporting requirements",
+      "signal_id": "osint:tavily:ame-geo-001",
+      "source_url": "https://wsj.com/articles/offshore-wind-critical-infrastructure",
+      "source_name": "Wall Street Journal",
+      "pillar": "geo"
+    },
+    {
+      "text": "CISA issues warning on critical infrastructure reconnaissance by foreign state-sponsored actors targeting North American energy sector",
+      "signal_id": "osint:tavily:ame-geo-002",
+      "source_url": "https://cisa.gov/advisories/energy-sector-targeting",
+      "source_name": "CISA",
+      "pillar": "geo"
+    },
+    {
+      "text": "Congressional hearing identifies ransomware as primary near-term cyber threat to US energy grid operators, wind farms cited as underprotected",
+      "signal_id": "osint:tavily:ame-geo-003",
+      "source_url": "https://politico.com/senate-energy-ransomware",
+      "source_name": "Politico",
+      "pillar": "geo"
+    },
+    {
+      "text": "Ransomware group targets North American energy operator, demands $22M, threatens to release proprietary turbine efficiency data",
+      "signal_id": "osint:tavily:ame-cyber-001",
+      "source_url": "https://therecord.media/ransomware-energy-operator-22m",
+      "source_name": "The Record",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Double-extortion ransomware encrypts and exfiltrates data from wind energy predictive maintenance platform — 18-day recovery, full OT rebuild at three facilities",
+      "signal_id": "osint:tavily:ame-cyber-002",
+      "source_url": "https://wired.com/wind-energy-ransomware",
+      "source_name": "Wired",
+      "pillar": "cyber"
+    },
+    {
+      "text": "RDP exploitation identified as dominant initial access vector in North American energy sector ransomware incidents, turbine networks reachable from corporate environments",
+      "signal_id": "osint:tavily:ame-cyber-003",
+      "source_url": "https://mandiant.com/ics-rdp-energy",
+      "source_name": "Mandiant",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {"name": "Wall Street Journal", "url": "https://wsj.com/articles/offshore-wind-critical-infrastructure"},
+    {"name": "CISA", "url": "https://cisa.gov/advisories/energy-sector-targeting"},
+    {"name": "The Record", "url": "https://therecord.media/ransomware-energy-operator-22m"},
+    {"name": "Mandiant", "url": "https://mandiant.com/ics-rdp-energy"}
+  ],
+  "matched_topics": [],
+  "source_provenance": "osint:tavily"
+}

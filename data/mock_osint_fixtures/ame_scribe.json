@@ -1,0 +1,38 @@
+{
+  "scribe": [
+    {
+      "signal_id": "seerist:scribe:ame-001",
+      "type": "country_summary",
+      "country_code": "US",
+      "assessment": "The United States energy sector faces an elevated ransomware threat environment. CISA and FBI warnings have been reinforced by confirmed incidents. Rapid wind energy expansion under IRA incentives is creating attack surface growth that security investment has not matched.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:AME→US"]
+    },
+    {
+      "signal_id": "seerist:scribe:ame-002",
+      "type": "country_summary",
+      "country_code": "CA",
+      "assessment": "Canada's energy sector cyber threat level remains moderate. Diverging cybersecurity regulations between Canada and the US create compliance complexity for cross-border operators. No active campaigns targeting Canadian wind energy infrastructure identified.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:AME→CA"]
+    }
+  ],
+  "wod_searches": [
+    {
+      "signal_id": "seerist:wod:ame-001",
+      "query": "Ransomware energy infrastructure",
+      "derived_from": ["scenario_map:ransomware"],
+      "result_count": 5,
+      "top_results": [
+        {
+          "title": "FBI PIN: ransomware-as-a-service campaigns targeting energy OT networks",
+          "source": "FBI",
+          "severity": 7,
+          "timestamp": "2026-04-07T14:00:00Z",
+          "source_reliability": "high"
+        }
+      ],
+      "generated_at": "2026-04-10T09:15:00Z"
+    }
+  ]
+}

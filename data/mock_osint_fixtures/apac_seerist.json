@@ -1,44 +1,68 @@
 {
   "region": "APAC",
-  "window_days": 7,
-  "pulse": {
-    "score": 51,
-    "score_prev": 58,
-    "delta": -7,
-    "security_risk": "High",
-    "political_risk": "Medium",
-    "sub_categories": {"border_tension": "High", "civil_unrest": "Medium", "organized_crime": "Low"}
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"since": "2026-04-03T08:30:00Z", "days": 7},
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:events_ai:apac-001",
+        "title": "Kaohsiung dockworker strike enters second day",
+        "category": "Unrest",
+        "severity": 4,
+        "location": {"lat": 22.62, "lon": 120.30, "name": "Kaohsiung, Taiwan", "country_code": "TW"},
+        "source_reliability": "high",
+        "source_count": 12,
+        "timestamp": "2026-03-19T08:00:00Z",
+        "verified": false
+      },
+      {
+        "signal_id": "seerist:events_ai:apac-002",
+        "title": "South China Sea patrol assertiveness elevated near Spratly Islands",
+        "category": "Conflict",
+        "severity": 3,
+        "location": {"lat": 10.00, "lon": 114.00, "name": "South China Sea", "country_code": "CN"},
+        "source_reliability": "high",
+        "source_count": 8,
+        "timestamp": "2026-03-18T14:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
   },
-  "events": [
-    {
-      "event_id": "apac-mock-001",
-      "category": "Unrest",
-      "severity": 4,
-      "title": "Kaohsiung dockworker strike enters second day",
-      "location": {"name": "Kaohsiung, TW", "lat": 22.62, "lon": 120.30, "country_code": "TW"},
-      "timestamp": "2026-03-19T08:00:00Z",
-      "verified": true,
-      "source_count": 12
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "CN": {"score": 3.2, "color": "orange", "delta": -0.4, "forecast": 3.0},
+        "TW": {"score": 4.1, "color": "yellow", "delta": -0.8, "forecast": 3.8}
+      },
+      "region_summary": {
+        "worst_country": "CN",
+        "worst_score": 3.2,
+        "avg_delta": -0.6,
+        "trend_direction": "declining"
+      }
     },
-    {
-      "event_id": "apac-mock-002",
-      "category": "Maritime",
-      "severity": 3,
-      "title": "South China Sea patrol assertiveness elevated near Spratly Islands",
-      "location": {"name": "South China Sea", "lat": 10.00, "lon": 114.00, "country_code": "CN"},
-      "timestamp": "2026-03-18T14:00:00Z",
-      "verified": true,
-      "source_count": 8
+    "hotspots": [
+      {
+        "signal_id": "seerist:hotspot:apac-001",
+        "location": {"name": "Taipei industrial district, TW", "lat": 25.03, "lon": 121.56},
+        "deviation_score": 0.87,
+        "category_hint": "Unrest",
+        "detected_at": "2026-03-19T14:00:00Z",
+        "anomaly_flag": true,
+        "cluster_ids": []
+      }
+    ],
+    "scribe": [],
+    "wod_searches": [],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "CN": {"overall": "High", "political": "High", "security": "High", "operational": "Medium"},
+      "TW": {"overall": "Medium", "political": "High", "security": "Medium", "operational": "Low"}
     }
-  ],
-  "hotspots": [
-    {
-      "hotspot_id": "apac-hot-001",
-      "location": {"name": "Taipei industrial district, TW", "country_code": "TW"},
-      "deviation_score": 0.87,
-      "category_hint": "Unrest",
-      "detected_at": "2026-03-19T14:00:00Z"
-    }
-  ],
-  "collected_at": "2026-03-20T05:00:00Z"
+  },
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }

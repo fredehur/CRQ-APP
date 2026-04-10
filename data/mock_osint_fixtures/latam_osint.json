@@ -1,0 +1,52 @@
+{
+  "region": "LATAM",
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "dominant_pillar": "Geopolitical",
+  "summary": "Latin America presents a low-risk environment for wind energy operations. Political stability indices are at multi-year highs, regulatory frameworks are supportive, and cyber threat actors have shown minimal interest in the regional energy sector.",
+  "lead_indicators": [
+    {
+      "text": "Brazil wind energy sector shows stable political and regulatory environment following recent elections, continued government support for wind expansion",
+      "signal_id": "osint:tavily:latam-geo-001",
+      "source_url": "https://reuters.com/brazil-wind-energy-stable",
+      "source_name": "Reuters Brazil",
+      "pillar": "geo"
+    },
+    {
+      "text": "LATAM regional trade agreements reducing tariff barriers for wind energy components, improving supply chain economics",
+      "signal_id": "osint:tavily:latam-geo-002",
+      "source_url": "https://latinfinance.com/wind-trade-agreements",
+      "source_name": "Latin Finance",
+      "pillar": "geo"
+    },
+    {
+      "text": "Wind turbine supply chain resilience improving in Latin America despite rare earth pressures from Chinese export controls",
+      "signal_id": "osint:tavily:latam-geo-003",
+      "source_url": "https://bloombergnef.com/latam-supply-chain-resilience",
+      "source_name": "BloombergNEF",
+      "pillar": "geo"
+    },
+    {
+      "text": "LATAM cyber threat landscape remains low intensity for industrial operators, no active campaigns targeting wind energy infrastructure",
+      "signal_id": "osint:tavily:latam-cyber-001",
+      "source_url": "https://crowdstrike.com/latam-threat-assessment",
+      "source_name": "CrowdStrike",
+      "pillar": "cyber"
+    },
+    {
+      "text": "No active OT threat campaigns targeting LATAM wind energy sector confirmed by threat intelligence providers",
+      "signal_id": "osint:tavily:latam-cyber-002",
+      "source_url": "https://dragos.com/latam-ot-threats",
+      "source_name": "Dragos",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {"name": "Reuters Brazil", "url": "https://reuters.com/brazil-wind-energy-stable"},
+    {"name": "BloombergNEF", "url": "https://bloombergnef.com/latam-supply-chain-resilience"},
+    {"name": "CrowdStrike", "url": "https://crowdstrike.com/latam-threat-assessment"},
+    {"name": "Dragos", "url": "https://dragos.com/latam-ot-threats"}
+  ],
+  "matched_topics": [],
+  "source_provenance": "osint:tavily"
+}

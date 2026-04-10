@@ -1,0 +1,38 @@
+{
+  "scribe": [
+    {
+      "signal_id": "seerist:scribe:apac-001",
+      "type": "country_summary",
+      "country_code": "CN",
+      "assessment": "China's geopolitical posture remains assertive in the South China Sea region. State-directed industrial policy continues to prioritise domestic energy technology at the expense of foreign operators. Regulatory risk for foreign wind energy companies is elevated.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:APAC→CN"]
+    },
+    {
+      "signal_id": "seerist:scribe:apac-002",
+      "type": "country_summary",
+      "country_code": "TW",
+      "assessment": "Taiwan's cross-strait tension remains the dominant risk driver. Critical infrastructure operators are at elevated risk of state-sponsored cyber operations linked to People's Liberation Army units. Supply chain dependencies on mainland components create dual-exposure.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:APAC→TW"]
+    }
+  ],
+  "wod_searches": [
+    {
+      "signal_id": "seerist:wod:apac-001",
+      "query": "ransomware energy infrastructure",
+      "derived_from": ["scenario_map:ransomware"],
+      "result_count": 3,
+      "top_results": [
+        {
+          "title": "Ransomware groups increasingly target energy sector OT networks",
+          "source": "Reuters",
+          "severity": 6,
+          "timestamp": "2026-04-08T10:00:00Z",
+          "source_reliability": "high"
+        }
+      ],
+      "generated_at": "2026-04-10T09:15:00Z"
+    }
+  ]
+}

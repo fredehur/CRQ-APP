@@ -1,0 +1,38 @@
+{
+  "scribe": [
+    {
+      "signal_id": "seerist:scribe:latam-001",
+      "type": "country_summary",
+      "country_code": "BR",
+      "assessment": "Brazil's renewable energy sector operates in a low-risk environment. Political stability is high following recent elections. No state-sponsored cyber threat activity targeting Brazilian wind energy infrastructure has been identified.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:LATAM→BR"]
+    },
+    {
+      "signal_id": "seerist:scribe:latam-002",
+      "type": "country_summary",
+      "country_code": "CL",
+      "assessment": "Chile maintains strong institutional stability and bilateral energy cooperation agreements with Argentina. The regulatory environment for wind energy operations is the most favourable in the region.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:LATAM→CL"]
+    }
+  ],
+  "wod_searches": [
+    {
+      "signal_id": "seerist:wod:latam-001",
+      "query": "geopolitical threat renewable energy",
+      "derived_from": ["osint:dominant_pillar:geopolitical"],
+      "result_count": 1,
+      "top_results": [
+        {
+          "title": "Latin America rare earth sourcing diversification reduces Chinese supply chain risk",
+          "source": "BloombergNEF",
+          "severity": 2,
+          "timestamp": "2026-04-06T08:00:00Z",
+          "source_reliability": "high"
+        }
+      ],
+      "generated_at": "2026-04-10T09:15:00Z"
+    }
+  ]
+}

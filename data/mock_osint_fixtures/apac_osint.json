@@ -1,0 +1,60 @@
+{
+  "region": "APAC",
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "dominant_pillar": "Cyber",
+  "summary": "State-sponsored cyber operations targeting APAC renewable energy infrastructure, with geopolitical tensions amplifying supply chain exposure.",
+  "lead_indicators": [
+    {
+      "text": "South China Sea tensions drive manufacturing supply chain restructuring",
+      "signal_id": "osint:tavily:apac-geo-001",
+      "source_url": "https://ft.com/content/south-china-sea-supply-chain",
+      "source_name": "Financial Times Asia",
+      "pillar": "geo"
+    },
+    {
+      "text": "China-Taiwan strait risk assessment: industrial sector exposure",
+      "signal_id": "osint:tavily:apac-geo-002",
+      "source_url": "https://reuters.com/taiwan-strait-risk",
+      "source_name": "Reuters",
+      "pillar": "geo"
+    },
+    {
+      "text": "Australia tightens foreign investment screening for energy technology",
+      "signal_id": "osint:tavily:apac-geo-003",
+      "source_url": "https://afr.com/energy-investment-screening",
+      "source_name": "Australian Financial Review",
+      "pillar": "geo"
+    },
+    {
+      "text": "State-sponsored actors expand targeting to renewable energy operational networks",
+      "signal_id": "osint:tavily:apac-cyber-001",
+      "source_url": "https://recordedfuture.com/apac-energy-targeting",
+      "source_name": "Recorded Future",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Supply chain compromise vector identified in APAC industrial software updates",
+      "signal_id": "osint:tavily:apac-cyber-002",
+      "source_url": "https://securityweek.com/apac-supply-chain-attack",
+      "source_name": "SecurityWeek",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Spear-phishing campaign targets wind energy engineering teams in Southeast Asia",
+      "signal_id": "osint:tavily:apac-cyber-003",
+      "source_url": "https://bleepingcomputer.com/wind-energy-phishing",
+      "source_name": "BleepingComputer",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {"name": "Financial Times Asia", "url": "https://ft.com/content/south-china-sea-supply-chain"},
+    {"name": "Reuters", "url": "https://reuters.com/taiwan-strait-risk"},
+    {"name": "Recorded Future", "url": "https://recordedfuture.com/apac-energy-targeting"},
+    {"name": "SecurityWeek", "url": "https://securityweek.com/apac-supply-chain-attack"},
+    {"name": "BleepingComputer", "url": "https://bleepingcomputer.com/wind-energy-phishing"}
+  ],
+  "matched_topics": [],
+  "source_provenance": "osint:tavily"
+}

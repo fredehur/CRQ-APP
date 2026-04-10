@@ -1,26 +1,47 @@
 {
   "region": "AME",
-  "window_days": 7,
-  "pulse": {
-    "score": 72,
-    "score_prev": 74,
-    "delta": -2,
-    "security_risk": "Medium",
-    "political_risk": "Medium",
-    "sub_categories": {"civil_unrest": "Low", "organized_crime": "Medium", "border_tension": "Low"}
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"since": "2026-04-03T08:30:00Z", "days": 7},
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:events_ai:ame-001",
+        "title": "Houston port area petty crime increase reported near energy district",
+        "category": "Crime",
+        "severity": 2,
+        "location": {"lat": 29.76, "lon": -95.37, "name": "Houston, TX, US", "country_code": "US"},
+        "source_reliability": "medium",
+        "source_count": 3,
+        "timestamp": "2026-03-18T10:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
   },
-  "events": [
-    {
-      "event_id": "ame-mock-001",
-      "category": "Crime",
-      "severity": 2,
-      "title": "Houston port area petty crime increase reported near energy district",
-      "location": {"name": "Houston, TX, US", "lat": 29.76, "lon": -95.37, "country_code": "US"},
-      "timestamp": "2026-03-18T10:00:00Z",
-      "verified": false,
-      "source_count": 3
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "US": {"score": 5.2, "color": "green", "delta": -0.2, "forecast": 5.1},
+        "CA": {"score": 5.4, "color": "green", "delta": 0.0, "forecast": 5.4}
+      },
+      "region_summary": {
+        "worst_country": "US",
+        "worst_score": 5.2,
+        "avg_delta": -0.1,
+        "trend_direction": "stable"
+      }
+    },
+    "hotspots": [],
+    "scribe": [],
+    "wod_searches": [],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "US": {"overall": "Low", "political": "Low", "security": "Medium", "operational": "Low"},
+      "CA": {"overall": "Low", "political": "Low", "security": "Low", "operational": "Low"}
     }
-  ],
-  "hotspots": [],
-  "collected_at": "2026-03-20T05:00:00Z"
+  },
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }

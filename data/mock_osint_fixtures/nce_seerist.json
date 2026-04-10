@@ -1,15 +1,35 @@
 {
   "region": "NCE",
-  "window_days": 7,
-  "pulse": {
-    "score": 81,
-    "score_prev": 81,
-    "delta": 0,
-    "security_risk": "Low",
-    "political_risk": "Low",
-    "sub_categories": {"civil_unrest": "Low", "organized_crime": "Low", "border_tension": "Low"}
+  "collected_at": "2026-04-10T08:30:00Z",
+  "collection_window": {"since": "2026-04-03T08:30:00Z", "days": 7},
+  "situational": {
+    "events": [],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
   },
-  "events": [],
-  "hotspots": [],
-  "collected_at": "2026-03-20T05:00:00Z"
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "DE": {"score": 6.1, "color": "green", "delta": 0.0, "forecast": 6.1},
+        "DK": {"score": 6.8, "color": "green", "delta": 0.1, "forecast": 6.9}
+      },
+      "region_summary": {
+        "worst_country": "DE",
+        "worst_score": 6.1,
+        "avg_delta": 0.05,
+        "trend_direction": "stable"
+      }
+    },
+    "hotspots": [],
+    "scribe": [],
+    "wod_searches": [],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "DE": {"overall": "Low", "political": "Low", "security": "Low", "operational": "Low"},
+      "DK": {"overall": "Low", "political": "Low", "security": "Low", "operational": "Low"}
+    }
+  },
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }
