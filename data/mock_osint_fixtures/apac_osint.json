@@ -1,7 +1,10 @@
 {
   "region": "APAC",
   "collected_at": "2026-04-10T08:30:00Z",
-  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "collection_window": {
+    "days": 7,
+    "since": "2026-04-03T08:30:00Z"
+  },
   "dominant_pillar": "Cyber",
   "summary": "State-sponsored cyber operations targeting APAC renewable energy infrastructure, with geopolitical tensions amplifying supply chain exposure.",
   "lead_indicators": [
@@ -49,12 +52,31 @@
     }
   ],
   "sources": [
-    {"name": "Financial Times Asia", "url": "https://ft.com/content/south-china-sea-supply-chain"},
-    {"name": "Reuters", "url": "https://reuters.com/taiwan-strait-risk"},
-    {"name": "Recorded Future", "url": "https://recordedfuture.com/apac-energy-targeting"},
-    {"name": "SecurityWeek", "url": "https://securityweek.com/apac-supply-chain-attack"},
-    {"name": "BleepingComputer", "url": "https://bleepingcomputer.com/wind-energy-phishing"}
+    {
+      "name": "Financial Times Asia",
+      "url": "https://ft.com/content/south-china-sea-supply-chain"
+    },
+    {
+      "name": "Reuters",
+      "url": "https://reuters.com/taiwan-strait-risk"
+    },
+    {
+      "name": "Recorded Future",
+      "url": "https://recordedfuture.com/apac-energy-targeting"
+    },
+    {
+      "name": "SecurityWeek",
+      "url": "https://securityweek.com/apac-supply-chain-attack"
+    },
+    {
+      "name": "BleepingComputer",
+      "url": "https://bleepingcomputer.com/wind-energy-phishing"
+    }
   ],
-  "matched_topics": [],
+  "matched_topics": [
+    "ot-ics-cyber-attacks",
+    "state-actor-wind-ip-theft",
+    "iran-strait-energy-routes"
+  ],
   "source_provenance": "osint:tavily"
 }

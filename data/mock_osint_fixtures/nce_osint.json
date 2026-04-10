@@ -1,12 +1,15 @@
 {
   "region": "NCE",
   "collected_at": "2026-04-10T08:30:00Z",
-  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "collection_window": {
+    "days": 7,
+    "since": "2026-04-03T08:30:00Z"
+  },
   "dominant_pillar": "Cyber",
   "summary": "Northern and Central Europe operates in the most stable wind energy environment globally. However, ENISA has flagged ransomware groups expanding from North American targeting patterns into NCE operators, and NIS2/CER compliance deadlines introduce near-term operational pressure.",
   "lead_indicators": [
     {
-      "text": "EU CER directive and NIS2 compliance deadlines approaching for NCE wind energy operators — critical infrastructure compliance required by Q3 2026",
+      "text": "EU CER directive and NIS2 compliance deadlines approaching for NCE wind energy operators \u00e2\u20ac\u201d critical infrastructure compliance required by Q3 2026",
       "signal_id": "osint:tavily:nce-geo-001",
       "source_url": "https://euractiv.com/nis2-cer-energy-deadline",
       "source_name": "Euractiv",
@@ -42,11 +45,28 @@
     }
   ],
   "sources": [
-    {"name": "Euractiv", "url": "https://euractiv.com/nis2-cer-energy-deadline"},
-    {"name": "ENISA", "url": "https://enisa.europa.eu/ransomware-nce-warning"},
-    {"name": "IEC Report", "url": "https://iec.int/nordic-ot-maturity-report"},
-    {"name": "BSI", "url": "https://bsi.bund.de/wind-energy-q1-2026"}
+    {
+      "name": "Euractiv",
+      "url": "https://euractiv.com/nis2-cer-energy-deadline"
+    },
+    {
+      "name": "ENISA",
+      "url": "https://enisa.europa.eu/ransomware-nce-warning"
+    },
+    {
+      "name": "IEC Report",
+      "url": "https://iec.int/nordic-ot-maturity-report"
+    },
+    {
+      "name": "BSI",
+      "url": "https://bsi.bund.de/wind-energy-q1-2026"
+    }
   ],
-  "matched_topics": [],
+  "matched_topics": [
+    "ot-ics-cyber-attacks",
+    "ransomware-energy-grid",
+    "state-actor-wind-ip-theft",
+    "eu-critical-infrastructure-directive"
+  ],
   "source_provenance": "osint:tavily"
 }

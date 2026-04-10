@@ -2,7 +2,7 @@
 
 Covers:
 - data/osint_topics.json schema validation
-- matched_topics field in geo_signals.json and cyber_signals.json (added in Task 5)
+- matched_topics field in osint_signals.json (written by osint_collector.py)
 """
 import json
 import os
@@ -90,84 +90,56 @@ def test_active_field_is_boolean():
 
 # ── Collector matched_topics integration tests ───────────────────────────────
 
-def _run(tool, args):
+def _run(region, extra_args=None):
+    cmd = [PYTHON, "tools/osint_collector.py", region, "--mock"] + (extra_args or [])
     return subprocess.run(
-        [PYTHON, f"tools/{tool}"] + args,
-        capture_output=True, text=True, encoding="utf-8", cwd=CWD,
+        cmd, capture_output=True, text=True, encoding="utf-8", cwd=CWD,
     )
 
 
-def test_geo_collector_outputs_matched_topics_for_ame():
-    """geo_collector AME must write matched_topics list — AME has 3 active topics."""
-    result = _run("geo_collector.py", ["AME", "--mock"])
-    assert result.returncode == 0, f"geo_collector AME failed: {result.stderr}"
-    out_path = os.path.join(CWD, "output/regional/ame/geo_signals.json")
-    with open(out_path, encoding="utf-8") as f:
+def _osint_path(region):
+    return os.path.join(CWD, f"output/regional/{region.lower()}/osint_signals.json")
+
+
+def test_osint_collector_outputs_matched_topics_for_ame():
+    """osint_collector AME must write matched_topics list — AME has active topics."""
+    result = _run("AME")
+    assert result.returncode == 0, f"osint_collector AME failed: {result.stderr}"
+    with open(_osint_path("AME"), encoding="utf-8") as f:
         data = json.load(f)
-    assert "matched_topics" in data, "geo_signals.json missing 'matched_topics'"
+    assert "matched_topics" in data, "osint_signals.json missing 'matched_topics'"
     assert isinstance(data["matched_topics"], list)
     assert len(data["matched_topics"]) > 0, "AME should have at least one matched topic"
 
 
-def test_geo_collector_matched_topics_are_valid_ids():
+def test_osint_collector_matched_topics_are_valid_ids():
     """All matched_topics entries must be valid IDs from the registry."""
-    result = _run("geo_collector.py", ["AME", "--mock"])
-    assert result.returncode == 0, f"geo_collector AME failed: {result.stderr}"
+    result = _run("AME")
+    assert result.returncode == 0, f"osint_collector AME failed: {result.stderr}"
     with open(TOPICS_PATH, encoding="utf-8") as f:
         known_ids = {t["id"] for t in json.load(f)}
-    out_path = os.path.join(CWD, "output/regional/ame/geo_signals.json")
-    with open(out_path, encoding="utf-8") as f:
+    with open(_osint_path("AME"), encoding="utf-8") as f:
         data = json.load(f)
     for tid in data["matched_topics"]:
         assert tid in known_ids, f"matched_topics contains unrecognised ID '{tid}'"
 
 
-def test_cyber_collector_outputs_matched_topics_for_ame():
-    """cyber_collector AME must write matched_topics list."""
-    result = _run("cyber_collector.py", ["AME", "--mock"])
-    assert result.returncode == 0, f"cyber_collector AME failed: {result.stderr}"
-    out_path = os.path.join(CWD, "output/regional/ame/cyber_signals.json")
-    with open(out_path, encoding="utf-8") as f:
-        data = json.load(f)
-    assert "matched_topics" in data, "cyber_signals.json missing 'matched_topics'"
-    assert isinstance(data["matched_topics"], list)
-
-
-def test_geo_collector_latam_matched_topics():
+def test_osint_collector_latam_matched_topics():
     """LATAM has supply-chain-wind-components in scope — matched_topics must include it."""
-    result = _run("geo_collector.py", ["LATAM", "--mock"])
-    assert result.returncode == 0, f"geo_collector LATAM failed: {result.stderr}"
-    out_path = os.path.join(CWD, "output/regional/latam/geo_signals.json")
-    with open(out_path, encoding="utf-8") as f:
+    result = _run("LATAM")
+    assert result.returncode == 0, f"osint_collector LATAM failed: {result.stderr}"
+    with open(_osint_path("LATAM"), encoding="utf-8") as f:
         data = json.load(f)
     assert "matched_topics" in data
     assert "supply-chain-wind-components" in data["matched_topics"]
 
 
-def test_geo_collector_all_regions_produce_matched_topics():
-    """All 5 regions must produce a matched_topics list (may be empty for regions with no topics)."""
+def test_osint_collector_all_regions_produce_matched_topics():
+    """All 5 regions must produce a matched_topics list."""
     for region in ["APAC", "AME", "LATAM", "MED", "NCE"]:
-        result = _run("geo_collector.py", [region, "--mock"])
-        assert result.returncode == 0, f"geo_collector {region} failed: {result.stderr}"
-        out_path = os.path.join(CWD, f"output/regional/{region.lower()}/geo_signals.json")
-        with open(out_path, encoding="utf-8") as f:
+        result = _run(region)
+        assert result.returncode == 0, f"osint_collector {region} failed: {result.stderr}"
+        with open(_osint_path(region), encoding="utf-8") as f:
             data = json.load(f)
-        assert "matched_topics" in data, f"{region} geo_signals.json missing 'matched_topics'"
+        assert "matched_topics" in data, f"{region} osint_signals.json missing 'matched_topics'"
         assert isinstance(data["matched_topics"], list), f"{region} matched_topics must be a list"
-
-
-def test_missing_topics_file_does_not_crash_collector():
-    """If osint_topics.json is missing, collector must still succeed with empty matched_topics."""
-    topics_path = os.path.join(CWD, "data/osint_topics.json")
-    backup_path = os.path.join(CWD, "data/osint_topics.json.bak")
-    os.rename(topics_path, backup_path)
-    try:
-        result = _run("geo_collector.py", ["AME", "--mock"])
-        assert result.returncode == 0, f"geo_collector crashed without topics file: {result.stderr}"
-        out_path = os.path.join(CWD, "output/regional/ame/geo_signals.json")
-        with open(out_path, encoding="utf-8") as f:
-            data = json.load(f)
-        assert data.get("matched_topics") == [], \
-            f"Expected empty matched_topics when file missing, got {data.get('matched_topics')}"
-    finally:
-        os.rename(backup_path, topics_path)

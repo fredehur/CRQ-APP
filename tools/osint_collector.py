@@ -362,13 +362,8 @@ def run_mock_mode(region: str, window: str | None = None) -> None:
         _write_json(out_dir / "osint_signals.json", data)
         print(f"[osint_collector] mock: wrote {out_dir / 'osint_signals.json'} from fixture")
     else:
-        # Fallback: delegate to old collectors if osint fixture doesn't exist yet
-        for collector in ("geo_collector", "cyber_collector"):
-            cmd = [sys.executable, f"tools/{collector}.py", region, "--mock"]
-            if window:
-                cmd += ["--window", window]
-            subprocess.run(cmd, check=True, cwd=REPO_ROOT)
-        print(f"[osint_collector] mock: fell back to geo/cyber collectors (no osint fixture)")
+        print(f"[osint_collector] ERROR: no fixture at {fixture_path}", file=sys.stderr)
+        sys.exit(1)
 
 
 def run_live_mode(region: str, window: str | None = None) -> None:

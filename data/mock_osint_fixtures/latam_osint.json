@@ -1,7 +1,10 @@
 {
   "region": "LATAM",
   "collected_at": "2026-04-10T08:30:00Z",
-  "collection_window": {"days": 7, "since": "2026-04-03T08:30:00Z"},
+  "collection_window": {
+    "days": 7,
+    "since": "2026-04-03T08:30:00Z"
+  },
   "dominant_pillar": "Geopolitical",
   "summary": "Latin America presents a low-risk environment for wind energy operations. Political stability indices are at multi-year highs, regulatory frameworks are supportive, and cyber threat actors have shown minimal interest in the regional energy sector.",
   "lead_indicators": [
@@ -42,11 +45,25 @@
     }
   ],
   "sources": [
-    {"name": "Reuters Brazil", "url": "https://reuters.com/brazil-wind-energy-stable"},
-    {"name": "BloombergNEF", "url": "https://bloombergnef.com/latam-supply-chain-resilience"},
-    {"name": "CrowdStrike", "url": "https://crowdstrike.com/latam-threat-assessment"},
-    {"name": "Dragos", "url": "https://dragos.com/latam-ot-threats"}
+    {
+      "name": "Reuters Brazil",
+      "url": "https://reuters.com/brazil-wind-energy-stable"
+    },
+    {
+      "name": "BloombergNEF",
+      "url": "https://bloombergnef.com/latam-supply-chain-resilience"
+    },
+    {
+      "name": "CrowdStrike",
+      "url": "https://crowdstrike.com/latam-threat-assessment"
+    },
+    {
+      "name": "Dragos",
+      "url": "https://dragos.com/latam-ot-threats"
+    }
   ],
-  "matched_topics": [],
+  "matched_topics": [
+    "supply-chain-wind-components"
+  ],
   "source_provenance": "osint:tavily"
 }

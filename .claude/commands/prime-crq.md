@@ -23,7 +23,7 @@ This is a **risk awareness platform**, not a security report tool.
 ```
 run-crq (Orchestrator slash command, opus) — logs all events to output/logs/system_trace.log
 ├── [PARALLEL via Task fan-out] 5x regional pipelines spawned simultaneously
-│   ├── OSINT tool chain: geo_collector → cyber_collector → scenario_mapper
+│   ├── OSINT tool chain: osint_collector → seerist_collector → scribe_enrichment → scenario_mapper
 │   ├── gatekeeper-agent (haiku) — triage, Admiralty rating, ESCALATE/MONITOR/CLEAR
 │   └── regional-analyst-agent (sonnet) — scenario coupling, brief, data.json update
 │       └── Stop hook → regional-analyst-stop.py → jargon-auditor + source-attribution-auditor
@@ -132,9 +132,10 @@ To go live: remove `--mock` from collector calls in `run-crq.md`. Set `TAVILY_AP
 
 ```bash
 # OSINT collection
+uv run python tools/osint_collector.py <REGION> [--mock] [--window 1d|7d|30d|90d|all]
+uv run python tools/seerist_collector.py <REGION> [--mock]
+uv run python tools/scribe_enrichment.py <REGION>
 uv run python tools/geopolitical_context.py <REGION>
-uv run python tools/geo_collector.py <REGION> [--mock]
-uv run python tools/cyber_collector.py <REGION> [--mock]
 uv run python tools/scenario_mapper.py <REGION> [--mock]
 uv run python tools/threat_scorer.py <REGION>
 

@@ -28,16 +28,15 @@ def load_master():
 
 
 def setup_region(region):
-    """Run collectors first so signal files exist."""
-    for tool in ["tools/geo_collector.py", "tools/cyber_collector.py"]:
-        result = subprocess.run(
-            [PYTHON, tool, region, "--mock"],
-            capture_output=True, text=True, encoding="utf-8",
-            cwd="c:/Users/frede/crq-agent-workspace/.worktrees/osint-toolchain"
-        )
-        assert result.returncode == 0, (
-            f"Collector {tool} failed for {region}: {result.stderr}"
-        )
+    """Run osint_collector first so osint_signals.json exists."""
+    result = subprocess.run(
+        [PYTHON, "tools/osint_collector.py", region, "--mock"],
+        capture_output=True, text=True, encoding="utf-8",
+        cwd="c:/Users/frede/crq-agent-workspace"
+    )
+    assert result.returncode == 0, (
+        f"osint_collector failed for {region}: {result.stderr}"
+    )
 
 
 def test_apac_writes_scenario_map():
