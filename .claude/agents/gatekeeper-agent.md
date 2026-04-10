@@ -28,9 +28,11 @@ Use site criticality to calibrate escalation threshold — a region with a PRIMA
 4. If it exists, read: `output/regional/{region_lower}/osint_scratchpad.json`
 
 5. If it exists, read: `output/regional/{region_lower}/collection_quality.json`
+   - Read `seerist_strength` — values: `"high"`, `"low"`, `"none"`. This is pre-computed. Do not re-derive it.
+   - **HARD RULE: if `seerist_strength == "none"` → your decision is MONITOR regardless of OSINT signals. Do not ESCALATE on OSINT alone. Set `seerist_absent: true` in output.**
    - If `thin_collection: true`, factor this into your Admiralty rating — the source basis is limited.
    - Note the collection gap in your rationale.
-   - Absence of this file is non-fatal — proceed normally.
+   - Absence of this file is non-fatal — proceed normally (treat `seerist_strength` as `"low"` if file absent).
    - Contains the target-centric working theory and pre-assessed confidence from the research collector.
    - If present: read `conclusion.suggested_admiralty` and `conclusion.confidence_rationale`.
      Your Admiralty assignment must either confirm or explicitly challenge it with a one-sentence rationale.
@@ -105,6 +107,8 @@ Write the decision file using the dedicated tool. Construct the JSON and pipe it
 - `dominant_pillar` — "Geopolitical" or "Cyber". NEVER null. Derived from `osint_signals.dominant_pillar`.
 - `rationale` — single sentence, no line breaks. Cite the specific signal(s) that drove the decision. For CLEAR: cite the dominant signal that led to clearing (e.g. geo stability, absence of state-aligned cyber activity). Do NOT use generic placeholder text.
 - `scenario_match` — pass through the value from `scenario_map.scenario_match`, or `null` if no match. This is a hint for the analyst — not a final determination.
+- `seerist_absent` — boolean. `true` if `seerist_strength == "none"`, otherwise `false`. ALWAYS present. Never omit.
+- `seerist_absent_reason` — string. If `seerist_absent: true`: `"seerist_strength=none — OSINT alone insufficient for ESCALATE"`. If `seerist_absent: false`: `""`. ALWAYS present.
 
 ### ESCALATE example
 
