@@ -1,6 +1,5 @@
 # Agent Config Tab Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a Config tab to the CRQ analyst workstation with an Intelligence Sources split-view (OSINT topics + YouTube sources) and a Prompts sub-tab for editing agent instruction bodies, all with diff-preview before saving to disk.
 

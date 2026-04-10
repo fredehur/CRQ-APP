@@ -1,6 +1,5 @@
 # Phase O — CISO Brief Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Redesign PDF and PPTX board outputs to Clean Executive style. Derive four display sentences (Driver, Exposure, Impact, Watch) from existing pillar text. Remove all VaCR figures from rendered outputs. Update the regional analyst quality checklist.
 

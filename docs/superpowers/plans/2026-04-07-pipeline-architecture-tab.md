@@ -1,6 +1,5 @@
 # Pipeline Architecture Tab — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a "Pipeline" tab to the CRQ app that visually explains the full agentic intelligence pipeline — both as an agentic framework reference and as an intelligence methodology guide — with a side panel that surfaces agent prompts for editing (relocating the existing Config > Prompts sub-tab).
 

@@ -1,6 +1,5 @@
 # CRQ Dev Team Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Register a native Claude Code agent team (`crq-dev-team`) of 6 specialized agents that help build and maintain the CRQ app following disler's agentic principles.
 

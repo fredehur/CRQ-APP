@@ -1,6 +1,5 @@
 # Pipeline Data Contract Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Extend the pipeline to output `signal_clusters.json` per region, `synthesis_brief` in `global_report.json`, and a `--window` date-range parameter on all OSINT collectors.
 

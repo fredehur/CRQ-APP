@@ -1,6 +1,5 @@
 # Analyst Dashboard UI Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Rebuild `static/index.html` + `static/app.js` as an analyst workstation — split-pane layout, SIGINT Terminal aesthetic, signal convergence explorer, Reports tab, and window-parameterised run trigger.
 

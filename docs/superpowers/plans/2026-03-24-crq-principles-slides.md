@@ -1,6 +1,5 @@
 # CRQ Principles Slides Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a single self-contained HTML slide deck (13 slides) for a 45-minute government meeting on Quantitative Cyber Risk Model Foundational Principles.
 

@@ -1,6 +1,5 @@
 # Trends & History Tab Redesign — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the flat Trends and History tabs with a threat-landscape pipeline + escalation matrix UI, relocate audit trace to Validate tab.
 

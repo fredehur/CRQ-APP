@@ -1,6 +1,5 @@
 # Demo Showcase Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Create a `demo/` folder containing a professional briefing-style walkthrough and the actual pipeline intelligence outputs, targeted at a risk professional colleague with no developer background.
 

@@ -1,6 +1,5 @@
 # Phase G — Deep Research Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a shared `tools/deep_research.py` module wrapping GPT Researcher with Claude + Tavily, wired into the pipeline as an optional deep research pass and consumed by a new `tools/discover.py` for Config tab discovery.
 

@@ -1,6 +1,5 @@
 # Phase L — RSM Intelligence Brief Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Wire an end-to-end RSM (Regional Security Manager) intelligence brief pipeline that collects Seerist signals, computes deltas, evaluates thresholds, formats SITREP briefs via an LLM agent, and delivers via email — all in mock mode first, live mode when API keys are available.
 

@@ -1,6 +1,5 @@
 # OSINT Tool Chain Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a 4-tool OSINT signal collection layer that generates `geo_signals.json`, `cyber_signals.json`, and `scenario_map.json` per region from mock fixture data, with a clean seam for live search.
 

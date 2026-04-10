@@ -1,6 +1,5 @@
 # Phase C — Board Export Polish Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace flat markdown exporters with production-quality board PDF and PPTX using Playwright + Jinja2 + python-pptx, sharing a single typed data layer.
 

@@ -1,6 +1,5 @@
 # Risk Register Validation — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add multi-register support and a dedicated VaCR source validation pipeline that finds quantitative sources (monetary + probability) and maps them to register scenarios to produce per-scenario verdicts.
 
@@ -22,9 +21,27 @@
 | Create | `tools/register_validator.py` | Validation pipeline — collect + score sources |
 | Modify | `server.py` | 9 new API endpoints |
 | Create | `.claude/agents/register-validator-agent.md` | Agent — produces register_validation.json |
+| Create | `.claude/hooks/validators/register-validation-auditor.py` | Stop hook — schema + quantitative filter enforcement |
 | Create | `.claude/commands/validate-register.md` | Orchestrator command |
 | Modify | `static/index.html` | Register bar, drawer, form, validation results section |
 | Modify | `static/app.js` | Register state, drawer JS, form JS, validation results render |
+
+---
+
+## Parallel Workstreams
+
+Run Builder A and Builder B simultaneously. They converge at Task 12 (validation).
+
+| Builder | Tasks | Files touched |
+|---|---|---|
+| **Builder A — Backend** | T1 → T2 → T3 → T4 → T8 → T9 | `tools/update_source_registry.py`, `data/registers/`, `data/active_register.json`, `tools/suggest_tags.py`, `tools/register_validator.py`, `server.py`, `.claude/agents/register-validator-agent.md`, `.claude/hooks/validators/register-validation-auditor.py`, `.claude/commands/validate-register.md` |
+| **Builder B — Frontend** | T5 → T6 → T7 → T10 → T11 | `static/index.html`, `static/app.js` |
+
+Builder B depends on the API contract from Builder A (endpoint paths + response shapes). These are fully defined in Tasks 3, 8, and 10 — Builder B can proceed against those contracts without waiting for Builder A to finish.
+
+**Task dependency note:** Task 9 (`register-validator-agent`) depends on Task 8 (`register_validator.py`) being complete. Builder A must finish T8 before starting T9.
+
+**Layout note (Task 5):** The register bar adds 24px, pushing `padding-top` from 36px → 60px. Before editing, grep for `calc(100vh - 36px)` across `static/index.html` — update every instance, not just the two named in the task.
 
 ---
 
@@ -1233,11 +1250,66 @@ print('OK — agent file valid')
 
 Expected: `OK — agent file valid`
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 3: Create `.claude/hooks/validators/register-validation-auditor.py`**
+
+```python
+#!/usr/bin/env python3
+"""
+Stop hook for register-validator-agent.
+Validates that output/validation/register_validation.json:
+  - Is valid JSON
+  - Has required top-level fields (register_id, validated_at, scenarios)
+  - Each scenario has financial + probability verdicts with non-empty recommendation
+  - No scenario has a null/empty verdict value
+"""
+import json
+import sys
+from pathlib import Path
+
+OUTPUT = Path("output/validation/register_validation.json")
+
+def fail(msg: str) -> None:
+    print(f"FAIL: {msg}", file=sys.stderr)
+    sys.exit(1)
+
+if not OUTPUT.exists():
+    fail("register_validation.json not found")
+
+try:
+    data = json.loads(OUTPUT.read_text())
+except json.JSONDecodeError as e:
+    fail(f"Invalid JSON: {e}")
+
+for field in ("register_id", "validated_at", "scenarios"):
+    if field not in data:
+        fail(f"Missing top-level field: {field}")
+
+for s in data.get("scenarios", []):
+    sid = s.get("scenario_id", "?")
+    for dim in ("financial", "probability"):
+        v = s.get(dim, {})
+        if not v.get("verdict"):
+            fail(f"Scenario {sid} — {dim}.verdict is empty")
+        if not v.get("recommendation"):
+            fail(f"Scenario {sid} — {dim}.recommendation is empty")
+
+print(f"OK — register_validation.json valid ({len(data['scenarios'])} scenarios)")
+sys.exit(0)
+```
+
+- [ ] **Step 4: Wire stop hook into agent frontmatter**
+
+In `.claude/agents/register-validator-agent.md`, update the frontmatter to add:
+```yaml
+hooks:
+  stop: uv run python .claude/hooks/validators/register-validation-auditor.py
+```
+
+- [ ] **Step 5: Commit**
 
 ```bash
-git add .claude/agents/register-validator-agent.md
-git commit -m "feat(agent): register-validator-agent for VaCR figure enrichment"
+git add .claude/agents/register-validator-agent.md .claude/hooks/validators/register-validation-auditor.py
+git commit -m "feat(agent): register-validator-agent + stop hook auditor"
 ```
 
 ---

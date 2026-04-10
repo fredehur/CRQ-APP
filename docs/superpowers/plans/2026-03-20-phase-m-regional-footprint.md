@@ -1,6 +1,5 @@
 # Phase M — Regional Footprint Context Layer Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add `data/regional_footprint.json` and `tools/build_context.py` so pipeline agents reason against AeroGrid's specific regional presence rather than the thin global company profile.
 

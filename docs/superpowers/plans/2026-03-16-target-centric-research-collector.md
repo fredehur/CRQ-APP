@@ -1,6 +1,5 @@
 # Target-Centric Research Collector Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the dumb Python OSINT collectors (in live mode) with a target-centric research loop that forms a CRQ-grounded working theory, collects evidence in 2 passes, and writes a `research_scratchpad.json` audit trail consumed by the gatekeeper and analyst.
 

@@ -1,6 +1,5 @@
 # Phase G-0: Shared OSINT Topic Registry Implementation Plan
 
-> **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Create a shared `data/osint_topics.json` registry and retrofit both OSINT collectors to run one focused search per active topic per region, producing a `matched_topics` field in their output for analyst traceability.
 
