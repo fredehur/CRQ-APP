@@ -83,10 +83,10 @@ Read all of the following before writing anything:
 4. `output/regional/{region_lower}/seerist_signals.json` — Seerist intelligence: situational events, pulse scores, Scribe AI country assessments, WoD search results.
 5. `output/regional/{region_lower}/youtube_signals.json` (if present) — analyst opinion from curated YouTube channels. Treat as corroborating evidence, not primary source. Cite channel names (not URLs) when referencing. If absent or `lead_indicators` is empty, note signal absence — do not fabricate.
 6. `output/regional/{region_lower}/scenario_map.json` — scenario mapper hint (advisory only — you will validate it)
-6. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
-7. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
-8. `output/regional/{region_lower}/osint_scratchpad.json` (if present — live mode only)
-9. `output/regional/{region_lower}/context_block.txt` (if present) —
+7. `output/regional/{region_lower}/gatekeeper_decision.json` — triage decision, Admiralty rating, dominant pillar, triage rationale
+8. `data/osint_topics.json` — the shared topic registry: which topics the platform is tracking globally, their keywords, and their stable `id` values. Use this to link signal clusters back to tracked topic IDs for traceability.
+9. `output/regional/{region_lower}/osint_scratchpad.json` (if present — live mode only)
+10. `output/regional/{region_lower}/context_block.txt` (if present) —
    AeroGrid's physical footprint in this region: sites, headcount,
    crown jewels, supply chain dependencies, key contracts.
    Use ONLY in the So What paragraph. Do not reference these assets in Why or How.

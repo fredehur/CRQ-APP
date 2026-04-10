@@ -433,7 +433,7 @@ def run_live_mode(region: str, window: str | None = None) -> None:
         "region": region,
         "collected_at": collected_at,
         "collection_window": {
-            "days": int(window.rstrip("d")) if window else 7,
+            "days": int(window.rstrip("d")) if window and window != "all" else 0,
             "since": "",  # filled by caller if needed
         },
         "dominant_pillar": dominant_pillar,

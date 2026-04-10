@@ -64,11 +64,17 @@ Combine into a rating string: "A1", "B2", "C3", etc.
 
 ## ROUTING LOGIC
 
-- `osint_signals.lead_indicators` (filter `pillar: "cyber"`) indicate **no active cyber campaigns targeting this sector** → **CLEAR**
-- Active cyber indicators present AND `scenario_map.financial_rank > 4` → **MONITOR**
-- Active cyber indicators present AND `scenario_map.financial_rank ≤ 4` (top-4: Ransomware, Accidental disclosure, System intrusion, Insider misuse) AND threat plausibly impacts a critical asset → **ESCALATE**
-- `seerist_signals.analytical.hotspots[].anomaly_flag == true` → automatic ESCALATE signal
-- `seerist_signals.analytical.pulse.region_summary.avg_delta < 0` strengthens ESCALATE case
+**CLEAR** — route here when BOTH of the following are true:
+- `osint_signals.lead_indicators` contains **zero items** with `pillar: "cyber"` (no cyber threat indicators at all), AND
+- `seerist_signals.analytical.hotspots` contains no entries where `anomaly_flag == true`
+
+**MONITOR** — route here when:
+- Cyber indicators are present in `osint_signals.lead_indicators` AND `scenario_map.financial_rank > 4`
+
+**ESCALATE** — route here when ANY of the following apply:
+- Cyber indicators present AND `scenario_map.financial_rank ≤ 4` (top-4: Ransomware, Accidental disclosure, System intrusion, Insider misuse) AND threat plausibly impacts a critical asset
+- `seerist_signals.analytical.hotspots[].anomaly_flag == true` (automatic escalation signal regardless of cyber indicators)
+- `seerist_signals.analytical.pulse.region_summary.avg_delta < 0` combined with active cyber indicators strengthens ESCALATE case
 
 Use `osint_signals.dominant_pillar` to assign the `dominant_pillar` field in your output.
 

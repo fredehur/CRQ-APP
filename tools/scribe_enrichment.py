@@ -22,8 +22,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
-OUTPUT_ROOT = Path("output")
-FIXTURES_DIR = Path("data/mock_osint_fixtures")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+OUTPUT_ROOT = REPO_ROOT / "output"
+FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
 
 
 def build_enrichment_plan(osint_signals: dict, scenario_map: dict, region: str) -> dict:
@@ -159,10 +160,14 @@ def enrich(region: str, mock: bool = True, window_days: int = 7) -> None:
         plan = build_enrichment_plan(osint, scenario, region)
         enrichment = _live_enrich(region, plan, window_days)
 
-    # Append to seerist_signals.json
+    # Append to seerist_signals.json — only overwrite if enrichment returned non-empty data
     seerist.setdefault("analytical", {})
-    seerist["analytical"]["scribe"] = enrichment.get("scribe", [])
-    seerist["analytical"]["wod_searches"] = enrichment.get("wod_searches", [])
+    scribe_data = enrichment.get("scribe")
+    wod_data = enrichment.get("wod_searches")
+    if scribe_data:
+        seerist["analytical"]["scribe"] = scribe_data
+    if wod_data:
+        seerist["analytical"]["wod_searches"] = wod_data
 
     seerist_path.write_text(json.dumps(seerist, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[scribe_enrichment] enriched {seerist_path} — {len(enrichment.get('scribe', []))} scribe + {len(enrichment.get('wod_searches', []))} wod", file=sys.stderr)

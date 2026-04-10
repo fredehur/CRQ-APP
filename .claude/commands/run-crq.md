@@ -97,19 +97,19 @@ uv run python tools/seerist_collector.py {REGION} {OSINT_FLAG}
 ```
 Writes `output/regional/{region_lower}/seerist_signals.json`.
 
-**Step 1c — Scribe enrichment (run after Step 1b):**
+**Step 2 — Scenario mapping (run after Step 1b):**
+```bash
+uv run python tools/scenario_mapper.py {REGION} {OSINT_FLAG}
+```
+Writes `output/regional/{region_lower}/scenario_map.json`.
+
+**Step 2b — Scribe enrichment (run after Step 2 — requires scenario_map.json):**
 ```bash
 uv run python tools/scribe_enrichment.py {REGION}
 ```
 Reads `osint_signals.json` + `scenario_map.json` to build deterministic Seerist queries.
 Appends `analytical.scribe[]` and `analytical.wod_searches[]` to `seerist_signals.json`.
 If Seerist API key absent or mock mode: tool exits 0 and leaves existing fixture data unchanged.
-
-**Step 2 — Scenario mapping:**
-```bash
-uv run python tools/scenario_mapper.py {REGION} {OSINT_FLAG}
-```
-Writes `output/regional/{region_lower}/scenario_map.json`.
 
 **Step 3 — Collection quality gate:**
 ```bash

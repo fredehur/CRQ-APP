@@ -36,10 +36,15 @@ def test_mock_collect_writes_correct_schema(tmp_path, monkeypatch):
     (tmp_path / "output" / "regional" / "apac").mkdir(parents=True)
 
     import sys
+    import importlib
     sys.path.insert(0, str(tmp_path))
 
-    from tools.seerist_collector import collect
-    result = collect("APAC", mock=True, window_days=7)
+    import tools.seerist_collector as sc
+    # Override absolute paths to point at tmp_path for this test
+    monkeypatch.setattr(sc, "OUTPUT_ROOT", tmp_path / "output")
+    monkeypatch.setattr(sc, "FIXTURES_DIR", tmp_path / "data" / "mock_osint_fixtures")
+
+    result = sc.collect("APAC", mock=True, window_days=7)
 
     assert result["region"] == "APAC"
     assert "situational" in result

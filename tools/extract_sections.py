@@ -47,9 +47,11 @@ ACTION_BULLETS = {
 
 # Signal type labels
 SIGNAL_TYPE_LABELS = {
+    "Event": "Confirmed Incident",
     "Confirmed Incident": "Confirmed Incident",
-    "Emerging Pattern": "Emerging Pattern",
     "Trend": "Emerging Pattern",
+    "Emerging Pattern": "Emerging Pattern",
+    "Mixed": "Confirmed Incident + Emerging Pattern",
     "Confirmed Incident + Emerging Pattern": "Confirmed Incident + Emerging Pattern",
 }
 

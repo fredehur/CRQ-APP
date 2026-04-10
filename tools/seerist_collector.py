@@ -22,8 +22,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
-OUTPUT_ROOT = Path("output")
-FIXTURES_DIR = Path("data/mock_osint_fixtures")
+REPO_ROOT = Path(__file__).resolve().parent.parent
+OUTPUT_ROOT = REPO_ROOT / "output"
+FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
 
 
 def _mock_collect(region: str, window_days: int) -> dict:
