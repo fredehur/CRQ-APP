@@ -61,23 +61,36 @@ STATUS_LABELS = {
 }
 
 
-def _group_bullets(bullets: list[dict]) -> dict:
-    """Group bullets by section into sections.json arrays."""
-    groups = {
+def _group_claims_into_bullets(claims: list[dict]) -> dict:
+    """Group claim texts into sections.json bullet arrays.
+
+    Reads the `bullets` field on each claim (new format) or falls back
+    to deriving from the `paragraph` field (legacy format).
+    """
+    groups: dict[str, list[str]] = {
         "intel_bullets": [],
         "adversary_bullets": [],
         "impact_bullets": [],
         "watch_bullets": [],
     }
-    section_map = {
-        "intel": "intel_bullets",
-        "adversary": "adversary_bullets",
-        "impact": "impact_bullets",
+    # Paragraph → bullets mapping for legacy claims without `bullets` field
+    paragraph_map = {
+        "why": "intel_bullets",
+        "how": "adversary_bullets",
+        "sowhat": "impact_bullets",
         "watch": "watch_bullets",
     }
-    for b in bullets:
-        key = section_map.get(b.get("section", ""), "intel_bullets")
-        groups[key].append(b["text"])
+    for c in claims:
+        text = c.get("text", "")
+        if not text:
+            continue
+        # New format: explicit bullets field
+        target = c.get("bullets")
+        if not target:
+            # Legacy: derive from paragraph
+            target = paragraph_map.get(c.get("paragraph", ""), "intel_bullets")
+        if target in groups:
+            groups[target].append(text)
     return groups
 
 
@@ -104,13 +117,17 @@ def _get_action_bullets(scenario: str, region: str) -> list[str]:
     ])
 
 
-def _extract_metadata(claims_data: dict) -> dict:
-    """Extract metadata fields from claims.json header."""
+def _extract_metadata(claims_data: dict, data: dict | None = None) -> dict:
+    """Extract metadata fields — data.json is authoritative (analyst writes it in Step 6).
+
+    Claims.json top-level fields are a fallback for future formats.
+    """
+    d = data or {}
     return {
-        "primary_scenario": claims_data.get("primary_scenario", ""),
-        "financial_rank": claims_data.get("financial_rank", 0),
-        "signal_type": claims_data.get("signal_type", ""),
-        "threat_actor": claims_data.get("threat_actor", ""),
+        "primary_scenario": d.get("primary_scenario") or claims_data.get("primary_scenario", ""),
+        "financial_rank": d.get("financial_rank") or claims_data.get("financial_rank", 0),
+        "signal_type": d.get("signal_type") or claims_data.get("signal_type", ""),
+        "threat_actor": d.get("threat_actor") or claims_data.get("threat_actor", ""),
     }
 
 
@@ -128,7 +145,6 @@ def extract(region: str) -> None:
 
     claims_data = json.loads(claims_path.read_text(encoding="utf-8"))
     claims = claims_data.get("claims", [])
-    bullets = claims_data.get("bullets", [])
 
     # 1. Build signal_clusters.json
     clusters = _group_claims_by_pillar(claims)
@@ -136,19 +152,15 @@ def extract(region: str) -> None:
     clusters_path.write_text(json.dumps(clusters, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[extract_sections] wrote {clusters_path}", file=sys.stderr)
 
-    # 2. Build sections.json
-    grouped = _group_bullets(bullets)
-
-    # Add action bullets from lookup
-    scenario = claims_data.get("primary_scenario", "")
-    grouped["action_bullets"] = _get_action_bullets(scenario, region)
-
-    # Add labels
-    meta = _extract_metadata(claims_data)
-    dominant_pillar = ""
+    # 2. Build sections.json — read data.json first for authoritative analyst fields
+    data: dict = {}
     if data_path.exists():
         data = json.loads(data_path.read_text(encoding="utf-8"))
-        dominant_pillar = data.get("dominant_pillar", "")
+    dominant_pillar = data.get("dominant_pillar", "")
+    meta = _extract_metadata(claims_data, data)
+
+    grouped = _group_claims_into_bullets(claims)
+    grouped["action_bullets"] = _get_action_bullets(meta["primary_scenario"], region)
 
     signal_type = meta.get("signal_type", "Emerging Pattern")
     grouped["signal_type_label"] = SIGNAL_TYPE_LABELS.get(signal_type, signal_type)
@@ -158,13 +170,11 @@ def extract(region: str) -> None:
     sections_path.write_text(json.dumps(grouped, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"[extract_sections] wrote {sections_path}", file=sys.stderr)
 
-    # 3. Update data.json with metadata from claims
+    # 3. Update data.json — backfill only fields not already set by the analyst
     if data_path.exists():
-        data = json.loads(data_path.read_text(encoding="utf-8"))
-        data["primary_scenario"] = meta["primary_scenario"]
-        data["financial_rank"] = meta["financial_rank"]
-        data["signal_type"] = meta["signal_type"]
-        data["threat_actor"] = meta["threat_actor"]
+        for field in ("primary_scenario", "financial_rank", "signal_type", "threat_actor"):
+            if not data.get(field) and meta.get(field):
+                data[field] = meta[field]
         data_path.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
         print(f"[extract_sections] updated {data_path}", file=sys.stderr)
 
