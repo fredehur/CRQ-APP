@@ -437,19 +437,19 @@
     .smb-flag    { background: #3d2000; color: #f6ad55; border: 1px solid #7b3f00; font-size: 9px; padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle; }
 
     /* Two-box source display */
-    .rr-sources-section { margin-top: 10px; }
-    .rr-sources-box { background: #0d1117; border: 1px solid #21262d; border-radius: 3px; margin-bottom: 6px; }
-    .rr-sources-box-header { padding: 5px 10px; font-size: 9px; font-weight: 600; color: #6e7681; text-transform: uppercase; letter-spacing: 0.08em; border-bottom: 1px solid #21262d; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; }
+    .rr-sources-section { margin-top: 8px; display: flex; flex-direction: column; gap: 0; }
+    .rr-sources-box { background: transparent; border: none; margin-bottom: 0; }
+    .rr-sources-box-header { padding: 6px 0 4px 0; font-size: 8px; font-weight: 700; color: #484f58; text-transform: uppercase; letter-spacing: 0.12em; display: flex; align-items: center; gap: 6px; font-family: 'IBM Plex Mono', monospace; border-bottom: 1px solid #161b22; margin-bottom: 2px; }
     .rr-sources-box-header .new-edition-badge { font-size: 9px; color: #e3b341; background: #1f1700; border: 1px solid #4a3800; border-radius: 2px; padding: 1px 5px; }
-    .rr-source-row { padding: 6px 10px; border-bottom: 1px solid #161b22; font-size: 11px; display: flex; align-items: flex-start; gap: 8px; }
+    .rr-source-row { padding: 7px 0; border-bottom: 1px solid #0d1117; font-size: 11px; display: flex; align-items: flex-start; gap: 0; }
     .rr-source-row:last-child { border-bottom: none; }
     .rr-source-row-main { flex: 1; min-width: 0; }
-    .rr-source-name { color: #c9d1d9; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif; }
+    .rr-source-name { color: #c9d1d9; font-weight: 500; font-family: 'IBM Plex Sans', sans-serif; display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
     .rr-source-name a { color: #58a6ff; text-decoration: none; }
     .rr-source-name a:hover { text-decoration: underline; color: #79c0ff; }
-    .rr-source-figure { color: #3fb950; font-weight: 600; margin-top: 2px; font-size: 11px; font-family: 'IBM Plex Mono', monospace; }
-    .rr-source-note { color: #8b949e; font-size: 10px; margin-top: 2px; line-height: 1.5; }
-    .rr-source-quote { color: #6e7681; font-size: 10px; margin-top: 3px; font-style: italic; line-height: 1.4; border-left: 2px solid #21262d; padding-left: 6px; margin-left: 2px; }
+    .rr-source-figure { color: #3fb950; font-weight: 700; margin-top: 3px; font-size: 13px; font-family: 'IBM Plex Mono', monospace; letter-spacing: -0.01em; }
+    .rr-source-note { color: #6e7681; font-size: 10px; margin-top: 2px; line-height: 1.5; }
+    .rr-source-quote { color: #484f58; font-size: 10px; margin-top: 4px; font-style: italic; line-height: 1.5; border-left: 2px solid #21262d; padding-left: 8px; }
 
     /* ── Risk Register scenario list rows ── */
     .rr-scenario-row {
@@ -501,37 +501,44 @@
     .rr-conf-low    { font-size:8px;color:#484f58;background:#0d1117;border:1px solid #21262d;border-radius:2px;padding:1px 5px;font-family:'IBM Plex Mono',monospace;font-weight:700;letter-spacing:0.06em; }
 
     /* ── Dimension validation row ── */
+    .rr-dim-card { border-radius: 3px; overflow: hidden; margin-bottom: 8px; border-left: 3px solid #21262d; background: #080c10; border-top: 1px solid #21262d; border-right: 1px solid #21262d; border-bottom: 1px solid #21262d; }
+    .rr-dim-card.verdict-supports  { border-left-color: #2ea043; }
+    .rr-dim-card.verdict-challenges { border-left-color: #da3633; }
+    .rr-dim-card.verdict-insufficient { border-left-color: #30363d; }
     .rr-dim-header {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 12px;
+      padding: 9px 12px;
       background: #080c10;
       cursor: pointer;
+      user-select: none;
     }
+    .rr-dim-header:hover { background: #0b1018; }
     .rr-dim-label {
-      font-size: 9px;
+      font-size: 8px;
       font-weight: 700;
-      letter-spacing: 0.1em;
-      color: #8b949e;
-      width: 70px;
+      letter-spacing: 0.12em;
+      color: #6e7681;
+      width: 66px;
       flex-shrink: 0;
       font-family: 'IBM Plex Mono', monospace;
       text-transform: uppercase;
     }
     .rr-dim-value {
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 600;
       color: #e6edf3;
       font-family: 'IBM Plex Mono', monospace;
       flex-shrink: 0;
-      min-width: 90px;
+      min-width: 80px;
     }
-    .rr-dim-sep { color: #30363d; font-size: 10px; flex-shrink: 0; }
-    .rr-dim-bench-label { font-size: 9px; color: #484f58; flex-shrink: 0; }
-    .rr-dim-bench-val { font-size: 10px; color: #8b949e; font-family: 'IBM Plex Mono', monospace; }
-    .rr-dim-right { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-    .rr-src-count { font-size: 9px; color: #484f58; font-family: 'IBM Plex Mono', monospace; }
+    .rr-dim-sep { color: #21262d; font-size: 10px; flex-shrink: 0; }
+    .rr-dim-bench-label { font-size: 8px; color: #30363d; flex-shrink: 0; letter-spacing: 0.06em; font-family: 'IBM Plex Mono', monospace; }
+    .rr-dim-bench-val { font-size: 9px; color: #6e7681; font-family: 'IBM Plex Mono', monospace; }
+    .rr-dim-right { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+    .rr-src-count { font-size: 9px; color: #30363d; font-family: 'IBM Plex Mono', monospace; }
+    .rr-dim-body { padding: 10px 14px 12px 14px; border-top: 1px solid #0d1117; background: #060a0f; }
 
     /* Pipeline two-panel layout */
     #pipeline-body {
@@ -1092,17 +1099,19 @@
   </div>
 
   <!-- Run summary card (last validation run) -->
-  <div id="rr-run-summary-card" style="flex-shrink:0;margin:0 16px 10px 16px"></div>
+  <div id="rr-run-summary-card" style="flex-shrink:0;margin:0 16px 10px 16px;max-height:40vh;overflow-y:auto"></div>
 
   <!-- Progress line (hidden until running) -->
   <div id="val-progress" style="display:none;flex-shrink:0;font-size:10px;color:#6e7681;padding:5px 16px;background:#161b22;border-bottom:1px solid #21262d"></div>
 
-  <!-- Two-column body -->
-  <div style="flex:1;display:grid;grid-template-columns:40% 60%;overflow:hidden;min-height:0">
+  <!-- Two-column body (resizable) -->
+  <div id="rr-body" style="flex:1;display:flex;overflow:hidden;min-height:0">
     <!-- Left panel: Scenario list -->
-    <div id="rr-scenario-list" style="overflow-y:auto;border-right:1px solid #21262d"></div>
+    <div id="rr-scenario-list" style="width:40%;min-width:160px;max-width:70%;overflow-y:auto;min-height:0;flex-shrink:0"></div>
+    <!-- Drag handle -->
+    <div id="rr-divider" style="width:4px;background:#161b22;cursor:col-resize;flex-shrink:0;transition:background 0.1s" onmouseenter="this.style.background='#1f6feb'" onmouseleave="if(!window._rrDragging)this.style.background='#161b22'"></div>
     <!-- Right panel: Scenario detail -->
-    <div id="rr-scenario-detail" style="overflow-y:auto"></div>
+    <div id="rr-scenario-detail" style="flex:1;overflow-y:auto;min-height:0"></div>
   </div>
 
 </div>

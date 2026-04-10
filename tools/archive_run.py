@@ -15,6 +15,7 @@ ARCHIVE_FILES = [
     "board_report.pdf",
     "board_report.pptx",
     "system_trace.log",
+    "pipeline/vacr_research.json",
 ]
 ARCHIVE_DIRS = [
     "regional",

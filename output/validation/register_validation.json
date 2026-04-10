@@ -1,0 +1,1348 @@
+{
+  "register_id": "wind_power_plant",
+  "validated_at": "2026-04-09T11:16:22.905074+00:00",
+  "run_summary": {
+    "run_id": "2026-04-09T11:16:22Z",
+    "previous_run_id": null,
+    "register_id": "wind_power_plant",
+    "register_name": "Wind Power Plant",
+    "duration_seconds": 423,
+    "scenarios": {
+      "total": 9,
+      "validated": 9,
+      "skipped": 0
+    },
+    "verdicts": {
+      "current": {
+        "support": 6,
+        "challenge": 7,
+        "insufficient": 5
+      },
+      "previous": {
+        "support": 3,
+        "challenge": 11,
+        "insufficient": 4
+      },
+      "deltas": [
+        {
+          "scenario": "System intrusion",
+          "dim": "fin",
+          "from": "challenge",
+          "to": "support",
+          "direction": "improved"
+        },
+        {
+          "scenario": "Ransomware",
+          "dim": "prob",
+          "from": "support",
+          "to": "challenge",
+          "direction": "weakened"
+        },
+        {
+          "scenario": "Physical threat",
+          "dim": "fin",
+          "from": "challenge",
+          "to": "support",
+          "direction": "improved"
+        },
+        {
+          "scenario": "Physical threat",
+          "dim": "prob",
+          "from": "challenge",
+          "to": "insufficient",
+          "direction": "weakened"
+        },
+        {
+          "scenario": "DoS attack",
+          "dim": "fin",
+          "from": "challenge",
+          "to": "support",
+          "direction": "improved"
+        },
+        {
+          "scenario": "Scam or fraud",
+          "dim": "prob",
+          "from": "insufficient",
+          "to": "challenge",
+          "direction": "improved"
+        },
+        {
+          "scenario": "System failure",
+          "dim": "fin",
+          "from": "challenge",
+          "to": "support",
+          "direction": "improved"
+        },
+        {
+          "scenario": "System failure",
+          "dim": "prob",
+          "from": "challenge",
+          "to": "insufficient",
+          "direction": "weakened"
+        }
+      ]
+    },
+    "sources": {
+      "queried": 0,
+      "matched": 0,
+      "matched_ids": [],
+      "new_this_run": [
+        {
+          "id": "20-business-email-compromise-statistics-2025-eftsure-us",
+          "name": "20-business-email-compromise-statistics-2025-eftsure-us",
+          "tier": "C"
+        },
+        {
+          "id": "2026-insider-threat-cyber-security-statistics-swif-ai",
+          "name": "2026-insider-threat-cyber-security-statistics-swif-ai",
+          "tier": "C"
+        },
+        {
+          "id": "all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance",
+          "name": "all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance",
+          "tier": "C"
+        },
+        {
+          "id": "all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance-pv-magazine-international",
+          "name": "all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance-pv-magazine-international",
+          "tier": "C"
+        },
+        {
+          "id": "business-email-compromise-statistics-2026-prevention-guide",
+          "name": "business-email-compromise-statistics-2026-prevention-guide",
+          "tier": "C"
+        },
+        {
+          "id": "business-email-compromise-the-55-billion-scam-ic3",
+          "name": "business-email-compromise-the-55-billion-scam-ic3",
+          "tier": "C"
+        },
+        {
+          "id": "cybercrime-to-cost-the-world-10-5-trillion-annually-by-2025",
+          "name": "cybercrime-to-cost-the-world-10-5-trillion-annually-by-2025",
+          "tier": "C"
+        },
+        {
+          "id": "cybersecurity-in-energy-infrastructure-market-size-cagr-of-15",
+          "name": "cybersecurity-in-energy-infrastructure-market-size-cagr-of-15",
+          "tier": "C"
+        },
+        {
+          "id": "data-breach-statistics-2025-global-costs-and-trends",
+          "name": "data-breach-statistics-2025-global-costs-and-trends",
+          "tier": "C"
+        },
+        {
+          "id": "ddos-attacks-in-2024-impacts-on-renewable-energy-and-how-to-mitigate-risks",
+          "name": "ddos-attacks-in-2024-impacts-on-renewable-energy-and-how-to-mitigate-risks",
+          "tier": "C"
+        },
+        {
+          "id": "dragos-2026-ot-report-shows-surge-in-threat-groups-and-ransomware",
+          "name": "dragos-2026-ot-report-shows-surge-in-threat-groups-and-ransomware",
+          "tier": "C"
+        },
+        {
+          "id": "dragos-reports-surge-in-ransomware-attacks-as-ai",
+          "name": "dragos-reports-surge-in-ransomware-attacks-as-ai",
+          "tier": "C"
+        },
+        {
+          "id": "energy-sector-ransomware-nightmare-haunts-critical-infrastructure",
+          "name": "energy-sector-ransomware-nightmare-haunts-critical-infrastructure",
+          "tier": "C"
+        },
+        {
+          "id": "financial-impact-from-severe-ot-events-could-top-300b-cybersecurity-dive",
+          "name": "financial-impact-from-severe-ot-events-could-top-300b-cybersecurity-dive",
+          "tier": "C"
+        },
+        {
+          "id": "ics-security-ot-cyber-incidents-down-57-in-2025",
+          "name": "ics-security-ot-cyber-incidents-down-57-in-2025",
+          "tier": "C"
+        },
+        {
+          "id": "industrial-cybersecurity-market-set-to-hit-usd-22-8-billion-by-2026",
+          "name": "industrial-cybersecurity-market-set-to-hit-usd-22-8-billion-by-2026",
+          "tier": "C"
+        },
+        {
+          "id": "insider-threat-statistics-2025-17-4m-annual-cost-per-org",
+          "name": "insider-threat-statistics-2025-17-4m-annual-cost-per-org",
+          "tier": "C"
+        },
+        {
+          "id": "insider-threat-statistics-2026-45-facts-on-cost-risk",
+          "name": "insider-threat-statistics-2026-45-facts-on-cost-risk",
+          "tier": "C"
+        },
+        {
+          "id": "pdf-2025-ot-cyber-threat-report-waterfall-security-solutions",
+          "name": "pdf-2025-ot-cyber-threat-report-waterfall-security-solutions",
+          "tier": "C"
+        },
+        {
+          "id": "q3-2025-ot-cyber-crisis-how-329-5b-in-industrial-losses-made",
+          "name": "q3-2025-ot-cyber-crisis-how-329-5b-in-industrial-losses-made",
+          "tier": "C"
+        },
+        {
+          "id": "ransomware-damage-to-cost-the-world-57b-in-2025",
+          "name": "ransomware-damage-to-cost-the-world-57b-in-2025",
+          "tier": "C"
+        },
+        {
+          "id": "the-17-4-million-breakthrough-how-organizations-are-finally-winning-against-insider-threats-in-2025-insider-risk-research-insider-risk-index",
+          "name": "the-17-4-million-breakthrough-how-organizations-are-finally-winning-against-insider-threats-in-2025-insider-risk-research-insider-risk-index",
+          "tier": "C"
+        },
+        {
+          "id": "the-economic-impact-of-data-breaches-in-2025-opencart",
+          "name": "the-economic-impact-of-data-breaches-in-2025-opencart",
+          "tier": "C"
+        },
+        {
+          "id": "the-financial-costs-of-cyberattacks-to-wind-farms-tamarindo",
+          "name": "the-financial-costs-of-cyberattacks-to-wind-farms-tamarindo",
+          "tier": "C"
+        },
+        {
+          "id": "the-real-cost-of-a-data-breach-in-2025",
+          "name": "the-real-cost-of-a-data-breach-in-2025",
+          "tier": "C"
+        },
+        {
+          "id": "the-real-cost-of-data-breaches-in-2024-2025",
+          "name": "the-real-cost-of-data-breaches-in-2024-2025",
+          "tier": "C"
+        },
+        {
+          "id": "when-business-email-compromise-nearly-costs-a-million",
+          "name": "when-business-email-compromise-nearly-costs-a-million",
+          "tier": "C"
+        },
+        {
+          "id": "wind-farm-cyber-attack-costs-millions-in-recovery",
+          "name": "wind-farm-cyber-attack-costs-millions-in-recovery",
+          "tier": "C"
+        },
+        {
+          "id": "wind-farm-cyber-attack-costs-millions-in-recovery-linkedin",
+          "name": "wind-farm-cyber-attack-costs-millions-in-recovery-linkedin",
+          "tier": "C"
+        }
+      ],
+      "dropped_this_run": [
+        {
+          "id": "australian-wind-industry-money-laundering-scam-facebook",
+          "name": "australian-wind-industry-money-laundering-scam-facebook",
+          "reason": "not_cited"
+        },
+        {
+          "id": "cost-of-damaging-ddos-attacks-in-2025-annual-trends-report-blog",
+          "name": "cost-of-damaging-ddos-attacks-in-2025-annual-trends-report-blog",
+          "reason": "not_cited"
+        },
+        {
+          "id": "ddos-attacks-in-2024-impacts-on-renewable-energy-and-centrii",
+          "name": "ddos-attacks-in-2024-impacts-on-renewable-energy-and-centrii",
+          "reason": "not_cited"
+        },
+        {
+          "id": "ddos-attacks-in-2025-trends-industry-insights-stormwall",
+          "name": "ddos-attacks-in-2025-trends-industry-insights-stormwall",
+          "reason": "not_cited"
+        },
+        {
+          "id": "dragos-attacks-on-ics-increased-in-2024-rto-insider",
+          "name": "dragos-attacks-on-ics-increased-in-2024-rto-insider",
+          "reason": "not_cited"
+        },
+        {
+          "id": "how-often-do-ransomware-attacks-occur-in-2025-total-assure",
+          "name": "how-often-do-ransomware-attacks-occur-in-2025-total-assure",
+          "reason": "not_cited"
+        },
+        {
+          "id": "ics-ot-cybersecurity-incidents-cost-some-u-s-firms-over-100-million-survey-securityweek",
+          "name": "ics-ot-cybersecurity-incidents-cost-some-u-s-firms-over-100-million-survey-securityweek",
+          "reason": "not_cited"
+        },
+        {
+          "id": "industrial-control-system-ics-security-market-to-reach-usd-41-82",
+          "name": "industrial-control-system-ics-security-market-to-reach-usd-41-82",
+          "reason": "not_cited"
+        },
+        {
+          "id": "injury-rates-climb-with-offshore-wind-growth-renewables-now",
+          "name": "injury-rates-climb-with-offshore-wind-growth-renewables-now",
+          "reason": "not_cited"
+        },
+        {
+          "id": "insider-risk-is-costing-17-4m-a-year-here-s-the-good",
+          "name": "insider-risk-is-costing-17-4m-a-year-here-s-the-good",
+          "reason": "not_cited"
+        },
+        {
+          "id": "pdf-g-global-offshore-wind-health-and-safety-organisation",
+          "name": "pdf-g-global-offshore-wind-health-and-safety-organisation",
+          "reason": "not_cited"
+        },
+        {
+          "id": "pdf-inflection-point-global-implications-of-scam-centres-underground",
+          "name": "pdf-inflection-point-global-implications-of-scam-centres-underground",
+          "reason": "not_cited"
+        },
+        {
+          "id": "reliability-and-o-m-key-performance-indicators-of-onshore-and",
+          "name": "reliability-and-o-m-key-performance-indicators-of-onshore-and",
+          "reason": "not_cited"
+        },
+        {
+          "id": "state-actors-hacktivists-and-critical-infrastructure-attacks-in-2024",
+          "name": "state-actors-hacktivists-and-critical-infrastructure-attacks-in-2024",
+          "reason": "not_cited"
+        },
+        {
+          "id": "the-mental-health-impacts-of-internet-scams-mdpi",
+          "name": "the-mental-health-impacts-of-internet-scams-mdpi",
+          "reason": "not_cited"
+        },
+        {
+          "id": "the-trump-administration-s-attack-on-offshore-wind-threatens-to",
+          "name": "the-trump-administration-s-attack-on-offshore-wind-threatens-to",
+          "reason": "not_cited"
+        },
+        {
+          "id": "understanding-and-mitigating-insider-threats-in-operational-technology-ot-systems-dragos",
+          "name": "understanding-and-mitigating-insider-threats-in-operational-technology-ot-systems-dragos",
+          "reason": "not_cited"
+        }
+      ],
+      "by_tier": {}
+    },
+    "evidence": {
+      "fin_extracted": 28,
+      "prob_extracted": 16,
+      "fin_after_iqr_filter": 28,
+      "prob_after_iqr_filter": 16,
+      "outliers_removed": 0
+    },
+    "coverage_gaps": [],
+    "baseline_usage": {
+      "scenarios_with_baseline": 1,
+      "baseline_aligned_with_osint": 0,
+      "baseline_diverged_from_osint": 1
+    },
+    "errors": [
+      {
+        "type": "baseline_orphan_source",
+        "scenario": "Ransomware",
+        "dim": "fin",
+        "source_id": "nonexistent-orphan-fixture"
+      }
+    ]
+  },
+  "version_checks": [
+    {
+      "source_id": "verizon-dbir",
+      "name": "Verizon Data Breach Investigations Report",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://www.verizon.com/business/resources/reports/dbir/"
+    },
+    {
+      "source_id": "ibm-cost-data-breach",
+      "name": "IBM Cost of a Data Breach Report",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://www.bluefin.com/bluefin-news/ibms-2025-data-breach-report-key-findings-and-the-years-biggest-attacks/"
+    },
+    {
+      "source_id": "dragos-ics-ot",
+      "name": "Dragos ICS/OT Cybersecurity Year in Review",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://www.linkedin.com/posts/lqlconsulting_otsecurity-ics-criticalinfrastructure-activity-7416827865046065152-_RQO"
+    },
+    {
+      "source_id": "mandiant-mtrends",
+      "name": "Mandiant M-Trends",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://offsec.blog/episode-132-reviewing-the-mandiant-m-trends-2025-report/"
+    },
+    {
+      "source_id": "claroty-xiot",
+      "name": "Claroty State of XIoT Security",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://claroty.com/resources/reports/sans-state-of-icsot-security-2025"
+    },
+    {
+      "source_id": "marsh-cyber-insurance",
+      "name": "Marsh Cyber Insurance Market Report",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://www.marsh.com/en/insights/reports.html"
+    },
+    {
+      "source_id": "enisa-threat-landscape",
+      "name": "ENISA Threat Landscape",
+      "edition_year": 2024,
+      "newer_version_found": true,
+      "newer_year": 2025,
+      "url": "https://securityaffairs.com/182978/security/reading-the-enisa-threat-landscape-2025-report.html"
+    }
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "WP-001",
+      "scenario_name": "System intrusion",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe $5.2M financial estimate is well-supported, sitting within the middle of a $700K–$10M benchmark range drawn from seven peer-sector sources with high data confidence, suggesting the figure is reasonably calibrated for a wind farm operator of this type. The probability verdict of 31% is directional only — the single source is a prevalence survey recording how many organisations in a sample reported experiencing this type of incident, which is not the same as a per-organisation annual likelihood, so this figure should not be treated as a reliable frequency estimate. To strengthen the probability assessment, the register would benefit from frequency-rate sources — specifically incidents-per-organisation-per-year data from OT/SCADA-focused threat intelligence reports, energy sector incident databases (e.g., E-ISAC reporting), or ICS-CERT annual summaries — which would allow a more defensible annualised probability to be derived.",
+      "financial": {
+        "vacr_figure_usd": 5200000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          10000000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Wind Farm Cyber Attack Costs Millions in Recovery - LinkedIn",
+            "url": "https://www.linkedin.com/posts/narezzi_official-report-from-poland-activity-7423308240374996993-lsjl",
+            "figure_usd": null,
+            "note": "Recovery and replacement costs for a 4-hour cyber incident in wind energy operations",
+            "raw_quote": "A 4-hour cyber incident in wind doesn't cost hundreds of thousands in lost MWh. It costs tens of millions in recovery, replacement,",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - Tamarindo",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily operational cost impact of ransomware attack on a wind farm",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "[PDF] 2025 OT Cyber Threat Report - Waterfall Security Solutions",
+            "url": "https://waterfall-security.com/wp-content/uploads/2025/03/2025-OT-Cyber-Security-Threat-Report.pdf",
+            "figure_usd": null,
+            "note": "Varta battery manufacturer production shutdown for 2+ weeks following cyberattack",
+            "raw_quote": "Shut down production, for 2+ weeks Following a cyberattack, Varta proactively shutdown their production plants",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Industrial Cybersecurity Market Set to Hit USD 22.8 Billion by 2026 ...",
+            "url": "https://www.electronicsmedia.info/2026/02/23/industrial-cybersecurity-market-set-to-hit-usd-22-8-billion-by-2026/",
+            "figure_usd": 5560000,
+            "note": "Median breach cost across incidents",
+            "raw_quote": "Breach costs reach $5.56M",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Q3 2025 OT Cyber Crisis: How $329.5B in Industrial Losses Made ...",
+            "url": "https://blog.denexus.io/resources/q3-2025-ot-cyber-incidents-industrial-risk-quantification",
+            "figure_usd": 329500000000,
+            "note": "Potential global OT cyber losses under severe scenarios",
+            "raw_quote": "global OT cyber losses estimated at $329.5 billion under severe scenarios",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": null,
+            "note": "Daily operational cost impact from ransomware paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 31.0,
+        "verdict": "insufficient",
+        "verdict_confidence": "high",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Dragos Reports OT/ICS Cyber Threats Escalate Amid Geopolitical Conflicts and Increasing Ransomware Attacks",
+            "url": "https://www.dragos.com/resources/press-release/dragos-reports-ot-ics-cyber-threats-escalate-amid-geopolitical-conflicts-and-increasing-ransomware-attacks",
+            "figure_pct": 87.0,
+            "note": "Ransomware activity surge reported as percentage increase over prior year (2023 to 2024). Represents year-over-year growth rate rather than prevalence or frequency rate. Population: OT/ICS environments globally.",
+            "raw_quote": "ransomware activity surging at an increase of more than 87% over last year",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-002",
+      "scenario_name": "Ransomware",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe register financial figure of $8M sits above the peer benchmark ceiling of $5.75M (high confidence, 4 sources), and the analyst baseline of $4.2M (range $1.8M–$7.5M) aligns with the benchmark rather than the register — two independent signals converging below the registered value suggests the $8M figure is likely overstated, and revision toward the $3M–$5.75M range is worth considering, though the baseline rests on only 2 sources so some upward headroom remains defensible for a full-site OT shutdown scenario. On probability, the benchmark range of 21%–87% challenges the registered 12%, but the evidence is mixed — some sources report prevalence surveys (the share of organisations that experienced ransomware in a given period, not a per-organisation annual rate), which inflates apparent frequency and makes direct comparison unreliable; the verdict should be treated as directional only, indicating the register probability may be conservative rather than as a precise quantitative challenge. The analyst baseline probability of 0.12/yr sits at the lower edge of frequency-rate sources (0.08–0.18), which are the more comparable evidence type here — this divergence from the broader OSINT range warrants a closer look, but the frequency-rate baseline is weighted higher than the mixed OSINT pool given its methodological consistency, so a modest upward revision to the 0.15–0.20/yr range is more credible than anchoring on the upper end of prevalence-survey figures.",
+      "financial": {
+        "vacr_figure_usd": 8000000,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          5750000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Average Cost of a Ransomware Attack in 2025 - Total Assure Blog",
+            "url": "https://www.totalassure.com/blog/average-cost-ransomware-attack-2025",
+            "figure_usd": 5750000,
+            "note": "Average total cost of ransomware attack in 2025, up 17% from 2024",
+            "raw_quote": "The average cost of a ransomware attack reached **$5.75 million in 2025, up 17% from 2024**",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Financial impact from severe OT events could top $300B | Cybersecurity Dive",
+            "url": "https://www.cybersecuritydive.com/news/financial-impact-severe-events-300-billion/757437/",
+            "figure_usd": 330000000000,
+            "note": "Global annual financial impact from catastrophic cyber events disrupting operational technology",
+            "raw_quote": "global financial impact from catastrophic cyber events that disrupt operational technology could near $330 billion on an annual basis",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily operational cost impact from ransomware paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments across all businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 12.0,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "evidence_type": "mixed",
+        "benchmark_range_pct": [
+          21.0,
+          87.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Energy Sector Ransomware Nightmare Haunts Critical Infrastructure",
+            "url": "https://cyble.com/blog/energy-sector-ransomware-attack-report/",
+            "figure_pct": null,
+            "note": "187 confirmed ransomware attacks in the global energy and utilities sector in 2025. This is an absolute count, not a prevalence rate or per-organization probability. No denominator provided to calculate prevalence.",
+            "raw_quote": "In 2025, the global energy and utilities sector faced **187 confirmed ransomware attacks**.",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Half of 2025 ransomware attacks hit critical sectors as manufacturing ...",
+            "url": "https://industrialcyber.co/reports/half-of-2025-ransomware-attacks-hit-critical-sectors-as-manufacturing-healthcare-and-energy-top-global-targets/",
+            "figure_pct": 50.0,
+            "note": "50% of 2,332 ransomware incidents out of 4,701 total incidents in 2025 targeted critical sectors",
+            "raw_quote": "2,332, or 50 percent, targeting critical sectors such as manufacturing, healthcare, energy, transportation, and financial services",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Statistics 2025: Attack Frequency, Payments, Costs & Industry Impact",
+            "url": "https://bluefire-redteam.com/ransomware-statistics/",
+            "figure_pct": 70.0,
+            "note": "Percentage of ransomware attacks that include data exfiltration component. Global statistic on ransomware incident characteristics.",
+            "raw_quote": "Data exfiltration occurs in more than 70% of ransomware attacks",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Dragos Reports OT/ICS Cyber Threats Escalate Amid Geopolitical ...",
+            "url": "https://www.dragos.com/resources/press-release/dragos-reports-ot-ics-cyber-threats-escalate-amid-geopolitical-conflicts-and-increasing-ransomware-attacks",
+            "figure_pct": 87.0,
+            "note": "Year-over-year increase in ransomware activity targeting OT/ICS environments in 2024 compared to 2023. Represents growth rate rather than absolute prevalence or incident count.",
+            "raw_quote": "ransomware activity surging at an increase of more than 87% over last year",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Dragos Industrial Ransomware Analysis: Q2 2024 | Dragos",
+            "url": "https://www.dragos.com/blog/dragos-industrial-ransomware-analysis-q2-2024",
+            "figure_pct": 21.0,
+            "note": "Lockbit group attributed to approximately 21% (66 incidents) of observed ransomware events against industrial organizations in Q2 2024",
+            "raw_quote": "Lockbit group was behind most attacks against industrial organizations, with approximately 21 percent (or 66 incidents) of observed ransomware events",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Dragos reports surge in ransomware attacks as AI ...",
+            "url": "https://industrialcyber.co/industrial-cyber-attacks/dragos-reports-surge-in-ransomware-attacks-as-ai-powered-tactics-drive-sharp-rise-in-industrial-targeting/",
+            "figure_pct": null,
+            "note": "Cl0p ransomware incidents increased from 2 incidents in Q4 2024 to 154 incidents in Q1 2025. This represents absolute incident counts, not a percentage or prevalence rate.",
+            "raw_quote": "Cl0p ransomware activity saw a dramatic surge, rising from just two incidents in the fourth quarter of 2024 to 154 in the first quarter of 2025.",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": {
+        "fin": {
+          "value_usd": 4200000,
+          "low_usd": 1800000,
+          "high_usd": 7500000,
+          "source_ids": [
+            "verizon-dbir",
+            "nonexistent-orphan-fixture"
+          ],
+          "notes": "Mid-case from 2025 Q4 incident response cost",
+          "updated": "2026-04-09",
+          "updated_by": "analyst"
+        },
+        "prob": {
+          "annual_rate": 0.12,
+          "low": 0.08,
+          "high": 0.18,
+          "evidence_type": "frequency_rate",
+          "source_ids": [
+            "dragos-ics-ot"
+          ],
+          "notes": "Dragos ICS/OT 2024 energy sector rate",
+          "updated": "2026-04-09",
+          "updated_by": "analyst"
+        }
+      },
+      "baseline_alignment": {
+        "fin": "aligned",
+        "prob": "diverged",
+        "aggregate": "diverged"
+      }
+    },
+    {
+      "scenario_id": "WP-003",
+      "scenario_name": "Accidental disclosure",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe $800,000 financial figure sits at the lower end of the peer benchmark range ($670,000–$5,300,000) and is supported by six sources with high data confidence, suggesting it is reasonably calibrated for a wind power operator where exposed assets are primarily operational configurations rather than sensitive personal or financial data. The probability verdict cannot be treated as reliable: no benchmark data was found, leaving the 8.0% figure unvalidated against external sources. Even if prevalence survey data were available, it would only indicate how many organisations in a population experienced this type of incident — not the per-organisation annual likelihood for this specific operator — so any such comparison would be directional at best, not a direct frequency estimate. To strengthen the probability assessment, the most useful sources would be per-organisation annual frequency rates from energy sector incident databases (e.g., ICS-CERT or E-ISAC reporting), or accidental disclosure frequency data from OT/SCADA-focused studies, which would allow a more direct comparison against the 8.0% figure.",
+      "financial": {
+        "vacr_figure_usd": 800000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          670000.0,
+          5300000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "The Economic Impact of Data Breaches in 2025 - OpenCart",
+            "url": "https://www.opencart.com/blog/the-economic-impact-of-data-breaches-in-2025",
+            "figure_usd": 5300000,
+            "note": "Average cost of a data breach in 2025",
+            "raw_quote": "The average cost of a data breach in 2025 is expected to hit $5.3 million",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The Real Cost of Data Breaches in 2024-2025",
+            "url": "https://gettrusted.io/blog/the-real-cost-of-data-breaches-in-2024-2025/",
+            "figure_usd": 2980000,
+            "note": "Average data breach cost for SMEs",
+            "raw_quote": "A data breach can cost SMEs an average of **$2.98 million**",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The real cost of a data breach in 2025",
+            "url": "https://fieldeffect.com/blog/real-cost-data-breach",
+            "figure_usd": 4440000,
+            "note": "Average global cost of a data breach (current year)",
+            "raw_quote": "average global cost of a data breach has declined for the first time in five years, dropping to USD 4.44 million",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Data Breach Statistics 2025: Global Costs and Trends",
+            "url": "https://deepstrike.io/blog/data-breach-statistics-2025",
+            "figure_usd": 4440000,
+            "note": "Global average cost per breach in 2025",
+            "raw_quote": "The global average cost per breach in 2025 was about $4.44 million",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily cost impact of ransomware paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments paid by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 8.0,
+        "verdict": "insufficient",
+        "verdict_confidence": "low",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [],
+        "registered_sources": [],
+        "new_sources": []
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-004",
+      "scenario_name": "Physical threat",
+      "asset_context_note": "",
+      "recommendation": "The $3.1M financial figure sits comfortably within the peer-validated range of $700K–$10M, supported by three high-confidence sources, and appears well-calibrated for a wind park operator exposed to physical sabotage of turbines, substations, and grid infrastructure. The probability verdict is directional only: the single source is a prevalence survey measuring what share of organisations reported experiencing this type of incident, not how often it occurs per organisation per year, so the 3.3% register figure cannot be meaningfully validated against it. To strengthen the probability assessment, seek frequency-rate data expressed as incidents per organisation per year from energy sector loss databases, insurer claims statistics for renewable infrastructure, or OT/ICS-focused threat intelligence covering physical attacks on remote unmanned sites.",
+      "financial": {
+        "vacr_figure_usd": 3100000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          10000000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily cost impact of ransomware attack on a wind farm",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Wind Farm Cyber Attack Costs Millions in Recovery - LinkedIn",
+            "url": "https://www.linkedin.com/posts/narezzi_official-report-from-poland-activity-7423308240374996993-lsjl",
+            "figure_usd": null,
+            "note": "Recovery and replacement costs for a 4-hour cyber incident in wind energy operations",
+            "raw_quote": "A 4-hour cyber incident in wind doesn't cost hundreds of thousands in lost MWh. It costs tens of millions in recovery, replacement,",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 3.3,
+        "verdict": "insufficient",
+        "verdict_confidence": "high",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "All 2022–2024 cyberattacks on energy infrastructure at a glance – pv magazine International",
+            "url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+            "figure_pct": 36.0,
+            "note": "Proportion of reported cyber incidents affecting energy infrastructure (2022-2024) that occurred in the power sector, from a global dataset of 119 incidents compiled by University of Belgrade researchers.",
+            "raw_quote": "power sector dominated among the most affected sub-sectors with 36% of incidents recorded",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-005",
+      "scenario_name": "Insider misuse",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe registered financial figure of $1.5M sits within the peer benchmark range of $700K–$17.4M and is supported by six high-confidence sources, suggesting it is reasonably calibrated for a wind power operator of this profile, though it leans toward the lower end of the range, which may be appropriate given the absence of manufacturing complexity. The probability figure of 5% is challenged by benchmark data pointing to 12%–13.5%, but because the evidence is mixed — combining prevalence surveys (which measure how many organisations have ever experienced the event) with frequency rates (incidents per organisation per year) — the verdict is directional only and should not be treated as a precise quantitative correction; the true annual probability for this organisation could sit anywhere within that spread depending on its size, workforce profile, and access controls. On balance, the financial exposure looks defensible, but the probability warrants a closer internal review — particularly access logs, insider threat controls, and staff vetting practices — to determine whether 5% genuinely reflects this operator's specific risk posture or is simply understated.",
+      "financial": {
+        "vacr_figure_usd": 1500000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          17400000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Interesting Tidbits from 2025 Cost of Insider Risks Global Report",
+            "url": "https://natlawreview.com/article/insider-threats-climb-are-costly",
+            "figure_usd": 17400000,
+            "note": "Total cost of insider risk globally in 2025",
+            "raw_quote": "The total cost of an insider risk has risen to $17.4M USD (up from $16.2M in 2023)",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The $17.4 Million Breakthrough: How Organizations Are Finally Winning Against Insider Threats in 2025 | Insider Risk Research | Insider Risk Index",
+            "url": "https://www.insiderisk.io/research/insider-threat-victory-2025",
+            "figure_usd": 17400000,
+            "note": "Annual cost of insider risks across organizations globally",
+            "raw_quote": "While costs continue rising to $17.4 million annually",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Insider Threat Statistics 2025: $17.4M Annual Cost Per ORG",
+            "url": "https://deepstrike.io/blog/insider-threat-statistics-2025",
+            "figure_usd": 17400000,
+            "note": "Annual cost of insider threats to businesses",
+            "raw_quote": "insider threats cost businesses $17.4M annually",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "[PDF] 2025 OT Cyber Threat Report - Waterfall Security Solutions",
+            "url": "https://waterfall-security.com/wp-content/uploads/2025/03/2025-OT-Cyber-Security-Threat-Report.pdf",
+            "figure_usd": null,
+            "note": "Varta battery manufacturer production shutdown for 2+ weeks following cyberattack",
+            "raw_quote": "Shut down production, for 2+ weeks Following a cyberattack, Varta proactively shutdown their production plants",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": null,
+            "note": "Daily operational cost impact from ransomware paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments paid by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 5.0,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "evidence_type": "mixed",
+        "benchmark_range_pct": [
+          12.0,
+          13.5
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Insider Threat Statistics [2026]: 45+ Facts on Cost & Risk",
+            "url": "https://app.stationx.net/articles/insider-threat-statistics",
+            "figure_pct": 13.5,
+            "note": "Average number of insider threat events per organization annually across surveyed organizations",
+            "raw_quote": "Average insider threat events per org annually | 13.5",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Insider Threat Statistics for 2025: Facts, Reports & Costs | Syteca",
+            "url": "https://www.syteca.com/en/blog/insider-threat-statistics-facts-and-figures",
+            "figure_pct": 81.0,
+            "note": "Percentage of organizations that have already implemented or are planning to implement insider threat management programs. This is a measure of program adoption, not actual incident frequency.",
+            "raw_quote": "81% of organizations have already implemented or are planning to implement a program for insider threat management.",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "2026 Insider Threat Cyber Security Statistics - Swif.ai",
+            "url": "https://www.swif.ai/blog/insider-threat-cyber-security-statistics",
+            "figure_pct": 60.0,
+            "note": "Percentage of security teams reporting staffing shortages that impact insider risk monitoring capability. This is a control/staffing adequacy metric, not an incident frequency measure.",
+            "raw_quote": "60% of security teams report staffing shortages impacting their ability to monitor insider risk effectively",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "ICS Security: OT Cyber Incidents Down 57 in 2025",
+            "url": "https://www.linkedin.com/posts/greg-hale-7972821_ot-threat-report-physical-impacts-down-activity-7445132400487165952-gg5U",
+            "figure_pct": null,
+            "note": "Absolute count of cyber incidents causing physical impacts in OT/ICS environments in 2025. This is an incident frequency count (57 incidents), not a percentage or prevalence rate. Represents incidents in operational technology/industrial control systems.",
+            "raw_quote": "Cyber incidents causing physical impacts in OT dropped to 57 in 2025",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-006",
+      "scenario_name": "DoS attack",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe $2M financial figure sits in the lower third of the peer benchmark range ($700K–$10M, five sources, high confidence), which is a plausible position for a pure wind operator with no manufacturing complexity, and the figure can be considered reasonably well-calibrated against sector data. The probability verdict requires caution: the benchmarking sources are prevalence surveys, meaning the 23%–41% range reflects the share of organisations that reported experiencing this type of incident across a survey population, not an estimated per-organisation annual likelihood — this makes the verdict directional only and the figures cannot be directly substituted for the registered 10% annual probability. That said, the gap between the registered probability and the survey prevalence is wide enough to warrant a conscious review of whether the 10% figure adequately reflects how commonly DoS disruptions to OT/SCADA communications are reported across comparable operators, even accounting for the measurement difference.",
+      "financial": {
+        "vacr_figure_usd": 2000000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          10000000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily operational cost impact from ransomware attack paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Wind Farm Cyber Attack Costs Millions in Recovery",
+            "url": "https://www.linkedin.com/posts/narezzi_official-report-from-poland-activity-7423308240374996993-lsjl",
+            "figure_usd": null,
+            "note": "Recovery and replacement costs for a 4-hour cyber incident at wind facility",
+            "raw_quote": "A 4-hour cyber incident in wind doesn't cost hundreds of thousands in lost MWh. It costs tens of millions in recovery, replacement,",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Cybersecurity in Energy Infrastructure Market Size | CAGR of 15%",
+            "url": "https://market.us/report/cybersecurity-in-energy-infrastructure-market/",
+            "figure_usd": 2900000000,
+            "note": "US Cybersecurity in Energy Infrastructure Market valuation in 2024",
+            "raw_quote": "US Cybersecurity in Energy Infrastructure Market is valued at approximately USD 2.9 Billion in 2024",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Q3 2025 OT Cyber Crisis: How $329.5B in Industrial Losses Made ...",
+            "url": "https://blog.denexus.io/resources/q3-2025-ot-cyber-incidents-industrial-risk-quantification",
+            "figure_usd": null,
+            "note": "Estimated global OT cyber losses under severe scenarios",
+            "raw_quote": "global OT cyber losses estimated at $329.5 billion under severe scenarios",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments made by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 10.0,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [
+          23.0,
+          41.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "DDoS Attacks in 2024: Impacts on Renewable Energy and How to Mitigate Risks",
+            "url": "https://centrii.com/en/ddos-attacks-2024-renewable-energy/",
+            "figure_pct": 41.0,
+            "note": "DDoS attacks represented 41% of all reported incidents in the renewable energy sector according to ENISA 2024",
+            "raw_quote": "The renewable energy sector reported DDoS as the most reported form of attack making up 41% of all incidents",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "All 2022–2024 cyberattacks on energy infrastructure at a glance",
+            "url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+            "figure_pct": 36.0,
+            "note": "Proportion of energy sector cyber incidents affecting power infrastructure (36% of 119 total incidents in dataset 2022-2024)",
+            "raw_quote": "The power sector dominated among the most affected sub-sectors with 36% of incidents recorded",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-007",
+      "scenario_name": "Scam or fraud",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe registered financial impact of $500,000 sits below the peer benchmark of $700,000, and with four sources at high data confidence this gap is meaningful — the figure likely understates realistic exposure for BEC and payment fraud targeting contractor invoicing or energy trading flows, and an upward revision toward the benchmark warrants consideration. The probability benchmark of 13% exceeds the registered 8%, but this verdict carries limited weight: the evidence is drawn from frequency-rate data (incidents per organisation per year), which is the more directly comparable metric, so the directional challenge is reasonably reliable despite coming from only two sources — the lower data confidence reflects source volume, not evidence type, and the registered probability also looks conservative. Both figures point in the same direction: current estimates appear to understate this risk, and the register would benefit from review against the benchmark figures on both dimensions.",
+      "financial": {
+        "vacr_figure_usd": 500000,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          700000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Business Email Compromise: The $55 Billion Scam - IC3",
+            "url": "https://www.ic3.gov/PSA/2024/PSA240911",
+            "figure_usd": null,
+            "note": "Total non-U.S. financial recipient exposed dollar loss from BEC incidents reported to FBI IC3 between October 2013 and December 2023",
+            "raw_quote": "Total non-U.S. financial recipient exposed dollar loss: | $8,953,920,759",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "When Business Email Compromise Nearly Costs a Million",
+            "url": "https://www.eye.security/blog/when-business-email-compromise-nearly-costs-a-million-an-incident-response-story",
+            "figure_usd": null,
+            "note": "Business Email Compromise incident at international organisation",
+            "raw_quote": "An international organisation nearly lost a million to Business Email Compromise",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily operational cost impact from ransomware attack on a wind farm",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 8.0,
+        "verdict": "challenges",
+        "verdict_confidence": "low",
+        "evidence_type": "frequency_rate",
+        "benchmark_range_pct": [
+          13.0,
+          13.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Business Email Compromise Statistics 2026 (+Prevention Guide)",
+            "url": "https://hoxhunt.com/blog/business-email-compromise-statistics",
+            "figure_pct": 13.0,
+            "note": "13% increase in BEC attacks in first 3 months of 2025 compared to prior period; represents attack volume growth rate rather than prevalence of affected organizations",
+            "raw_quote": "One report found a 13% increase in BEC attacks in just the first 3 months of 2025",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "20 Business Email Compromise Statistics 2025 | Eftsure US",
+            "url": "https://www.eftsure.com/statistics/business-email-compromise-statistics/",
+            "figure_pct": null,
+            "note": "Absolute count of BEC (Business Email Compromise) incidents reported across multiple sectors, not a percentage or rate. Cannot be converted to probability without denominator information.",
+            "raw_quote": "305,000+ BEC incidents have been reported across industries and sectors",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-008",
+      "scenario_name": "Defacement",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe registered financial figure of $200,000 sits below the peer benchmark floor of $700,000 (derived from 4 high-confidence sources), suggesting the current estimate is likely understated even for a low-severity defacement scenario — the register value warrants upward review against the lower end of the peer range at minimum. On probability, the 3.0% figure cannot be reliably validated: no benchmark sources were found, and any prevalence survey data that may inform this figure reflects the share of organisations that reported experiencing an incident, not a per-organisation annual likelihood — so the directional signal is weak and the figure should be treated as provisional. To strengthen the probability assessment, targeted sources would include frequency-rate data from cyber insurance loss databases, sector-specific incident reporting (e.g., energy sector ISAC reporting or national CERT datasets), or actuarial benchmarks expressed as incidents per organisation per year rather than survey prevalence counts.",
+      "financial": {
+        "vacr_figure_usd": 200000,
+        "verdict": "challenges",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          325000000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Cybercrime To Cost The World $10.5 Trillion Annually By 2025",
+            "url": "https://cybersecurityventures.com/cybercrime-damages-6-trillion-by-2021/",
+            "figure_usd": 6000000000,
+            "note": "Global cybercrime damages predicted for 2021",
+            "raw_quote": "cybercrime — which is predicted to inflict damages totaling [$6 trillion USD] globally in 2021",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Damage To Cost The World $57B In 2025",
+            "url": "https://cybersecurityventures.com/ransomware-damage-to-cost-the-world-57b-in-2025/",
+            "figure_usd": 57000000000,
+            "note": "Predicted global ransomware damage costs for 2025",
+            "raw_quote": "For this year, 2025, we predict that ransomware costs will reach $57 billion annually.",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": 700000,
+            "note": "Daily operational cost impact from ransomware paralyzing a wind farm fleet",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments made by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 3.0,
+        "verdict": "insufficient",
+        "verdict_confidence": "low",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [],
+        "registered_sources": [],
+        "new_sources": []
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    },
+    {
+      "scenario_id": "WP-009",
+      "scenario_name": "System failure",
+      "asset_context_note": "",
+      "recommendation": "**Analyst Note**\n\nThe $4M financial figure is well-calibrated: it sits near the midpoint of the $700K–$10M peer benchmark range, which is drawn from four sources with high data confidence, giving reasonable assurance that this estimate reflects realistic exposure for a wind operator facing critical system failure. The probability verdict is directional only — the single source is a prevalence survey measuring how many organisations in a population reported experiencing this type of incident, which is not the same as a per-organisation annual likelihood; the 15% register figure cannot be directly validated against this evidence. To strengthen the probability assessment, seek frequency-rate data expressing incidents per organisation per year from wind or broader renewable energy operators, or OT/SCADA-specific failure rate studies from sources such as NERC reliability reports or ICS-CERT incident statistics.",
+      "financial": {
+        "vacr_figure_usd": 4000000,
+        "verdict": "supports",
+        "verdict_confidence": "high",
+        "benchmark_range_usd": [
+          700000.0,
+          10000000.0
+        ],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Wind Farm Cyber Attack Costs Millions in Recovery - LinkedIn",
+            "url": "https://www.linkedin.com/posts/narezzi_official-report-from-poland-activity-7423308240374996993-lsjl",
+            "figure_usd": null,
+            "note": "Recovery and replacement costs for a 4-hour cyber incident in wind energy",
+            "raw_quote": "A 4-hour cyber incident in wind doesn't cost hundreds of thousands in lost MWh. It costs tens of millions in recovery, replacement,",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Q3 2025 OT Cyber Crisis: How $329.5B in Industrial Losses Made ...",
+            "url": "https://blog.denexus.io/resources/q3-2025-ot-cyber-incidents-industrial-risk-quantification",
+            "figure_usd": 184500000000,
+            "note": "Lost production, supply chain disruption, and economic ripple effects from business interruption",
+            "raw_quote": "56% Business Interruption: $184.5 billion in lost production, supply chain disruption, and economic ripple effects",
+            "phase": 2,
+            "context_tag": "general",
+            "smb_scale_flag": false
+          },
+          {
+            "name": "The financial costs of cyberattacks to wind farms - tamarindo.global",
+            "url": "https://tamarindo.global/insight/analysis/the-financial-costs-of-cyberattacks-to-wind-farms/",
+            "figure_usd": null,
+            "note": "Daily operational cost impact from ransomware attack on a wind farm",
+            "raw_quote": "ransomware could paralyse a fleet of wind turbines and cause huge costs for project owners: up to around $700,000 per wind farm each day",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": true
+          },
+          {
+            "name": "Ransomware Costs Businesses Record-High $1 Billion in 2023",
+            "url": "https://www.fisherphillips.com/en/insights/insights/ransomware-costs-businesses-record-high-1-billion-in-2023",
+            "figure_usd": 1000000000,
+            "note": "Total ransom payments by businesses in 2023",
+            "raw_quote": "businesses forking over $1 billion in ransom payments for the first time",
+            "phase": 2,
+            "context_tag": "company_scale",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "probability": {
+        "vacr_probability_pct": 15.0,
+        "verdict": "insufficient",
+        "verdict_confidence": "high",
+        "evidence_type": "prevalence_survey",
+        "benchmark_range_pct": [],
+        "registered_sources": [],
+        "new_sources": [
+          {
+            "name": "Dragos 2026 OT Report Shows Surge in Threat Groups and Ransomware",
+            "url": "https://www.dragos.com/resources/press-release/dragos-2026-year-in-review-new-ot-threats-ransomware",
+            "figure_pct": 49.0,
+            "note": "Ransomware groups with reach into OT environments surged 49% — describes growth/increase in threat group reach rather than prevalence of incidents or organizations affected",
+            "raw_quote": "ransomware groups with reach into OT environments surged 49%",
+            "phase": 2,
+            "context_tag": "asset_specific",
+            "smb_scale_flag": false
+          }
+        ]
+      },
+      "analyst_baseline": null,
+      "baseline_alignment": {
+        "fin": "n/a",
+        "prob": "n/a",
+        "aggregate": "n/a"
+      }
+    }
+  ]
+}

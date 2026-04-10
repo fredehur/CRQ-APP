@@ -1153,6 +1153,10 @@ async def add_validation_source(body: dict):
         "last_checked": None,
         "last_new_content": None,
     }
+    if body.get("fin_range_usd") is not None:
+        new_source["fin_range_usd"] = body["fin_range_usd"]
+    if body.get("prob_range_pct") is not None:
+        new_source["prob_range_pct"] = body["prob_range_pct"]
     sources_data["sources"].append(new_source)
     _write_json_atomic(sources_path, sources_data)
     return {"ok": True, "source_id": source_id}
@@ -1618,21 +1622,21 @@ def _sources_db_path() -> Path:
 def _osint_run_identity(conn: sqlite3.Connection) -> tuple[str | None, str | None, list[str]]:
     """
     Returns (current_run_ts, previous_run_ts, recent_run_days_desc[:3]) per spec §3.
-    Uses MAX(run_timestamp) globally; distinct run-days drive "<=3 runs" lifecycle.
+    Uses MAX(collected_at) globally; distinct run-days drive "<=3 runs" lifecycle.
     """
     rows = conn.execute(
-        "SELECT DISTINCT substr(run_timestamp, 1, 10) AS run_day "
+        "SELECT DISTINCT substr(collected_at, 1, 10) AS run_day "
         "FROM source_appearances ORDER BY run_day DESC LIMIT 3"
     ).fetchall()
     run_days = [r[0] for r in rows]
     current_ts = conn.execute(
-        "SELECT MAX(run_timestamp) FROM source_appearances"
+        "SELECT MAX(collected_at) FROM source_appearances"
     ).fetchone()[0]
     prev_ts = None
     if len(run_days) >= 2:
         prev_ts = conn.execute(
-            "SELECT MAX(run_timestamp) FROM source_appearances "
-            "WHERE substr(run_timestamp, 1, 10) = ?",
+            "SELECT MAX(collected_at) FROM source_appearances "
+            "WHERE substr(collected_at, 1, 10) = ?",
             (run_days[1],),
         ).fetchone()[0]
     return current_ts, prev_ts, run_days
@@ -1655,11 +1659,11 @@ async def get_source_library_osint(
     try:
         current_ts, prev_ts, recent_days = _osint_run_identity(conn)
         rows = conn.execute("""
-            SELECT sr.id, sr.name, sr.domain, sr.tier, sr.type, sr.blocked,
-                   COUNT(sa.rowid) AS appearances,
+            SELECT sr.id, sr.name, sr.domain, sr.credibility_tier, sr.source_type, sr.blocked,
+                   COUNT(sa.id) AS appearances,
                    SUM(CASE WHEN sa.cited=1 THEN 1 ELSE 0 END) AS cited_count,
-                   MIN(sa.run_timestamp) AS first_seen,
-                   MAX(sa.run_timestamp) AS last_seen,
+                   MIN(sa.collected_at) AS first_seen,
+                   MAX(sa.collected_at) AS last_seen,
                    GROUP_CONCAT(DISTINCT sa.region) AS regions,
                    GROUP_CONCAT(DISTINCT sa.pillar) AS pillars
               FROM sources_registry sr
@@ -1702,11 +1706,11 @@ async def get_source_library_osint(
             c2 = _sq.connect(str(db_path))
             try:
                 cur_n = c2.execute(
-                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(run_timestamp,1,10)=?",
+                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(collected_at,1,10)=?",
                     (sid, cur_day),
                 ).fetchone()[0]
                 prev_n = c2.execute(
-                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(run_timestamp,1,10)=?",
+                    "SELECT COUNT(*) FROM source_appearances WHERE source_id=? AND substr(collected_at,1,10)=?",
                     (sid, prev_day),
                 ).fetchone()[0]
                 run_delta = cur_n - prev_n
@@ -1796,7 +1800,7 @@ async def get_source_library_benchmarks(register: str | None = None, show_all: b
     # Shape each source
     shaped = []
     for s in filtered:
-        shaped.append({
+        entry = {
             "id": s.get("id"),
             "name": s.get("name"),
             "url": s.get("url"),
@@ -1809,7 +1813,12 @@ async def get_source_library_benchmarks(register: str | None = None, show_all: b
             "covered_scenarios": sorted(set(s.get("scenario_tags") or []) & register_scenario_tags),
             "last_checked": s.get("last_checked"),
             "cited_in_current_run": [],  # populated from register_validation.json below
-        })
+        }
+        if s.get("fin_range_usd") is not None:
+            entry["fin_range_usd"] = s["fin_range_usd"]
+        if s.get("prob_range_pct") is not None:
+            entry["prob_range_pct"] = s["prob_range_pct"]
+        shaped.append(entry)
 
     # Attach cited_in_current_run from the most recent register_validation.json
     val_path = BASE / "output" / "validation" / "register_validation.json"
