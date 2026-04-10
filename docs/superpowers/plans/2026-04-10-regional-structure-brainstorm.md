@@ -198,6 +198,7 @@ The biggest quality lever for these outputs isn't document structure — it's wh
 
 ## Open threads for next session
 
+- [ ] **End-to-end pipeline review** — walk the full path from raw collection (OSINT + Seerist) through every intermediate file, every agent, every stop hook, to each final stakeholder output (CISO, Board, RSM, Overview). Map where data is transformed, where it's lost, where formats diverge unnecessarily, and where quality gates exist vs. where they're missing. This review should happen BEFORE implementing any structural changes — it's the diagnostic that tells us what's actually broken vs. what we're assuming is broken.
 - [ ] Should regional sections in CISO brief be shortened (headline + bullets) when a global summary opener is added? Or keep full prose?
 - [ ] The "different lenses" model — does this mean each format needs its own rendering template, or can we share a data structure with format-specific views?
 - [ ] RSM cross-regional watch: the global_builder's `cross_regional_patterns` — is it structured enough to drive the watch block, or does it need a deterministic Python postprocessor?
