@@ -16,6 +16,8 @@ import os
 import sys
 from pathlib import Path
 
+from tools.seerist_strength import score_seerist_strength
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 COLLECTION_QUALITY_THRESHOLD = int(os.environ.get("COLLECTION_QUALITY_THRESHOLD", "3"))
 
@@ -68,12 +70,31 @@ def check_collection_quality(region: str, run_id: str | None = None) -> dict:
     cyber_grounded = sum(1 for ind in all_indicators if isinstance(ind, dict) and ind.get("source_url") and ind.get("pillar") == "cyber")
 
     thin = geo_grounded < COLLECTION_QUALITY_THRESHOLD or cyber_grounded < COLLECTION_QUALITY_THRESHOLD
+
+    # Score Seerist signal strength
+    seerist = _load_signal_file(REPO_ROOT / f"output/regional/{region_lower}/seerist_signals.json")
+    seerist_strength = score_seerist_strength(seerist)
+
+    # collection_lag: Seerist silent but OSINT has signals
+    osint_has_signals = bool(all_indicators)
+    lag_detected = seerist_strength == "none" and osint_has_signals
+    lag_note = (
+        "OSINT signals present but Seerist has no corroborating data"
+        " — assess as early indicator pending confirmation"
+        if lag_detected else ""
+    )
+
     result = {
         "region": region.upper(),
         "thin_collection": thin,
         "geo_grounded_count": geo_grounded,
         "cyber_grounded_count": cyber_grounded,
         "threshold": COLLECTION_QUALITY_THRESHOLD,
+        "seerist_strength": seerist_strength,
+        "collection_lag": {
+            "detected": lag_detected,
+            "note": lag_note,
+        },
     }
 
     out_path = REPO_ROOT / f"output/regional/{region_lower}/collection_quality.json"
