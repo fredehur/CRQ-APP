@@ -143,7 +143,70 @@ This pulls from `global_report.json` — the global builder already identifies c
 
 ---
 
+## Round 2 — Self-Critique (2026-04-10)
+
+### The zoom model is wrong
+
+Board/CISO/RSM are **different lenses**, not zoom levels. Board needs governance context and financial exposure (things the CISO does NOT need). CISO needs threat actor tradecraft and defensive posture (things the Board does NOT want). RSM needs operational detail about THEIR region only — not "CISO plus more detail." Containment hierarchy sounds clean but forces formats that serve two audiences at once, which serves neither well.
+
+### "Canonical intelligence object" was hand-waving
+
+"The canonical object should be the threat driver, not the scenario" — but the threat driver IS the Why paragraph. We already organize around threat drivers. The problem isn't the canonical object — it's that the global builder's cross-regional synthesis doesn't feed back into per-format outputs. That's a plumbing problem, not a conceptual one.
+
+### Delta-first has a cold-start problem
+
+First run: no prior archive. Scenario register update: old comparisons become meaningless. New region: no history. Need a fallback to full-picture mode, meaning two rendering paths. Real complexity for a feature whose value depends on enough archived runs. **Phase 3 feature**, not a structural foundation.
+
+### Event-first reorganization is high-risk for CISO brief
+
+Each regional analyst is independently accountable for their section. Stop hooks verify each section independently. If we merge regional content into a cross-regional event-first page, **who validates that merged view?** Stop hooks can't — they only see one region at a time. The global-validator-agent checks the global report, but an event-first CISO page would be a new rendering of merged data with no dedicated validator.
+
+### Deduplication doesn't survive contact with reality
+
+Whether two regional entries SHOULD be merged depends on analytical judgment about causal linkage (is it the same campaign?), not on mechanical signal_id matching. Any automated deduplication will be wrong some of the time in a way that's hard to detect. **Leave deduplication to the analyst.**
+
+### Option B makes the document longer, not shorter
+
+CISO's binding constraint is reading time. Adding delta summary + global status BEFORE existing regional sections = 4-page document where we had 3 pages. If we add a summary page, we should also shorten regional sections (headline + 3 bullets, not full prose). Otherwise it says the same thing twice at two detail levels.
+
+### What survives scrutiny — priority-ordered
+
+| # | Change | Risk | Effort | Status |
+|---|---|---|---|---|
+| 1 | **RSM cross-regional watch block** — "System intrusion also active in NCE" | None | Low — pull from `global_report.json` | Ready to build |
+| 2 | **"Why clear" footnote** — surface `seerist_absent` + `collection_lag` for MONITOR/CLEAR regions in CISO brief | None | Low — data already exists | Ready to build |
+| 3 | **Global summary opener** — add global builder exec summary as CISO brief opening section (Option C) | Medium — if global builder summary is weak, it weakens the brief opener | Medium — already produced + validated | Ready to build |
+| 4 | **brief_headlines** — analyst-written summary sentences → shared narrative spine | Low | Medium — analyst instruction change + extract_sections update | Ready to build (plan exists) |
+| 5 | **Event-first reorganization** — merge regional content into cross-regional event view | High — validation gap, deduplication risk, ranking function needed | High | **Not yet** — ship current format improvements first, get CISO feedback |
+| 6 | **Delta briefing** — "what changed since last cycle" as brief opener | Medium — cold-start, two rendering paths | High | **Phase 3** — needs mature archive structure |
+
+### Corrected implementation order
+
+Original order was wrong (cosmetic before impactful). Impact-first:
+
+1. Cross-regional watch for RSM ← zero infrastructure, fills real gap
+2. "Why clear" footnotes ← surfaces existing data, zero risk
+3. Global summary as CISO opener ← minor docx change, Option C
+4. brief_headlines → shared narrative spine ← plan already written
+5. Delta briefing ← future, after archive maturity
+
+### Key insight from critique
+
+The biggest quality lever for these outputs isn't document structure — it's whether the analyst wrote good Why/How/So What paragraphs and whether the stop hooks enforced quality. Restructuring the container doesn't improve the content. Items 1-3 above improve content delivery without restructuring. Item 4 improves content creation. Items 5-6 are structural and can wait until we've shipped to an actual CISO and gotten feedback.
+
+---
+
+## Open threads for next session
+
+- [ ] Should regional sections in CISO brief be shortened (headline + bullets) when a global summary opener is added? Or keep full prose?
+- [ ] The "different lenses" model — does this mean each format needs its own rendering template, or can we share a data structure with format-specific views?
+- [ ] RSM cross-regional watch: the global_builder's `cross_regional_patterns` — is it structured enough to drive the watch block, or does it need a deterministic Python postprocessor?
+- [ ] After shipping items 1-3, get real CISO feedback before attempting event-first reorganization
+- [ ] The CLEAR region distinction (genuine quiet vs. thin collection vs. seerist cap) — how to phrase this for a non-technical CISO?
+
+---
+
 ## Related Plans
 
-- `2026-04-10-overview-source-split-brief-structure.md` — `brief_headlines` plan; Task 1 (analyst summary fields) is a prerequisite for Option B
+- `2026-04-10-overview-source-split-brief-structure.md` — `brief_headlines` plan; Task 1 (analyst summary fields) is a prerequisite for item 4
 - `2026-04-10-seerist-source-hierarchy.md` — complete; `seerist_strength` scores available per region, can be used in ranking function
