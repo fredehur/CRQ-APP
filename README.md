@@ -38,17 +38,7 @@ The audience is the **whole organization (~30,000 employees)** — not just the 
 
 ## Web Application
 
-The pipeline includes a FastAPI web application (port **8001**) with 7 tabs:
-
-| Tab | Purpose |
-|-----|---------|
-| **Overview** | Synthesis bar (status counts + narrative), region list with status colours, detail panel with sections + signal clusters |
-| **Reports** | Audience Hub — config-driven card grid (CISO, Board, RSM, Sales), click-to-detail with preview and download |
-| **Trends** | Longitudinal trend analysis across archived runs |
-| **History** | Historical run log with per-region severity charts |
-| **Config** | Intelligence sources, regional footprint, agent prompts |
-| **Validate** | Benchmark validation — OSINT signal + velocity columns, scenario cross-check |
-| **Source Audit** | Source registry browser — grouped by publication, tier badges, filters, flag/block workflow |
+The pipeline includes a FastAPI web application (port **8001**) with 7 tabs.
 
 ### Start the app
 
@@ -56,6 +46,92 @@ The pipeline includes a FastAPI web application (port **8001**) with 7 tabs:
 uv run python server.py
 # → http://localhost:8001
 ```
+
+### Tab Definitions
+
+There are two fundamentally different kinds of tabs — **analyst workspace** and **stakeholder delivery**. Understanding the distinction matters for what data each tab reads and how it should be designed.
+
+---
+
+**Overview — Analyst workspace**
+
+The analyst's operational dashboard. Shows the live intelligence picture produced by the agents and data collectors: regional status, source signal quality (Seerist strength, OSINT sources), signal clusters, convergence/divergence assessment, collection quality per region. Everything here is internal — raw material for the analyst to review, QA, and interrogate before anything goes to stakeholders.
+
+*Data sources:* `sections.json`, `seerist_signals.json`, `osint_signals.json`, `collection_quality.json`, `signal_clusters.json`, `gatekeeper_decision.json`
+
+*Audience:* Intelligence analyst, pipeline operator
+
+---
+
+**Reports — Stakeholder delivery**
+
+Where finished outputs for external audiences live. The analyst comes here to trigger generation and preview what stakeholders will receive. Each report card is audience-specific — CISO, Board, RSM, Regional Ops. Content is polished, jargon-free, and framed for non-technical readers.
+
+*Data sources:* `global_report.json`, `sections.json` (via `report_builder.py`), `export_ciso_docx.py`, `rsm_input_builder.py`
+
+*Audience:* Intelligence analyst (to generate and QA), CISO, Board, RSMs (to receive)
+
+---
+
+**Remaining tabs:**
+
+| Tab | Type | Purpose |
+|-----|------|---------|
+| **Trends** | Analyst workspace | Longitudinal trend analysis across archived pipeline runs |
+| **History** | Analyst workspace | Historical run log with per-region severity charts |
+| **Config** | Analyst workspace | Intelligence sources, regional footprint, agent prompts |
+| **Validate** | Analyst workspace | Benchmark validation — OSINT signal + velocity columns, scenario cross-check |
+| **Source Audit** | Analyst workspace | Source registry browser — tier badges, filters, flag/block workflow |
+
+### App Structure
+
+The app is built on two layers: the **pipeline** writes files; the **server** reads and serves them. The app never writes to `output/` — it is a read-only consumer of pipeline artifacts.
+
+```
+Pipeline (agents + Python tools)
+    │
+    ├── writes per region:
+    │     data.json · sections.json · signal_clusters.json
+    │     seerist_signals.json · osint_signals.json
+    │     gatekeeper_decision.json · collection_quality.json · claims.json
+    │
+    └── writes globally:
+          global_report.json · run_manifest.json · history.json
+
+FastAPI server (server.py — port 8001)
+    │
+    ├── GET /api/overview              → run_manifest.json (region cards)
+    ├── GET /api/region/{r}/sections   → sections.json (brief + bullets)
+    ├── GET /api/region/{r}/data       → data.json (status, VaCR, velocity)
+    ├── GET /api/global                → global_report.json
+    ├── GET /api/sources               → data/sources.db (source registry)
+    ├── GET /api/validation/flags      → validation/flags.json
+    └── GET /api/outputs/...           → deliverables/ (generate + serve)
+
+Browser (static/index.html + static/app.js)
+    │
+    ├── Overview tab     → /api/overview + /api/region/{r}/sections
+    ├── Reports tab      → /api/outputs/... (generate CISO docx, board PDF)
+    ├── Trends tab       → /api/trends
+    ├── History tab      → /api/history
+    ├── Config tab       → /api/config (read), POST /api/config (write)
+    ├── Validate tab     → /api/validation/flags
+    └── Source Audit tab → /api/sources
+```
+
+**Key data flows:**
+
+- `claims.json` → `extract_sections.py` → `sections.json` → Overview + Reports
+- `seerist_signals.json` + `osint_signals.json` → `sections.json`.`source_metadata` → Overview source boxes
+- `claims.json`.`why_summary/how_summary/so_what_summary` → `sections.json`.`brief_headlines` → CISO + Board + RSM
+- `global_report.json` → board PDF, PPTX, and the Reports tab global summary card
+- `data/sources.db` → Source Audit tab (persistent across runs, never in `output/`)
+
+**What the Overview reads (analyst workspace):**
+Every intermediate file — `sections.json`, `seerist_signals.json`, `collection_quality.json`, `signal_clusters.json`. The analyst sees the raw intelligence picture, source quality, and convergence/divergence — before anything is polished for stakeholders.
+
+**What the Reports tab reads (stakeholder delivery):**
+Only finished outputs — `global_report.json` for board content, `sections.json` for per-region briefs. Generation triggers (`export_ciso_docx.py`, `export_pdf.py`) run server-side on demand. The analyst previews what stakeholders receive.
 
 ---
 
