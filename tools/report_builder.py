@@ -58,6 +58,9 @@ class RegionEntry:
     # source quality (populated by enrich_region_data)
     source_quality: dict | None
 
+    # analyst headline (from sections.json brief_headlines)
+    so_what_headline: str = ""
+
 
 @dataclass
 class ReportData:
@@ -323,6 +326,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             impact_b       = sections.get("impact_bullets") or []
             watch_b        = sections.get("watch_bullets") or []
             action_b       = sections.get("action_bullets") or []
+            so_what_headline = sections.get("brief_headlines", {}).get("so_what", "")
         else:
             threat_actor   = None
             sig_type_label = _signal_type_label(d.get("signal_type"))
@@ -331,6 +335,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             impact_b       = []
             watch_b        = []
             action_b       = []
+            so_what_headline = ""
 
         source_quality = d.get("source_quality")
 
@@ -357,6 +362,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             watch_bullets=watch_b,
             action_bullets=action_b,
             source_quality=source_quality,
+            so_what_headline=so_what_headline,
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]

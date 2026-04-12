@@ -226,6 +226,15 @@
     margin-top: 3px;
   }
 
+  /* ── Analyst headline (so-what) ──────────────────────────────────── */
+  .card-headline {
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.55;
+    color: #111;
+    margin: 2mm 0 4mm 0;
+  }
+
   /* ── Region meta row ──────────────────────────────────────────────── */
   .region-meta {
     display: flex;
@@ -490,6 +499,11 @@
         <span class="meta-item"><strong>Signal Type:</strong> {{ r.signal_type_label }}</span>
       {% endif %}
     </div>
+
+    {# ── Analyst headline (from sections.json brief_headlines.so_what) ── #}
+    {% if r.so_what_headline %}
+    <p class="card-headline">{{ r.so_what_headline }}</p>
+    {% endif %}
 
     {# ── Intelligence sections ─────────────────────────────────────────── #}
     {% if r.intel_bullets %}

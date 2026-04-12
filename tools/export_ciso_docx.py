@@ -389,7 +389,10 @@ def _build_exec_summary(doc: Document, data: ReportData,
 
 def _build_region_escalated(doc: Document, entry: RegionEntry,
                               registry: SourceRegistry,
-                              cluster_map: dict[str, str]) -> None:
+                              cluster_map: dict[str, str],
+                              brief_headlines: dict | None = None) -> None:
+    if brief_headlines is None:
+        brief_headlines = {}
     sl     = _status_label(entry.status, entry.dominant_pillar)
     colour = _status_colour(entry.status, entry.dominant_pillar)
 
@@ -407,17 +410,17 @@ def _build_region_escalated(doc: Document, entry: RegionEntry,
         return _process_citations(text, registry, cluster_map)
 
     if entry.intel_bullets:
-        _add_subheading(doc, "Intelligence Findings")
+        _add_subheading(doc, brief_headlines.get("why") or "Intelligence Findings")
         for b in entry.intel_bullets:
             _add_bullet(doc, proc(b))
 
     if entry.adversary_bullets:
-        _add_subheading(doc, "Observed Adversary Activity")
+        _add_subheading(doc, brief_headlines.get("how") or "Observed Adversary Activity")
         for b in entry.adversary_bullets:
             _add_bullet(doc, proc(b))
 
     if entry.impact_bullets:
-        _add_subheading(doc, "Impact for AeroGrid")
+        _add_subheading(doc, brief_headlines.get("so_what") or "Impact for AeroGrid")
         for b in entry.impact_bullets:
             _add_bullet(doc, proc(b))
 
@@ -454,6 +457,10 @@ def _build_monitor_section(doc: Document, monitor_regions: list,
         _font(r1, 10, bold=True)
         r2 = p.add_run(rationale)
         _font(r2, 10)
+        footnote = _why_clear_footnote(region)
+        if footnote:
+            r3 = p.add_run(footnote)
+            _font(r3, 9, italic=True, colour=GREY)
         p.paragraph_format.space_after = Pt(4)
 
     _add_divider(doc)
@@ -507,6 +514,55 @@ def _build_footer_note(doc: Document, data: ReportData) -> None:
     _font(r, 8, italic=True, colour=GREY)
 
 
+# ── Phase 4 helpers: brief_headlines, global opener, why-clear footnotes ─────
+def _load_brief_headlines(region_name: str) -> dict:
+    """Load brief_headlines from sections.json for a region. Returns {} if absent."""
+    path = Path(OUTPUT_DIR) / "regional" / region_name.lower() / "sections.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("brief_headlines", {})
+    except Exception:
+        return {}
+
+
+def _build_global_opener(doc: Document) -> None:
+    """Render global_report.json executive_summary as a styled section before region detail."""
+    path = Path(OUTPUT_DIR) / "pipeline" / "global_report.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        summary = data.get("executive_summary", "").strip()
+    except Exception:
+        return
+    if not summary:
+        return
+
+    p = doc.add_paragraph()
+    r = p.add_run("Global Intelligence Summary")
+    _font(r, 13, bold=True, colour=NAVY)
+
+    _add_normal(doc, summary, italic=True, colour=GREY)
+    _add_divider(doc)
+
+
+def _why_clear_footnote(region: str) -> str:
+    """One-line reason why a region didn't escalate. Returns '' if no signal found."""
+    base = Path(OUTPUT_DIR) / "regional" / region.lower()
+    parts = []
+    try:
+        gk = json.loads((base / "gatekeeper_decision.json").read_text(encoding="utf-8"))
+        if gk.get("seerist_absent"):
+            parts.append("Seerist data absent")
+    except Exception:
+        pass
+    try:
+        cq = json.loads((base / "collection_quality.json").read_text(encoding="utf-8"))
+        lag = cq.get("collection_lag", {})
+        if isinstance(lag, dict) and lag.get("detected"):
+            parts.append("collection lag detected")
+    except Exception:
+        pass
+    return " — " + ", ".join(parts) if parts else ""
+
+
 # ── Main ───────────────────────────────────────────────────────────────────────
 def export(output_path: str = DEFAULT_OUT) -> None:
     data        = build()
@@ -524,9 +580,11 @@ def export(output_path: str = DEFAULT_OUT) -> None:
     _build_cover(doc, data)
     _build_exec_summary(doc, data, registry, cluster_map)
 
+    _build_global_opener(doc)
     for entry in data.regions:
         if entry.status == RegionStatus.ESCALATED:
-            _build_region_escalated(doc, entry, registry, cluster_map)
+            headlines = _load_brief_headlines(entry.name)
+            _build_region_escalated(doc, entry, registry, cluster_map, headlines)
 
     _build_monitor_section(doc, data.monitor_regions, registry, cluster_map)
     _build_references(doc, registry)

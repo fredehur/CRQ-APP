@@ -11,6 +11,7 @@ Usage:
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 
@@ -106,12 +107,44 @@ def build_rsm_inputs(region: str, output_dir: str = "output") -> dict:
             "Address brief to 'Regional Security Manager' generically."
         )
 
+    # ── brief_headlines ───────────────────────────────────────────────────────
+    sections_path = base / "sections.json"
+    brief_headlines: dict = {}
+    if sections_path.exists():
+        try:
+            brief_headlines = json.loads(
+                sections_path.read_text(encoding="utf-8")
+            ).get("brief_headlines", {})
+        except Exception:
+            pass
+
+    # ── cross_regional_watch ──────────────────────────────────────────────────
+    global_report_path = _PROJECT_ROOT / output_dir / "pipeline" / "global_report.json"
+    cross_regional_watch: list = []
+    if global_report_path.exists():
+        try:
+            gr = json.loads(global_report_path.read_text(encoding="utf-8"))
+            patterns = gr.get("cross_regional_patterns", [])
+            # Include patterns that mention this region or are global
+            region_upper = region.upper()
+            cross_regional_watch = [
+                p for p in patterns
+                if isinstance(p, dict) and (
+                    region_upper in p.get("regions", []) or
+                    p.get("scope") == "global"
+                )
+            ]
+        except Exception:
+            pass
+
     return {
         "region": region.upper(),
         "required": required,
         "optional": optional,
         "fallback_flags": fallback_flags,
         "fallback_instructions": fallback_instructions,
+        "brief_headlines": brief_headlines,
+        "cross_regional_watch": cross_regional_watch,
     }
 
 
@@ -135,6 +168,17 @@ def manifest_summary(manifest: dict) -> str:
         lines.append("\nFallback instructions for agent:")
         for k, instr in manifest["fallback_instructions"].items():
             lines.append(f"  [{k}] {instr}")
+
+    bh = manifest.get("brief_headlines", {})
+    if any(bh.values()):
+        lines.append("\nBrief headlines:")
+        for k, v in bh.items():
+            if v:
+                lines.append(f"  {k}: {v}")
+
+    cw = manifest.get("cross_regional_watch", [])
+    if cw:
+        lines.append(f"\nCross-regional watch: {len(cw)} pattern(s)")
 
     return "\n".join(lines)
 
