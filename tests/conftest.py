@@ -82,16 +82,28 @@ $22,000,000 at risk. Service delivery continuity for 25% of global operations at
 
 @pytest.fixture
 def mock_output(tmp_path):
-    """Create a minimal mock output/ tree under tmp_path. Returns the root path."""
-    # run_manifest.json
-    (tmp_path / "run_manifest.json").write_text(
+    """Create a minimal mock output/ tree under tmp_path.
+
+    Matches the canonical pipeline layout:
+      tmp_path/pipeline/run_manifest.json
+      tmp_path/pipeline/global_report.json
+      tmp_path/regional/{region}/data.json
+      tmp_path/regional/{region}/report.md  (escalated regions)
+
+    Returns tmp_path/pipeline — the value passed as output_dir to build().
+    """
+    pipeline_dir = tmp_path / "pipeline"
+    pipeline_dir.mkdir()
+
+    # pipeline-level files
+    (pipeline_dir / "run_manifest.json").write_text(
         json.dumps(MOCK_MANIFEST), encoding="utf-8"
     )
-    # global_report.json
-    (tmp_path / "global_report.json").write_text(
+    (pipeline_dir / "global_report.json").write_text(
         json.dumps(MOCK_GLOBAL_REPORT), encoding="utf-8"
     )
-    # regional data
+
+    # regional data (sibling of pipeline/, not nested inside it)
     for region, data in MOCK_DATA_JSONS.items():
         region_dir = tmp_path / "regional" / region.lower()
         region_dir.mkdir(parents=True)
@@ -104,4 +116,5 @@ def mock_output(tmp_path):
     (tmp_path / "regional" / "ame" / "report.md").write_text(
         AME_REPORT_MD, encoding="utf-8"
     )
-    return tmp_path
+
+    return pipeline_dir

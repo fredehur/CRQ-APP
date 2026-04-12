@@ -150,7 +150,7 @@ def test_build_clear_regions_have_no_pillar_text(mock_output):
 
 def test_build_graceful_when_report_md_missing(mock_output):
     """build() should not raise if report.md is absent for an escalated region."""
-    (mock_output / "regional" / "ame" / "report.md").unlink()
+    (mock_output.parent / "regional" / "ame" / "report.md").unlink()
     data = build(output_dir=str(mock_output))
     ame = next(r for r in data.regions if r.name == "AME")
     assert ame.status == RegionStatus.ESCALATED
