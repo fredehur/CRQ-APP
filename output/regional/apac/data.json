@@ -5,19 +5,14 @@
   "severity": "HIGH",
   "severity_score": 3,
   "primary_scenario": "System intrusion",
-  "vacr_exposure_usd": 18500000,
-  "admiralty": "B2",
-  "rationale": "Corroborated state-sponsored economic espionage indicators across geopolitical and cyber pillars; System intrusion scenario with PRIMARY manufacturing footprint at Kaohsiung warrants escalation.",
-  "velocity": "stable",
-  "dominant_pillar": "Geopolitical",
-  "report_path": "regional/apac/report.md",
-  "timestamp": "2026-04-07T09:34:29Z",
   "financial_rank": 3,
   "signal_type": "Trend",
-  "source_quality": {
-    "tier_a": 0,
-    "tier_b": 0,
-    "tier_c": 0,
-    "total": 0
-  }
+  "threat_actor": null,
+  "vacr_exposure_usd": 18500000,
+  "admiralty": "B2",
+  "rationale": "Cyber indicators present (state-sponsored APT campaigns targeting manufacturing IP) with financial_rank 3 breach ESCALATE threshold; seerist hotspot anomaly_flag=true at Taipei industrial district corroborates Taiwan asset exposure; negative regional delta (-0.6) strengthens case.",
+  "velocity": "stable",
+  "dominant_pillar": "Cyber",
+  "report_path": "regional/apac/report.md",
+  "timestamp": "2026-04-12T07:24:09Z"
 }

@@ -1,0 +1,92 @@
+{
+  "region": "AME",
+  "collected_at": "2026-04-12T06:44:09.122565+00:00",
+  "collection_window": {
+    "days": 7,
+    "since": ""
+  },
+  "dominant_pillar": "Geo",
+  "summary": "Geoeconomic confrontation has emerged as the top global risk for 2026 per the World Economic Forum, with state actors increasingly weaponizing energy infrastructure as geopolitical leverage. Geopolitical tensions between the US and China are documented to affect renewable energy production and supply chains, while AME-region energy markets face elevated disruption risk from Iranian political instability and broader interstate conflict dynamics. The intersection of fragile political institutions in developing AME markets and shifting regulatory frameworks creates a permissive environment for state-sponsored or state-tolerated threat activity targeting renewable energy operators. A global dataset of 119 energy-sector cyber incidents from 2022–2024 confirms the power sector as the most targeted sub-sector at 36% of recorded incidents, with EU and BRICS countries most affected, establishing a strong baseline threat environment for OT/SCADA-reliant operators. A joint advisory from FBI, CISA, NSA, EPA, and DOE issued April 7, 2026 signals an active, credible threat against energy infrastructure OT systems in the current period. However, the collected evidence contains no named threat actors, no confirmed incidents specifically attributable to wind farm telemetry or blade manufacturing OT networks in AME, and no documented compromised credentials from wind energy supply chain partners.",
+  "lead_indicators": [
+    {
+      "text": "WEF Global Risks Report 2026 ranks geoeconomic confrontation as the #1 near-term global risk, up 8 positions year-on-year, directly implicating energy sector targeting",
+      "signal_id": "osint:tavily:ame-geo-001",
+      "source_url": "https://www.weforum.org/press/2026/01/global-risks-report-2026-geopolitical-and-economic-risks-rise-in-new-age-of-competition/",
+      "source_name": "World Economic Forum – Global Risks Report 2026 Press Release",
+      "pillar": "geo"
+    },
+    {
+      "text": "Documented geopolitical tensions between US and China shown to materially affect renewable energy production and supply chain resilience per Energy Policy journal research",
+      "signal_id": "osint:tavily:ame-geo-002",
+      "source_url": "https://www.weforum.org/press/2026/01/global-risks-report-2026-geopolitical-and-economic-risks-rise-in-new-age-of-competition/",
+      "source_name": "World Economic Forum – Global Risks Report 2026 Press Release",
+      "pillar": "geo"
+    },
+    {
+      "text": "Geopolitical shocks in AME roiling energy markets in early 2026, including Iranian regime instability and potential US intervention scenarios creating threat actor opportunity windows",
+      "signal_id": "osint:tavily:ame-geo-003",
+      "source_url": "https://www.weforum.org/press/2026/01/global-risks-report-2026-geopolitical-and-economic-risks-rise-in-new-age-of-competition/",
+      "source_name": "World Economic Forum – Global Risks Report 2026 Press Release",
+      "pillar": "geo"
+    },
+    {
+      "text": "No named threat actor or group specifically targeting wind farm OT/SCADA or telemetry systems in AME is identified in the collected evidence",
+      "signal_id": "osint:tavily:ame-cyber-001",
+      "source_url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+      "source_name": "PV Magazine – All 2022–2024 cyberattacks on energy infrastructure at a glance",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Joint FBI/CISA/NSA/EPA/DOE advisory issued April 7 2026 warning of active threats against energy infrastructure OT systems — method and specific targets not detailed in available evidence excerpt",
+      "signal_id": "osint:tavily:ame-cyber-002",
+      "source_url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+      "source_name": "PV Magazine – All 2022–2024 cyberattacks on energy infrastructure at a glance",
+      "pillar": "cyber"
+    },
+    {
+      "text": "University of Belgrade global dataset (2022–2024): power sector accounts for 36% of 119 documented energy cyber incidents, confirming OT/SCADA attack campaigns as a sustained trend but without AME wind-specific attribution",
+      "signal_id": "osint:tavily:ame-cyber-003",
+      "source_url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+      "source_name": "PV Magazine – All 2022–2024 cyberattacks on energy infrastructure at a glance",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {
+      "name": "World Economic Forum – Global Risks Report 2026 Press Release",
+      "url": "https://www.weforum.org/press/2026/01/global-risks-report-2026-geopolitical-and-economic-risks-rise-in-new-age-of-competition/",
+      "published_date": null
+    },
+    {
+      "name": "IDEAS/RePEc – Geopolitical tensions between the US and China and renewable energy (Energy Policy)",
+      "url": "https://ideas.repec.org/a/eee/enepol/v208y2026ics0301421525004008.html",
+      "published_date": null
+    },
+    {
+      "name": "Energy Aspects – Geopolitical shocks roil energy markets 2026",
+      "url": "https://www.energyaspects.com/resources/insights/marketer-in-chief-geopolitical-shocks-roil-energy-markets-at-the-start-of-2026",
+      "published_date": null
+    },
+    {
+      "name": "Brussels Morning – Critical Geopolitical Risks for Investors 2026",
+      "url": "https://brusselsmorning.com/geopolitical-risks-for-investors-2026/92326/",
+      "published_date": null
+    },
+    {
+      "name": "PV Magazine – All 2022–2024 cyberattacks on energy infrastructure at a glance",
+      "url": "https://www.pv-magazine.com/2026/03/13/all-2022-2024-cyberattacks-on-energy-infrastructure-at-a-glance/",
+      "published_date": null
+    },
+    {
+      "name": "Facebook/FBI-CISA-NSA-EPA-DOE Joint Advisory April 2026",
+      "url": "https://www.facebook.com/61557977777913/posts/federal-agencies-including-the-fbi-cisa-nsa-epa-and-the-department-of-energy-iss/122242796534265925/",
+      "published_date": null
+    }
+  ],
+  "matched_topics": [
+    "supply-chain-wind-components",
+    "ransomware-energy-grid",
+    "ot-ics-cyber-attacks"
+  ],
+  "source_provenance": "osint:tavily"
+}

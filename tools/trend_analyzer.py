@@ -5,6 +5,9 @@ Writes output/trend_brief.json and patches velocity into each regional data.json
 import json
 import os
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import REGIONS, TREND_BRIEF_PATH
 
 SEVERITY_ORDER = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1, "UNKNOWN": 0}

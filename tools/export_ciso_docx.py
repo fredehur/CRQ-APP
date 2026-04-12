@@ -20,7 +20,7 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 
 sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from report_builder import build, ReportData, RegionEntry, RegionStatus, _split_sentences
 from tools.config import CISO_BRIEF_PATH
 

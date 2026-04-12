@@ -2,6 +2,11 @@
   "region": "NCE",
   "thin_collection": false,
   "geo_grounded_count": 4,
-  "cyber_grounded_count": 4,
-  "threshold": 3
+  "cyber_grounded_count": 3,
+  "threshold": 3,
+  "seerist_strength": "none",
+  "collection_lag": {
+    "detected": true,
+    "note": "OSINT signals present but Seerist has no corroborating data \u2014 assess as early indicator pending confirmation"
+  }
 }

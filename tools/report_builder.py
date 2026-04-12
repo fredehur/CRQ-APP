@@ -141,7 +141,7 @@ def _signal_type_label(signal_type: str | None) -> str:
 
 def _load_sections(base: Path, region: str) -> dict:
     """Load pre-extracted sections from sections.json if present."""
-    path = base / "regional" / region.lower() / "sections.json"
+    path = base.parent / "regional" / region.lower() / "sections.json"
     if not path.exists():
         return {}
     try:
@@ -199,7 +199,7 @@ _GENERIC_SOURCES = {
 
 def _load_named_sources(base: Path, region_name: str) -> list[str]:
     """Return unique named sources from signal_clusters.json, excluding generic labels."""
-    clusters_path = base / "regional" / region_name.lower() / "signal_clusters.json"
+    clusters_path = base.parent / "regional" / region_name.lower() / "signal_clusters.json"
     if not clusters_path.exists():
         return []
     try:
@@ -279,7 +279,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
     # --- Regional entries ---
     regions: list[RegionEntry] = []
     for region_name in REGIONS:
-        data_path = base / "regional" / region_name.lower() / "data.json"
+        data_path = base.parent / "regional" / region_name.lower() / "data.json"
         if not data_path.exists():
             logger.warning("Missing data.json for %s — skipping", region_name)
             continue
@@ -294,7 +294,7 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
 
         why_text = how_text = so_what_text = None
         if status == RegionStatus.ESCALATED:
-            report_path = base / "regional" / region_name.lower() / "report.md"
+            report_path = base.parent / "regional" / region_name.lower() / "report.md"
             if report_path.exists():
                 why_text, how_text, so_what_text = _parse_pillars(
                     report_path.read_text(encoding="utf-8")

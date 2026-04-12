@@ -52,6 +52,7 @@ def _enrich_indicators_with_ids(indicators: list, region: str, pillar: str, sour
     return enriched
 
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 # Canonical implementation lives in collection_gate.py
 from tools.collection_gate import check_collection_quality  # noqa: F401 — re-exported for back-compat
 
@@ -316,8 +317,10 @@ For sources in both geo_signals and cyber_signals:
   - Maximum 10 sources per signal type.
   - No invented names — name must be derivable from the actual URL domain or article title."""
 
-    # Use Sonnet for synthesis — quality-critical step
-    result = _call_llm(prompt, model="claude-sonnet-4-6", max_tokens=2048)
+    # Use Sonnet for synthesis — quality-critical step.
+    # 8192 tokens accommodates worst-case output: 2 pillars × (summary + 3 indicators
+    # + up to 10 sources with URLs) + conclusion. 2048 truncated mid-string on high-signal regions.
+    result = _call_llm(prompt, model="claude-sonnet-4-6", max_tokens=8192)
 
     # Validate required keys in each sub-dict
     geo_required = {"summary", "lead_indicators", "dominant_pillar", "matched_topics"}

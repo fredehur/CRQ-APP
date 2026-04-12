@@ -6,8 +6,10 @@ Extracted as a standalone module so it can be tested independently.
 Imported by .claude/hooks/validators/regional-analyst-stop.py.
 """
 import json
+import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.seerist_strength import score_seerist_strength, get_substantive_signal_ids
 
 REGIONAL = Path(__file__).resolve().parent.parent / "output" / "regional"

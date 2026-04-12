@@ -16,6 +16,7 @@ import os
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.seerist_strength import score_seerist_strength
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

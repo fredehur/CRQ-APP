@@ -6,6 +6,10 @@ Usage: uv run python tools/status_report.py
 """
 import json
 import os
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import REGIONS, MANIFEST_PATH, TREND_BRIEF_PATH
 
 STATUS_ICON = {

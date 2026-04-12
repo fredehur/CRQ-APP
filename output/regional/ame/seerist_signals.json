@@ -1,35 +1,114 @@
 {
   "region": "AME",
-  "window_days": 7,
-  "pulse": {
-    "score": 72,
-    "score_prev": 74,
-    "delta": -2,
-    "security_risk": "Medium",
-    "political_risk": "Medium",
-    "sub_categories": {
-      "civil_unrest": "Low",
-      "organized_crime": "Medium",
-      "border_tension": "Low"
+  "collected_at": "2026-04-12T06:44:09Z",
+  "collection_window": {
+    "days": 7
+  },
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:events_ai:ame-001",
+        "title": "Houston port area petty crime increase reported near energy district",
+        "category": "Crime",
+        "severity": 2,
+        "location": {
+          "lat": 29.76,
+          "lon": -95.37,
+          "name": "Houston, TX, US",
+          "country_code": "US"
+        },
+        "source_reliability": "medium",
+        "source_count": 3,
+        "timestamp": "2026-03-18T10:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
+  },
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "US": {
+          "score": 5.2,
+          "color": "green",
+          "delta": -0.2,
+          "forecast": 5.1
+        },
+        "CA": {
+          "score": 5.4,
+          "color": "green",
+          "delta": 0.0,
+          "forecast": 5.4
+        }
+      },
+      "region_summary": {
+        "worst_country": "US",
+        "worst_score": 5.2,
+        "avg_delta": -0.1,
+        "trend_direction": "stable"
+      }
+    },
+    "hotspots": [],
+    "scribe": [
+      {
+        "signal_id": "seerist:scribe:ame-001",
+        "type": "country_summary",
+        "country_code": "US",
+        "assessment": "The United States energy sector faces an elevated ransomware threat environment. CISA and FBI warnings have been reinforced by confirmed incidents. Rapid wind energy expansion under IRA incentives is creating attack surface growth that security investment has not matched.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:AME→US"
+        ]
+      },
+      {
+        "signal_id": "seerist:scribe:ame-002",
+        "type": "country_summary",
+        "country_code": "CA",
+        "assessment": "Canada's energy sector cyber threat level remains moderate. Diverging cybersecurity regulations between Canada and the US create compliance complexity for cross-border operators. No active campaigns targeting Canadian wind energy infrastructure identified.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:AME→CA"
+        ]
+      }
+    ],
+    "wod_searches": [
+      {
+        "signal_id": "seerist:wod:ame-001",
+        "query": "Ransomware energy infrastructure",
+        "derived_from": [
+          "scenario_map:ransomware"
+        ],
+        "result_count": 5,
+        "top_results": [
+          {
+            "title": "FBI PIN: ransomware-as-a-service campaigns targeting energy OT networks",
+            "source": "FBI",
+            "severity": 7,
+            "timestamp": "2026-04-07T14:00:00Z",
+            "source_reliability": "high"
+          }
+        ],
+        "generated_at": "2026-04-10T09:15:00Z"
+      }
+    ],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "US": {
+        "overall": "Low",
+        "political": "Low",
+        "security": "Medium",
+        "operational": "Low"
+      },
+      "CA": {
+        "overall": "Low",
+        "political": "Low",
+        "security": "Low",
+        "operational": "Low"
+      }
     }
   },
-  "events": [
-    {
-      "event_id": "ame-mock-001",
-      "category": "Crime",
-      "severity": 2,
-      "title": "Houston port area petty crime increase reported near energy district",
-      "location": {
-        "name": "Houston, TX, US",
-        "lat": 29.76,
-        "lon": -95.37,
-        "country_code": "US"
-      },
-      "timestamp": "2026-03-18T10:00:00Z",
-      "verified": false,
-      "source_count": 3
-    }
-  ],
-  "hotspots": [],
-  "collected_at": "2026-03-20T09:33:52Z"
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }

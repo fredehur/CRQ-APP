@@ -1,25 +1,14 @@
 {
   "company": "AeroGrid Wind Solutions (Anonymized)",
-  "total_vacr_exposure": 44700000,
-  "reporting_date": "2026-04-07",
+  "total_vacr_exposure": 18500000,
+  "reporting_date": "2026-04-12",
   "regions_analyzed": 5,
-  "regions_escalated": 5,
-  "regions_monitored": 0,
+  "regions_escalated": 1,
+  "regions_monitored": 4,
   "regions_clear": 0,
-  "executive_summary": "CURRENT-CYCLE HEADLINE: All five operating regions have escalated simultaneously — a global first in this pipeline's run history — with state-sponsored pressure targeting wind turbine IP, manufacturing OT environments, and supply chain access points across every geography in which AeroGrid holds assets; AME carries the highest single-region financial exposure under a Ransomware scenario, while APAC, LATAM, MED, and NCE converge on System intrusion, collectively placing the full scope of AeroGrid's crown jewels under active geopolitical threat. CROSS-REGIONAL PATTERN: System intrusion against wind turbine IP and OT networks is the dominant global scenario across four of five escalated regions, driven in each case by the Geopolitical pillar — state-directed competition over clean energy technology is the single unifying driver; AME diverges with a Ransomware primary scenario at financial rank 1, but shares the same underlying geopolitical driver of supply chain coercion; all five escalations carry B2 Admiralty ratings with the exception of LATAM, whose Admiralty confidence is partially impaired by a confirmed cyber collection gap — the board should treat LATAM's escalation as geopolitically grounded but cyber-layer inferred, distinguishing it from the B2-confirmed assessments in APAC, MED, and NCE where dual-pillar corroboration is available. VELOCITY/HISTORICAL CONTEXT: Two regions are accelerating (LATAM, NCE), three are stable (APAC, AME, MED); APAC has returned System intrusion as its primary scenario for 12 consecutive runs, representing sustained structural exposure rather than cyclical variance; LATAM has returned System intrusion for 4 consecutive runs following an escalation step-change from a clear baseline sustained through early March 2026; MED has returned System intrusion for 3 consecutive runs, indicating a durable rather than transient alignment with current maritime disruption and OT pre-positioning conditions. CORRECTIONS/CAVEATS: The AME data classification is Ransomware at financial rank 1, but the current AME regional brief addresses System intrusion tradecraft — this discrepancy should be reviewed before the next AME cycle; the NCE primary scenario reflects an analyst override of the automated System failure classification, grounded in confirmed state-actor manufacturing sector tradecraft but not a direct indicator match against wind OT environments; LATAM and NCE carry VaCR of zero in the current risk register, reflecting the absence of quantified exposure assignments rather than the absence of operational risk.",
-  "synthesis_brief": "System intrusion against wind turbine manufacturing IP and OT networks converges across APAC, LATAM, MED, and NCE under a shared geopolitical driver — state-sponsored actors competing for clean energy technology advantage through covert acquisition rather than open-market procurement. AME is the single regional outlier with a Ransomware primary scenario, but the underlying coercive supply chain logic connecting all five escalations is identical.",
+  "executive_summary": "CURRENT-CYCLE HEADLINE: APAC is the sole escalated region this cycle, carrying a B2 (corroborated, probably true) assessment of state-aligned intrusion risk against AeroGrid's Kaohsiung manufacturing hub — the board's primary operational concern and the only region where intelligence quality supports a confirmed escalation threshold. CROSS-REGIONAL PATTERN: All five regions share System intrusion as their primary assessed scenario, indicating a globally consistent threat vector directed at operational technology and control systems regardless of geography; however, confidence levels differ materially — APAC's B2 rating reflects corroborated indicators, while AME carries C3 (working theory, unconfirmed), LATAM C3, MED B3, and NCE B2 with a materially undersubstantiated cyber dimension; the board must distinguish APAC's B2 corroborated assessment from the lower-confidence monitor-region signals, which represent plausible risk conditions rather than confirmed threat activity. VELOCITY AND HISTORICAL CONTEXT: Global risk is stable in its escalated core but structurally expanding at the margins; APAC has returned System intrusion as its primary scenario for 12 consecutive runs, representing sustained structural exposure rather than cyclical variance and confirming this is a durable operating condition; LATAM has returned System intrusion for 4 consecutive runs following escalation in the two immediately prior cycles, signalling an emerging pattern; MED has returned System intrusion for 3 consecutive runs, confirming a stable threat alignment; LATAM and NCE both carry accelerating velocity despite current low severity, meaning the intelligence picture in those regions is deteriorating even though neither has crossed the escalation threshold this cycle. CORRECTIONS AND CAVEATS: The APAC escalation is explicitly trend-level — no confirmed intrusion into AeroGrid's own systems has been identified; the assessment reflects corroborated actor capability, a government advisory, and geographic proximity to the Kaohsiung footprint, not a detected incident; AME holds CRITICAL severity and the largest single-region financial exposure in the portfolio but did not escalate this cycle because corroborating intelligence quality declined, not because the underlying threat conditions have improved.",
+  "synthesis_brief": "System intrusion against operational technology and control systems is the assessed threat vector across all five regions, driven by state-aligned actors with documented energy sector intent — but only APAC has cleared the corroboration threshold for escalation this cycle; the remaining four regions share geopolitical structural drivers without the confirming intelligence to elevate them. LATAM and NCE are accelerating in velocity, representing the portfolio's most dynamic early-warning conditions and the most likely candidates for escalation in the next planning cycle.",
   "regional_threats": [
-    {
-      "region": "AME",
-      "vacr_exposure": 22000000,
-      "severity": "Critical",
-      "primary_scenario": "Ransomware",
-      "financial_rank": 1,
-      "admiralty_rating": "B2",
-      "velocity": "stable",
-      "dominant_pillar": "Geopolitical",
-      "strategic_assessment": "China's deployment of rare earth export controls as an active instrument of economic statecraft and the US Commerce Department's national security investigation into wind turbine imports — proposing tariffs of 11 to 50 percent — have created simultaneous sourcing and procurement friction that elevates the collection value of AeroGrid's wind farm telemetry and predictive maintenance IP to state-level actors seeking to close technological gaps through covert acquisition. The Houston Operations Center aggregates live telemetry from wind farm network NA-01 and anchors remote maintenance scheduling, placing it at the centre of the documented state-actor collection incentive; the Toronto Engineering Hub holds the predictive maintenance algorithms that would constitute a secondary acquisition priority. If this threat pathway materialises without detection, the consequence is not immediate disruption but the progressive erosion of the competitive differentiation that underpins both the NextEra Energy three-year maintenance contract and the Ontario Wind Power service agreement."
-    },
     {
       "region": "APAC",
       "vacr_exposure": 18500000,
@@ -28,42 +17,30 @@
       "financial_rank": 3,
       "admiralty_rating": "B2",
       "velocity": "stable",
-      "dominant_pillar": "Geopolitical",
-      "strategic_assessment": "State-sponsored economic espionage targeting proprietary wind turbine technology across APAC has followed a sustained upward trajectory, anchored by the Sinovel conviction establishing that Chinese state-linked actors used insider and digital access to steal wind turbine firmware and OT control system code from a Western manufacturer — a directly precedent-setting incident for AeroGrid's operating environment. The Kaohsiung Manufacturing Hub hosts 60 percent of global turbine output, the Series 7 production line, and SCADA network TW-01, matching the documented profile of assets targeted in state-linked wind sector intrusions; the Shanghai Service Hub adds a secondary exposure pathway through its presence within Chinese jurisdiction. Compromise of Kaohsiung's production IP or OT environment would carry consequences to the TEPCO five-year supply agreement and the Vestas APAC logistics joint venture beyond the direct operational loss, and the threat is assessed as pre-positioning rather than imminent — no confirmed active campaign has been detected in the current collection window."
-    },
+      "dominant_pillar": "Cyber",
+      "strategic_assessment": "State-sponsored economic competition over renewable energy technology has created durable structural incentives for adversaries to target wind turbine intellectual property, with Iranian state-aligned actor Seedworm corroborated by a multi-agency April 2026 advisory as actively operating against energy operational technology systems — placing AeroGrid's Kaohsiung manufacturing hub, which accounts for 60% of global turbine output and hosts the Series 7 production line and primary SCADA network, directly within the established actor geography. The documented method in the most directly comparable confirmed incident involved digital exfiltration of wind turbine firmware and operational control system code — the same category of proprietary asset held at Kaohsiung — and SideWinder APT's confirmed geographic expansion into Southeast Asia brings additional credential-harvesting tradecraft closer to AeroGrid's regional manufacturing and service supply chain. A successful intrusion would extend consequences beyond internal IP loss to production continuity risk across the TEPCO five-year supply agreement and the Vestas APAC logistics partnership; the current evidence is trend-level rather than incident-specific, meaning the board should treat this as a structural pre-positioning risk rather than a confirmed active campaign, with the 12-run sustained escalation history confirming it is a durable operating condition rather than a transient alert."
+    }
+  ],
+  "monitor_regions": [
     {
-      "region": "MED",
-      "vacr_exposure": 4200000,
-      "severity": "Medium",
-      "primary_scenario": "System intrusion",
-      "financial_rank": 3,
-      "admiralty_rating": "B2",
-      "velocity": "stable",
-      "dominant_pillar": "Geopolitical",
-      "strategic_assessment": "Confirmed Iran-linked military disruption of the Strait of Hormuz and Gulf of Oman maritime corridor has converted latent supply chain risk into an active delivery constraint, with EU offshore wind component shipments already documented as delayed and AeroGrid's Palermo blade assembly operation directly dependent on the Mediterranean supply corridor and North African logistics route that sit inside the disrupted theatre. Nation-state OT pre-positioning in peer European energy environments is confirmed — Volt Typhoon embedded within European critical infrastructure OT networks, Sandworm's 2023 attack against 22 Danish energy companies — establishing tradecraft directly applicable to wind SCADA environments; 26 EU member states remain non-compliant with NIS2 and CER transposition, sustaining systemic security blind spots that adversarial actors are assessed to be mapping. The compound exposure for AeroGrid is physical supply disruption to Palermo's manufacturing process and OT pre-positioning risk against the service infrastructure supporting the Iberdrola offshore maintenance contract and ENEL MED service agreement."
-    },
-    {
-      "region": "NCE",
-      "vacr_exposure": 0,
-      "severity": "High",
-      "primary_scenario": "System intrusion",
-      "financial_rank": 3,
-      "admiralty_rating": "B2",
-      "velocity": "accelerating",
-      "dominant_pillar": "Geo+Cyber",
-      "strategic_assessment": "China-nexus groups UNC3886 and UNC5221 have confirmed targeting of edge devices for initial access into defense industrial base and manufacturing environments, and Russian state-aligned groups have been confirmed targeting manufacturing organisations through insecure remote connections — both tradecraft patterns are directly transferable to AeroGrid's Hamburg and Gdansk manufacturing OT environments operating on SCADA networks EU-01 and EU-02. Global clean energy manufacturing concentration — less than 25 percent of demand can be met at key supply chain steps without the single dominant producer — makes AeroGrid's turbine aerodynamic designs and manufacturing specifications structurally valuable to state actors seeking to close domestic development gaps, while the CER Directive's missed 2024 transposition deadline leaves NCE wind turbine manufacturers without formal critical entity designation and associated state-level protective measures. The Copenhagen Engineering Hub concentrates crown jewel R&D assets most directly aligned with documented state-actor acquisition objectives; both HIGH-criticality manufacturing sites anchor the Ørsted offshore wind contract and Vattenfall EU service agreement, each carrying direct schedule exposure if production is disrupted."
+      "region": "AME",
+      "admiralty_rating": "C3",
+      "rationale": "Government advisories document a broad energy sector operational technology threat environment in the Americas, and AME carries the largest single-region financial exposure in AeroGrid's portfolio at CRITICAL severity. However, no named threat actor with confirmed targeting of wind farm telemetry or remote service infrastructure in this geography has been identified this cycle, and there are material gaps in evidence of wind-specific intrusion methods, supply chain compromise indicators, or peer incident corroboration. Regional intelligence collection returned low-strength results with no geographic anomaly signals. The underlying threat conditions have not improved — AME did not escalate because corroborating intelligence quality declined this cycle, not because the risk has resolved; CRITICAL severity has been sustained across all prior recorded cycles and this region should be treated as a sustained watch priority."
     },
     {
       "region": "LATAM",
-      "vacr_exposure": 0,
-      "severity": "Low",
-      "primary_scenario": "System intrusion",
-      "financial_rank": 3,
+      "admiralty_rating": "C3",
+      "rationale": "Regional intelligence collection returned no results this cycle, preventing escalation. Open-source signals do not confirm active operational technology threat actor activity targeting wind manufacturing in Latin America, but geopolitical supply chain vulnerabilities create structural risk requiring continued monitoring pending intelligence corroboration. The region escalated to HIGH severity in the cycle immediately preceding this one, then returned to LOW — that spike-and-return pattern, combined with an accelerating velocity designation and System intrusion as the assessed scenario for 4 consecutive runs, indicates the structural drivers are present and re-escalation on short notice is a credible near-term prospect."
+    },
+    {
+      "region": "MED",
+      "admiralty_rating": "B3",
+      "rationale": "Iranian advanced persistent threat capability against industrial control systems is confirmed in the Mediterranean region, and financial exposure from a system intrusion scenario is active. However, no collected evidence confirms direct operational technology reconnaissance targeting wind manufacturing facilities or aerodynamic intellectual property in this geography specifically. Regional intelligence corroboration remains at low strength with no geographic anomaly signals, and the absence of target-specific threat confirmation holds this region below the escalation threshold. The System intrusion scenario has been the primary assessed vector for 3 consecutive runs and the threat profile has been stable at medium severity across all 13 recorded cycles, indicating conditions are persistent but have not intensified."
+    },
+    {
+      "region": "NCE",
       "admiralty_rating": "B2",
-      "velocity": "accelerating",
-      "dominant_pillar": "Geopolitical",
-      "strategic_assessment": "Chinese state-owned enterprise expansion across Argentina, Brazil, and Chile — combined with LATAM's position as supplier of approximately 40 percent of global copper production, a critical wind turbine input — has created structural access risk for AeroGrid's active service contracts by embedding PRC-affiliated entities into the component supply chains on which the Enel Chile and Neoenergia service agreements depend. The Sinovel conviction confirms that Chinese state-linked actors have used vendor and supply chain access rather than external network intrusion as the primary vector for wind turbine IP theft, a tradecraft pattern directly applicable to LATAM's service-only model where component sourcing relationships represent the primary exposure pathway. No VaCR is assigned in the current risk register, reflecting the absence of primary manufacturing assets; however, LATAM has escalated in each of the four most recent consecutive runs following eight consecutive clear or monitor assessments, indicating a structural shift in the regional threat environment that the CRQ register has not yet quantified."
+      "rationale": "The geopolitical drivers behind intellectual property targeting in Northern and Central Europe are well-corroborated — documented EU-China trade friction, substantial sector-wide losses attributed to technology transfer campaigns, and dominant Chinese production share all establish clear state-level incentives to target European wind manufacturer engineering data. However, no attributed threat actor activity or confirmed operational technology incidents directed at wind sector targets have been detected this cycle, and regional intelligence collection returned no results. The cyber dimension of the risk remains materially undersubstantiated, capping the assessment at monitor status. Severity has oscillated between HIGH and LOW in recent cycles, and velocity is accelerating — the conditions for re-escalation are structurally present even though current intelligence does not confirm an active campaign."
     }
-  ],
-  "monitor_regions": []
+  ]
 }

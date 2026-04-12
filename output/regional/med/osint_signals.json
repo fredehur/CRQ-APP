@@ -1,0 +1,131 @@
+{
+  "region": "MED",
+  "collected_at": "2026-04-12T06:49:03.018315+00:00",
+  "collection_window": {
+    "days": 7,
+    "since": ""
+  },
+  "dominant_pillar": "Cyber",
+  "summary": "Iran's sustained leverage over the Strait of Hormuz is reshaping the EU-U.S. energy equation and incentivizing asymmetric intelligence operations against Western renewable energy capacity as fossil fuel chokepoint control becomes a geopolitical instrument. EU critical infrastructure directives (CER and NIS2) are entering application but transposition gaps — particularly among non-EU supply chain partners such as Turkish component suppliers — create exploitable compliance windows across MED manufacturing nodes. Industry leaders have publicly assessed EU energy infrastructure as comparably vulnerable to European defence assets, signalling that the threat environment has outpaced regulatory implementation. Iranian-affiliated APT actors — including CyberAv3ngers and Handala — are conducting active campaigns against OT/SCADA environments and PLC devices across critical infrastructure sectors, with confirmed disruption to HMI and SCADA displays via manipulation of project files, exploiting internet-exposed PLCs manufactured by Rockwell Automation and Allen-Bradley. IOCONTROL malware has been specifically identified as targeting SCADA systems within renewable energy environments, representing a purpose-built threat against shared OT architectures common to offshore wind operators. The 2026 critical infrastructure threat landscape is characterised by AI-assisted reconnaissance, multi-country coordination, and supply-chain intrusion targeting legacy industrial control systems that remain under-segmented and difficult to patch.",
+  "lead_indicators": [
+    {
+      "text": "Iran leveraging Strait of Hormuz control as informal sanctions instrument against Western energy actors, with US intelligence assessing closure unlikely to be reversed near-term",
+      "signal_id": "osint:tavily:med-geo-001",
+      "source_url": "https://www.hstoday.us/subject-matter-areas/infrastructure-security/irans-strategic-leverage-how-hormuz-reshapes-the-russia-eu-u-s-energy-equation/",
+      "source_name": "Homeland Security Today",
+      "pillar": "geo"
+    },
+    {
+      "text": "NIS2 Directive imposing new supply-chain security obligations on Turkish suppliers to EU entities, with compliance gaps creating persistent access risks across MED wind component networks",
+      "signal_id": "osint:tavily:med-geo-002",
+      "source_url": "https://www.hstoday.us/subject-matter-areas/infrastructure-security/irans-strategic-leverage-how-hormuz-reshapes-the-russia-eu-u-s-energy-equation/",
+      "source_name": "Homeland Security Today",
+      "pillar": "geo"
+    },
+    {
+      "text": "CER Directive entering application with EU member states required to conduct critical infrastructure risk assessments, but transposition timelines leaving legacy OT environments temporarily unprotected",
+      "signal_id": "osint:tavily:med-geo-003",
+      "source_url": "https://www.hstoday.us/subject-matter-areas/infrastructure-security/irans-strategic-leverage-how-hormuz-reshapes-the-russia-eu-u-s-energy-equation/",
+      "source_name": "Homeland Security Today",
+      "pillar": "geo"
+    },
+    {
+      "text": "EU energy industry warning that energy infrastructure is 'as vulnerable as defence', corroborating elevated threat surface across MED offshore wind and manufacturing footprint",
+      "signal_id": "osint:tavily:med-geo-004",
+      "source_url": "https://www.hstoday.us/subject-matter-areas/infrastructure-security/irans-strategic-leverage-how-hormuz-reshapes-the-russia-eu-u-s-energy-equation/",
+      "source_name": "Homeland Security Today",
+      "pillar": "geo"
+    },
+    {
+      "text": "CyberAv3ngers and Handala (Iranian government-affiliated APT groups) actively targeting OT/PLC devices across US critical infrastructure sectors including energy, using overseas and leased third-party IP infrastructure to access internet-exposed PLCs and manipulate SCADA/HMI displays",
+      "signal_id": "osint:tavily:med-cyber-001",
+      "source_url": "https://www.helpnetsecurity.com/2026/04/08/iran-targets-us-critical-infrastructure/",
+      "source_name": "Help Net Security",
+      "pillar": "cyber"
+    },
+    {
+      "text": "IOCONTROL malware campaign: purpose-built ICS/SCADA malware targeting renewable energy operators exploiting shared SCADA architectures, confirmed as active threat against OT environments in the energy sector",
+      "signal_id": "osint:tavily:med-cyber-002",
+      "source_url": "https://www.helpnetsecurity.com/2026/04/08/iran-targets-us-critical-infrastructure/",
+      "source_name": "Help Net Security",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Documented attack vector: Iranian actors exploiting internet-exposed PLCs (Rockwell Automation, Allen-Bradley) via legitimate engineering software over leased third-party infrastructure, resulting in confirmed operational disruption and financial loss across multiple critical infrastructure sectors",
+      "signal_id": "osint:tavily:med-cyber-003",
+      "source_url": "https://www.helpnetsecurity.com/2026/04/08/iran-targets-us-critical-infrastructure/",
+      "source_name": "Help Net Security",
+      "pillar": "cyber"
+    },
+    {
+      "text": "No named MED-region-specific incident or confirmed targeting of turbine aerodynamic design files or offshore wind telemetry identified in collected evidence — direct attribution to the MED scenario remains inferential",
+      "signal_id": "osint:tavily:med-cyber-004",
+      "source_url": "https://www.helpnetsecurity.com/2026/04/08/iran-targets-us-critical-infrastructure/",
+      "source_name": "Help Net Security",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Homeland Security Today",
+      "url": "https://www.hstoday.us/subject-matter-areas/infrastructure-security/irans-strategic-leverage-how-hormuz-reshapes-the-russia-eu-u-s-energy-equation/",
+      "published_date": null
+    },
+    {
+      "name": "Times of India",
+      "url": "https://timesofindia.indiatimes.com/world/middle-east/only-real-leverage-iran-unlikely-to-reopen-strait-of-hormuz-anytime-soon-claims-us-intelligence-report/articleshow/130012059.cms",
+      "published_date": null
+    },
+    {
+      "name": "Infosec.ae",
+      "url": "https://www.infosec.ae/how-the-nis2-directive-changes-european-companies-compliance-guide-for-turkish-suppliers/",
+      "published_date": null
+    },
+    {
+      "name": "European Commission (Home Affairs)",
+      "url": "https://home-affairs.ec.europa.eu/news/critical-entities-resilience-directive-enters-application-ensure-protection-critical-infrastructure-2024-10-23_en",
+      "published_date": null
+    },
+    {
+      "name": "Euronews",
+      "url": "https://www.euronews.com/my-europe/2026/02/13/eu-energy-infrastructure-is-as-vulnerable-as-european-defence-industry-warns",
+      "published_date": null
+    },
+    {
+      "name": "Help Net Security",
+      "url": "https://www.helpnetsecurity.com/2026/04/08/iran-targets-us-critical-infrastructure/",
+      "published_date": null
+    },
+    {
+      "name": "Security Boulevard",
+      "url": "https://securityboulevard.com/2026/04/iranian-attackers-are-targeting-u-s-energy-water-systems-federal-agencies-say/",
+      "published_date": null
+    },
+    {
+      "name": "Vital Law",
+      "url": "https://www.vitallaw.com/news/iranian-hackers-disrupt-energy-water-sectors-u-s-agencies-warn/cspd014534edda77ef4487a12539c56240ca7f",
+      "published_date": null
+    },
+    {
+      "name": "News.az",
+      "url": "https://news.az/news/us-agencies-warn-of-iranian-cyberattacks-on-critical-infrastructure-plcs",
+      "published_date": null
+    },
+    {
+      "name": "Cyber Energia (centrii.com)",
+      "url": "https://centrii.com/en/scada-malware/",
+      "published_date": null
+    },
+    {
+      "name": "SC World",
+      "url": "https://www.scworld.com/feature/critical-infrastructure-facing-cyber-surge-in-ot-and-supply-chains-in-2026",
+      "published_date": null
+    }
+  ],
+  "matched_topics": [
+    "iran-strait-energy-routes",
+    "eu-critical-infrastructure-directive",
+    "supply-chain-wind-components"
+  ],
+  "source_provenance": "osint:tavily"
+}

@@ -1,6 +1,9 @@
 import sys
 import json
 import os
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import COMPANY_PROFILE_PATH, MASTER_SCENARIOS_PATH
 
 def load_company_profile():

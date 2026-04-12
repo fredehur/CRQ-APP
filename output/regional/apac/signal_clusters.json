@@ -1,113 +1,146 @@
 {
-  "region": "APAC",
-  "timestamp": "2026-04-06T10:00:00Z",
-  "window_used": "7d",
-  "total_signals": 6,
-  "sources_queried": 9,
-  "clusters": [
+  "geopolitical": [
     {
-      "name": "Gulf Conflict Accelerates APAC Wind Technology Race",
-      "pillar": "Geo",
-      "convergence": 4,
-      "topic_id": "iran-strait-energy-routes",
-      "sources": [
-        {
-          "name": "Recharge News",
-          "url": "https://www.rechargenews.com/offshore-wind/watershed-moment-beckons-for-asian-renewables-amid-persian-gulf-turmoil/2-1-1963008",
-          "credibility_tier": "B",
-          "headline": "Persian Gulf conflict driving APAC nations to accelerate offshore wind deployment as LNG alternative"
-        },
-        {
-          "name": "Gulf Observer via LinkedIn",
-          "url": "https://www.linkedin.com/posts/thegulfobserver_iran-china-sign-agreement-to-cooperate-on-activity-7393995373595320320-Nb9u",
-          "credibility_tier": "C",
-          "headline": "China and Iran sign MoU on renewable energy cooperation amid broader Iran conflict"
-        },
-        {
-          "name": "City News Service — Trial by Fire Analysis",
-          "url": "https://www.citynewsservice.cn/articles/china-biz-buzz/in-perspective/trial-by-fire-iran-war-accelerates-maturity-of-chinas-green-industries-pk8v6wjn",
-          "credibility_tier": "B",
-          "headline": "Iran war accelerates maturity of China's green industries — state-backed industrial strategy"
-        },
-        {
-          "name": "Now Solar — Reuters via Now Solar",
-          "url": "https://now.solar/2026/03/28/investors-bet-iran-war-will-boost-chinese-renewables-demand-reuters-com/",
-          "credibility_tier": "B",
-          "headline": "Investors bet Iran war will boost Chinese renewables demand as clean energy markets reorient"
-        }
-      ]
+      "claim_id": "apac-001",
+      "text": "Seerist detected a geospatial anomaly in the Taipei industrial district on 19 March 2026, with a deviation score of 0.87 \u2014 the highest anomaly-flagged location in the APAC region during the current collection window, categorised under Unrest.",
+      "signal_ids": [
+        "seerist:hotspot:apac-001"
+      ],
+      "confidence": "Confirmed"
     },
     {
-      "name": "China State-Backed Wind Technology Dominance Push",
-      "pillar": "Geo",
-      "convergence": 2,
-      "topic_id": "state-actor-wind-ip-theft",
-      "sources": [
-        {
-          "name": "Energies Media",
-          "url": "https://energiesmedia.com/china-plans-2026-rollout-of-50-mw-wind-turbines/",
-          "credibility_tier": "B",
-          "headline": "China plans 2026 rollout of 50MW wind turbines — MingYang state-backed programme targets global supply chain dominance"
-        },
-        {
-          "name": "Recharge News",
-          "url": "https://www.rechargenews.com/offshore-wind/watershed-moment-beckons-for-asian-renewables-amid-persian-gulf-turmoil/2-1-1963008",
-          "credibility_tier": "B",
-          "headline": "China's wind turbine ambitions reach 50MW — state urgency to lead global offshore wind OEM market"
-        }
-      ]
+      "claim_id": "apac-002",
+      "text": "Seerist records elevated South China Sea patrol assertiveness near the Spratly Islands, with China rated High on political and security risk dimensions and a regional pulse declining at an average delta of -0.6.",
+      "signal_ids": [
+        "seerist:events_ai:apac-002"
+      ],
+      "confidence": "Confirmed"
     },
     {
-      "name": "China-Nexus APT Surge Targeting Energy and Manufacturing",
-      "pillar": "Cyber",
-      "convergence": 4,
-      "topic_id": "state-actor-wind-ip-theft",
-      "sources": [
-        {
-          "name": "FalconFeeds — China Cyber Campaign Critical Infrastructure 2024–2025",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "150% surge in China-nexus APT espionage confirmed across APAC energy, finance, and manufacturing in 2024"
-        },
-        {
-          "name": "Cybersecurity Dive — Asian Government Espionage Campaign",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "Asian government APT confirmed breach of 70+ critical infrastructure organisations in 37 countries including energy ministries"
-        },
-        {
-          "name": "ASPI — State-Sponsored Economic Cyber-Espionage Report",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "State-sponsored economic cyber-espionage for commercial purposes — APAC preparedness assessment"
-        },
-        {
-          "name": "CyberProof — East Asia State-Backed Cyber Espionage 2025",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "East Asia state-backed cyber espionage and ransomware campaigns targeting critical sectors in 2025"
-        }
-      ]
+      "claim_id": "apac-003",
+      "text": "Seerist Scribe assesses that China's state-directed industrial policy elevates regulatory and competitive risk for foreign wind energy operators, with domestic energy technology prioritised at the expense of foreign firms.",
+      "signal_ids": [
+        "seerist:scribe:apac-001"
+      ],
+      "confidence": "Assessed"
     },
     {
-      "name": "SideWinder APT Expansion Into Southeast Asia",
-      "pillar": "Cyber",
-      "convergence": 2,
-      "topic_id": "ot-ics-cyber-attacks",
-      "sources": [
-        {
-          "name": "Dark Reading — SideWinder Espionage Campaign Southeast Asia",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "SideWinder espionage campaign expands into Indonesia and Thailand — phishing targets logistics and nuclear sectors"
-        },
-        {
-          "name": "Telsy — 2024 State-Sponsored Campaigns Review",
-          "url": null,
-          "credibility_tier": "B",
-          "headline": "2024 state-sponsored campaign review — credential theft and phishing tradecraft in Southeast Asia manufacturing adjacencies"
-        }
-      ]
+      "claim_id": "apac-004",
+      "text": "Seerist Scribe assesses that Taiwan's cross-strait tension remains the dominant risk driver for critical infrastructure operators, with state-sponsored cyber operations linked to People's Liberation Army units cited as an elevated risk.",
+      "signal_ids": [
+        "seerist:scribe:apac-002"
+      ],
+      "confidence": "Assessed"
+    },
+    {
+      "claim_id": "apac-005",
+      "text": "Norway publicly warned of security risks from Chinese technology dependencies in wind and solar energy supply chains, marking a formal government acknowledgment that Chinese component dominance creates strategic exposure for foreign renewable energy operators.",
+      "signal_ids": [
+        "osint:tavily:apac-geo-001"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-006",
+      "text": "China's dominance of global offshore wind capacity and the escalating China-US green technology trade dispute in 2026 \u2014 including China's Ministry of Commerce probe into US green product barriers \u2014 increase state-level incentive to acquire competing manufacturers' aerodynamic design IP through non-market means.",
+      "signal_ids": [
+        "osint:tavily:apac-geo-003",
+        "osint:tavily:apac-geo-004"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-013",
+      "text": "AeroGrid's Kaohsiung Manufacturing Hub and SCADA network TW-01 sit within the geographic footprint of the Seerist Taipei industrial district anomaly, placing the primary APAC production site within an active disruption zone during a period of cross-strait tension.",
+      "signal_ids": [
+        "seerist:hotspot:apac-001",
+        "seerist:scribe:apac-002"
+      ],
+      "confidence": "Assessed"
+    },
+    {
+      "claim_id": "apac-017",
+      "text": "Further deterioration in cross-strait relations \u2014 including new military exercise activity in the Taiwan Strait or additional Seerist anomaly escalation in the Taipei industrial corridor \u2014 would signal elevated risk to Taiwan-based critical infrastructure operators.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment"
+    },
+    {
+      "claim_id": "apac-018",
+      "text": "Additional government-level warnings or formal sanctions specifically naming Chinese-supplied wind energy components \u2014 following Norway's supply chain warning \u2014 would indicate the intelligence community has confirmed a broader active campaign, materially upgrading the threat assessment.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment"
+    }
+  ],
+  "cyber": [
+    {
+      "claim_id": "apac-007",
+      "text": "A Chinese state-sponsored hacking campaign confirmed by Check Point targeted manufacturing firms specifically for intellectual property theft \u2014 sector-confirmed against manufacturing, though no named actor or specific campaign was publicly identified.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-001"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-008",
+      "text": "A documented intrusion lifecycle from a Norwegian wind and energy sector incident shows a sustained attack from March to July 2025 \u2014 reconnaissance, credential theft, and privilege escalation with undetected dwell time \u2014 culminating in a December 2025 wiper deployment, consistent with OT-targeting intent.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-002"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-009",
+      "text": "EU-sanctioned Chinese and Iranian threat actors have been executing credential theft campaigns \u2014 including automated credential harvesting \u2014 against energy and manufacturing sector targets, confirmed through EU sanctions proceedings.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-003",
+        "osint:tavily:apac-geo-002"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-010",
+      "text": "Iranian APT groups are assessed as actively targeting energy sector OT and manufacturing networks globally per CISA guidance and Horizon3.ai reporting, though confirmed incidents are concentrated in Middle East and US contexts \u2014 APAC-specific activity has not been confirmed in current signals.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-004"
+      ],
+      "confidence": "Assessed"
+    },
+    {
+      "claim_id": "apac-011",
+      "text": "No named threat actor or confirmed incident in the current signal corpus is directly attributed to this renewable energy manufacturer's OT networks or engineering design systems \u2014 direct entity-level confirmation of intrusion is absent.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-005"
+      ],
+      "confidence": "Confirmed"
+    },
+    {
+      "claim_id": "apac-012",
+      "text": "Seerist's WOD query on ransomware targeting energy sector OT networks returned results confirming the sector is under active targeting pressure, corroborating system intrusion as the highest-frequency cyber incident scenario in this environment.",
+      "signal_ids": [
+        "seerist:wod:apac-001"
+      ],
+      "confidence": "Assessed"
+    },
+    {
+      "claim_id": "apac-014",
+      "text": "The TEPCO five-year turbine supply agreement and the Vestas APAC logistics joint venture represent contracted revenue streams exposed to disruption if a system intrusion compromises the Series 7 production line or delays blade manufacturing output from the Kaohsiung hub.",
+      "signal_ids": [
+        "osint:tavily:apac-cyber-001",
+        "seerist:scribe:apac-002"
+      ],
+      "confidence": "Assessed"
+    },
+    {
+      "claim_id": "apac-015",
+      "text": "No confirmed evidence of intrusion into AeroGrid's APAC OT or engineering systems was identified \u2014 assessed exposure is based on sector-level threat pattern and geographic proximity, not entity-specific incident data. This is a collection gap acknowledged in the current window.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment"
+    },
+    {
+      "claim_id": "apac-016",
+      "text": "A publicly reported intrusion against a peer wind energy sector operator \u2014 particularly one involving OT dwell time or aerodynamic design file access at a manufacturing facility \u2014 would represent a material escalation signal for AeroGrid's Taiwan exposure.",
+      "signal_ids": [],
+      "confidence": "Analyst judgment"
     }
   ]
 }

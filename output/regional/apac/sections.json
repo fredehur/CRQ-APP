@@ -1,30 +1,35 @@
 {
-  "region": "APAC",
-  "generated_at": "2026-04-06T10:00:00Z",
-  "threat_actor": "China-nexus APT",
-  "signal_type_label": "Emerging Pattern",
-  "status_label": "ESCALATED — CYBER-LED",
   "intel_bullets": [
-    "Persian Gulf conflict is driving structural acceleration of offshore wind deployment across APAC as governments hedge against LNG supply risk, corroborated by Recharge News.",
-    "China formalised renewable energy cooperation with Iran through a state-level MoU, signalling coordinated acquisition of clean energy technology and industrial capability.",
-    "MingYang's state-backed 50MW turbine programme targets 2026 rollout, demonstrating Beijing's urgency to dominate the global wind technology supply chain ahead of Western competitors."
+    "Seerist detected a geospatial anomaly in the Taipei industrial district on 19 March 2026, with a deviation score of 0.87 — the highest anomaly-flagged location in the APAC region during the current collection window, categorised under Unrest.",
+    "Seerist records elevated South China Sea patrol assertiveness near the Spratly Islands, with China rated High on political and security risk dimensions and a regional pulse declining at an average delta of -0.6.",
+    "Seerist Scribe assesses that China's state-directed industrial policy elevates regulatory and competitive risk for foreign wind energy operators, with domestic energy technology prioritised at the expense of foreign firms.",
+    "Seerist Scribe assesses that Taiwan's cross-strait tension remains the dominant risk driver for critical infrastructure operators, with state-sponsored cyber operations linked to People's Liberation Army units cited as an elevated risk.",
+    "Norway publicly warned of security risks from Chinese technology dependencies in wind and solar energy supply chains, marking a formal government acknowledgment that Chinese component dominance creates strategic exposure for foreign renewable energy operators.",
+    "China's dominance of global offshore wind capacity and the escalating China-US green technology trade dispute in 2026 — including China's Ministry of Commerce probe into US green product barriers — increase state-level incentive to acquire competing manufacturers' aerodynamic design IP through non-market means."
   ],
   "adversary_bullets": [
-    "China-nexus APT campaigns showed a 150% surge in espionage activity across APAC energy and manufacturing in 2024, with a confirmed breach of 70+ critical infrastructure organisations across 37 countries including energy ministries, per FalconFeeds and Cybersecurity Dive.",
-    "SideWinder APT has expanded into Indonesia and Thailand deploying government-audit-themed phishing and credential theft against logistics and industrial sectors adjacent to wind manufacturing supply chains."
+    "A Chinese state-sponsored hacking campaign confirmed by Check Point targeted manufacturing firms specifically for intellectual property theft — sector-confirmed against manufacturing, though no named actor or specific campaign was publicly identified.",
+    "A documented intrusion lifecycle from a Norwegian wind and energy sector incident shows a sustained attack from March to July 2025 — reconnaissance, credential theft, and privilege escalation with undetected dwell time — culminating in a December 2025 wiper deployment, consistent with OT-targeting intent.",
+    "EU-sanctioned Chinese and Iranian threat actors have been executing credential theft campaigns — including automated credential harvesting — against energy and manufacturing sector targets, confirmed through EU sanctions proceedings.",
+    "Iranian APT groups are assessed as actively targeting energy sector OT and manufacturing networks globally per CISA guidance and Horizon3.ai reporting, though confirmed incidents are concentrated in Middle East and US contexts — APAC-specific activity has not been confirmed in current signals.",
+    "No named threat actor or confirmed incident in the current signal corpus is directly attributed to this renewable energy manufacturer's OT networks or engineering design systems — direct entity-level confirmation of intrusion is absent.",
+    "Seerist's WOD query on ransomware targeting energy sector OT networks returned results confirming the sector is under active targeting pressure, corroborating system intrusion as the highest-frequency cyber incident scenario in this environment."
   ],
   "impact_bullets": [
-    "Kaohsiung's Series 7 production line and SCADA TW-01 network — responsible for 60% of AeroGrid's global turbine output — match the documented IP acquisition profile of China-nexus APT campaigns.",
-    "The Shanghai Service Hub's operating jurisdiction creates a secondary exposure pathway for credential access against privileged systems shared with Kaohsiung, with direct risk to TEPCO supply agreement delivery timelines."
+    "AeroGrid's Kaohsiung Manufacturing Hub and SCADA network TW-01 sit within the geographic footprint of the Seerist Taipei industrial district anomaly, placing the primary APAC production site within an active disruption zone during a period of cross-strait tension.",
+    "The TEPCO five-year turbine supply agreement and the Vestas APAC logistics joint venture represent contracted revenue streams exposed to disruption if a system intrusion compromises the Series 7 production line or delays blade manufacturing output from the Kaohsiung hub.",
+    "No confirmed evidence of intrusion into AeroGrid's APAC OT or engineering systems was identified — assessed exposure is based on sector-level threat pattern and geographic proximity, not entity-specific incident data. This is a collection gap acknowledged in the current window."
   ],
   "watch_bullets": [
-    "Credential harvesting or phishing campaigns targeting Taiwanese semiconductor or precision manufacturing firms sharing supply chain personnel and technology profiles with wind blade production.",
-    "New confirmed APT breaches at energy ministry or clean energy manufacturer targets in Japan, South Korea, or Taiwan — geographic convergence toward AeroGrid's operating jurisdictions.",
-    "Expansion of the China-Iran renewable energy MoU to include turbine technology transfer, signalling reduced motivation for covert acquisition and a possible shift in adversary methodology."
+    "A publicly reported intrusion against a peer wind energy sector operator — particularly one involving OT dwell time or aerodynamic design file access at a manufacturing facility — would represent a material escalation signal for AeroGrid's Taiwan exposure.",
+    "Further deterioration in cross-strait relations — including new military exercise activity in the Taiwan Strait or additional Seerist anomaly escalation in the Taipei industrial corridor — would signal elevated risk to Taiwan-based critical infrastructure operators.",
+    "Additional government-level warnings or formal sanctions specifically naming Chinese-supplied wind energy components — following Norway's supply chain warning — would indicate the intelligence community has confirmed a broader active campaign, materially upgrading the threat assessment."
   ],
   "action_bullets": [
-    "Audit third-party and supply chain access credentials for privileged systems.",
-    "Review hardware integrity for recently sourced components in affected manufacturing sites.",
-    "Conduct a targeted review of privileged credential access at the Shanghai Service Hub for any shared pathways into Kaohsiung's Series 7 production systems and SCADA TW-01 network."
-  ]
+    "Audit privileged access to predictive maintenance algorithm repositories",
+    "Review network monitoring coverage for lateral movement indicators in OT zones",
+    "Validate endpoint detection coverage on engineering workstations"
+  ],
+  "signal_type_label": "Emerging Pattern",
+  "status_label": "[ESCALATED — CYBER-LED]"
 }

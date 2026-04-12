@@ -1,35 +1,114 @@
 {
   "region": "MED",
-  "window_days": 7,
-  "pulse": {
-    "score": 44,
-    "score_prev": 46,
-    "delta": -2,
-    "security_risk": "High",
-    "political_risk": "High",
-    "sub_categories": {
-      "civil_unrest": "Medium",
-      "organized_crime": "High",
-      "maritime_dispute": "Medium"
+  "collected_at": "2026-04-12T06:49:03Z",
+  "collection_window": {
+    "days": 7
+  },
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:events_ai:med-001",
+        "title": "Palermo port workers strike over austerity pension cuts",
+        "category": "Unrest",
+        "severity": 3,
+        "location": {
+          "lat": 38.12,
+          "lon": 13.36,
+          "name": "Palermo, Italy",
+          "country_code": "IT"
+        },
+        "source_reliability": "high",
+        "source_count": 7,
+        "timestamp": "2026-03-17T09:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
+  },
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "IT": {
+          "score": 3.8,
+          "color": "orange",
+          "delta": -0.2,
+          "forecast": 3.6
+        },
+        "MA": {
+          "score": 3.2,
+          "color": "orange",
+          "delta": -0.4,
+          "forecast": 3.0
+        }
+      },
+      "region_summary": {
+        "worst_country": "MA",
+        "worst_score": 3.2,
+        "avg_delta": -0.3,
+        "trend_direction": "declining"
+      }
+    },
+    "hotspots": [],
+    "scribe": [
+      {
+        "signal_id": "seerist:scribe:med-001",
+        "type": "country_summary",
+        "country_code": "IT",
+        "assessment": "Italy faces moderate geopolitical risk with ongoing port industrial action and EU regulatory compliance pressures on energy operators. Insider threat risk is elevated at third-party service providers with privileged OT access.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:MED→IT"
+        ]
+      },
+      {
+        "signal_id": "seerist:scribe:med-002",
+        "type": "country_summary",
+        "country_code": "MA",
+        "assessment": "Morocco's political environment is stable but North African regional instability creates cross-border logistics risk. Seerist does not assess active cyber threat campaigns targeting Moroccan energy infrastructure at this time.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:MED→MA"
+        ]
+      }
+    ],
+    "wod_searches": [
+      {
+        "signal_id": "seerist:wod:med-001",
+        "query": "Insider misuse energy infrastructure",
+        "derived_from": [
+          "scenario_map:insider_misuse"
+        ],
+        "result_count": 2,
+        "top_results": [
+          {
+            "title": "European energy operators report rise in privileged access misuse incidents",
+            "source": "Gartner",
+            "severity": 5,
+            "timestamp": "2026-04-05T10:00:00Z",
+            "source_reliability": "high"
+          }
+        ],
+        "generated_at": "2026-04-10T09:15:00Z"
+      }
+    ],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "IT": {
+        "overall": "Medium",
+        "political": "Medium",
+        "security": "Medium",
+        "operational": "Low"
+      },
+      "MA": {
+        "overall": "Medium",
+        "political": "High",
+        "security": "Medium",
+        "operational": "Medium"
+      }
     }
   },
-  "events": [
-    {
-      "event_id": "med-mock-001",
-      "category": "Unrest",
-      "severity": 3,
-      "title": "Palermo port workers strike over austerity pension cuts",
-      "location": {
-        "name": "Palermo, IT",
-        "lat": 38.12,
-        "lon": 13.36,
-        "country_code": "IT"
-      },
-      "timestamp": "2026-03-17T09:00:00Z",
-      "verified": true,
-      "source_count": 7
-    }
-  ],
-  "hotspots": [],
-  "collected_at": "2026-03-20T09:34:05Z"
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }

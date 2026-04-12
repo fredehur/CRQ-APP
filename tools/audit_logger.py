@@ -1,6 +1,9 @@
 import sys
 import os
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import TRACE_LOG_PATH
 
 LOG_PATH = str(TRACE_LOG_PATH)

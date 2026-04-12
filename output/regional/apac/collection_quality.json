@@ -1,7 +1,12 @@
 {
   "region": "APAC",
   "thin_collection": false,
-  "geo_grounded_count": 3,
-  "cyber_grounded_count": 3,
-  "threshold": 3
+  "geo_grounded_count": 4,
+  "cyber_grounded_count": 5,
+  "threshold": 3,
+  "seerist_strength": "high",
+  "collection_lag": {
+    "detected": false,
+    "note": ""
+  }
 }

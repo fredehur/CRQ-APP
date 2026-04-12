@@ -3,6 +3,8 @@ import sys
 import os
 from pathlib import Path
 from datetime import datetime, timezone
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import REGIONS, GLOBAL_REPORT_JSON as GLOBAL_REPORT_PATH, MANIFEST_PATH, TRACE_LOG_PATH, VALIDATION_FLAGS_JSON, VALIDATION_CANDIDATES_JSON, DASHBOARD_PATH, GLOBAL_REPORT_MD
 
 # Static Tailwind class mapping — dynamic interpolation breaks Tailwind CDN purging

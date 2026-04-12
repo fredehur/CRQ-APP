@@ -1,61 +1,144 @@
 {
   "region": "APAC",
-  "window_days": 7,
-  "pulse": {
-    "score": 51,
-    "score_prev": 58,
-    "delta": -7,
-    "security_risk": "High",
-    "political_risk": "Medium",
-    "sub_categories": {
-      "border_tension": "High",
-      "civil_unrest": "Medium",
-      "organized_crime": "Low"
+  "collected_at": "2026-04-12T07:23:33Z",
+  "collection_window": {
+    "days": 7
+  },
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:events_ai:apac-001",
+        "title": "Kaohsiung dockworker strike enters second day",
+        "category": "Unrest",
+        "severity": 4,
+        "location": {
+          "lat": 22.62,
+          "lon": 120.3,
+          "name": "Kaohsiung, Taiwan",
+          "country_code": "TW"
+        },
+        "source_reliability": "high",
+        "source_count": 12,
+        "timestamp": "2026-03-19T08:00:00Z",
+        "verified": false
+      },
+      {
+        "signal_id": "seerist:events_ai:apac-002",
+        "title": "South China Sea patrol assertiveness elevated near Spratly Islands",
+        "category": "Conflict",
+        "severity": 3,
+        "location": {
+          "lat": 10.0,
+          "lon": 114.0,
+          "name": "South China Sea",
+          "country_code": "CN"
+        },
+        "source_reliability": "high",
+        "source_count": 8,
+        "timestamp": "2026-03-18T14:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
+  },
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "CN": {
+          "score": 3.2,
+          "color": "orange",
+          "delta": -0.4,
+          "forecast": 3.0
+        },
+        "TW": {
+          "score": 4.1,
+          "color": "yellow",
+          "delta": -0.8,
+          "forecast": 3.8
+        }
+      },
+      "region_summary": {
+        "worst_country": "CN",
+        "worst_score": 3.2,
+        "avg_delta": -0.6,
+        "trend_direction": "declining"
+      }
+    },
+    "hotspots": [
+      {
+        "signal_id": "seerist:hotspot:apac-001",
+        "location": {
+          "name": "Taipei industrial district, TW",
+          "lat": 25.03,
+          "lon": 121.56
+        },
+        "deviation_score": 0.87,
+        "category_hint": "Unrest",
+        "detected_at": "2026-03-19T14:00:00Z",
+        "anomaly_flag": true,
+        "cluster_ids": []
+      }
+    ],
+    "scribe": [
+      {
+        "signal_id": "seerist:scribe:apac-001",
+        "type": "country_summary",
+        "country_code": "CN",
+        "assessment": "China's geopolitical posture remains assertive in the South China Sea region. State-directed industrial policy continues to prioritise domestic energy technology at the expense of foreign operators. Regulatory risk for foreign wind energy companies is elevated.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:APAC→CN"
+        ]
+      },
+      {
+        "signal_id": "seerist:scribe:apac-002",
+        "type": "country_summary",
+        "country_code": "TW",
+        "assessment": "Taiwan's cross-strait tension remains the dominant risk driver. Critical infrastructure operators are at elevated risk of state-sponsored cyber operations linked to People's Liberation Army units. Supply chain dependencies on mainland components create dual-exposure.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:APAC→TW"
+        ]
+      }
+    ],
+    "wod_searches": [
+      {
+        "signal_id": "seerist:wod:apac-001",
+        "query": "ransomware energy infrastructure",
+        "derived_from": [
+          "scenario_map:ransomware"
+        ],
+        "result_count": 3,
+        "top_results": [
+          {
+            "title": "Ransomware groups increasingly target energy sector OT networks",
+            "source": "Reuters",
+            "severity": 6,
+            "timestamp": "2026-04-08T10:00:00Z",
+            "source_reliability": "high"
+          }
+        ],
+        "generated_at": "2026-04-10T09:15:00Z"
+      }
+    ],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "CN": {
+        "overall": "High",
+        "political": "High",
+        "security": "High",
+        "operational": "Medium"
+      },
+      "TW": {
+        "overall": "Medium",
+        "political": "High",
+        "security": "Medium",
+        "operational": "Low"
+      }
     }
   },
-  "events": [
-    {
-      "event_id": "apac-mock-001",
-      "category": "Unrest",
-      "severity": 4,
-      "title": "Kaohsiung dockworker strike enters second day",
-      "location": {
-        "name": "Kaohsiung, TW",
-        "lat": 22.62,
-        "lon": 120.3,
-        "country_code": "TW"
-      },
-      "timestamp": "2026-03-19T08:00:00Z",
-      "verified": true,
-      "source_count": 12
-    },
-    {
-      "event_id": "apac-mock-002",
-      "category": "Maritime",
-      "severity": 3,
-      "title": "South China Sea patrol assertiveness elevated near Spratly Islands",
-      "location": {
-        "name": "South China Sea",
-        "lat": 10.0,
-        "lon": 114.0,
-        "country_code": "CN"
-      },
-      "timestamp": "2026-03-18T14:00:00Z",
-      "verified": true,
-      "source_count": 8
-    }
-  ],
-  "hotspots": [
-    {
-      "hotspot_id": "apac-hot-001",
-      "location": {
-        "name": "Taipei industrial district, TW",
-        "country_code": "TW"
-      },
-      "deviation_score": 0.87,
-      "category_hint": "Unrest",
-      "detected_at": "2026-03-19T14:00:00Z"
-    }
-  ],
-  "collected_at": "2026-03-20T09:33:39Z"
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }

@@ -1,0 +1,133 @@
+{
+  "region": "APAC",
+  "collected_at": "2026-04-12T07:23:29.141408+00:00",
+  "collection_window": {
+    "days": 7,
+    "since": ""
+  },
+  "dominant_pillar": "Cyber",
+  "summary": "APAC's renewable energy sector is experiencing intensifying geopolitical competition, with China dominating offshore wind technology while state-sponsored actors from China, Iran, Russia, and North Korea have been sanctioned or identified as actively pursuing intellectual property theft and disruption campaigns against energy and manufacturing sectors. Norway's public warning about Chinese wind component dependencies highlights growing Western awareness of strategic exposure within wind energy supply chains. The US-China trade dispute over green technology products and China's Ministry of Commerce probe into US green product barriers reflect an escalating technology competition context that increases incentive for state-directed IP acquisition through cyber means. Multiple state-sponsored threat actors — principally Chinese and Iranian APT groups — have active campaigns targeting manufacturing IP and OT/SCADA environments, consistent with the working theory's threat vectors. The Norway-linked reference describes a confirmed intrusion sequence (March–July 2025: reconnaissance, credential theft, privilege escalation, followed by a December 2025 wiper deployment) that matches three of four materialization criteria in the working theory: OT reconnaissance, credential harvesting, and confirmed dwell time. However, no evidence in the collected corpus directly names this manufacturer or confirms blade manufacturing plant compromise or aerodynamic design file exfiltration, limiting confidence in direct scenario confirmation.",
+  "lead_indicators": [
+    {
+      "text": "Norway publicly warns of security risks from Chinese technology dependencies in wind and solar energy supply chains",
+      "signal_id": "osint:tavily:apac-geo-001",
+      "source_url": "https://www.linkedin.com/posts/recharge-newspaper_dependence-on-chinese-wind-parts-raises-security-activity-7426570244158251008-cwiS",
+      "source_name": "Recharge / LinkedIn (Norway Wind Security Warning)",
+      "pillar": "geo"
+    },
+    {
+      "text": "EU sanctions imposed on Chinese and Iranian firms for cyberattacks, signaling confirmed state-nexus offensive cyber activity targeting critical sectors",
+      "signal_id": "osint:tavily:apac-geo-002",
+      "source_url": "https://www.linkedin.com/posts/recharge-newspaper_dependence-on-chinese-wind-parts-raises-security-activity-7426570244158251008-cwiS",
+      "source_name": "Recharge / LinkedIn (Norway Wind Security Warning)",
+      "pillar": "geo"
+    },
+    {
+      "text": "China-US green technology trade dispute escalating in 2026, increasing state incentive to acquire wind turbine IP through non-market means",
+      "signal_id": "osint:tavily:apac-geo-003",
+      "source_url": "https://www.linkedin.com/posts/recharge-newspaper_dependence-on-chinese-wind-parts-raises-security-activity-7426570244158251008-cwiS",
+      "source_name": "Recharge / LinkedIn (Norway Wind Security Warning)",
+      "pillar": "geo"
+    },
+    {
+      "text": "China dominates global offshore wind capacity, creating strategic motivation to acquire competing manufacturers' aerodynamic design IP in APAC",
+      "signal_id": "osint:tavily:apac-geo-004",
+      "source_url": "https://www.linkedin.com/posts/recharge-newspaper_dependence-on-chinese-wind-parts-raises-security-activity-7426570244158251008-cwiS",
+      "source_name": "Recharge / LinkedIn (Norway Wind Security Warning)",
+      "pillar": "geo"
+    },
+    {
+      "text": "Chinese state-sponsored hacking campaign confirmed by Check Point targeting manufacturing firms specifically for intellectual property theft (campaign unnamed, sector-confirmed)",
+      "signal_id": "osint:tavily:apac-cyber-001",
+      "source_url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "source_name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Confirmed intrusion lifecycle documented via Norwegian wind/energy sector incident: March–July 2025 reconnaissance, credential theft, and privilege escalation with undetected dwell time, culminating in December 2025 wiper deployment — matching OT-ICS attack pattern",
+      "signal_id": "osint:tavily:apac-cyber-002",
+      "source_url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "source_name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "EU-sanctioned Chinese and Iranian threat actors executing credential theft campaigns, including exploitation of React2Shell for automated credential harvesting against energy and manufacturing targets",
+      "signal_id": "osint:tavily:apac-cyber-003",
+      "source_url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "source_name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Iranian APT groups (per CISA and Horizon3.ai reporting) actively targeting energy sector OT and manufacturing networks, with CISA advising organizations to assume targeting given demonstrated capability",
+      "signal_id": "osint:tavily:apac-cyber-004",
+      "source_url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "source_name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "No named threat actor or confirmed incident in the evidence corpus directly attributed to this specific renewable energy manufacturer's SCADA or blade design systems — direct entity-level confirmation is absent",
+      "signal_id": "osint:tavily:apac-cyber-005",
+      "source_url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "source_name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Recharge / LinkedIn (Norway Wind Security Warning)",
+      "url": "https://www.linkedin.com/posts/recharge-newspaper_dependence-on-chinese-wind-parts-raises-security-activity-7426570244158251008-cwiS",
+      "published_date": null
+    },
+    {
+      "name": "BleepingComputer (EU Sanctions Chinese and Iranian Firms)",
+      "url": "https://www.bleepingcomputer.com/news/security/europe-sanctions-chinese-and-iranian-firms-for-cyberattacks/",
+      "published_date": null
+    },
+    {
+      "name": "Digitimes (China Green Product Trade Probe)",
+      "url": "https://www.digitimes.com/news/a20260330VL207/investigation-probe-renewable-energy-technology-2026.html",
+      "published_date": null
+    },
+    {
+      "name": "Outlook Business (China Offshore Wind Dominance)",
+      "url": "https://www.outlookbusiness.com/industry/china-offshore-wind-surge-india-renewable-goals",
+      "published_date": null
+    },
+    {
+      "name": "S&P Global (APAC Renewable Energy 2026)",
+      "url": "https://www.spglobal.com/energy/en/news-research/latest-news/energy-transition/010226-asia-pacific-to-boost-renewable-energy-capacity-in-2026-despite-geopolitical-challenges-inflation",
+      "published_date": null
+    },
+    {
+      "name": "Infosecurity Magazine (Chinese Hacking Campaign IP Theft)",
+      "url": "https://www.infosecurity-magazine.com/news/new-chinese-hacking-ip-theft/",
+      "published_date": null
+    },
+    {
+      "name": "Horizon3.ai (Iranian Cyber Campaigns — Energy/OT Targeting)",
+      "url": "https://horizon3.ai/intelligence/blogs/iranian-cyber-campaigns-security-leaders/",
+      "published_date": null
+    },
+    {
+      "name": "Frontier Enterprise (Chinese and Iranian AI-Boosted Hacking — Google)",
+      "url": "https://www.frontier-enterprise.com/chinese-iranian-hackers-keep-using-ai-to-boost-activities-says-google/",
+      "published_date": null
+    },
+    {
+      "name": "Cyber Risk Leaders (Iranian Cyber Warning — CISA Guidance)",
+      "url": "https://cyberriskleaders.com/iranian-warning-raises-concerns-over-potential-cyber-attacks-targeting-u-s-technology-companies/",
+      "published_date": null
+    },
+    {
+      "name": "OPFOR Journal (Homeland Security Brief — State Actor IP Theft)",
+      "url": "https://www.opforjournal.com/p/homeland-security-brief-february",
+      "published_date": null
+    }
+  ],
+  "matched_topics": [
+    "state-actor-wind-ip-theft",
+    "iran-strait-energy-routes",
+    "ot-ics-cyber-attacks"
+  ],
+  "source_provenance": "osint:tavily"
+}

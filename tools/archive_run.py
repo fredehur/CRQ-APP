@@ -4,18 +4,25 @@ import sys
 import json
 import shutil
 from datetime import datetime, timezone
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import MANIFEST_PATH
 
 # Files and directories to archive from output/
 ARCHIVE_FILES = [
-    "run_manifest.json",
-    "global_report.json",
-    "global_report.md",
-    "dashboard.html",
-    "board_report.pdf",
-    "board_report.pptx",
-    "system_trace.log",
+    "pipeline/run_manifest.json",
+    "pipeline/global_report.json",
+    "pipeline/global_report.md",
+    "pipeline/dashboard.html",
+    "pipeline/trend_brief.json",
+    "pipeline/trend_analysis.json",
+    "pipeline/threat_landscape.json",
     "pipeline/vacr_research.json",
+    "deliverables/board_report.pdf",
+    "deliverables/board_report.pptx",
+    "deliverables/ciso_brief.docx",
+    "logs/system_trace.log",
 ]
 ARCHIVE_DIRS = [
     "regional",
@@ -43,7 +50,9 @@ def archive():
     for fname in ARCHIVE_FILES:
         src = f"output/{fname}"
         if os.path.exists(src):
-            shutil.copy2(src, f"{run_dir}/{fname}")
+            dst = f"{run_dir}/{fname}"
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
             copied += 1
 
     for dirname in ARCHIVE_DIRS:

@@ -1,0 +1,119 @@
+{
+  "region": "NCE",
+  "collected_at": "2026-04-12T06:50:13.992913+00:00",
+  "collection_window": {
+    "days": 7,
+    "since": ""
+  },
+  "dominant_pillar": "Geo",
+  "summary": "The European wind energy sector faces intensifying geopolitical pressure driven by Chinese industrial policy, EU-China trade friction over subsidised turbine exports, and Western government security interventions blocking Chinese investment in wind manufacturing. China's dominant 60% share of global wind turbine production capacity creates structural supply chain dependencies that state actors can exploit for both economic coercion and technology acquisition. Geopolitical drivers for wind IP theft are amplified by the EU's accelerating renewable energy transition, which makes European blade design and SCADA expertise strategically valuable to state-sponsored acquisition programmes. No named APT groups, attributed intrusion campaigns, or confirmed OT/ICS incidents against NCE wind manufacturing facilities or SCADA networks are present in the collected evidence. The regulatory environment under NIS2 and the CER Directive explicitly acknowledges that energy sector SCADA networks are high-priority targets requiring mandatory security uplift, implying recognised but unattributed threat exposure. The absence of confirmed cyber incident reporting from the evidence base limits direct attribution, but structural attack surface indicators — interconnected SCADA networks, predictive maintenance telemetry, and supply chain concentration in Chinese manufacturing — are documented as material vectors.",
+  "lead_indicators": [
+    {
+      "text": "EU launched formal investigation in 2024 into Chinese wind turbine subsidies; China vowed to defend company interests, signalling state-backed commercial conflict over European wind market access",
+      "signal_id": "osint:tavily:nce-geo-001",
+      "source_url": "https://www.reuters.com/sustainability/china-says-eu-probe-chinese-wind-turbine-maker-sends-protectionist-signal-2026-02-04/",
+      "source_name": "Reuters",
+      "pillar": "geo"
+    },
+    {
+      "text": "UK government blocked a major Chinese wind turbine manufacturing facility on national security grounds, citing dual-use technology risks and supply chain concentration — coordinated with allied intelligence sharing frameworks",
+      "signal_id": "osint:tavily:nce-geo-002",
+      "source_url": "https://www.reuters.com/sustainability/china-says-eu-probe-chinese-wind-turbine-maker-sends-protectionist-signal-2026-02-04/",
+      "source_name": "Reuters",
+      "pillar": "geo"
+    },
+    {
+      "text": "China controls approximately 60% of global wind turbine production capacity, creating confirmed supply chain concentration risk and incentive structure for IP acquisition targeting European aerodynamic design leaders",
+      "signal_id": "osint:tavily:nce-geo-003",
+      "source_url": "https://www.reuters.com/sustainability/china-says-eu-probe-chinese-wind-turbine-maker-sends-protectionist-signal-2026-02-04/",
+      "source_name": "Reuters",
+      "pillar": "geo"
+    },
+    {
+      "text": "Wind energy industry has lost USD 5.2 billion through avoidable IP infringements and trade secret theft, establishing a documented pattern of motivated IP targeting in the sector",
+      "signal_id": "osint:tavily:nce-geo-004",
+      "source_url": "https://www.reuters.com/sustainability/china-says-eu-probe-chinese-wind-turbine-maker-sends-protectionist-signal-2026-02-04/",
+      "source_name": "Reuters",
+      "pillar": "geo"
+    },
+    {
+      "text": "No named threat actor or APT group is identified in the collected evidence as conducting attributed reconnaissance or intrusion against NCE wind manufacturing OT/ICS environments — a gap that weakens direct confirmation of the working theory",
+      "signal_id": "osint:tavily:nce-cyber-001",
+      "source_url": "https://nis2directive.eu/energy/",
+      "source_name": "NIS2 Directive (nis2directive.eu)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "No specific confirmed incident with named target, method, and outcome involving wind energy SCADA networks or blade design repositories is present in the collected evidence",
+      "signal_id": "osint:tavily:nce-cyber-002",
+      "source_url": "https://nis2directive.eu/energy/",
+      "source_name": "NIS2 Directive (nis2directive.eu)",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Documented attack vector: NIS2 Directive explicitly identifies interconnected SCADA networks in the European energy sector as prime cyberattack targets, with mandatory incident response and risk assessment obligations commencing 2026 — confirming regulator recognition of the OT attack surface without a named incident",
+      "signal_id": "osint:tavily:nce-cyber-003",
+      "source_url": "https://nis2directive.eu/energy/",
+      "source_name": "NIS2 Directive (nis2directive.eu)",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {
+      "name": "Reuters",
+      "url": "https://www.reuters.com/sustainability/china-says-eu-probe-chinese-wind-turbine-maker-sends-protectionist-signal-2026-02-04/",
+      "published_date": null
+    },
+    {
+      "name": "Discovery Alert (Critical Infrastructure Energy Vulnerabilities 2026)",
+      "url": "https://discoveryalert.com.au/critical-infrastructure-energy-vulnerabilities-2026/",
+      "published_date": null
+    },
+    {
+      "name": "Renewables Now",
+      "url": "https://renewablesnow.com/news/wind-industry-has-lost-usd-5-2bn-to-avoidable-ip-infringements-trade-secret-theft-651619/",
+      "published_date": null
+    },
+    {
+      "name": "Windtech International",
+      "url": "https://www.windtech-international.com/windtech-future/wind-energy-industry-has-lost-us-5-2-billion-through-avoidable-ip-infringements-and-trade-secret-theft",
+      "published_date": null
+    },
+    {
+      "name": "Global Banking and Finance Review",
+      "url": "https://www.globalbankingandfinance.com/china-eu-probe-chinese-wind-turbine-maker-sends/",
+      "published_date": null
+    },
+    {
+      "name": "NIS2 Directive (nis2directive.eu)",
+      "url": "https://nis2directive.eu/energy/",
+      "published_date": null
+    },
+    {
+      "name": "European Commission — Critical Infrastructure and Cybersecurity",
+      "url": "https://energy.ec.europa.eu/topics/energy-security/critical-infrastructure-and-cybersecurity_en",
+      "published_date": null
+    },
+    {
+      "name": "Human Risks — CER Directive",
+      "url": "https://humanrisks.com/blog/the-cer-directive-what-it-means-for-critical-infrastructure-and-supply-chain-resilience-in-europe/",
+      "published_date": null
+    },
+    {
+      "name": "TTMS — Energy Sector Security Vulnerability Management 2026",
+      "url": "https://ttms.com/energy-sector-security-vulnerability-management/",
+      "published_date": null
+    },
+    {
+      "name": "Global Relay — SCADA Compliance Insights",
+      "url": "https://www.globalrelay.com/resources/the-compliance-hub/compliance-insights/ensuring-scada-system-compliance-in-the-energy-sector/",
+      "published_date": null
+    }
+  ],
+  "matched_topics": [
+    "state-actor-wind-ip-theft",
+    "eu-critical-infrastructure-directive",
+    "ot-ics-cyber-attacks"
+  ],
+  "source_provenance": "osint:tavily"
+}

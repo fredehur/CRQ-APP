@@ -1,0 +1,105 @@
+{
+  "region": "LATAM",
+  "collected_at": "2026-04-12T06:45:24.528684+00:00",
+  "collection_window": {
+    "days": 7,
+    "since": ""
+  },
+  "dominant_pillar": "Geo",
+  "summary": "Latin America is experiencing intensifying geopolitical competition over critical minerals and wind energy supply chains, with China, the US, EU, and Canada all vying for strategic positioning in the region's resource base. The GWEC has explicitly flagged Latin America's wind energy supply chain as a structural vulnerability requiring urgent strengthening to capture projected growth beyond 120 GW by 2035. Investment uncertainty, slower GDP growth, and export control escalation between the US and China are compounding supply chain fragility across the region's energy manufacturing base. The collected evidence contains no documented OT/SCADA intrusions, no named threat actors conducting reconnaissance against blade manufacturing networks in Brazil, Mexico, or Chile, and no confirmed incidents targeting predictive maintenance or farm telemetry systems in LATAM wind operations. The only directly relevant cyber precedent is the historical Sinovel Wind Group trade secret theft case — a Chinese state-linked company convicted in the US of stealing wind turbine control software from AMSC — which establishes a baseline pattern of Chinese actor interest in wind energy IP but is not geographically or operationally specific to current LATAM OT targeting. No OSINT from the collected results confirms active cyber campaigns materializing the working theory's three evidentiary criteria.",
+  "lead_indicators": [
+    {
+      "text": "GWEC report identifies Latin America wind supply chain as critically underdeveloped relative to projected capacity growth, signaling structural sourcing vulnerability",
+      "signal_id": "osint:tavily:latam-geo-001",
+      "source_url": "https://www.gwec.net/news/latin-america-must-strengthen-its-wind-energy-supply-chain-to-capture-a-once-in-a-generation-growth-opportunity-finds-new-gwec-report",
+      "source_name": "GWEC – Latin America Wind Energy Supply Chain Report",
+      "pillar": "geo"
+    },
+    {
+      "text": "US-China export control escalation over critical minerals and advanced technology creating bifurcated supply chain pressures on LATAM wind component manufacturers dependent on Chinese inputs",
+      "signal_id": "osint:tavily:latam-geo-002",
+      "source_url": "https://www.gwec.net/news/latin-america-must-strengthen-its-wind-energy-supply-chain-to-capture-a-once-in-a-generation-growth-opportunity-finds-new-gwec-report",
+      "source_name": "GWEC – Latin America Wind Energy Supply Chain Report",
+      "pillar": "geo"
+    },
+    {
+      "text": "Rare earth elements and critical minerals (nickel, lithium, copper) essential to wind turbine manufacturing are subject to active geopolitical competition across Brazil, Chile, Mexico, and Argentina",
+      "signal_id": "osint:tavily:latam-geo-003",
+      "source_url": "https://www.gwec.net/news/latin-america-must-strengthen-its-wind-energy-supply-chain-to-capture-a-once-in-a-generation-growth-opportunity-finds-new-gwec-report",
+      "source_name": "GWEC – Latin America Wind Energy Supply Chain Report",
+      "pillar": "geo"
+    },
+    {
+      "text": "No named threat actor or group confirmed conducting OT/SCADA reconnaissance against LATAM wind manufacturing or farm telemetry networks in collected evidence",
+      "signal_id": "osint:tavily:latam-cyber-001",
+      "source_url": "https://www.justice.gov/archives/opa/pr/chinese-company-sinovel-wind-group-convicted-theft-trade-secrets",
+      "source_name": "US Department of Justice – Sinovel Wind Group Conviction",
+      "pillar": "cyber"
+    },
+    {
+      "text": "Sinovel Wind Group (Chinese state-linked manufacturer): convicted in US federal court of stealing AMSC wind turbine control software via insider recruitment — historical precedent for Chinese actor wind-sector IP targeting, not a current LATAM OT incident",
+      "signal_id": "osint:tavily:latam-cyber-002",
+      "source_url": "https://www.justice.gov/archives/opa/pr/chinese-company-sinovel-wind-group-convicted-theft-trade-secrets",
+      "source_name": "US Department of Justice – Sinovel Wind Group Conviction",
+      "pillar": "cyber"
+    },
+    {
+      "text": "No documented attack vector or active campaign against blade manufacturing OT networks or predictive maintenance systems in Brazil, Mexico, or Chile identified in collected evidence",
+      "signal_id": "osint:tavily:latam-cyber-003",
+      "source_url": "https://www.justice.gov/archives/opa/pr/chinese-company-sinovel-wind-group-convicted-theft-trade-secrets",
+      "source_name": "US Department of Justice – Sinovel Wind Group Conviction",
+      "pillar": "cyber"
+    }
+  ],
+  "sources": [
+    {
+      "name": "GWEC – Latin America Wind Energy Supply Chain Report",
+      "url": "https://www.gwec.net/news/latin-america-must-strengthen-its-wind-energy-supply-chain-to-capture-a-once-in-a-generation-growth-opportunity-finds-new-gwec-report",
+      "published_date": null
+    },
+    {
+      "name": "Discovery Alert – Latin America Critical Mineral Dependencies 2026",
+      "url": "https://discoveryalert.com.au/latin-america-critical-mineral-dependencies-2026/",
+      "published_date": null
+    },
+    {
+      "name": "White & Case – Latin America Critical Minerals Boom",
+      "url": "https://www.whitecase.com/news/media/latin-americas-critical-minerals-boom-gains-momentum-amid-global-supply-fears",
+      "published_date": null
+    },
+    {
+      "name": "Eversheds Sutherland – US and China Export Restrictions on Critical Minerals",
+      "url": "https://www.eversheds-sutherland.com/en/united-states/insights/us-and-china-tighten-respective-export-restrictions-on-advanced-technology-and-critical-minerals",
+      "published_date": null
+    },
+    {
+      "name": "BNamericas – Latin America Slows Down But Critical Minerals Boost Prospects",
+      "url": "https://www.bnamericas.com/en/features/latin-america-slows-down-but-critical-minerals-boost-prospects",
+      "published_date": null
+    },
+    {
+      "name": "US Embassy Chile – 2026 Critical Minerals Ministerial",
+      "url": "https://cl.usembassy.gov/2026-critical-minerals-ministerial/",
+      "published_date": null
+    },
+    {
+      "name": "US Department of Justice – Sinovel Wind Group Conviction",
+      "url": "https://www.justice.gov/archives/opa/pr/chinese-company-sinovel-wind-group-convicted-theft-trade-secrets",
+      "published_date": null
+    },
+    {
+      "name": "Dark Reading – Chinese Wind Turbine Manufacturer Source Code Theft",
+      "url": "https://www.darkreading.com/cyberattacks-data-breaches/chinese-wind-turbine-manufacturer-gets-max-fine-for-source-code-theft",
+      "published_date": null
+    },
+    {
+      "name": "AMSC Investor Relations – Sinovel Indictment",
+      "url": "https://ir.amsc.com/news-releases/news-release-details/chinas-sinovel-indicted-united-states-stealing-amsc-trade/",
+      "published_date": null
+    }
+  ],
+  "matched_topics": [
+    "supply-chain-wind-components"
+  ],
+  "source_provenance": "osint:tavily"
+}

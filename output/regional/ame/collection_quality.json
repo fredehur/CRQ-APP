@@ -3,5 +3,10 @@
   "thin_collection": false,
   "geo_grounded_count": 3,
   "cyber_grounded_count": 3,
-  "threshold": 3
+  "threshold": 3,
+  "seerist_strength": "low",
+  "collection_lag": {
+    "detected": false,
+    "note": ""
+  }
 }

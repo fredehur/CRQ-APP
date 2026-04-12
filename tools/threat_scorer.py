@@ -1,6 +1,9 @@
 import sys
 import json
 import os
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 from tools.config import MASTER_SCENARIOS_PATH, SEVERITY_MAP
 
 def load_master_scenarios():

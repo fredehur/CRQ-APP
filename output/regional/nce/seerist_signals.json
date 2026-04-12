@@ -1,19 +1,97 @@
 {
   "region": "NCE",
-  "window_days": 7,
-  "pulse": {
-    "score": 81,
-    "score_prev": 81,
-    "delta": 0,
-    "security_risk": "Low",
-    "political_risk": "Low",
-    "sub_categories": {
-      "civil_unrest": "Low",
-      "organized_crime": "Low",
-      "border_tension": "Low"
+  "collected_at": "2026-04-12T06:50:14Z",
+  "collection_window": {
+    "days": 7
+  },
+  "situational": {
+    "events": [],
+    "verified_events": [],
+    "breaking_news": [],
+    "news": []
+  },
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "DE": {
+          "score": 6.1,
+          "color": "green",
+          "delta": 0.0,
+          "forecast": 6.1
+        },
+        "DK": {
+          "score": 6.8,
+          "color": "green",
+          "delta": 0.1,
+          "forecast": 6.9
+        }
+      },
+      "region_summary": {
+        "worst_country": "DE",
+        "worst_score": 6.1,
+        "avg_delta": 0.05,
+        "trend_direction": "stable"
+      }
+    },
+    "hotspots": [],
+    "scribe": [
+      {
+        "signal_id": "seerist:scribe:nce-001",
+        "type": "country_summary",
+        "country_code": "DE",
+        "assessment": "Germany's energy sector operates in the most secure environment in the region. NIS2 and CER compliance requirements are approaching but no material threat activity is identified. Seerist concurs with ENISA's assessment that ransomware expansion from North America to NCE is an emerging pattern rather than an active campaign.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:NCE→DE"
+        ]
+      },
+      {
+        "signal_id": "seerist:scribe:nce-002",
+        "type": "country_summary",
+        "country_code": "DK",
+        "assessment": "Denmark maintains the highest OT/IT segmentation maturity in the region. Nordic wind operators lead the industry in security posture. No active threat campaigns identified.",
+        "date": "2026-04-10",
+        "derived_from": [
+          "region_map:NCE→DK"
+        ]
+      }
+    ],
+    "wod_searches": [
+      {
+        "signal_id": "seerist:wod:nce-001",
+        "query": "cyber threat renewable energy",
+        "derived_from": [
+          "osint:dominant_pillar:cyber"
+        ],
+        "result_count": 2,
+        "top_results": [
+          {
+            "title": "ENISA: ransomware groups expanding energy targeting into Northern Europe",
+            "source": "ENISA",
+            "severity": 5,
+            "timestamp": "2026-04-08T08:00:00Z",
+            "source_reliability": "high"
+          }
+        ],
+        "generated_at": "2026-04-10T09:15:00Z"
+      }
+    ],
+    "analysis_reports": [],
+    "risk_ratings": {
+      "DE": {
+        "overall": "Low",
+        "political": "Low",
+        "security": "Low",
+        "operational": "Low"
+      },
+      "DK": {
+        "overall": "Low",
+        "political": "Low",
+        "security": "Low",
+        "operational": "Low"
+      }
     }
   },
-  "events": [],
-  "hotspots": [],
-  "collected_at": "2026-03-20T09:34:10Z"
+  "poi_alerts": [],
+  "source_provenance": "seerist"
 }
