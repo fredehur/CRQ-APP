@@ -13,6 +13,8 @@ from pathlib import Path
 
 sys.path.insert(0, ".")
 
+from tools.seerist_strength import score_seerist_strength
+
 OUTPUT_ROOT = Path("output")
 
 # Action bullets lookup — keyed by scenario name.
@@ -119,6 +121,66 @@ def _get_action_bullets(scenario: str, region: str) -> list[str]:
     ])
 
 
+def _build_source_metadata(seerist: dict, osint: dict) -> dict:
+    """Build structured source metadata for Overview boxes.
+
+    Reads seerist_signals.json and osint_signals.json directly — not from claims.
+    Seerist box: strength level, anomaly hotspot names, pulse delta, verified event count.
+    OSINT box: deduplicated source names, count, signal type.
+    """
+    strength = score_seerist_strength(seerist)
+    ana = seerist.get("analytical", {})
+    sit = seerist.get("situational", {})
+
+    hotspot_labels = []
+    for h in ana.get("hotspots", []):
+        if not h.get("anomaly_flag"):
+            continue
+        loc = h.get("location", "")
+        if isinstance(loc, dict):
+            loc = loc.get("name", "")
+        label = loc or h.get("signal_id", "?")
+        hotspot_labels.append(f"{label} — anomaly")
+    pulse_delta = ana.get("pulse", {}).get("region_summary", {}).get("avg_delta", 0.0)
+    verified_count = len(sit.get("verified_events", []))
+
+    raw_sources = osint.get("sources", [])
+    seen_names: set[str] = set()
+    unique_sources: list[str] = []
+    for s in raw_sources:
+        name = s.get("name", "")
+        if name and name not in seen_names:
+            seen_names.add(name)
+            unique_sources.append(name)
+
+    return {
+        "seerist": {
+            "strength": strength,
+            "hotspots": hotspot_labels,
+            "pulse_delta": pulse_delta,
+            "verified_event_count": verified_count,
+        },
+        "osint": {
+            "source_count": len(unique_sources),
+            "sources": unique_sources,
+            "signal_type": osint.get("signal_type", ""),
+        },
+    }
+
+
+def _extract_brief_headlines(claims_data: dict) -> dict:
+    """Pass through analyst-written summary fields as brief_headlines.
+
+    Reads why_summary, how_summary, so_what_summary from claims.json top level.
+    Returns empty strings if any field is absent — never None.
+    """
+    return {
+        "why": claims_data.get("why_summary", ""),
+        "how": claims_data.get("how_summary", ""),
+        "so_what": claims_data.get("so_what_summary", ""),
+    }
+
+
 def _extract_metadata(claims_data: dict, data: dict | None = None) -> dict:
     """Extract metadata fields — data.json is authoritative (analyst writes it in Step 6).
 
@@ -167,6 +229,25 @@ def extract(region: str) -> None:
     signal_type = meta.get("signal_type", "Emerging Pattern")
     grouped["signal_type_label"] = SIGNAL_TYPE_LABELS.get(signal_type, signal_type)
     grouped["status_label"] = STATUS_LABELS.get(dominant_pillar, "[ESCALATED]")
+
+    # Load signal files for source metadata
+    seerist: dict = {}
+    osint: dict = {}
+    seerist_path = base / "seerist_signals.json"
+    osint_path = base / "osint_signals.json"
+    if seerist_path.exists():
+        try:
+            seerist = json.loads(seerist_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+    if osint_path.exists():
+        try:
+            osint = json.loads(osint_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            pass
+
+    grouped["source_metadata"] = _build_source_metadata(seerist, osint)
+    grouped["brief_headlines"] = _extract_brief_headlines(claims_data)
 
     sections_path = base / "sections.json"
     sections_path.write_text(json.dumps(grouped, indent=2, ensure_ascii=False), encoding="utf-8")

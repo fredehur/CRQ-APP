@@ -73,6 +73,27 @@ Set `bullets` to the value in the `bullets` column corresponding to your `paragr
 
 `convergence_assessment.category` must be one of: `CONVERGE`, `DIVERGE`, `SILENT`, `LOW CONFIDENCE`.
 
+**Summary fields (required — write these before the claims array):**
+
+After writing `convergence_assessment`, add three summary fields — one sentence each:
+
+```json
+{
+  "convergence_assessment": { "category": "CONVERGE", "rationale": "..." },
+  "why_summary": "Taiwan Strait tensions elevated following PLA naval exercise expansion",
+  "how_summary": "State-aligned actors pivoting to supply chain intrusion against energy OEMs",
+  "so_what_summary": "Taipei Blade Manufacturing faces elevated physical disruption and IP theft risk",
+  "claims": [...]
+}
+```
+
+Rules:
+- Each summary is one declarative sentence. No hedging, no "it is assessed that."
+- `why_summary` — the world event or structural condition driving the threat. No AeroGrid.
+- `how_summary` — the observed adversary behaviour or threat vector. No AeroGrid assets.
+- `so_what_summary` — the operational consequence for AeroGrid. This is the only sentence where AeroGrid is named.
+- These become the opening line of every downstream report format — CISO, Board, RSM. Write them accordingly.
+
 ## STEP 1 — LOAD CONTEXT
 
 Read all inputs in this exact order. The order matters: Seerist establishes the intelligence picture; everything else layers on top.
@@ -269,3 +290,4 @@ Before exiting, verify:
 - [ ] First `paragraph='why'` claim cites a `seerist:event:*`, `seerist:hotspot:*`, or `seerist:pulse:*` signal_id when `seerist_strength` is high or low
 - [ ] Every hotspot with `anomaly_flag=True` has a corresponding claim citing its `signal_id`
 - [ ] collection_lag caveat present in So What when `collection_lag.detected = true`
+- [ ] `why_summary`, `how_summary`, `so_what_summary` present in claims.json — one sentence each, no hedging
