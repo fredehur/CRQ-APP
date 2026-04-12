@@ -293,7 +293,12 @@ function renderRightPanel() {
 
   const reviewHtml = `<div id="review-badge" style="display:flex;align-items:center;margin:8px 0 4px 0"></div>`;
   const audienceHtml = `<div id="audience-cards-panel"></div>`;
-  if (!c || !c.clusters || c.clusters.length === 0) {
+  // Normalize old (c.clusters[]) and new (c.geopolitical[] + c.cyber[]) formats
+  const clusterList = c?.clusters || [
+    ...(c?.geopolitical || []).map(cl => ({ pillar: 'Geo', name: cl.text, convergence: cl.signal_ids?.length || 1, sources: [], confidence: cl.confidence })),
+    ...(c?.cyber || []).map(cl => ({ pillar: 'Cyber', name: cl.text, convergence: cl.signal_ids?.length || 1, sources: [], confidence: cl.confidence })),
+  ];
+  if (!c || clusterList.length === 0) {
     body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + `<p style="color:#6e7681;font-size:11px">No signal clusters yet — pipeline may still be processing.</p>`;
     renderFeedbackUI(r);
     renderReviewBadge(r);
@@ -302,7 +307,7 @@ function renderRightPanel() {
     return;
   }
 
-  const clusterHtml = c.clusters.map((cl, i) => renderClusterCard(r, cl, i)).join('');
+  const clusterHtml = clusterList.map((cl, i) => renderClusterCard(r, cl, i)).join('');
   body.innerHTML = contextStrip + reviewHtml + briefSection + audienceHtml + clusterHtml;
   renderFeedbackUI(r);
   renderReviewBadge(r);
@@ -316,8 +321,9 @@ function renderClusterCard(region, cl, i) {
   const pillCls = cl.pillar === 'Cyber' ? 'pill-cyber' : 'pill-geo';
   const pillarCardCls = cl.pillar === 'Cyber' ? 'pillar-cyber' : cl.pillar === 'Mixed' ? 'pillar-mixed' : 'pillar-geo';
   const convColor = cl.convergence >= 3 ? '#ff7b72' : cl.convergence >= 2 ? '#e3b341' : '#6e7681';
+  const confColor = cl.confidence === 'Confirmed' ? '#3fb950' : cl.confidence === 'Assessed' ? '#e3b341' : '#6e7681';
 
-  const sourcesHtml = isExpanded ? `
+  const sourcesHtml = isExpanded && (cl.sources || []).length > 0 ? `
 <div class="cluster-sources">
   ${(cl.sources || []).map(s => `
   <div class="source-row">
@@ -326,12 +332,16 @@ function renderClusterCard(region, cl, i) {
   </div>`).join('')}
 </div>` : '';
 
+  const rightMeta = cl.confidence
+    ? `<span style="font-size:9px;color:${confColor}">${esc(cl.confidence)}</span>`
+    : `<span style="font-size:10px;color:${convColor}">${cl.convergence} signal${cl.convergence === 1 ? '' : 's'}</span>`;
+
   return `
 <div class="cluster-card ${pillarCardCls}">
   <div class="cluster-card-header" onclick="toggleCluster('${id}')">
     <span class="${pillCls}">${cl.pillar || '?'}</span>
     <span style="flex:1;font-size:12px;color:#e6edf3">${esc(cl.name || '')}</span>
-    <span style="font-size:10px;color:${convColor}">${cl.convergence} signal${cl.convergence === 1 ? '' : 's'} ${isExpanded ? '&#9662;' : '&#9658;'}</span>
+    ${rightMeta} ${isExpanded ? '&#9662;' : '&#9658;'}
   </div>
   ${sourcesHtml}
 </div>`;
@@ -391,6 +401,42 @@ function _fetchBrief(region) {
   _fetchEvidence(region);
 }
 
+function _renderSourceBoxes(sm) {
+  if (!sm) return '';
+  const s = sm.seerist || {};
+  const o = sm.osint || {};
+
+  const strength = (s.strength || 'none').toLowerCase();
+  const seeristItems = [];
+  (s.hotspots || []).forEach(h => seeristItems.push(esc(h)));
+  if (s.verified_event_count) seeristItems.push(`${s.verified_event_count} verified event(s)`);
+  if (typeof s.pulse_delta === 'number' && s.pulse_delta !== 0) {
+    seeristItems.push(`Pulse delta: ${s.pulse_delta.toFixed(1)}`);
+  }
+  const seeristList = seeristItems.length
+    ? seeristItems.map(t => `<li>${t}</li>`).join('')
+    : '<li><em>No substantive signals</em></li>';
+
+  const sources = o.sources || [];
+  const osintList = sources.length
+    ? sources.map(n => `<li>${esc(n)}</li>`).join('')
+    : '<li><em>No named sources</em></li>';
+  const osintCount = `${o.source_count || 0} source${o.source_count === 1 ? '' : 's'}`;
+
+  return `<div class="source-split-panel">
+  <div class="source-box source-box--seerist">
+    <div class="source-box-header">Seerist</div>
+    <div class="source-strength-badge ${strength}">Strength: ${strength.toUpperCase()}</div>
+    <ul class="source-detail-list">${seeristList}</ul>
+  </div>
+  <div class="source-box source-box--osint">
+    <div class="source-box-header">OSINT</div>
+    <div class="source-count-label">${osintCount}</div>
+    <ul class="source-detail-list">${osintList}</ul>
+  </div>
+</div>`;
+}
+
 function _renderSections(s) {
   const sections = [
     { key: 'intel_bullets',     label: 'INTEL FINDINGS',              color: '#1f6feb' },
@@ -399,7 +445,8 @@ function _renderSections(s) {
     { key: 'watch_bullets',     label: 'WATCH FOR',                   color: '#e3b341' },
     { key: 'action_bullets',    label: 'RECOMMENDED ACTIONS',         color: '#ff7b72' },
   ];
-  return sections.map(sec => {
+  const sourceBoxes = _renderSourceBoxes(s.source_metadata);
+  const bulletsHtml = sections.map(sec => {
     const bullets = s[sec.key] || [];
     if (!bullets.length) return '';
     const items = bullets.map(b => `<div style="margin-bottom:4px;color:#c9d1d9;font-size:11px;line-height:1.5">${esc(b)}</div>`).join('');
@@ -408,6 +455,7 @@ function _renderSections(s) {
   ${items}
 </div>`;
   }).join('');
+  return sourceBoxes + bulletsHtml;
 }
 
 function _classifySourceTier(url) {
@@ -1356,7 +1404,7 @@ function _doSwitchTab(tab) {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' || t === 'validate' ? 'flex' : 'block') : '';
+    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' || t === 'validate' ? 'flex' : 'block') : 'none';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });

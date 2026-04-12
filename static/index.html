@@ -81,7 +81,7 @@
     #progress-fill { height: 100%; background: #3fb950; transition: width 300ms ease-in-out; }
 
     /* Overview tab — flex column so synthesis bar + split pane stack */
-    #tab-overview { flex-direction: column; height: calc(100vh - 60px); }
+    #tab-overview { display: flex; flex-direction: column; height: calc(100vh - 60px); }
 
     /* Global synthesis */
     #global-synthesis {
@@ -100,7 +100,9 @@
     #split-pane {
       display: grid;
       grid-template-columns: 180px 1fr;
+      grid-template-rows: 1fr;
       flex: 1;
+      min-height: 0;
       overflow: hidden;
     }
 
@@ -108,6 +110,7 @@
     #left-panel {
       border-right: 1px solid #21262d;
       display: flex; flex-direction: column;
+      min-height: 0;
       overflow-y: auto;
       background: #080c10;
     }
@@ -115,6 +118,7 @@
     /* Right panel */
     #right-panel {
       display: flex; flex-direction: column;
+      min-height: 0;
       overflow: hidden;
     }
     #right-panel-body { flex: 1; overflow-y: auto; padding: 12px 16px; }
@@ -199,6 +203,58 @@
     .brief-header { display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:4px 0;font-size:10px;color:#6e7681;letter-spacing:.5px; }
     .brief-header:hover { color:#8b949e; }
     .brief-content { font-size:11px;color:#8b949e;line-height:1.6;white-space:pre-wrap;margin-top:8px; }
+
+    /* Source intelligence boxes — Overview */
+    .source-split-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .source-box {
+      background: #0d1117;
+      border: 1px solid #21262d;
+      border-top-width: 2px;
+      border-radius: 4px;
+      padding: 8px 10px;
+    }
+    .source-box--seerist { border-top-color: #f59e0b; }
+    .source-box--osint   { border-top-color: #4a9eff; }
+    .source-box-header {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #6e7681;
+      margin-bottom: 6px;
+    }
+    .source-strength-badge {
+      font-size: 9px;
+      font-weight: 600;
+      letter-spacing: .05em;
+      padding: 2px 6px;
+      border-radius: 3px;
+      display: inline-block;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+    .source-strength-badge.high   { background: #311b1b; color: #ff7b72; border: 1px solid #7f1d1d; }
+    .source-strength-badge.low    { background: #2a1e0a; color: #e3b341; border: 1px solid #713f12; }
+    .source-strength-badge.none   { background: #161b22; color: #6e7681; border: 1px solid #21262d; }
+    .source-count-label {
+      font-size: 10px;
+      color: #6e7681;
+      margin-bottom: 6px;
+    }
+    .source-detail-list {
+      margin: 0;
+      padding: 0 0 0 14px;
+      font-size: 10px;
+      color: #8b949e;
+      line-height: 1.5;
+    }
+    .source-detail-list li { margin-bottom: 2px; }
+    .source-detail-list li em { color: #6e7681; font-style: italic; }
 
     /* Context strip under escalated header */
     .context-strip { padding:6px 0 8px;border-bottom:1px solid #21262d;margin-bottom:8px; }
@@ -1010,7 +1066,7 @@
 </div>
 
 <!-- ── PIPELINE TAB ─────────────────────────────────────────────────── -->
-<div id="tab-pipeline" class="hidden" style="height:calc(100vh - 60px);overflow:hidden;display:flex;flex-direction:column">
+<div id="tab-pipeline" class="hidden" style="height:calc(100vh - 60px);overflow:hidden;flex-direction:column">
 
   <!-- Fixed header: requirement + admiralty -->
   <div id="pipeline-header">
@@ -1073,7 +1129,7 @@
 </div>
 
 <!-- ── RUN LOG TAB ──────────────────────────────────────────────── -->
-<div id="tab-runlog" class="tab-content" style="display:none;flex-direction:column;gap:12px;padding:16px">
+<div id="tab-runlog" class="tab-content hidden" style="flex-direction:column;gap:12px;padding:16px">
   <!-- Run header -->
   <div id="runlog-header" style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#161b22;border:1px solid #21262d;border-radius:6px">
     <span id="runlog-timestamp" style="font-size:11px;color:#8b949e">No run yet</span>
@@ -1087,7 +1143,7 @@
 </div>
 
 <!-- ── VALIDATE TAB ─────────────────────────────────────────────── -->
-<div id="tab-validate" class="hidden" style="display:flex;flex-direction:column;height:calc(100vh - 60px);overflow:hidden">
+<div id="tab-validate" class="hidden" style="flex-direction:column;height:calc(100vh - 60px);overflow:hidden">
 
   <!-- Tab header strip -->
   <div style="flex-shrink:0;padding:6px 16px;background:#080c10;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px">
