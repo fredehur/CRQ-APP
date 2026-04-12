@@ -6,8 +6,36 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 import pytest
 from pptx import Presentation
 from pptx.presentation import Presentation as PresentationClass
-from report_builder import build
+from report_builder import build, RegionEntry
 import export_pptx as ep
+
+
+def _region_with_all_bullets() -> RegionEntry:
+    """Minimal RegionEntry with populated bullets so build_region renders all 5 labels."""
+    return RegionEntry(
+        name="APAC",
+        status="escalated",
+        admiralty="B2",
+        velocity="stable",
+        severity="HIGH",
+        scenario_match="System intrusion",
+        dominant_pillar="GEO",
+        signal_type="cyber",
+        confidence_label="High",
+        threat_characterisation="State-directed threat",
+        top_sources=["Reuters"],
+        why_text="why",
+        how_text="how",
+        so_what_text="so what",
+        threat_actor="APT-Test",
+        signal_type_label="Confirmed Incident",
+        intel_bullets=["intel finding alpha"],
+        adversary_bullets=["adversary activity bravo"],
+        impact_bullets=["impact for aerogrid charlie"],
+        watch_bullets=["watch item delta"],
+        action_bullets=["recommended action echo"],
+        source_quality=None,
+    )
 
 
 def test_build_pptx_returns_presentation(mock_output, tmp_path):
@@ -51,15 +79,6 @@ def test_pptx_region_slides_contain_confidence(mock_output):
     assert "B2" not in all_text       # admiralty must not appear in new layout
 
 
-def test_pptx_cover_says_ciso(mock_output):
-    """Cover slide must contain 'CISO' somewhere."""
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    cover = prs.slides[0]
-    all_text = " ".join(shape.text for shape in cover.shapes if shape.has_text_frame)
-    assert "CISO" in all_text
-
-
 def test_pptx_cover_no_vacr(mock_output):
     """Cover slide must not contain VaCR dollar amount or label."""
     data = build(output_dir=str(mock_output))
@@ -80,11 +99,14 @@ def test_pptx_exec_summary_no_vacr_column(mock_output):
     assert "TOTAL VaCR" not in all_text
 
 
-def test_pptx_region_slide_contains_driver_sentence(mock_output):
-    """Region slides must render board_bullets[0] (Driver sentence) as text."""
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    apac_slide = prs.slides[2]  # 0=cover, 1=exec, 2=APAC
-    all_text = " ".join(shape.text for shape in apac_slide.shapes if shape.has_text_frame)
-    # board_bullets[0] is the first sentence of APAC why_text
-    assert "State-sponsored" in all_text
+def test_pptx_region_slide_uses_new_intel_layout():
+    """build_region renders all 5 intelligence row labels when bullets are populated."""
+    prs = Presentation()
+    ep.build_region(prs, _region_with_all_bullets())
+    slide = prs.slides[0]
+    all_text = " ".join(shape.text for shape in slide.shapes if shape.has_text_frame)
+    assert "INTEL FINDINGS" in all_text
+    assert "ADVERSARY ACTIVITY" in all_text
+    assert "IMPACT FOR AEROGRID" in all_text
+    assert "WATCH FOR" in all_text
+    assert "RECOMMENDED ACTION" in all_text

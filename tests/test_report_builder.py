@@ -5,9 +5,36 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 
 from report_builder import (
     RegionStatus, RegionEntry, ReportData, _parse_pillars, build,
-    _confidence_label, _threat_characterisation, _extract_board_bullets,
-    _first_non_vacr_sentence,
+    _confidence_label, _threat_characterisation,
 )
+
+
+def _make_region(name, status, vacr, admiralty, velocity, severity,
+                 scenario_match, why_text, how_text, so_what_text):
+    return RegionEntry(
+        name=name,
+        status=status,
+        admiralty=admiralty,
+        velocity=velocity,
+        severity=severity,
+        scenario_match=scenario_match,
+        dominant_pillar=None,
+        signal_type=None,
+        confidence_label=None,
+        threat_characterisation=None,
+        top_sources=None,
+        why_text=why_text,
+        how_text=how_text,
+        so_what_text=so_what_text,
+        threat_actor=None,
+        signal_type_label=None,
+        intel_bullets=[],
+        adversary_bullets=[],
+        impact_bullets=[],
+        watch_bullets=[],
+        action_bullets=[],
+        source_quality=None,
+    )
 
 
 def test_region_status_values():
@@ -17,24 +44,23 @@ def test_region_status_values():
 
 
 def test_region_entry_is_dataclass():
-    entry = RegionEntry(
-        name="APAC", status=RegionStatus.ESCALATED,
-        vacr=18_500_000.0, admiralty="B2", velocity="stable",
-        severity="HIGH", scenario_match="System intrusion",
-        why_text="geo text", how_text="cyber text", so_what_text="biz text",
+    entry = _make_region(
+        "APAC", RegionStatus.ESCALATED, 18_500_000.0, "B2", "stable",
+        "HIGH", "System intrusion", "geo text", "cyber text", "biz text",
     )
     assert entry.name == "APAC"
     assert entry.status == RegionStatus.ESCALATED
-    assert entry.vacr == 18_500_000.0
+    assert entry.admiralty == "B2"
+    assert entry.why_text == "geo text"
 
 
 def test_report_data_derived_counts():
     regions = [
-        RegionEntry("APAC", RegionStatus.ESCALATED, 18_500_000, "B2", "stable", "HIGH", "Sys", "w", "h", "s"),
-        RegionEntry("AME",  RegionStatus.ESCALATED, 22_000_000, "A1", "accelerating", "CRITICAL", "Ransomware", "w", "h", "s"),
-        RegionEntry("MED",  RegionStatus.MONITOR,    4_200_000, "C3", "stable", "MEDIUM", "Insider", None, None, None),
-        RegionEntry("LATAM",RegionStatus.CLEAR,      0,         "A1", "unknown", "LOW", None, None, None, None),
-        RegionEntry("NCE",  RegionStatus.CLEAR,      0,         "A1", "unknown", "LOW", None, None, None, None),
+        _make_region("APAC", RegionStatus.ESCALATED, 18_500_000, "B2", "stable", "HIGH", "Sys", "w", "h", "s"),
+        _make_region("AME",  RegionStatus.ESCALATED, 22_000_000, "A1", "accelerating", "CRITICAL", "Ransomware", "w", "h", "s"),
+        _make_region("MED",  RegionStatus.MONITOR,    4_200_000, "C3", "stable", "MEDIUM", "Insider", None, None, None),
+        _make_region("LATAM", RegionStatus.CLEAR,     0,         "A1", "unknown", "LOW", None, None, None, None),
+        _make_region("NCE",  RegionStatus.CLEAR,      0,         "A1", "unknown", "LOW", None, None, None, None),
     ]
     data = ReportData(
         run_id="crq-test-001", timestamp="2026-03-10T08:00:00Z",
@@ -164,40 +190,3 @@ def test_threat_characterisation_mixed():
 
 def test_threat_characterisation_none():
     assert _threat_characterisation(None) == "Unknown"
-
-
-# ── _extract_board_bullets ─────────────────────────────────────────────────────
-
-def test_extract_board_bullets_normal():
-    why = "Structural instability is driving state interest in energy IP. Secondary sentence."
-    how = "Wind turbine control systems are the primary target. More detail here."
-    so_what = "If this materialises, blade production schedules will be disrupted. Watch for credential abuse."
-    bullets = _extract_board_bullets(why, how, so_what)
-    assert bullets is not None
-    assert len(bullets) == 4
-    assert bullets[0] == "Structural instability is driving state interest in energy IP."
-    assert bullets[1] == "Wind turbine control systems are the primary target."
-    assert bullets[2] == "If this materialises, blade production schedules will be disrupted."
-    assert bullets[3] == "Watch for credential abuse."
-
-def test_extract_board_bullets_skips_vacr_sentence():
-    so_what = "AeroGrid's quantified exposure stands at $4,200,000 (VaCR). If this materialises, maintenance access will be disrupted. Watch for access reviews failing."
-    bullets = _extract_board_bullets("why.", "how.", so_what)
-    assert bullets is not None
-    assert "$" not in bullets[2]
-    assert "maintenance access" in bullets[2]
-
-def test_extract_board_bullets_returns_none_when_missing():
-    assert _extract_board_bullets(None, "how.", "so_what.") is None
-    assert _extract_board_bullets("why.", None, "so_what.") is None
-    assert _extract_board_bullets("why.", "how.", None) is None
-
-def test_first_non_vacr_sentence_whitespace_only():
-    assert _first_non_vacr_sentence("   ") is None
-
-def test_first_non_vacr_sentence_all_vacr_returns_none():
-    assert _first_non_vacr_sentence("Exposure is $4.2M. VaCR stands at $22M.") is None
-
-def test_extract_board_bullets_single_sentence_so_what_returns_none():
-    # Single-sentence so_what produces identical impact/watch — return None
-    assert _extract_board_bullets("Why sentence.", "How sentence.", "Watch for service disruption.") is None

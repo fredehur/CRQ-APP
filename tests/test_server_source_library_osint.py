@@ -8,24 +8,30 @@ from fastapi.testclient import TestClient
 def client_with_db(tmp_path, monkeypatch):
     db_path = tmp_path / "sources.db"
     conn = sqlite3.connect(db_path)
+    # Schema matches server.py's actual query: credibility_tier, source_type,
+    # sa.id PK, sa.collected_at. Keep this aligned with
+    # /api/source-library/osint in server.py.
     conn.executescript("""
         CREATE TABLE sources_registry (
             id INTEGER PRIMARY KEY,
-            name TEXT, domain TEXT, tier TEXT, type TEXT,
+            name TEXT, domain TEXT,
+            credibility_tier TEXT,
+            source_type TEXT,
             collection_type TEXT DEFAULT 'osint',
             blocked INTEGER DEFAULT 0
         );
         CREATE TABLE source_appearances (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             source_id INTEGER,
             region TEXT,
             pillar TEXT,
             cited INTEGER,
-            run_timestamp TEXT
+            collected_at TEXT
         );
         INSERT INTO sources_registry VALUES
             (1, 'Reuters', 'reuters.com', 'A', 'news', 'osint', 0),
             (2, 'Blog X',  'blog.example.com', 'C', 'news', 'osint', 0);
-        INSERT INTO source_appearances VALUES
+        INSERT INTO source_appearances (source_id, region, pillar, cited, collected_at) VALUES
             (1, 'APAC', 'geo',   1, '2026-04-09T08:00:00Z'),
             (1, 'MED',  'cyber', 1, '2026-04-08T08:00:00Z'),
             (1, 'MED',  'geo',   0, '2026-04-07T08:00:00Z'),

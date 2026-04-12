@@ -10,6 +10,10 @@ To run locally:
 import pytest
 from playwright.sync_api import sync_playwright, expect
 
+pytestmark = pytest.mark.skip(
+    reason="Playwright browser not installed — run 'playwright install chromium' first"
+)
+
 
 BASE = "http://localhost:8000"
 

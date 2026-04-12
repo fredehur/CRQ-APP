@@ -35,7 +35,7 @@ def _run_main(monkeypatch, tmp_path, capsys) -> dict:
     import tools.feedback_summary as fs
     monkeypatch.setattr(fs, "REPO_ROOT", tmp_path)
     fs.main()
-    out_path = tmp_path / "output" / "feedback_trends.json"
+    out_path = tmp_path / "output" / "pipeline" / "feedback_trends.json"
     return json.loads(out_path.read_text(encoding="utf-8"))
 
 

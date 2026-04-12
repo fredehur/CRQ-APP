@@ -58,9 +58,6 @@ class RegionEntry:
     # source quality (populated by enrich_region_data)
     source_quality: dict | None
 
-    # DEPRECATED — kept for export_pptx.py / report.html.j2 compat. Task 3 removes.
-    board_bullets: list[str] | None = None
-
 
 @dataclass
 class ReportData:
@@ -106,23 +103,6 @@ def _last_sentence(text: str | None) -> str | None:
         return None
     parts = _split_sentences(text)
     return parts[-1] if parts else None
-
-
-def _first_non_vacr_sentence(text: str | None) -> str | None:
-    """Return first sentence that contains no dollar amount or VaCR reference.
-
-    Returns None if all sentences contain VaCR/dollar references, or if input
-    is empty/whitespace — callers treat None as unavailable content.
-    """
-    if not text:
-        return None
-    parts = _split_sentences(text)
-    if not parts:
-        return None
-    for s in parts:
-        if '$' not in s and 'vacr' not in s.lower():
-            return s
-    return None  # all sentences contain VaCR — caller returns None board_bullets
 
 
 def _confidence_label(admiralty: str | None) -> str:
@@ -377,7 +357,6 @@ def build(output_dir: str = OUTPUT_DIR) -> ReportData:
             watch_bullets=watch_b,
             action_bullets=action_b,
             source_quality=source_quality,
-            board_bullets=None,
         ))
 
     escalated = [r for r in regions if r.status == RegionStatus.ESCALATED]

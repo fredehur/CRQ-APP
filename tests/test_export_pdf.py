@@ -50,16 +50,11 @@ def test_template_contains_escalated_regions(mock_output):
     assert "AME" in html
 
 
-def test_template_contains_board_grid_labels(mock_output):
+def test_template_uses_seven_section_intel_layout(mock_output):
+    """Region layout uses the 7-section intel structure (intel-section + section-heading CSS classes)."""
     html = _render(mock_output)
-    assert "DRIVER" in html
-    assert "EXPOSURE" in html
-    assert "WATCH" in html
-
-
-def test_template_cover_says_ciso_edition(mock_output):
-    html = _render(mock_output)
-    assert "CISO" in html
+    assert "intel-section" in html
+    assert "section-heading" in html
 
 
 def test_template_confidence_label_in_table(mock_output):

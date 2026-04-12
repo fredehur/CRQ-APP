@@ -42,9 +42,12 @@ def _patch(monkeypatch, tmp_path):
     audience_path.parent.mkdir(parents=True, exist_ok=True)
     audience_path.write_text(json.dumps(INLINE_AUDIENCE_CONFIG), encoding="utf-8")
     sites_path.write_text(json.dumps(INLINE_SITES), encoding="utf-8")
+    routing_path = tmp_path / "output" / "routing_decisions.json"
+    routing_path.parent.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(te, "OUTPUT_ROOT", tmp_path / "output")
     monkeypatch.setattr(te, "AUDIENCE_CONFIG_PATH", audience_path)
     monkeypatch.setattr(te, "SITES_PATH", sites_path)
+    monkeypatch.setattr(te, "_ROUTING_PATH", routing_path)
 
 
 def _write_seerist(tmp_path, region, events=None, hotspots=None, pulse_score=70):
@@ -145,15 +148,15 @@ def test_flash_triggered_by_high_severity_event(monkeypatch, tmp_path):
 
 
 def test_flash_triggered_by_direct_cyber_targeting(monkeypatch, tmp_path):
-    """cyber_signals.json with aerowind_targeted=true triggers flash for that region's RSM."""
+    """osint_signals.json with aerowind_targeted=true triggers flash for that region's RSM."""
     _patch(monkeypatch, tmp_path)
     for r in ["APAC", "AME", "LATAM", "MED", "NCE"]:
         _write_seerist(tmp_path, r)
         _write_delta(tmp_path, r)
-    # Write cyber_signals.json for APAC with direct AeroGrid targeting flag
-    cyber_path = tmp_path / "output" / "regional" / "apac"
-    cyber_path.mkdir(parents=True, exist_ok=True)
-    (cyber_path / "cyber_signals.json").write_text(json.dumps({
+    # Write osint_signals.json for APAC with direct AeroGrid targeting flag
+    osint_dir = tmp_path / "output" / "regional" / "apac"
+    osint_dir.mkdir(parents=True, exist_ok=True)
+    (osint_dir / "osint_signals.json").write_text(json.dumps({
         "region": "APAC", "aerowind_targeted": True, "threats": [
             {"type": "phishing", "target": "AeroGrid supply chain", "severity": "HIGH"}
         ]
