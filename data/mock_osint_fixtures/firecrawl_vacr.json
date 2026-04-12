@@ -1,0 +1,17 @@
+{
+  "https://www.ibm.com/reports/data-breach-2024": {
+    "markdown": "# IBM Cost of a Data Breach Report 2024\n\nThe average cost of a data breach reached $4.88 million in 2024, a 10% increase over the prior year and the highest total ever recorded.\n\nBy industry sector:\n- Energy and utilities: $5.29 million average breach cost (highest across sectors)\n- Manufacturing: $4.73 million\n- Healthcare: $9.77 million\n\nBy incident type:\n- System intrusion: $4.62 million median\n- Ransomware: $5.13 million median (excluding ransom payment)\n- Accidental disclosure: $3.17 million median\n\nGeographic breakdown for energy sector:\n- North America: $6.21 million\n- Europe: $4.84 million\n- Asia-Pacific: $3.98 million\n\nRaw quote: 'Energy sector breaches cost an average of $5.29 million in 2024, reflecting the high operational and regulatory costs associated with critical infrastructure incidents.'",
+    "title": "IBM Cost of a Data Breach Report 2024",
+    "status": "ok"
+  },
+  "https://www.verizon.com/business/resources/reports/dbir/2024": {
+    "markdown": "# Verizon 2024 Data Breach Investigations Report\n\nThe 2024 DBIR analyzed 30,458 security incidents and 10,626 confirmed data breaches across 94 countries.\n\nKey findings for the energy sector:\n- System intrusion pattern accounts for 72% of energy sector breaches\n- Median financial impact of system intrusion: $46,000 (25th percentile) to $4.2M (75th percentile)\n- Ransomware present in 32% of energy sector breaches\n- OT-targeting incidents up 87% year-over-year\n\nRaw quote: 'In the energy sector, system intrusion incidents have a median financial impact of $1.4M, with 25% of incidents exceeding $4.2M in total losses including downtime, remediation, and regulatory penalties.'",
+    "title": "Verizon 2024 Data Breach Investigations Report",
+    "status": "ok"
+  },
+  "https://www.mandiant.com/resources/reports/restricted-2025": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  }
+}

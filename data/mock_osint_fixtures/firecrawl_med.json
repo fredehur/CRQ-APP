@@ -1,0 +1,17 @@
+{
+  "https://www.enisa.europa.eu/med-energy-cyber-2025": {
+    "markdown": "# ENISA: Mediterranean Energy Sector Cyber Threat Landscape 2025\n\nThe European Union Agency for Cybersecurity (ENISA) has published its threat landscape assessment for the Mediterranean energy sector, covering operators in Spain, Italy, Greece, Turkey, and North Africa.\n\nKey findings:\n- Russian-aligned threat actors (Sandworm, Gamaredon) maintain targeting interest in Southern European energy infrastructure\n- Wind energy OT networks in Spain and Italy targeted via exposed Modbus/TCP interfaces\n- Supply chain: 3 incidents involving compromised industrial control system software updates\n\nNIS2 directive implications: Wind energy operators with >50 employees now classified as 'essential entities' subject to mandatory incident reporting within 24 hours.",
+    "title": "ENISA Mediterranean Energy Cyber Threat Landscape 2025",
+    "status": "ok"
+  },
+  "https://www.paywalled-med-security.com/wind-2025": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  },
+  "https://www.incibe-cert.es/med-wind-advisory-2025": {
+    "markdown": "# INCIBE-CERT: Threats to Spanish Wind Energy Operators 2025\n\nSpain's National Cybersecurity Institute advisory for wind energy infrastructure operators.\n\nCurrent threat actors active in Spanish energy sector:\n- APT28 (Fancy Bear): spearphishing campaigns targeting operational staff\n- Sandworm: reconnaissance activity against grid management systems\n\nSpain has the highest wind energy penetration in the EU at 24% of electricity generation. This makes Spanish wind operators a high-value target for disruption campaigns.\n\nRecommended actions: Enable MFA on all remote access, segment OT from IT networks, apply Siemens SINEMA advisory patches.",
+    "title": "INCIBE-CERT: Spanish Wind Energy Cyber Advisory 2025",
+    "status": "ok"
+  }
+}

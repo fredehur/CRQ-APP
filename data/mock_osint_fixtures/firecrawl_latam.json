@@ -1,0 +1,17 @@
+{
+  "https://www.latam-energy-news.com/wind-cyber-threat-2025": {
+    "markdown": "# Latin America Wind Energy Sector Cyber Threats 2025\n\nThe rapid expansion of wind energy capacity across Brazil, Mexico, and Chile has attracted threat actor attention to the sector. Limited cybersecurity maturity among regional operators increases risk exposure.\n\nKey observations:\n- Brazilian wind farm operators report 340% increase in phishing attempts targeting OT credentials (CERT.br, Q1 2025)\n- Mexican grid operator CFE issued internal advisory on APT targeting\n- Chilean operator Enel Green Power reported network intrusion attempt, successfully contained\n\nRegulatory context: Brazil ANEEL cybersecurity requirements effective June 2025.",
+    "title": "LATAM Wind Energy Cyber Threat Landscape 2025",
+    "status": "ok"
+  },
+  "https://www.restricted-latam-report.com/2025": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  },
+  "https://www.cert.br/latam-ot-incidents-2025": {
+    "markdown": "# CERT.br OT Incident Report 2025\n\nBrazilian Computer Emergency Response Team quarterly report on operational technology incidents affecting critical infrastructure.\n\nWind energy sector highlights:\n- 12 incidents reported involving wind farm SCADA systems\n- 8 confirmed intrusion attempts, 4 successful\n- Primary attack vectors: exposed RDP, default credentials on industrial equipment\n\nRecommended mitigations: Patch management, network segmentation, multi-factor authentication for remote access.",
+    "title": "CERT.br OT Incident Report Q1 2025",
+    "status": "ok"
+  }
+}

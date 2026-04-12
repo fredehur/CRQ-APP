@@ -16,6 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(REPO_ROOT))
 OUTPUT_FILE = REPO_ROOT / "output" / "pipeline" / "vacr_research.json"
 
 HAIKU_MODEL = "claude-haiku-4-5-20251001"
@@ -83,7 +84,7 @@ def _search_web(query: str, max_results: int = 5) -> list[dict]:
                 timeout=20,
             )
             results = resp.json().get("results", [])
-            return [{"title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", "")} for r in results]
+            return [{"title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", ""), "score": r.get("score", 0.0)} for r in results]
         except Exception as e:
             print(f"[vacr-researcher] Tavily failed: {e}", file=sys.stderr)
     try:
@@ -177,10 +178,26 @@ def research_scenario(incident_type: str, current_vacr_usd: int, sector: str = "
         f'"{incident_type}" average cost USD million 2024 2025 industry report',
     ]
 
+    from tools.firecrawl_scraper import scrape_urls as _firecrawl_scrape
+
     all_figures = []
     for query in queries:
         print(f"[vacr-researcher]   Searching: {query[:80]}...", file=sys.stderr)
         results = _search_web(query, max_results=4)
+
+        # Scrape top 3 by Tavily score if scores are present (Tavily path only)
+        if results and any(r.get("score") for r in results):
+            top3 = sorted(results, key=lambda r: r.get("score", 0.0), reverse=True)[:3]
+            snippet_lookup = {r["url"]: r.get("content", "") for r in top3}
+            score_lookup = {r["url"]: r.get("score", 0.0) for r in top3}
+            scraped = _firecrawl_scrape(
+                [r["url"] for r in top3],
+                snippet_lookup,
+                score_lookup,
+            )
+            for r, s in zip(top3, scraped):
+                r["content"] = s["content"]
+
         for r in results:
             content = r.get("content", "")
             source_name = r.get("title") or r.get("url", "Unknown")

@@ -1,0 +1,17 @@
+{
+  "https://www.cisa.gov/news-events/cybersecurity-advisories/aa25-ame-wind": {
+    "markdown": "# CISA Advisory: Threat to Wind Energy Operators in Americas Region\n\nCISA, in coordination with FBI and NSA, is releasing this advisory to warn operators of wind energy infrastructure of increased threat actor interest in ICS/SCADA systems.\n\nThe advisory covers threat actor TTPs observed targeting US and Canadian wind farm operators:\n- Spearphishing campaigns targeting engineering staff with turbine management credentials\n- Exploitation of CVE-2024-38819 in Siemens SIMATIC WinCC OA\n- Deployment of custom malware on historian servers\n\nAffected sectors: Wind energy generation, Grid interconnection operators",
+    "title": "CISA Advisory AA25-AME: Wind Energy ICS Threats",
+    "status": "ok"
+  },
+  "https://www.paywalled-energy-report.com/ame-cyber-2025": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  },
+  "https://www.e-isac.com/ame-wind-threat-brief-q1-2025": {
+    "markdown": "# E-ISAC Wind Energy Threat Brief Q1 2025\n\nElectricity Information Sharing and Analysis Center threat brief for wind energy operators in the Americas region.\n\nThreat landscape summary:\n- Ransomware targeting business IT with increasing attempts to pivot to OT\n- Nation-state pre-positioning activity detected in 3 US wind operators\n- Supply chain risk: compromised firmware update mechanism in third-party SCADA vendor\n\nVaCR benchmark: Average incident cost for system intrusion in energy sector: $4.5M (IBM X-Force 2024).",
+    "title": "E-ISAC AME Wind Energy Threat Brief Q1 2025",
+    "status": "ok"
+  }
+}

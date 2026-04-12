@@ -1,0 +1,17 @@
+{
+  "https://www.reuters.com/article/apac-wind-energy-cyber": {
+    "markdown": "# APAC Wind Energy Cyber Threat Report\n\nState-sponsored threat actors operating from China have intensified targeting of renewable energy infrastructure across the Asia-Pacific region. The VOLT TYPHOON campaign, documented by CISA in early 2025, targeted operational technology networks in Australian wind farm operators.\n\nKey findings:\n- 14 confirmed intrusions into SCADA systems managing wind turbine arrays\n- Exfiltration of grid synchronisation protocols\n- Persistent access maintained for an average of 47 days before detection\n\nThe Australian Cyber Security Centre (ACSC) has issued advisory ASD-2025-0021 recommending immediate network segmentation between IT and OT environments.",
+    "title": "APAC Wind Energy Under Sustained Cyber Campaign",
+    "status": "ok"
+  },
+  "https://www.paywall-journal.com/restricted-article": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  },
+  "https://www.scada-security.org/apac-ot-threats-2025": {
+    "markdown": "# OT Security in APAC Renewable Energy Sector\n\nThe proliferation of internet-connected wind turbine management systems has expanded the attack surface for threat actors targeting critical infrastructure. Recent analysis of 200 wind farm operators across APAC reveals that 67% use legacy SCADA systems with unpatched vulnerabilities.\n\nNotable incidents Q1 2025:\n- March: Unnamed Australian operator reported ransomware deployment in business IT network with attempted lateral movement to OT\n- February: South Korean wind farm control systems accessed via VPN credential stuffing\n\nRecommendations focus on zero-trust architecture and OT-specific EDR deployment.",
+    "title": "OT Threat Landscape: APAC Renewable Energy 2025",
+    "status": "ok"
+  }
+}

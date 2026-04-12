@@ -1,0 +1,17 @@
+{
+  "https://www.ncsc.gov.uk/news/nce-wind-energy-advisory-2025": {
+    "markdown": "# NCSC Advisory: Threats to Northern/Central European Wind Energy Operators\n\nThe National Cyber Security Centre, in cooperation with BSI (Germany), NCSC-NL, and the Danish Centre for Cyber Security, is issuing this advisory to Northern and Central European wind energy operators.\n\nThe advisory addresses sustained threat actor interest in the North Sea offshore wind corridor, which now supplies approximately 18% of regional electricity demand.\n\nThreat actor activity:\n- Russian GRU-affiliated actors (APT28/Fancy Bear) scanning OT-exposed endpoints in Danish and German offshore wind operators\n- Persistent access maintained in 2 unnamed Northern European energy companies\n- Hacktivism: pro-Russian groups conducted DDoS against wind operator customer portals\n\nRecommended actions: Air-gap OT networks, disable direct internet connectivity on turbine management systems.",
+    "title": "NCSC Advisory: NCE Wind Energy Threat Landscape 2025",
+    "status": "ok"
+  },
+  "https://www.bsi.bund.de/nce-energy-restricted": {
+    "markdown": "",
+    "title": "",
+    "status": "failed"
+  },
+  "https://www.dcyber.dk/nce-wind-threats-2025": {
+    "markdown": "# Danish Centre for Cyber Security: North Sea Wind Sector Threats 2025\n\nDenmark is the world's leading offshore wind energy producer per capita. The Danish Centre for Cyber Security (CFCS) has assessed that the sector faces elevated threat levels in 2025.\n\nKey threats:\n- Russian state actors targeting Danish offshore wind operators in response to Baltic Sea cable sabotage investigations\n- Ransomware groups (LockBit successors, BlackCat/ALPHV) targeting wind O&M contractors\n- Supply chain: compromised software update for Vestas turbine management system (unconfirmed, under investigation)\n\nDenmark has 3.7 GW offshore and 4.8 GW onshore wind capacity — disruption would materially impact European grid stability.",
+    "title": "CFCS: North Sea Wind Sector Threat Assessment 2025",
+    "status": "ok"
+  }
+}

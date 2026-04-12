@@ -250,7 +250,7 @@ Set run_pass_2 to true if significant gaps remain. Maximum 3 follow_up_queries."
 
 
 def synthesize_signals(
-    region: str, working_theory: dict, results: list[dict]
+    region: str, working_theory: dict, results: list[dict], source_note: str = ""
 ) -> tuple[dict, dict, dict]:
     """LLM Call 3 (Sonnet): Synthesize all results into geo + cyber signal schemas.
 
@@ -269,7 +269,7 @@ WORKING THEORY: {working_theory['hypothesis']}
 SCENARIO: {working_theory['scenario_name']} (${working_theory['vacr_usd']:,})
 ACTIVE TOPICS: {json.dumps(topic_ids)}
 
-COLLECTED EVIDENCE ({len(results)} results):
+{f"SOURCE NOTE: {source_note}{chr(10)}{chr(10)}" if source_note else ""}COLLECTED EVIDENCE ({len(results)} results):
 {snippets_text}
 
 Synthesize this into structured intelligence. Separate the geopolitical context (WHY) from the cyber vector (HOW).
@@ -395,8 +395,54 @@ def run_live_mode(region: str, window: str | None = None) -> None:
 
     all_results = pass_1_results + pass_2_results
 
+    # --- Firecrawl deep extraction ---
+    from tools.firecrawl_scraper import scrape_urls as _firecrawl_scrape
+
+    # Build URL pool: junk-filtered, deduplicated, sorted by Tavily score
+    _score_lookup: dict[str, float] = {r["url"]: r.get("score", 0.0) for r in all_results if r.get("url")}
+    _seen_fc: set[str] = set()
+    _candidate_urls: list[str] = []
+    for r in all_results:
+        u = r.get("url", "")
+        if u and u not in _seen_fc and not _is_junk_url(u):
+            _seen_fc.add(u)
+            _candidate_urls.append(u)
+
+    top5_urls = sorted(_candidate_urls, key=lambda u: _score_lookup.get(u, 0.0), reverse=True)[:5]
+    _snippet_lookup: dict[str, str] = {r["url"]: r.get("summary", "") for r in all_results if r.get("url")}
+
+    scraped_items = _firecrawl_scrape(top5_urls, _snippet_lookup, _score_lookup, region)
+
+    # Adapt ScrapedItems for synthesize_signals: inject source_type tag into summary
+    synthesis_inputs = [
+        {
+            "title": s["title"],
+            "url": s["url"],
+            "summary": f"[{s['source_type']}] {s['content']}",
+            "published_date": "",
+        }
+        for s in scraped_items
+    ]
+
+    # Track stats for scratchpad
+    _fc_succeeded = sum(1 for s in scraped_items if s["source_type"] == "fulltext")
+    _fc_stats = {
+        "attempted": len(scraped_items),
+        "succeeded": _fc_succeeded,
+        "fell_back": len(scraped_items) - _fc_succeeded,
+    }
+
     # --- LLM Call 3: Synthesize (Sonnet) ---
-    geo_signals, cyber_signals, conclusion = synthesize_signals(region, working_theory, all_results)
+    geo_signals, cyber_signals, conclusion = synthesize_signals(
+        region,
+        working_theory,
+        synthesis_inputs,
+        source_note=(
+            "Items labeled [fulltext] are main-content extracts up to ~3k tokens. "
+            "Items labeled [snippet] are 200-char previews. "
+            "Weight fulltext primary sources more heavily when both are available."
+        ),
+    )
 
     # --- Collect source URLs from raw Tavily results (junk-filtered) ---
     source_urls = list(dict.fromkeys(
@@ -461,6 +507,7 @@ def run_live_mode(region: str, window: str | None = None) -> None:
             "pass_2_queries": gap_data.get("follow_up_queries", []),
             "pass_2_result_count": len(pass_2_results),
             "total_result_count": len(all_results),
+            "firecrawl_stats": _fc_stats,
         },
         "conclusion": conclusion,
     }

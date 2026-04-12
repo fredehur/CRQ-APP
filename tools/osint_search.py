@@ -125,6 +125,7 @@ def search_tavily(query: str, max_results: int = 8, window: str = None) -> list[
                 "summary": r.get("content", ""),
                 "url": r.get("url", ""),
                 "published_date": r.get("published_date", ""),
+                "score": r.get("score", 0.0),
             }
             for r in data.get("results", [])
         ]

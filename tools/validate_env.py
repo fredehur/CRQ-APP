@@ -53,6 +53,11 @@ def main() -> None:
               hint="Optional — Tavily gives higher quality results. "
                    "Falling back to DuckDuckGo (free, no key).")
 
+        # Firecrawl is optional — pipeline degrades to snippet-only synthesis if absent
+        check("FIRECRAWL_API_KEY", required=False,
+              hint="Optional — enables full-text article extraction for richer synthesis. "
+                   "Without this key, synthesis uses Tavily snippets (~200 chars) only.")
+
     if failures:
         print(f"\n[validate_env] FAILED — {len(failures)} missing variable(s): "
               f"{', '.join(failures)}")
