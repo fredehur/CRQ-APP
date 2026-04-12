@@ -50,8 +50,9 @@ Thin standalone wrapper around Firecrawl `/scrape`. Imported **directly** by `os
 ```python
 def scrape_urls(
     urls: list[str],
-    tavily_snippets: dict[str, str],  # url → snippet, used for fallback
-    region: str | None = None,         # for mock fixture lookup
+    tavily_snippets: dict[str, str],   # url → snippet, used for fallback
+    tavily_scores: dict[str, float],   # url → score, stored on ScrapedItem
+    region: str | None = None,          # for mock fixture lookup
 ) -> list[ScrapedItem]
 ```
 
@@ -69,13 +70,26 @@ Returns one `ScrapedItem` per input URL — always. A failed scrape returns a re
 2. Filter through existing `_is_junk_url` / `_BLOCKED_URLS` / `_JUNK_DOMAINS` — junk must not hit Firecrawl.
 3. Sort descending by Tavily `score`.
 4. Take top 5 (per-region ceiling).
-5. Call `firecrawl_scraper.scrape_urls(top5, snippet_lookup, region)`.
-6. Feed the returned `ScrapedItem` list into `synthesize_signals` **instead of** the existing `snippets_text[:20]` slice. The 5-item scraped list is the new synthesis input.
+5. Call `firecrawl_scraper.scrape_urls(top5_urls, snippet_lookup, score_lookup, region)`.
+6. Feed the returned `ScrapedItem` list into `synthesize_signals` **instead of** the existing `snippets_text[:20]` slice. The 5-item scraped list is the new synthesis input — 5 full-text articles carry more synthesis signal than 20 200-char snippets.
 7. Write `firecrawl_stats` block into `output/regional/{region}/osint_scratchpad.json`.
 
 `synthesize_signals` prompt gets a one-line note explaining the `source_type` tag. `assess_gaps` is **unchanged** — it continues to run on snippets, which is fine for coarse gap detection.
 
-**`tools/vacr_researcher.py`** — inline scrape inside `_search_web`. After each Tavily call returns, sort results by score, take top 3, scrape, and replace each result's `content` field with the scraped markdown (snippet fallback on failure). `vacr_researcher.py` has its own inline Tavily wrapper (it does not share `osint_search.py`), so the integration lives inline there.
+**`tools/vacr_researcher.py`** — scrape in `research_scenario`, between the existing `_search_web` call and `_extract_figures`. `_search_web` stays search-only (one responsibility). The DDG fallback path has no score field, so an `if any(r.get("score") for r in results)` guard naturally skips scraping when only DDG results are available.
+
+```python
+# research_scenario — after _search_web, before _extract_figures:
+if results and any(r.get("score") for r in results):
+    top3 = sorted(results, key=lambda r: r.get("score", 0.0), reverse=True)[:3]
+    scraped = scrape_urls(
+        [r["url"] for r in top3],
+        {r["url"]: r["content"] for r in top3},
+        {r["url"]: r.get("score", 0.0) for r in top3},
+    )
+    for r, s in zip(top3, scraped):
+        r["content"] = s["content"]
+```
 
 ## Data contracts
 
