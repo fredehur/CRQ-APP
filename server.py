@@ -576,6 +576,12 @@ async def get_region_sections(region: str):
         return {}
 
 
+@app.get("/api/region/{region}/brief")
+async def get_region_brief(region: str):
+    """Alias for /sections — used by Board Regional view to fetch brief_headlines."""
+    return await get_region_sections(region)
+
+
 @app.get("/api/region/{region}/sources")
 async def get_region_sources(region: str):
     """Aggregate sources from osint_signals.json for a region."""

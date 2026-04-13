@@ -32,6 +32,7 @@ let state = {
   expandedBriefs: new Set(),
   feedbackByRegion: {},   // { [region]: {rating, note, submitted_at} }
   selectedAudienceId: 'ciso',
+  selectedBoardRegion: 'APAC',
   selectedRsmRegion: 'APAC',
   rsmStatus: {},        // { APAC: {has_flash, has_intsum}, ... } from /api/rsm/status
   rsmBriefs: {},        // keyed by region, cached {intsum, flash} from /api/rsm/{region}
@@ -392,6 +393,7 @@ function _fetchBrief(region) {
         el.innerHTML = `<p style="color:#6e7681;font-size:11px">Brief not available for this run.</p>`;
         return;
       }
+      data._region = region;   // inject so _renderSourceBoxes can generate unique IDs
       el.innerHTML = _renderSections(data);
     })
     .catch(() => {
@@ -401,40 +403,112 @@ function _fetchBrief(region) {
   _fetchEvidence(region);
 }
 
-function _renderSourceBoxes(sm) {
+window.toggleSrcBox = function(region, type) {
+  const body = document.getElementById(`src-body-${region}-${type}`);
+  const chev = document.getElementById(`src-chev-${region}-${type}`);
+  if (!body) return;
+  body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open');
+};
+
+function _renderSourceBoxes(sm, headlines, region) {
   if (!sm) return '';
-  const s = sm.seerist || {};
-  const o = sm.osint || {};
+  const s   = sm.seerist || {};
+  const o   = sm.osint   || {};
+  const why = esc((headlines || {}).why || '');
+  const how = esc((headlines || {}).how || '');
+  const sow = esc((headlines || {}).so_what || '');
+  const reg = region || 'x';
 
+  // ── Seerist box ──────────────────────────────────────────
   const strength = (s.strength || 'none').toLowerCase();
-  const seeristItems = [];
-  (s.hotspots || []).forEach(h => seeristItems.push(esc(h)));
-  if (s.verified_event_count) seeristItems.push(`${s.verified_event_count} verified event(s)`);
-  if (typeof s.pulse_delta === 'number' && s.pulse_delta !== 0) {
-    seeristItems.push(`Pulse delta: ${s.pulse_delta.toFixed(1)}`);
-  }
-  const seeristList = seeristItems.length
-    ? seeristItems.map(t => `<li>${t}</li>`).join('')
-    : '<li><em>No substantive signals</em></li>';
+  const hotspots = s.hotspots || [];
+  const sigCount = hotspots.length;
+  const sigLabel = sigCount ? `${sigCount} signal${sigCount !== 1 ? 's' : ''}` : 'no signals';
+  const topLabels = hotspots.slice(0, 3).map(h => esc(h.label || '')).filter(Boolean).join(' · ') || '';
 
-  const sources = o.sources || [];
-  const osintList = sources.length
-    ? sources.map(n => `<li>${esc(n)}</li>`).join('')
-    : '<li><em>No named sources</em></li>';
-  const osintCount = `${o.source_count || 0} source${o.source_count === 1 ? '' : 's'}`;
+  const synthHtml = (why || how || sow) ? `
+    <div class="src-divider"></div>
+    <div class="src-section-lbl">AI synthesis</div>
+    ${why ? `<div class="synth-tag" style="color:#f59e0b">Why</div><div class="synth-prose">${why}</div>` : ''}
+    ${how ? `<div class="synth-tag" style="color:#4a9eff">How</div><div class="synth-prose">${how}</div>` : ''}
+    ${sow ? `<div class="synth-tag" style="color:#3fb950">So what</div><div class="synth-prose">${sow}</div>` : ''}` : '';
 
-  return `<div class="source-split-panel">
-  <div class="source-box source-box--seerist">
-    <div class="source-box-header">Seerist</div>
-    <div class="source-strength-badge ${strength}">Strength: ${strength.toUpperCase()}</div>
-    <ul class="source-detail-list">${seeristList}</ul>
+  const incHtml = hotspots.length ? hotspots.map(h => {
+    const score = typeof h.deviation_score === 'number' ? h.deviation_score : 0;
+    const scoreClass = score >= 7 ? 'hot' : '';
+    const cat = esc(h.category || 'Signal');
+    const ts  = esc(h.timestamp || '');
+    const lbl = esc(h.label || '?');
+    const sevClass = score >= 8 ? 'crit' : score >= 5 ? 'high' : score >= 3 ? 'med' : 'low';
+    return `<div class="inc-row ${sevClass}">
+      <div class="inc-row-top">
+        <span class="inc-title">${cat} — ${lbl}</span>
+        <span class="dev-score ${scoreClass}">${score.toFixed(1)}</span>
+      </div>
+      ${ts ? `<div class="inc-meta">${ts}</div>` : ''}
+    </div>`;
+  }).join('') : '<div style="font-size:9px;color:#484f58;font-style:italic">No anomaly signals this period.</div>';
+
+  const seeristHtml = `
+<div class="src-box src-box--seerist">
+  <div class="src-compact" onclick="toggleSrcBox('${reg}','see')">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="src-section-lbl" style="margin:0">Seerist</span>
+      <span class="source-strength-badge ${strength}">${strength.toUpperCase()} <span class="src-chev" id="src-chev-${reg}-see">▾</span></span>
+      <span style="font-size:8px;color:#484f58">${sigLabel}</span>
+    </div>
+    <span style="font-size:8px;color:#484f58">${topLabels}</span>
   </div>
-  <div class="source-box source-box--osint">
-    <div class="source-box-header">OSINT</div>
-    <div class="source-count-label">${osintCount}</div>
-    <ul class="source-detail-list">${osintList}</ul>
+  <div class="src-body" id="src-body-${reg}-see">
+    <div class="src-inner">
+      ${synthHtml}
+      <div class="src-divider"></div>
+      <div class="src-section-lbl">Raw signals (${hotspots.length})</div>
+      ${incHtml}
+    </div>
   </div>
 </div>`;
+
+  // ── OSINT box ─────────────────────────────────────────────
+  const sources   = o.sources || [];
+  const srcCount  = o.source_count || sources.length;
+  const countLbl  = `${srcCount} source${srcCount !== 1 ? 's' : ''}`;
+  const artCount  = o.article_count || 0;
+  const artLabel  = artCount ? `${artCount} articles · 24h` : '';
+
+  const corrHtml = sources.length ? sources.map(src => {
+    const name     = esc(src.name || src);
+    const articles = src.article_count || 1;
+    const tier     = articles >= 2 ? 'confirmed' : 'single';
+    const tierLbl  = articles >= 2 ? 'CONFIRMED' : '⚠ SINGLE-SOURCE';
+    const rowClass = articles >= 2 ? 'crit' : 'high';
+    return `<div class="corr-row ${rowClass}">
+      <div class="corr-row-top">
+        <span class="corr-name">${name}</span>
+        <span class="corr-badge ${tier}">${tierLbl}</span>
+      </div>
+    </div>`;
+  }).join('') : '<div style="font-size:9px;color:#484f58;font-style:italic">No OSINT sources this period.</div>';
+
+  const osintHtml = `
+<div class="src-box src-box--osint">
+  <div class="src-compact" onclick="toggleSrcBox('${reg}','osint')">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="src-section-lbl" style="margin:0">OSINT</span>
+      <span class="source-strength-badge osint">${countLbl} <span class="src-chev" id="src-chev-${reg}-osint">▾</span></span>
+    </div>
+    <span style="font-size:8px;color:#484f58">${artLabel}</span>
+  </div>
+  <div class="src-body" id="src-body-${reg}-osint">
+    <div class="src-inner">
+      <div class="src-section-lbl">Sources</div>
+      ${corrHtml}
+    </div>
+  </div>
+</div>`;
+
+  return `<div class="source-split-panel">${seeristHtml}${osintHtml}</div>`;
 }
 
 function _renderSections(s) {
@@ -445,7 +519,7 @@ function _renderSections(s) {
     { key: 'watch_bullets',     label: 'WATCH FOR',                   color: '#e3b341' },
     { key: 'action_bullets',    label: 'RECOMMENDED ACTIONS',         color: '#ff7b72' },
   ];
-  const sourceBoxes = _renderSourceBoxes(s.source_metadata);
+  const sourceBoxes = _renderSourceBoxes(s.source_metadata, s.brief_headlines, s._region);
   const bulletsHtml = sections.map(sec => {
     const bullets = s[sec.key] || [];
     if (!bullets.length) return '';
@@ -635,95 +709,97 @@ const AUDIENCE_REGISTRY = [
     name: 'CISO Weekly Brief',
     format: 'Word (.docx)',
     phase: 'live',
+    color: '#ff7b72',
     generate: '/api/outputs/ciso-docx',
-    downloads: [{ label: '&#8595; Download', endpoint: '/api/outputs/ciso-docx' }],
-    renderer: 'single-doc',
-    sections: ['Scenario','Threat Actor','Intel Findings','Adversary Activity','Impact','Watch For','Actions'],
+    downloads: [{ label: '&#8595; DOCX', endpoint: '/api/outputs/ciso-docx' }],
+    renderer: 'ciso',
   },
   {
     id: 'board',
     name: 'Board Report',
-    format: 'PDF + PowerPoint',
+    format: 'PDF + PPTX',
     phase: 'live',
+    color: '#e3b341',
     generate: null,
     downloads: [
       { label: '&#8595; PDF',  endpoint: '/api/outputs/pdf' },
       { label: '&#8595; PPTX', endpoint: '/api/outputs/pptx' },
     ],
-    renderer: 'single-doc',
+    renderer: 'board',
+    subviews: [
+      { id: 'board-global',   label: 'Global Board' },
+      { id: 'board-regional', label: 'Regional Exec' },
+    ],
   },
   {
     id: 'rsm',
     name: 'RSM Briefs',
     format: 'Markdown + PDF · 5 regions',
     phase: 'live',
+    color: '#79c0ff',
     generate: null,
     downloads: [],
-    renderer: 'region-list',
+    renderer: 'rsm',
   },
   {
     id: 'sales',
     name: 'Regional Sales',
     format: 'TBD',
     phase: 'future',
-    phaseLabel: 'Planned',
+    color: '#6e7681',
     generate: null,
     downloads: [],
-    renderer: 'single-doc',
+    renderer: 'future',
+    phaseLabel: 'Planned for a future release.',
   },
 ];
 
 async function renderReports() {
   const tab = $('tab-reports');
   if (!tab) return;
-
-  // Build two-panel shell (idempotent — only if not already built)
-  if (!$('reports-rail')) {
+  if (!$('rpt-rail')) {
     tab.innerHTML = `
-      <div style="display:grid;grid-template-columns:180px 1fr;height:calc(100vh - 60px);overflow:hidden">
-        <div id="reports-rail"
-             style="border-right:1px solid #21262d;overflow-y:auto;background:#080c10"></div>
-        <div id="reports-content"
-             style="display:flex;flex-direction:column;overflow:hidden"></div>
+      <div class="rpt-shell">
+        <div id="rpt-rail" class="rpt-rail"></div>
+        <div id="rpt-content" class="rpt-content"></div>
       </div>`;
   }
-
   renderReportsRail();
   renderAudienceContent(state.selectedAudienceId);
 }
 
 function renderReportsRail() {
-  const rail = $('reports-rail');
+  const rail = $('rpt-rail');
   if (!rail) return;
 
   rail.innerHTML = AUDIENCE_REGISTRY.map(a => {
-    const isActive = a.id === state.selectedAudienceId;
+    const isActive = state.selectedAudienceId === a.id
+      || (a.subviews && a.subviews.some(s => s.id === state.selectedAudienceId));
     const isFuture = a.phase === 'future';
-    const opacity  = isFuture ? '0.4' : '1';
+    const badge    = a.phase === 'live'
+      ? `<span class="rpt-live-badge">Live</span>`
+      : `<span class="rpt-plan-badge">Planned</span>`;
+    const opacity  = isFuture ? 'opacity:0.45;' : '';
 
-    const phaseBadge = a.phase === 'live'
-      ? `<span style="font-size:8px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;
-                      padding:1px 5px;border-radius:8px;margin-left:4px">Live</span>`
-      : a.phase === 'phase-2'
-        ? `<span style="font-size:8px;background:#2d2208;border:1px solid #9e6a03;color:#e3b341;
-                        padding:1px 5px;border-radius:8px;margin-left:4px">Phase 2</span>`
-        : `<span style="font-size:8px;background:#161b22;border:1px solid #30363d;color:#6e7681;
-                        padding:1px 5px;border-radius:8px;margin-left:4px">Planned</span>`;
+    let subHtml = '';
+    if (a.subviews && isActive) {
+      subHtml = a.subviews.map(sv => {
+        const svActive = state.selectedAudienceId === sv.id;
+        return `<div class="rpt-rail-subitem${svActive ? ' active' : ''}"
+                     onclick="selectAudience('${sv.id}')">${sv.label}</div>`;
+      }).join('');
+    }
 
     return `
-<div onclick="selectAudience('${a.id}')"
-     style="padding:10px 14px;cursor:pointer;opacity:${opacity};
-            border-left:2px solid ${isActive ? '#58a6ff' : 'transparent'};
-            background:${isActive ? '#0d1117' : 'transparent'};
-            transition:background 0.1s"
-     onmouseover="if('${a.id}'!==state.selectedAudienceId)this.style.background='rgba(13,17,23,0.5)'"
-     onmouseout="if('${a.id}'!==state.selectedAudienceId)this.style.background='transparent'">
+<div onclick="selectAudience('${a.subviews ? a.subviews[0].id : a.id}')"
+     class="rpt-rail-item${isActive ? ' active' : ''}"
+     style="${opacity}">
   <div style="display:flex;align-items:center;flex-wrap:wrap">
-    <span style="font-size:11px;font-weight:600;color:${isActive ? '#e6edf3' : '#8b949e'}">${a.name}</span>
-    ${phaseBadge}
+    <span class="rpt-rail-name">${a.name}</span>${badge}
   </div>
-  <div style="font-size:9px;color:#484f58;margin-top:2px">${a.format}</div>
-</div>`;
+  <div class="rpt-rail-fmt">${a.format}</div>
+</div>
+${subHtml}`;
   }).join('');
 }
 
@@ -738,46 +814,333 @@ function selectAudience(id) {
 }
 
 function renderAudienceContent(id) {
-  const content = $('reports-content');
+  const content = $('rpt-content');
   if (!content) return;
 
-  const audience = AUDIENCE_REGISTRY.find(a => a.id === id);
+  const audience = AUDIENCE_REGISTRY.find(a =>
+    a.id === id || (a.subviews && a.subviews.some(s => s.id === id))
+  );
   if (!audience) return;
 
-  const isFuture = audience.phase === 'future';
-
-  const dlHtml = audience.downloads.map(d =>
-    `<a href="${d.endpoint}" target="_blank"
-       style="font-size:10px;background:#0d1117;border:1px solid #30363d;color:#c9d1d9;
-              padding:3px 10px;border-radius:2px;text-decoration:none">${d.label}</a>`
-  ).join('');
-  const genHtml = audience.generate
-    ? `<button onclick="_hubGenerate('${audience.id}')"
-         style="font-size:10px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;
-                padding:3px 10px;border-radius:2px;cursor:pointer;font-family:inherit">
-         &#8635; Generate</button>`
-    : '';
-
-  content.innerHTML = `
-    <div style="padding:10px 16px;border-bottom:1px solid #21262d;flex-shrink:0;
-                display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-      <span style="font-size:11px;font-weight:600;color:#e6edf3">${audience.name}</span>
-      <span style="font-size:10px;color:#6e7681">${audience.format}</span>
-      <div style="margin-left:auto;display:flex;gap:6px">${genHtml}${dlHtml}</div>
-    </div>
-    <div id="audience-detail-body" style="flex:1;overflow-y:auto;font-size:12px;color:#c9d1d9"></div>`;
-
-  if (isFuture) {
-    $('audience-detail-body').innerHTML =
-      `<p style="color:#6e7681;font-size:11px;padding:16px">${audience.phaseLabel || 'Coming soon.'}</p>`;
+  if (audience.phase === 'future') {
+    content.innerHTML = `
+      <div class="rpt-action-bar">
+        <span class="rpt-action-title">${audience.name}</span>
+      </div>
+      <div class="rpt-body" style="color:#6e7681;font-size:11px;padding:20px 16px">${audience.phaseLabel}</div>`;
     return;
   }
 
-  if (audience.renderer === 'region-list') {
-    renderRegionListView(audience);
-  } else {
-    renderSingleDocView(audience);
+  // Build action bar (shared chrome — identical for all live tabs)
+  const dlHtml = audience.downloads.map(d =>
+    `<a href="${d.endpoint}" target="_blank" class="rpt-btn-dl">${d.label}</a>`
+  ).join('');
+  const genHtml = audience.generate
+    ? `<button onclick="_hubGenerate('${audience.id}')" class="rpt-btn rpt-btn-push">&#8635; Generate</button>`
+    : '';
+
+  const runMeta = `WK15-2026 · Last generated 04:12 UTC`;
+  const displayName = audience.subviews
+    ? (id === 'board-regional' ? 'Board Report — Regional Exec' : 'Board Report — Global')
+    : audience.name;
+
+  content.innerHTML = `
+    <div class="rpt-action-bar">
+      <span class="rpt-action-title">${displayName}</span>
+      <span class="rpt-action-meta">${runMeta}</span>
+      <div class="rpt-action-btns">
+        <button class="rpt-btn rpt-btn-push" onclick="_hubGenerate('${audience.id}')">PUSH</button>
+        <button class="rpt-btn rpt-btn-hold">HOLD</button>
+        ${genHtml}${dlHtml}
+      </div>
+    </div>
+    <div id="rpt-body" class="rpt-body"></div>`;
+
+  if (audience.renderer === 'ciso') renderCisoView();
+  else if (id === 'board-global')   renderBoardGlobalView();
+  else if (id === 'board-regional') renderBoardRegionalView();
+  else if (audience.renderer === 'rsm') renderRsmInReports();
+}
+
+async function renderCisoView() {
+  const body = $('rpt-body');
+  if (!body) return;
+  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
+
+  const report = await fetchJSON('/api/global-report');
+  if (!report) {
+    body.innerHTML = '<p style="color:#6e7681;font-size:11px;padding:8px 0">No pipeline data — run the pipeline first.</p>';
+    return;
   }
+
+  const escalated = (report.regional_threats || []).filter(r =>
+    r.severity === 'Critical' || r.severity === 'High'
+  );
+  const monitor   = report.monitor_regions || [];
+  const patterns  = report.cross_regional_patterns || [];
+
+  // Section 1: Intelligence Snapshot (leads — ammunition kit framing)
+  const snapshotHtml = `
+<div class="rpt-section" style="border-left-color:#f59e0b">
+  <div class="rpt-section-lbl" style="color:#f59e0b">Intelligence Snapshot</div>
+  <div class="rpt-section-prose">${esc(report.executive_summary || 'No summary available.')}</div>
+</div>`;
+
+  // Section 2: Decisions Required
+  const decisionsHtml = escalated.length ? escalated.map(r => {
+    const sevCol = r.severity === 'Critical' ? '#ff7b72' : '#ffa657';
+    return `<div class="rpt-decision">
+      <div class="rpt-decision-title" style="color:${sevCol}">${esc(r.region)} — ${esc(r.severity)}</div>
+      <div class="rpt-decision-body">${esc(r.strategic_assessment || '')}</div>
+    </div>`;
+  }).join('') : '<div style="font-size:10px;color:#484f58;font-style:italic">No escalations this period.</div>';
+
+  const decisionsSection = `
+<div class="rpt-section" style="border-left-color:#ff7b72">
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+    <span class="rpt-section-lbl" style="color:#ff7b72;margin:0">Decisions Required</span>
+    ${escalated.length ? `<span style="font-size:8px;padding:1px 6px;background:#2d0000;border:1px solid #da3633;color:#ff7b72;border-radius:2px">${escalated.length} OPEN</span>` : ''}
+  </div>
+  ${decisionsHtml}
+</div>`;
+
+  // Section 3: Talking Points
+  const talkingRegions = [...escalated, ...monitor.slice(0, 2)];
+  const tpHtml = talkingRegions.length ? talkingRegions.map(r => {
+    const text = r.strategic_assessment || r.rationale || '';
+    const sentences = text.split(/\.\s+/);
+    return `<div class="rpt-tp">
+      <div class="rpt-tp-text"><strong>${esc(r.region)}:</strong> ${esc(sentences[0] || text)}.</div>
+    </div>`;
+  }).join('') : '<div style="font-size:10px;color:#484f58;font-style:italic">No talking points this period.</div>';
+
+  const talkingSection = `
+<div class="rpt-section" style="border-left-color:#4a9eff">
+  <div class="rpt-section-lbl" style="color:#4a9eff">Talking Points — Board &amp; Org</div>
+  ${tpHtml}
+</div>`;
+
+  // Section 4: Financial Exposure (VaCR)
+  const vacr = report.global_vacr_summary || {};
+  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : 'See Risk Register';
+  const vacrDelta = vacr.delta_pct != null
+    ? (vacr.delta_pct > 0
+        ? `<span class="rpt-delta-up">↑ ${vacr.delta_pct.toFixed(1)}% vs last cycle</span>`
+        : `<span class="rpt-delta-dn">↓ ${Math.abs(vacr.delta_pct).toFixed(1)}% vs last cycle</span>`)
+    : '';
+
+  const financialSection = `
+<div class="rpt-cards">
+  <div class="rpt-card" style="border-top-color:#3fb950">
+    <div class="rpt-card-lbl" style="color:#3fb950">Global VaCR</div>
+    <div class="rpt-card-value">${vacrValue}</div>
+    <div class="rpt-card-delta">${vacrDelta}</div>
+  </div>
+  <div class="rpt-card" style="border-top-color:#f59e0b">
+    <div class="rpt-card-lbl" style="color:#f59e0b">Escalated Regions</div>
+    <div class="rpt-card-value">${escalated.length}</div>
+    <div class="rpt-card-delta" style="color:#6e7681">${escalated.map(r => r.region).join(' · ') || '—'}</div>
+  </div>
+  <div class="rpt-card" style="border-top-color:#79c0ff">
+    <div class="rpt-card-lbl" style="color:#79c0ff">At Monitor</div>
+    <div class="rpt-card-value">${monitor.length}</div>
+    <div class="rpt-card-delta" style="color:#6e7681">${monitor.map(m => m.region).join(' · ') || '—'}</div>
+  </div>
+</div>`;
+
+  // Section 5: Watch List
+  const watchHtml = patterns.length
+    ? patterns.slice(0, 5).map(p => {
+        const txt = typeof p === 'string' ? p : (p.summary || p.description || JSON.stringify(p));
+        return `<div class="rpt-watch">${esc(txt)}</div>`;
+      }).join('')
+    : '<div style="font-size:10px;color:#484f58;font-style:italic">No cross-regional patterns flagged.</div>';
+
+  const watchSection = `
+<div class="rpt-section" style="border-left-color:#6e40c9">
+  <div class="rpt-section-lbl" style="color:#d2a8ff">Watch List — WK16</div>
+  ${watchHtml}
+</div>`;
+
+  // Critique fix: snapshot leads (ammunition kit framing)
+  body.innerHTML = snapshotHtml + decisionsSection + talkingSection + financialSection + watchSection;
+}
+
+async function renderBoardGlobalView() {
+  const body = $('rpt-body');
+  if (!body) return;
+  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
+
+  const report = await fetchJSON('/api/global-report');
+  if (!report) {
+    body.innerHTML = '<p style="color:#6e7681;font-size:11px;padding:8px 0">No pipeline data — run the pipeline first.</p>';
+    return;
+  }
+
+  const escalated = (report.regional_threats || []);
+  const vacr = report.global_vacr_summary || {};
+  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : '—';
+  const vacrDelta = vacr.delta_pct != null
+    ? (vacr.delta_pct > 0
+        ? `<span class="rpt-delta-up">↑ ${vacr.delta_pct.toFixed(1)}%</span>`
+        : `<span class="rpt-delta-dn">↓ ${Math.abs(vacr.delta_pct).toFixed(1)}%</span>`)
+    : '';
+
+  // Financial first for board
+  const financialSection = `
+<div class="rpt-cards">
+  <div class="rpt-card" style="border-top-color:#3fb950">
+    <div class="rpt-card-lbl" style="color:#3fb950">Total Risk Exposure</div>
+    <div class="rpt-card-value">${vacrValue}</div>
+    <div class="rpt-card-delta">${vacrDelta}</div>
+  </div>
+  <div class="rpt-card" style="border-top-color:#ff7b72">
+    <div class="rpt-card-lbl" style="color:#ff7b72">Elevated Risk Regions</div>
+    <div class="rpt-card-value">${escalated.filter(r => r.severity === 'Critical' || r.severity === 'High').length}</div>
+  </div>
+  <div class="rpt-card" style="border-top-color:#f59e0b">
+    <div class="rpt-card-lbl" style="color:#f59e0b">Active Scenarios</div>
+    <div class="rpt-card-value">${escalated.length + (report.monitor_regions || []).length}</div>
+  </div>
+</div>`;
+
+  const summarySection = `
+<div class="rpt-section" style="border-left-color:#f59e0b">
+  <div class="rpt-section-lbl" style="color:#f59e0b">Executive Summary</div>
+  <div class="rpt-section-prose">${esc(report.executive_summary || '')}</div>
+</div>`;
+
+  const risksHtml = escalated.slice(0, 3).map(r => {
+    const sevCol = r.severity === 'Critical' ? '#ff7b72' : r.severity === 'High' ? '#ffa657' : '#e3b341';
+    return `<div class="rpt-decision">
+      <div class="rpt-decision-title" style="color:${sevCol}">${esc(r.region)} — ${esc(r.primary_scenario || r.severity)}</div>
+      <div class="rpt-decision-body">${esc(r.strategic_assessment || '')}</div>
+    </div>`;
+  }).join('') || '<div style="font-size:10px;color:#484f58;font-style:italic">No elevated risks this period.</div>';
+
+  const risksSection = `
+<div class="rpt-section" style="border-left-color:#ff7b72">
+  <div class="rpt-section-lbl" style="color:#ff7b72">Key Risks This Period</div>
+  ${risksHtml}
+</div>`;
+
+  // Critique fix: pull from report.management_summary, not hardcoded prose
+  const responseProse = esc(
+    report.management_summary ||
+    'Continuous monitoring active across all five regions. CISO-level review completed. Escalated regions under enhanced intelligence collection. No advisory changes required at this time.'
+  );
+  const responseSection = `
+<div class="rpt-section" style="border-left-color:#3fb950">
+  <div class="rpt-section-lbl" style="color:#3fb950">Management Response</div>
+  <div class="rpt-section-prose">${responseProse}</div>
+</div>`;
+
+  body.innerHTML = financialSection + summarySection + risksSection + responseSection;
+}
+
+async function renderBoardRegionalView() {
+  const body = $('rpt-body');
+  if (!body) return;
+
+  // Critique fix: fetch global_report for VaCR card (regional brief has no VaCR field)
+  const globalReport = await fetchJSON('/api/global-report');
+
+  // Inject region selector above body
+  const content = $('rpt-content');
+  const existingSelector = content.querySelector('.rpt-region-selector');
+  if (!existingSelector) {
+    const selectorDiv = document.createElement('div');
+    selectorDiv.className = 'rpt-region-selector';
+    selectorDiv.innerHTML = ['APAC','AME','LATAM','MED','NCE'].map(r =>
+      `<button class="rpt-region-btn${state.selectedBoardRegion === r ? ' active' : ''}"
+               onclick="selectBoardRegion('${r}')">${r}</button>`
+    ).join('');
+    const actionBar = content.querySelector('.rpt-action-bar');
+    if (actionBar) actionBar.after(selectorDiv);
+  } else {
+    existingSelector.querySelectorAll('.rpt-region-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.textContent === state.selectedBoardRegion);
+    });
+  }
+
+  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
+
+  const region  = state.selectedBoardRegion;
+  const lower   = region.toLowerCase();
+  const sections = await fetchJSON(`/api/region/${lower}/brief`);
+
+  if (!sections) {
+    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No data for ${region} — run the pipeline first.</p>`;
+    return;
+  }
+
+  const headlines = sections.brief_headlines || {};
+  const why = esc(headlines.why || '');
+  const how = esc(headlines.how || '');
+  const sow = esc(headlines.so_what || '');
+
+  // Critique fix: Board Regional needs VaCR card (global context — note in label)
+  const vacr = (globalReport || {}).global_vacr_summary || {};
+  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : '—';
+  const vacrCard = `
+<div class="rpt-cards">
+  <div class="rpt-card" style="border-top-color:#3fb950">
+    <div class="rpt-card-lbl" style="color:#3fb950">Global VaCR <span style="color:#484f58;font-weight:400">(global)</span></div>
+    <div class="rpt-card-value">${vacrValue}</div>
+    <div class="rpt-card-delta" style="color:#484f58">Regional allocation: see risk register</div>
+  </div>
+</div>`;
+
+  const summarySection = why ? `
+<div class="rpt-section" style="border-left-color:#f59e0b">
+  <div class="rpt-section-lbl" style="color:#f59e0b">Executive Summary — ${esc(region)}</div>
+  <div class="rpt-section-prose">${why}</div>
+</div>` : '';
+
+  const basisSection = how ? `
+<div class="rpt-section" style="border-left-color:#ff7b72">
+  <div class="rpt-section-lbl" style="color:#ff7b72">Risk Basis</div>
+  <div class="rpt-section-prose">${how}</div>
+</div>` : '';
+
+  const implicSection = sow ? `
+<div class="rpt-section" style="border-left-color:#3fb950">
+  <div class="rpt-section-lbl" style="color:#3fb950">Business Implication</div>
+  <div class="rpt-section-prose">${sow}</div>
+</div>` : '';
+
+  const fallback = (!why && !how && !sow)
+    ? '<p style="color:#6e7681;font-size:11px">No regional summary available — run the pipeline first.</p>' : '';
+
+  body.innerHTML = vacrCard + summarySection + basisSection + implicSection + fallback;
+}
+
+window.selectBoardRegion = function(region) {
+  state.selectedBoardRegion = region;
+  renderBoardRegionalView();
+};
+
+function renderRsmInReports() {
+  const body = $('rpt-body');
+  if (!body) return;
+
+  body.style.padding = '0';  // RSM uses its own internal padding
+  body.innerHTML = `
+<div style="display:grid;grid-template-columns:160px 1fr;height:100%;overflow:hidden">
+  <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
+    <div style="padding:6px 12px;border-bottom:1px solid #21262d;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#484f58">Regions</div>
+    <div id="rsm-region-list"></div>
+  </div>
+  <div style="display:flex;flex-direction:column;overflow:hidden">
+    <div style="padding:8px 16px;border-bottom:1px solid #21262d;flex-shrink:0">
+      <span id="rsm-region-label" style="font-size:12px;font-weight:600;color:#e6edf3"></span>
+    </div>
+    <div id="rsm-panel-body" style="flex:1;overflow:hidden;display:flex"></div>
+  </div>
+</div>`;
+
+  renderRsmSidebar();
+  renderRsmContent(state.selectedRsmRegion || REGIONS[0]);
 }
 
 async function renderSingleDocView(audience) {
