@@ -138,12 +138,12 @@ def _reason_against_vacr(incident_type: str, current_vacr_usd: int, sector: str,
         client = anthropic.Anthropic()
         resp = client.messages.create(
             model=SONNET_MODEL,
-            max_tokens=1500,
+            max_tokens=4000,
             messages=[{"role": "user", "content": REASONING_PROMPT.format(
                 incident_type=incident_type,
                 sector=sector,
                 current_vacr_usd=current_vacr_usd,
-                findings_text=findings_text,
+                findings_text=findings_text[:8000],
             )}],
         )
         content = resp.content[0].text.strip()
