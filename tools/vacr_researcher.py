@@ -24,25 +24,25 @@ OUTPUT_FILE = REPO_ROOT / "output" / "pipeline" / "vacr_research.json"
 SONNET_MODEL = "claude-sonnet-4-6"
 
 OUTPUT_SCHEMA = {
-    "type": "object",
     "properties": {
         "figures": {
             "type": "array",
+            "description": "Financial and probability impact figures extracted from research sources",
             "items": {
                 "type": "object",
                 "required": ["dimension", "note", "raw_quote", "source_name", "source_url"],
                 "properties": {
-                    "dimension":              {"type": "string", "enum": ["financial", "probability"]},
-                    "cost_low_usd":           {"type": ["number", "null"]},
-                    "cost_median_usd":        {"type": ["number", "null"]},
-                    "cost_high_usd":          {"type": ["number", "null"]},
-                    "probability_low_pct":    {"type": ["number", "null"]},
-                    "probability_median_pct": {"type": ["number", "null"]},
-                    "probability_high_pct":   {"type": ["number", "null"]},
-                    "note":        {"type": "string"},
-                    "raw_quote":   {"type": "string"},
-                    "source_name": {"type": "string"},
-                    "source_url":  {"type": "string"},
+                    "dimension":              {"type": "string", "description": "financial or probability"},
+                    "cost_low_usd":           {"type": "number", "description": "Lower bound cost in USD"},
+                    "cost_median_usd":        {"type": "number", "description": "Median/average cost in USD"},
+                    "cost_high_usd":          {"type": "number", "description": "Upper bound cost in USD"},
+                    "probability_low_pct":    {"type": "number", "description": "Lower bound annual probability %"},
+                    "probability_median_pct": {"type": "number", "description": "Median annual probability %"},
+                    "probability_high_pct":   {"type": "number", "description": "Upper bound annual probability %"},
+                    "note":        {"type": "string", "description": "Brief description of what this figure represents"},
+                    "raw_quote":   {"type": "string", "description": "Exact text excerpt (max 200 chars)"},
+                    "source_name": {"type": "string", "description": "Name of the source document or report"},
+                    "source_url":  {"type": "string", "description": "URL of the source"},
                 },
             },
         }
@@ -85,40 +85,43 @@ If no findings provided, return {{"findings": [], "overall_direction": "?", "age
 """
 
 
-def _research_tavily(incident_type: str, sector: str) -> list[dict]:
-    """Submit a Tavily Research job and poll until complete. Returns figures list."""
+def _research_tavily(incident_type: str, sector: str) -> str:
+    """Submit a Tavily Research job and poll until complete. Returns synthesised content."""
     import os
     client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
     query = (
         f"{incident_type} financial cost incident rate probability "
         f"{sector} sector renewable energy operator USD 2024 2025"
     )
-    task = client.research(input=query, model="mini", output_schema=OUTPUT_SCHEMA)
+    task = client.research(input=query, model="mini")
     request_id = task["request_id"]
     deadline = time.monotonic() + _RESEARCH_TIMEOUT_S
     while time.monotonic() < deadline:
         result = client.get_research(request_id)
         if result.get("status") == "completed":
-            structured = result.get("structured_output")
-            if not structured or "figures" not in structured:
+            content = result.get("content", "")
+            if not content:
                 raise ValueError(
-                    f"Tavily research completed but returned no structured_output "
+                    f"Tavily research completed but returned empty content "
                     f"for {incident_type!r} (request_id={request_id})"
                 )
-            return structured["figures"]
+            print(f"[vacr-researcher] Research complete: {len(content)} chars, {len(result.get('sources', []))} sources", file=sys.stderr)
+            return content
         time.sleep(_RESEARCH_POLL_INTERVAL_S)
     raise TimeoutError(
         f"Tavily research timed out after {_RESEARCH_TIMEOUT_S}s (request_id={request_id})"
     )
 
 
-def _reason_against_vacr(incident_type: str, current_vacr_usd: int, sector: str, all_figures: list[dict]) -> dict:
+def _reason_against_vacr(incident_type: str, current_vacr_usd: int, sector: str, research_data: "str | list[dict]") -> dict:
     """Run Sonnet to reason whether findings support/challenge the VaCR."""
-    if not all_figures:
+    if isinstance(research_data, str):
+        findings_text = research_data if research_data.strip() else "No benchmark findings found."
+    elif not research_data:
         findings_text = "No benchmark figures found."
     else:
         lines = []
-        for f in all_figures[:20]:
+        for f in research_data[:20]:
             src = f.get("source_name", "Unknown source")
             note = f.get("note", "")
             quote = f.get("raw_quote", "")
