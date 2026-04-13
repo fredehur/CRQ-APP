@@ -80,6 +80,85 @@ $22,000,000 at risk. Service delivery continuity for 25% of global operations at
 """
 
 
+MOCK_SECTIONS = {
+    "APAC": {
+        "brief_headlines": {
+            "why": "Ransomware campaign targeting APAC energy-sector OT environments — consistent with state-nexus actor TTPs. Supply chain vector identified via three regional vendors — medium confidence, not yet confirmed in AeroGrid environment.",
+            "how": "In March 2026, a ransomware group with suspected state-nexus links launched targeted intrusion attempts against energy-sector OT environments across the Asia-Pacific region. Three AeroGrid vendor partners in the region reported anomalous access attempts consistent with the campaign's known TTPs.",
+            "so_what": "AeroGrid's APAC turbine control infrastructure may be within the campaign's targeting envelope — immediate offline backup validation is recommended."
+        },
+        "source_metadata": {
+            "osint": {"source_count": 4, "corroboration_tier": "2 corroborated"},
+            "seerist": {"verified_event_count": 2}
+        },
+        "scenario_match": "State-Nexus OT Ransomware Campaign",
+        "dominant_pillar": "CYBER",
+        "admiralty": "B2",
+        "corroboration_tier": "2 corroborated",
+        "action_bullets": [
+            "Validate offline backup integrity for turbine control systems",
+            "Review vendor access controls with regional ops teams"
+        ],
+        "watch_bullets": [
+            "Monitor for further OT-targeting indicators in APAC energy sector",
+            "Track vendor partner security posture across three identified firms"
+        ],
+        "intel_bullets": [
+            "Three AeroGrid vendor partners reported anomalous access attempts [B2]",
+            "Campaign TTPs consistent with known state-nexus group tooling [C3]"
+        ],
+        "why_text": "Emerging ransomware pattern in APAC energy sector.",
+        "how_text": "Ransomware group launched intrusion attempts in March 2026.",
+        "so_what_text": "OT infrastructure may be within targeting envelope."
+    },
+    "AME": {
+        "brief_headlines": {
+            "why": "",
+            "how": "",
+            "so_what": ""
+        },
+        "source_metadata": {
+            "osint": {"source_count": 2, "corroboration_tier": "1 corroborated"},
+            "seerist": {"verified_event_count": 1}
+        },
+        "scenario_match": "Supply Chain Disruption — Gulf",
+        "dominant_pillar": "GEO",
+        "admiralty": "C3",
+        "corroboration_tier": "1 corroborated",
+        "action_bullets": ["Review vendor access controls with regional ops teams"],
+        "watch_bullets": ["Track Gulf supply chain exposure"],
+        "intel_bullets": [],
+        "why_text": "Supply chain disruption risk elevated in Gulf region.",
+        "how_text": "Geopolitical tensions affecting logistics routes.",
+        "so_what_text": "Procurement timelines may be affected."
+    },
+    "MED": {
+        "brief_headlines": {
+            "why": "State-nexus ransomware campaign extending into Mediterranean energy infrastructure — same actor TTPs as APAC cluster.",
+            "how": "The same ransomware campaign identified in APAC has been observed probing Mediterranean energy infrastructure in April 2026. Two confirmed intrusion attempts against regional grid operators.",
+            "so_what": "AeroGrid MED operations share infrastructure topology with confirmed targets — escalation response aligned with APAC track."
+        },
+        "source_metadata": {
+            "osint": {"source_count": 3, "corroboration_tier": "2 corroborated"},
+            "seerist": {"verified_event_count": 1}
+        },
+        "scenario_match": "State-Nexus OT Ransomware Campaign",
+        "dominant_pillar": "CYBER",
+        "admiralty": "B2",
+        "corroboration_tier": "2 corroborated",
+        "action_bullets": [
+            "Validate offline backup integrity for turbine control systems",
+            "Brief senior leadership on emerging risk indicators"
+        ],
+        "watch_bullets": ["Monitor Mediterranean grid operator targeting"],
+        "intel_bullets": ["Two confirmed intrusion attempts against MED grid operators [B2]"],
+        "why_text": "MED energy infrastructure probed by same ransomware actor.",
+        "how_text": "Intrusion attempts observed in April 2026.",
+        "so_what_text": "MED operations share topology with confirmed targets."
+    }
+}
+
+
 @pytest.fixture
 def mock_output(tmp_path):
     """Create a minimal mock output/ tree under tmp_path.
@@ -116,5 +195,11 @@ def mock_output(tmp_path):
     (tmp_path / "regional" / "ame" / "report.md").write_text(
         AME_REPORT_MD, encoding="utf-8"
     )
+
+    # Write sections.json for regions that have brief_headlines
+    for region in ["APAC", "AME", "MED"]:
+        region_dir = tmp_path / "regional" / region.lower()
+        region_dir.mkdir(parents=True, exist_ok=True)
+        (region_dir / "sections.json").write_text(json.dumps(MOCK_SECTIONS[region]))
 
     return pipeline_dir
