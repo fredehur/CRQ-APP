@@ -48,12 +48,37 @@ def _make_claims(why_summary="Why headline", how_summary="How headline",
 def test_seerist_metadata_high_strength_with_hotspot():
     from tools.extract_sections import _build_source_metadata
     seerist = _make_seerist(hotspots=[
-        {"signal_id": "seerist:hotspot:apac-001", "anomaly_flag": True, "location": "Taipei"},
+        {
+            "signal_id": "seerist:hotspot:apac-001",
+            "anomaly_flag": True,
+            "location": "Taipei",
+            "category_hint": "Industrial",
+            "deviation_score": 9.2,
+            "timestamp": "06:14 UTC",
+        },
     ])
     osint = _make_osint(sources=[{"name": "Reuters", "url": "https://reuters.com"}])
     meta = _build_source_metadata(seerist, osint)
     assert meta["seerist"]["strength"] == "high"
-    assert "Taipei" in meta["seerist"]["hotspots"][0]
+    h = meta["seerist"]["hotspots"][0]
+    assert h["label"] == "Taipei"
+    assert h["category"] == "Industrial"
+    assert h["deviation_score"] == 9.2
+    assert h["timestamp"] == "06:14 UTC"
+
+
+def test_seerist_hotspot_missing_optional_fields():
+    from tools.extract_sections import _build_source_metadata
+    seerist = _make_seerist(hotspots=[
+        {"signal_id": "seerist:hotspot:x", "anomaly_flag": True, "location": "Seoul"},
+    ])
+    osint = _make_osint()
+    meta = _build_source_metadata(seerist, osint)
+    h = meta["seerist"]["hotspots"][0]
+    assert h["label"] == "Seoul"
+    assert h["category"] == ""
+    assert h["deviation_score"] == 0.0
+    assert h["timestamp"] == ""
 
 
 def test_seerist_metadata_none_when_empty():

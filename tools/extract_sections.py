@@ -132,7 +132,7 @@ def _build_source_metadata(seerist: dict, osint: dict) -> dict:
     ana = seerist.get("analytical", {})
     sit = seerist.get("situational", {})
 
-    hotspot_labels = []
+    hotspots_enriched: list[dict] = []
     for h in ana.get("hotspots", []):
         if not h.get("anomaly_flag"):
             continue
@@ -140,7 +140,12 @@ def _build_source_metadata(seerist: dict, osint: dict) -> dict:
         if isinstance(loc, dict):
             loc = loc.get("name", "")
         label = loc or h.get("signal_id", "?")
-        hotspot_labels.append(f"{label} — anomaly")
+        hotspots_enriched.append({
+            "label": label,
+            "category": h.get("category_hint", ""),
+            "deviation_score": round(float(h.get("deviation_score", 0.0)), 1),
+            "timestamp": str(h.get("timestamp", "")),
+        })
     pulse_delta = ana.get("pulse", {}).get("region_summary", {}).get("avg_delta", 0.0)
     verified_count = len(sit.get("verified_events", []))
 
@@ -156,7 +161,7 @@ def _build_source_metadata(seerist: dict, osint: dict) -> dict:
     return {
         "seerist": {
             "strength": strength,
-            "hotspots": hotspot_labels,
+            "hotspots": hotspots_enriched,
             "pulse_delta": pulse_delta,
             "verified_event_count": verified_count,
         },
