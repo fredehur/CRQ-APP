@@ -1,8 +1,8 @@
 # Tavily Research API — VaCR Benchmark Researcher Integration
 
-**Date:** 2026-04-13
-**Status:** Approved
-**Scope:** `tools/vacr_researcher.py` only — no changes to `register_validator.py`, `server.py`, Sonnet reasoning prompt, or output schema.
+**Date:** 2026-04-13 (rev 2 — grounded in real API inspection)
+**Status:** Approved — pending Tavily plan upgrade
+**Scope:** `tools/vacr_researcher.py` + `pyproject.toml` only.
 
 ---
 
@@ -14,42 +14,85 @@
 2. **Haiku extraction** — LLM extracts financial/probability figures from snippets
 3. **Sonnet reasoning** — LLM produces supports/challenges/inconclusive verdict
 
-Step 2 is working from the same thin snippet context that the OSINT pipeline already identified as a quality limit. The Haiku extraction sees 200-character previews, not primary source text — the same problem Firecrawl solved for OSINT collection.
+Step 2 is working from the same thin snippet context that the OSINT pipeline identified as a quality limit. Haiku sees 200-character previews, not primary source text.
 
 ---
 
 ## Solution
 
-Replace steps 1 and 2 with a single **Tavily Research API** call that returns structured figures derived from full primary-source text, then feed those figures into the existing Sonnet reasoning step unchanged.
+Replace steps 1 and 2 with a single **Tavily Research API** call that synthesises primary sources and returns structured figures via `output_schema`, then feed those figures into the existing Sonnet reasoning step unchanged.
 
 ```
-BEFORE:  Tavily Search → Haiku extraction → Sonnet reasoning
-AFTER:   Tavily Research (output_schema) → Sonnet reasoning
+BEFORE:  Tavily Search (snippets) → Haiku extraction → Sonnet reasoning
+AFTER:   Tavily Research (output_schema → structured_output) → Sonnet reasoning
 ```
+
+---
+
+## Prerequisites
+
+### 1. Tavily plan upgrade (blocker)
+The Research API is gated behind a higher-tier Tavily plan. The current plan raises `ForbiddenError: This request exceeds your plan's set usage limit` on any `research()` call. Upgrade at app.tavily.com before implementation begins.
+
+### 2. Add `tavily-python` dependency
+`osint_search.py` currently calls the Tavily REST API directly via `httpx` — the SDK is not installed. Add it:
+
+```bash
+uv add tavily-python
+```
+
+Confirmed version: `tavily-python==0.7.23` contains `.research()` and `.get_research()`.
 
 ---
 
 ## Architecture
 
-**Single file change:** `tools/vacr_researcher.py`
+**Files changed:** `tools/vacr_researcher.py`, `pyproject.toml`
 
-**Deleted from the file:**
-- `search_tavily()` helper function
+**Deleted from `vacr_researcher.py`:**
+- `search_tavily()` helper
 - `EXTRACTION_PROMPT` constant
-- All Haiku client code (`haiku_client`, `HAIKU_MODEL` import)
+- All Haiku client code (`HAIKU_MODEL`, Haiku `anthropic.Anthropic()` call)
 
 **Unchanged everywhere:**
 - `REASONING_PROMPT` and Sonnet reasoning call
 - `vacr_research.json` output schema
-- `register_validator.py`
-- `server.py` and SSE progress streaming
-- All UI code
-
-The `TavilyClient` from `tavily-python` (already a dependency via `osint_search.py`) gains a `.research()` call. No new packages required.
+- `register_validator.py`, `server.py`, SSE streaming, all UI code
 
 ---
 
 ## The Research Call
+
+### SDK pattern (confirmed by source inspection)
+
+`research()` is **async-submit** — it returns immediately with a `request_id`. You must poll `get_research(request_id)` until `status == "completed"`.
+
+```python
+from tavily import TavilyClient
+
+client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+
+# Submit
+task = client.research(
+    input=query,
+    model="mini",
+    output_schema=OUTPUT_SCHEMA,
+)
+request_id = task["request_id"]
+
+# Poll
+import time
+deadline = time.time() + 180  # 3-minute hard limit
+while time.time() < deadline:
+    result = client.get_research(request_id)
+    if result["status"] == "completed":
+        figures = result["structured_output"]["figures"]  # schema result lives here
+        break
+    logger.info("[vacr_researcher] research status=%s, waiting...", result["status"])
+    time.sleep(5)
+else:
+    raise TimeoutError(f"Tavily research timed out after 180s (request_id={request_id})")
+```
 
 ### Query shape
 
@@ -62,11 +105,9 @@ query = (
 )
 ```
 
-One call per scenario (not separate financial/probability queries). The research API performs multi-angle synthesis internally across both dimensions.
+**Risk:** a merged query may produce strong financial figures but weak probability data (different vocabulary domains). If this proves out during testing, split into two queries and `asyncio.gather()` them — see Parallelisation section.
 
 ### output_schema
-
-Pass a JSON Schema so Tavily returns structured figures directly — no LLM extraction step needed on our side:
 
 ```python
 OUTPUT_SCHEMA = {
@@ -78,11 +119,8 @@ OUTPUT_SCHEMA = {
                 "type": "object",
                 "required": ["dimension", "note", "raw_quote", "source_name", "source_url"],
                 "properties": {
-                    "dimension": {
-                        "type": "string",
-                        "enum": ["financial", "probability"]
-                    },
-                    "cost_low_usd":          {"type": ["number", "null"]},
+                    "dimension":              {"type": "string", "enum": ["financial", "probability"]},
+                    "cost_low_usd":           {"type": ["number", "null"]},
                     "cost_median_usd":        {"type": ["number", "null"]},
                     "cost_high_usd":          {"type": ["number", "null"]},
                     "probability_low_pct":    {"type": ["number", "null"]},
@@ -100,49 +138,54 @@ OUTPUT_SCHEMA = {
 }
 ```
 
-The schema matches the figure format Haiku currently extracts, so the `REASONING_PROMPT` receives the same `findings_text` it always has — zero changes to the reasoning step.
+Schema matches the figure format Haiku currently extracts — the `REASONING_PROMPT` receives the same `findings_text` it always has.
+
+**Note:** `output_schema` compliance is treated as a contract with the API. If `result["structured_output"]` is absent or malformed, the scenario raises an explicit error rather than degrading silently.
 
 ### Model
 
-`"mini"` — faster (30-60s vs 60-120s for `"pro"`), targeted efficiency, sufficient for financial benchmark lookups across energy sector sources.
+`"mini"` — faster (30-60s vs 60-120s for `"pro"`), targeted efficiency. Switch to `"pro"` if financial figure coverage proves thin after initial runs.
 
-### Polling
+---
 
-Simple polling at 5-second intervals up to a 3-minute hard timeout:
+## Parallelisation
+
+With 8 scenarios × 30-60s each, sequential execution takes 4-8 minutes. Use `AsyncTavilyClient` + `asyncio.gather()` to run all scenarios in parallel:
 
 ```python
-client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-result = client.research(query, model="mini", output_schema=OUTPUT_SCHEMA)
-# If SDK exposes only the raw async endpoint (request_id), implement a thin
-# polling wrapper: submit → poll get_research(request_id) every 5s → return on "completed"
-figures = result["figures"]
+from tavily import AsyncTavilyClient
+import asyncio
+
+async def research_scenario(client, scenario):
+    task = await client.research(input=build_query(scenario), model="mini", output_schema=OUTPUT_SCHEMA)
+    # ... poll async ...
+
+async def run_all(scenarios):
+    async with AsyncTavilyClient(api_key=...) as client:
+        results = await asyncio.gather(*[research_scenario(client, s) for s in scenarios], return_exceptions=True)
+    return results
 ```
 
-Progress is logged via `logger.info()` during the wait — existing SSE stream forwards these to the UI automatically. No changes to the streaming infrastructure.
+Failed scenarios surface as exceptions in the results list — other scenarios complete normally.
 
 ---
 
 ## Error Handling
 
-No fallback path. If the research call fails (timeout, API error, malformed schema response), the exception propagates:
+No fallback to search+Haiku. Failures are explicit:
 
-- The scenario is written to `vacr_research.json` with `"status": "error"` and an `"error"` field containing the message.
-- The UI shows the scenario as failed — the analyst sees it explicitly and re-runs.
-- No silent degradation to lower-quality data.
+- **API error / plan limit** → `ForbiddenError` propagates, scenario marked `"status": "error"` in `vacr_research.json`
+- **Timeout (>180s)** → `TimeoutError`, same treatment
+- **Missing `structured_output`** → `KeyError` with a descriptive message logged
+- **Individual scenario failure** → other scenarios in the parallel batch complete normally (via `return_exceptions=True`)
 
-**Hard timeout:** 3 minutes. If Tavily hasn't responded, raise `TimeoutError`.
+The analyst sees failed scenarios in the UI and re-runs them.
 
 ---
 
-## Latency
+## Cost
 
-Current per-scenario time: ~8s (Tavily search ~3s + Haiku extraction ~5s).
-New per-scenario time: 30-120s (Tavily Research `mini` model).
-
-This is acceptable because:
-- `validate-register` is an on-demand workflow triggered from the UI, not part of the real-time pipeline.
-- The UI already shows a live progress bar with SSE streaming.
-- With the `mini` model and a focused query, most runs should land in the 30-60s range.
+Research API credits are significantly higher than Search. Estimate before the first production run. With `mini` model and parallel calls, budget per validate-register run = `N_scenarios × research_credit_cost`. Log `result.get("usage", {})` per call for visibility.
 
 ---
 
@@ -150,7 +193,8 @@ This is acceptable because:
 
 | File | Change |
 |---|---|
-| `tools/vacr_researcher.py` | Replace search + Haiku extraction with `TavilyClient.research()` call; delete `search_tavily()`, `EXTRACTION_PROMPT`, Haiku imports |
+| `tools/vacr_researcher.py` | Replace search + Haiku with `TavilyClient.research()` + polling wrapper; add `AsyncTavilyClient` parallel execution; delete `search_tavily()`, `EXTRACTION_PROMPT`, Haiku imports |
+| `pyproject.toml` | Add `tavily-python>=0.7.23` |
 
 ## Files Unchanged
 
@@ -158,6 +202,5 @@ This is acceptable because:
 |---|---|
 | `tools/register_validator.py` | Not involved in per-scenario research |
 | `server.py` | SSE streaming and API endpoints unchanged |
-| `REASONING_PROMPT` (in vacr_researcher.py) | Receives same `findings_text` format |
+| `REASONING_PROMPT` | Receives same `findings_text` format |
 | `output/pipeline/vacr_research.json` schema | Output contract unchanged |
-| All tests referencing output format | No schema changes |
