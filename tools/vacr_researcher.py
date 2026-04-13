@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""VaCR Benchmark Researcher — searches industry sources per scenario and reasons against current VaCR.
+"""VaCR Benchmark Researcher — researches industry sources per scenario and reasons against current VaCR.
 
 Usage:
     uv run python tools/vacr_researcher.py <incident_type> <current_vacr_usd> [--sector energy|manufacturing]
@@ -8,10 +8,12 @@ Writes: output/pipeline/vacr_research.json (appends/updates this scenario's entr
 """
 import json
 import sys
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
+from tavily import TavilyClient
 
 load_dotenv()
 
@@ -19,25 +21,37 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 OUTPUT_FILE = REPO_ROOT / "output" / "pipeline" / "vacr_research.json"
 
-HAIKU_MODEL = "claude-haiku-4-5-20251001"
 SONNET_MODEL = "claude-sonnet-4-6"
 
-EXTRACTION_PROMPT = """\
-You are extracting financial impact data from a cybersecurity industry report.
+OUTPUT_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "figures": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["dimension", "note", "raw_quote", "source_name", "source_url"],
+                "properties": {
+                    "dimension":              {"type": "string", "enum": ["financial", "probability"]},
+                    "cost_low_usd":           {"type": ["number", "null"]},
+                    "cost_median_usd":        {"type": ["number", "null"]},
+                    "cost_high_usd":          {"type": ["number", "null"]},
+                    "probability_low_pct":    {"type": ["number", "null"]},
+                    "probability_median_pct": {"type": ["number", "null"]},
+                    "probability_high_pct":   {"type": ["number", "null"]},
+                    "note":        {"type": "string"},
+                    "raw_quote":   {"type": "string"},
+                    "source_name": {"type": "string"},
+                    "source_url":  {"type": "string"},
+                },
+            },
+        }
+    },
+    "required": ["figures"],
+}
 
-Extract all dollar-denominated financial impact figures for cyber incidents. For each figure found:
-- scenario_tag: classify into one of: System intrusion, Ransomware, Accidental disclosure, Physical threat, Insider misuse, DoS attack, Scam or fraud, Defacement, System failure
-- sector: the industry sector this applies to (e.g. "manufacturing", "energy", "all")
-- cost_low_usd: lower bound in USD as integer (null if not stated)
-- cost_median_usd: median or average in USD as integer (null if not stated)
-- cost_high_usd: upper bound in USD as integer (null if not stated)
-- note: brief description of what this figure represents
-- raw_quote: the exact text excerpt this came from (max 200 chars)
-
-Return ONLY a JSON array. If no financial figures found, return [].
-
-Text to analyze:
-{raw_text}"""
+_RESEARCH_TIMEOUT_S = 180
+_RESEARCH_POLL_INTERVAL_S = 5
 
 REASONING_PROMPT = """\
 You are a cyber risk quantification analyst reviewing benchmark data against a company's VaCR (Value at Cyber Risk) estimate.
@@ -71,57 +85,31 @@ If no findings provided, return {{"findings": [], "overall_direction": "?", "age
 """
 
 
-def _search_web(query: str, max_results: int = 5) -> list[dict]:
-    """Search using Tavily if key available, else DuckDuckGo."""
+def _research_tavily(incident_type: str, sector: str) -> list[dict]:
+    """Submit a Tavily Research job and poll until complete. Returns figures list."""
     import os
-    tavily_key = os.environ.get("TAVILY_API_KEY", "")
-    if tavily_key:
-        try:
-            import requests
-            resp = requests.post(
-                "https://api.tavily.com/search",
-                json={"api_key": tavily_key, "query": query, "max_results": max_results, "search_depth": "basic"},
-                timeout=20,
-            )
-            results = resp.json().get("results", [])
-            return [{"title": r.get("title", ""), "content": r.get("content", ""), "url": r.get("url", ""), "score": r.get("score", 0.0)} for r in results]
-        except Exception as e:
-            print(f"[vacr-researcher] Tavily failed: {e}", file=sys.stderr)
-    try:
-        from duckduckgo_search import DDGS
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=max_results))
-        return [{"title": r.get("title", ""), "content": r.get("body", ""), "url": r.get("href", "")} for r in results]
-    except Exception as e:
-        print(f"[vacr-researcher] DDG failed: {e}", file=sys.stderr)
-        return []
-
-
-def _extract_figures(text: str, source_name: str) -> list[dict]:
-    """Run Haiku over text to extract financial figures."""
-    if not text.strip():
-        return []
-    try:
-        import anthropic
-        client = anthropic.Anthropic()
-        resp = client.messages.create(
-            model=HAIKU_MODEL,
-            max_tokens=1024,
-            messages=[{"role": "user", "content": EXTRACTION_PROMPT.format(raw_text=text[:12_000])}],
-        )
-        content = resp.content[0].text.strip()
-        if content.startswith("```"):
-            content = content.split("```")[1]
-            if content.startswith("json"):
-                content = content[4:]
-        figures = json.loads(content)
-        for f in figures:
-            f["_source_name"] = source_name
-            f["_source_url"] = ""
-        return figures
-    except Exception as e:
-        print(f"[vacr-researcher] Haiku extraction failed for {source_name}: {e}", file=sys.stderr)
-        return []
+    client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+    query = (
+        f"{incident_type} financial cost incident rate probability "
+        f"{sector} sector renewable energy operator USD 2024 2025"
+    )
+    task = client.research(input=query, model="mini", output_schema=OUTPUT_SCHEMA)
+    request_id = task["request_id"]
+    deadline = time.monotonic() + _RESEARCH_TIMEOUT_S
+    while time.monotonic() < deadline:
+        result = client.get_research(request_id)
+        if result.get("status") == "completed":
+            structured = result.get("structured_output")
+            if not structured or "figures" not in structured:
+                raise ValueError(
+                    f"Tavily research completed but returned no structured_output "
+                    f"for {incident_type!r} (request_id={request_id})"
+                )
+            return structured["figures"]
+        time.sleep(_RESEARCH_POLL_INTERVAL_S)
+    raise TimeoutError(
+        f"Tavily research timed out after {_RESEARCH_TIMEOUT_S}s (request_id={request_id})"
+    )
 
 
 def _reason_against_vacr(incident_type: str, current_vacr_usd: int, sector: str, all_figures: list[dict]) -> dict:
@@ -130,13 +118,16 @@ def _reason_against_vacr(incident_type: str, current_vacr_usd: int, sector: str,
         findings_text = "No benchmark figures found."
     else:
         lines = []
-        for f in all_figures[:20]:  # cap at 20 figures
-            src = f.get("_source_name", "Unknown source")
+        for f in all_figures[:20]:
+            src = f.get("source_name", "Unknown source")
             note = f.get("note", "")
             quote = f.get("raw_quote", "")
             median = f.get("cost_median_usd")
-            tag = f.get("scenario_tag", "")
-            lines.append(f"- {src}: {tag} | median=${median:,} | {note} | \"{quote}\"" if median else f"- {src}: {tag} | {note} | \"{quote}\"")
+            dimension = f.get("dimension", "financial")
+            if median:
+                lines.append(f"- {src}: {dimension} | median=${median:,} | {note} | \"{quote}\"")
+            else:
+                lines.append(f"- {src}: {dimension} | {note} | \"{quote}\"")
         findings_text = "\n".join(lines)
 
     try:
@@ -171,43 +162,8 @@ def research_scenario(incident_type: str, current_vacr_usd: int, sector: str = "
     """Full pipeline for one scenario. Returns result dict."""
     print(f"[vacr-researcher] Researching: {incident_type} (VaCR ${current_vacr_usd:,})", file=sys.stderr)
 
-    # Build queries targeting known benchmark sources
-    queries = [
-        f'"{incident_type}" cost {sector} 2024 2025 site:ibm.com OR site:verizon.com OR site:mandiant.com',
-        f'"{incident_type}" financial impact manufacturing energy 2024 benchmark',
-        f'"{incident_type}" average cost USD million 2024 2025 industry report',
-    ]
-
-    from tools.firecrawl_scraper import scrape_urls as _firecrawl_scrape
-
-    all_figures = []
-    for query in queries:
-        print(f"[vacr-researcher]   Searching: {query[:80]}...", file=sys.stderr)
-        results = _search_web(query, max_results=4)
-
-        # Scrape top 3 by Tavily score if scores are present (Tavily path only)
-        if results and any(r.get("score") for r in results):
-            top3 = sorted(results, key=lambda r: r.get("score", 0.0), reverse=True)[:3]
-            snippet_lookup = {r["url"]: r.get("content", "") for r in top3}
-            score_lookup = {r["url"]: r.get("score", 0.0) for r in top3}
-            scraped = _firecrawl_scrape(
-                [r["url"] for r in top3],
-                snippet_lookup,
-                score_lookup,
-            )
-            for r, s in zip(top3, scraped):
-                r["content"] = s["content"]
-
-        for r in results:
-            content = r.get("content", "")
-            source_name = r.get("title") or r.get("url", "Unknown")
-            figures = _extract_figures(content, source_name)
-            # Only keep figures matching this scenario type
-            relevant = [f for f in figures if incident_type.lower() in f.get("scenario_tag", "").lower()
-                        or f.get("scenario_tag", "") == incident_type]
-            all_figures.extend(relevant)
-
-    reasoning = _reason_against_vacr(incident_type, current_vacr_usd, sector, all_figures)
+    figures = _research_tavily(incident_type, sector)
+    reasoning = _reason_against_vacr(incident_type, current_vacr_usd, sector, figures)
 
     result = {
         "incident_type": incident_type,
