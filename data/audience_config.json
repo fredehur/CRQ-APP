@@ -4,6 +4,12 @@
     "formatter_agent": "rsm-formatter-agent",
     "regions": ["APAC"],
     "products": {
+      "daily": {
+        "cadence": "daily",
+        "time_local": "06:00",
+        "timezone": "Asia/Singapore",
+        "always_emit": true
+      },
       "weekly_intsum": {
         "cadence": "monday",
         "time_local": "07:00",
@@ -28,6 +34,12 @@
     "formatter_agent": "rsm-formatter-agent",
     "regions": ["AME"],
     "products": {
+      "daily": {
+        "cadence": "daily",
+        "time_local": "06:00",
+        "timezone": "America/New_York",
+        "always_emit": true
+      },
       "weekly_intsum": {
         "cadence": "monday",
         "time_local": "07:00",
@@ -52,6 +64,12 @@
     "formatter_agent": "rsm-formatter-agent",
     "regions": ["LATAM"],
     "products": {
+      "daily": {
+        "cadence": "daily",
+        "time_local": "06:00",
+        "timezone": "America/Sao_Paulo",
+        "always_emit": true
+      },
       "weekly_intsum": {
         "cadence": "monday",
         "time_local": "07:00",
@@ -76,6 +94,12 @@
     "formatter_agent": "rsm-formatter-agent",
     "regions": ["MED"],
     "products": {
+      "daily": {
+        "cadence": "daily",
+        "time_local": "06:00",
+        "timezone": "Europe/Rome",
+        "always_emit": true
+      },
       "weekly_intsum": {
         "cadence": "monday",
         "time_local": "07:00",
@@ -100,6 +124,12 @@
     "formatter_agent": "rsm-formatter-agent",
     "regions": ["NCE"],
     "products": {
+      "daily": {
+        "cadence": "daily",
+        "time_local": "06:00",
+        "timezone": "Europe/Berlin",
+        "always_emit": true
+      },
       "weekly_intsum": {
         "cadence": "monday",
         "time_local": "07:00",
