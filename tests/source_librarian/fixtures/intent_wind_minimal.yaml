@@ -1,0 +1,31 @@
+register_id: wind_test
+register_name: Wind Test Register
+industry: renewable_energy
+sub_industry: wind_power_generation
+geography:
+  primary: [europe]
+  secondary: []
+
+scenarios:
+  WP-001:
+    name: "System intrusion into OT/SCADA"
+    threat_terms: [system intrusion, OT compromise]
+    asset_terms: [wind turbine SCADA, OT network]
+    industry_terms: [wind farm, renewable energy]
+    time_focus_years: 3
+    notes: "Focus on documented OT intrusions."
+  WP-002:
+    name: "Ransomware on OT/SCADA"
+    threat_terms: [ransomware, wiper]
+    asset_terms: [wind turbine SCADA]
+    industry_terms: [renewable energy]
+    time_focus_years: 2
+    notes: "Vestas 2021 canonical."
+
+query_modifiers:
+  news_set:
+    - "{threat} {asset} attack {year}"
+    - "{industry} {threat} {year}"
+  doc_set:
+    - "{threat} {asset} report pdf"
+    - "{industry} {threat} assessment"

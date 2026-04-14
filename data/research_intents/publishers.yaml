@@ -1,0 +1,31 @@
+# Source publisher allowlist for source_librarian.
+# Entries are prefix-matched against URL host+path. Anything not listed = T4 (filtered).
+tiers:
+  T1:  # primary research & government
+    - dragos.com
+    - mandiant.com
+    - cisa.gov
+    - ibm.com/security
+    - verizon.com/business/resources/reports
+    - marsh.com
+    - enisa.europa.eu
+    - ncsc.gov.uk
+    - sans.org
+    - nist.gov
+    - cert.gov.uk
+  T2:  # sector vendors & specialized firms
+    - claroty.com
+    - armis.com
+    - nozominetworks.com
+    - kaspersky.com/ics-cert
+    - waterfall-security.com
+    - tenable.com
+    - rapid7.com
+    - crowdstrike.com
+  T3:  # general cyber press
+    - bleepingcomputer.com
+    - therecord.media
+    - securityweek.com
+    - darkreading.com
+    - thehackernews.com
+    - cyberscoop.com

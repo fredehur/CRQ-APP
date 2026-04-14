@@ -1,0 +1,9 @@
+tiers:
+  T1:
+    - dragos.com
+    - cisa.gov
+    - ibm.com/security
+  T2:
+    - claroty.com
+  T3:
+    - bleepingcomputer.com
