@@ -27,7 +27,15 @@
         "verified": false
       }
     ],
-    "verified_events": [],
+    "verified_events": [
+      {
+        "signal_id": "seerist:verified:apac-0007",
+        "title": "Typhoon-driven port closure at Kaohsiung",
+        "verified_at": "2026-04-13T08:00:00Z",
+        "verifier": "Seerist analyst desk",
+        "linked_event_id": "seerist:event:apac-0007"
+      }
+    ],
     "breaking_news": [],
     "news": []
   },
@@ -57,12 +65,28 @@
     ],
     "scribe": [],
     "wod_searches": [],
-    "analysis_reports": [],
+    "analysis_reports": [
+      {
+        "report_id": "seerist:analysis:apac-2026-04-002",
+        "title": "Taiwan Strait shipping risk Q2 2026",
+        "published_at": "2026-04-09T00:00:00Z",
+        "url": "https://example.com/seerist/taiwan-strait-q2"
+      }
+    ],
     "risk_ratings": {
-      "CN": {"overall": "High", "political": "High", "security": "High", "operational": "Medium"},
-      "TW": {"overall": "Medium", "political": "High", "security": "Medium", "operational": "Low"}
+      "TW": {"overall": "Medium", "political": "Medium", "security": "Medium", "operational": "Medium", "trend": "stable"},
+      "CN": {"overall": "Medium", "political": "High", "security": "Medium", "operational": "Medium", "trend": "stable"}
     }
   },
-  "poi_alerts": [],
+  "poi_alerts": [
+    {
+      "signal_id": "seerist:poi:apac-001",
+      "facility": "Kaohsiung Manufacturing Hub",
+      "coordinates": [120.30, 22.62],
+      "radius_km": 50,
+      "matching_events": ["seerist:event:apac-0007"],
+      "nearest_event_km": 4
+    }
+  ],
   "source_provenance": "seerist"
 }
