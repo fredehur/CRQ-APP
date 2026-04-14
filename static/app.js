@@ -2305,15 +2305,15 @@ async function renderRsmContent(region) {
   if (!state.rsmBriefs[region]) {
     body.innerHTML = `<p style="color:#6e7681;font-size:11px;padding:12px 16px">Loading...</p>`;
     const data = await fetchJSON(`/api/rsm/${region.toLowerCase()}`);
-    state.rsmBriefs[region] = data || { flash: null, intsum: null };
+    state.rsmBriefs[region] = data || { flash: null, intsum: null, daily: null };
   }
 
   const brief = state.rsmBriefs[region];
   const r     = region.toLowerCase();
 
-  // Default active tab: flash if available, else intsum
+  // Default active tab: flash > daily > intsum
   if (!state.rsmActiveTab[region]) {
-    state.rsmActiveTab[region] = brief?.flash ? 'flash' : 'intsum';
+    state.rsmActiveTab[region] = brief?.flash ? 'flash' : (brief?.daily ? 'daily' : 'intsum');
   }
   const activeTab = state.rsmActiveTab[region];
 
@@ -2331,6 +2331,7 @@ async function renderRsmContent(region) {
   const tabBar = `
     <div style="border-bottom:1px solid #21262d;display:flex;align-items:center;padding:0 8px;flex-shrink:0">
       ${_tabBtn('flash', '⚡ Flash Alert')}
+      ${_tabBtn('daily', 'Daily')}
       ${_tabBtn('intsum', 'INTSUM')}
       <a href="/api/rsm/${r}/pdf?type=${activeTab}" download
          style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:3px;
@@ -2341,11 +2342,12 @@ async function renderRsmContent(region) {
   function _tabContent(type) {
     const content = brief?.[type];
     if (!content) {
-      const typeLabel = type === 'flash' ? 'flash alert' : 'INTSUM brief';
+      const typeLabel = type === 'flash' ? 'flash alert' : (type === 'daily' ? 'daily brief' : 'INTSUM brief');
+      const headerLabel = type === 'flash' ? '⚡ Flash Alert' : (type === 'daily' ? 'Daily Brief' : 'Weekly INTSUM');
       return `
         <div style="padding:20px 16px">
           <div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:#484f58;margin-bottom:8px">
-            ${type === 'flash' ? '⚡ Flash Alert' : 'Weekly INTSUM'}
+            ${headerLabel}
           </div>
           <div style="font-size:11px;color:#6e7681">No ${typeLabel} available for ${region}.</div>
           <div style="margin-top:6px;font-size:10px;color:#484f58">

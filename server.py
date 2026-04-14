@@ -126,9 +126,11 @@ async def get_rsm_status():
         base = OUTPUT / "regional" / r
         intsum_files = list(base.glob(f"rsm_brief_{r}_*.md")) if base.exists() else []
         flash_files  = list(base.glob(f"rsm_flash_{r}_*.md"))  if base.exists() else []
+        daily_files  = list(base.glob(f"rsm_daily_{r}_*.md"))  if base.exists() else []
         result[region] = {
             "has_intsum": len(intsum_files) > 0,
             "has_flash":  len(flash_files)  > 0,
+            "has_daily":  len(daily_files)  > 0,
         }
     return result
 
@@ -153,12 +155,13 @@ async def get_rsm_brief(region: str):
         "region": r,
         "intsum": _latest_md(f"rsm_brief_{r_lower}_*.md"),
         "flash":  _latest_md(f"rsm_flash_{r_lower}_*.md"),
+        "daily":  _latest_md(f"rsm_daily_{r_lower}_*.md"),
     }
 
 
 @app.get("/api/rsm/{region}/pdf")
-async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(flash|intsum)$")):
-    """Export an RSM brief (FLASH or INTSUM) as a downloadable PDF."""
+async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(flash|intsum|daily)$")):
+    """Export an RSM brief (FLASH, INTSUM, or DAILY) as a downloadable PDF."""
     import io
     import tempfile
     import os
@@ -179,6 +182,9 @@ async def get_rsm_brief_pdf(region: str, type: str = Query("intsum", pattern="^(
     if type == "flash":
         md_path = _latest_md(f"rsm_flash_{r_lower}_*.md")
         label = "FLASH"
+    elif type == "daily":
+        md_path = _latest_md(f"rsm_daily_{r_lower}_*.md")
+        label = "DAILY"
     else:
         md_path = _latest_md(f"rsm_brief_{r_lower}_*.md")
         label = "INTSUM"
