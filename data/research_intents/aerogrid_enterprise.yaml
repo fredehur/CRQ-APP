@@ -1,0 +1,222 @@
+register_id: aerogrid_enterprise
+register_name: AeroGrid Enterprise
+industry: energy
+sub_industry: renewable-energy-manufacturing
+geography:
+  primary:
+    - Global
+  secondary:
+    - North America
+    - Europe
+scenarios:
+  AE-001:
+    name: System intrusion
+    threat_terms:
+      - persistent access attacks
+      - OT/SCADA compromise
+      - network infiltration
+      - manufacturing system breach
+      - APT targeting energy
+    asset_terms:
+      - SCADA networks
+      - OT systems
+      - manufacturing control systems
+      - industrial networks
+      - blade production infrastructure
+    industry_terms:
+      - wind turbine manufacturing
+      - renewable energy operations
+      - industrial control systems
+      - energy infrastructure security
+      - manufacturing facility networks
+    time_focus_years: 2
+    notes: Adversary gains persistent access to OT/SCADA networks or corporate IT across manufacturing and service divisions, representing critical operational risk to turbine production and service delivery. Focus on intrusion techniques targeting manufacturing environments and energy sector OT infrastructure.
+  AE-002:
+    name: Ransomware
+    threat_terms:
+      - ransomware campaigns
+      - encryption attacks
+      - operational shutdown
+      - OT ransomware
+      - industrial extortion
+    asset_terms:
+      - manufacturing systems
+      - OT/SCADA networks
+      - enterprise IT systems
+      - production facilities
+      - service division networks
+    industry_terms:
+      - energy sector ransomware
+      - manufacturing ransomware
+      - industrial operations disruption
+      - renewable energy attacks
+      - critical infrastructure threats
+    time_focus_years: 2
+    notes: Ransomware encrypts corporate IT and OT systems across manufacturing and service divisions, causing operational shutdown and ransom demands. High-value scenario affecting both production capacity and service delivery across global operations.
+  AE-003:
+    name: Accidental disclosure
+    threat_terms:
+      - misconfiguration exposure
+      - unintentional data leakage
+      - human error disclosure
+      - cloud storage misconfiguration
+      - access control failure
+    asset_terms:
+      - proprietary turbine designs
+      - customer contracts
+      - employee data
+      - intellectual property repositories
+      - design documentation
+    industry_terms:
+      - manufacturing IP protection
+      - energy sector data security
+      - industrial design confidentiality
+      - competitive advantage protection
+      - research and development security
+    time_focus_years: 2
+    notes: Unintentional exposure of proprietary turbine designs, customer contracts, or employee data through misconfiguration or human error. Lower probability but significant IP and competitive risk scenario affecting core manufacturing advantage.
+  AE-004:
+    name: Physical threat
+    threat_terms:
+      - physical sabotage
+      - site infiltration
+      - equipment destruction
+      - supply chain sabotage
+      - infrastructure vandalism
+    asset_terms:
+      - manufacturing plants
+      - wind farm sites
+      - service depots
+      - critical equipment
+      - facility infrastructure
+    industry_terms:
+      - energy infrastructure security
+      - manufacturing facility protection
+      - renewable energy asset security
+      - critical infrastructure defense
+      - supply chain vulnerability
+    time_focus_years: 3
+    notes: Physical attack or sabotage at manufacturing plants, wind farm sites, or service depots poses operational and safety risks. Lower probability scenario requiring focus on physical security measures and facility hardening in renewable energy sector.
+  AE-005:
+    name: Insider misuse
+    threat_terms:
+      - insider threat
+      - malicious insider
+      - IP exfiltration
+      - employee data theft
+      - negligent disclosure
+    asset_terms:
+      - proprietary turbine designs
+      - maintenance algorithms
+      - customer data
+      - technical documentation
+      - predictive models
+    industry_terms:
+      - manufacturing insider threats
+      - energy sector employee risk
+      - intellectual property theft
+      - research and development security
+      - supply chain insider risk
+    time_focus_years: 2
+    notes: Malicious or negligent insider exfiltrates proprietary turbine designs, maintenance algorithms, or customer data. Moderate probability scenario targeting core competitive advantages and requiring robust access controls and employee monitoring.
+  AE-006:
+    name: DoS attack
+    threat_terms:
+      - denial of service
+      - DDoS attacks
+      - availability disruption
+      - platform outage
+      - network flooding
+    asset_terms:
+      - remote monitoring platforms
+      - telemetry systems
+      - maintenance scheduling platforms
+      - customer portals
+      - cloud services
+    industry_terms:
+      - energy operations monitoring
+      - renewable energy management systems
+      - predictive maintenance platforms
+      - wind farm telemetry
+      - service delivery platforms
+    time_focus_years: 2
+    notes: Denial-of-service attack disrupts remote monitoring, live telemetry, or maintenance scheduling platforms. Moderate probability scenario affecting service delivery and operational visibility across wind farm network.
+  AE-007:
+    name: Scam or fraud
+    threat_terms:
+      - business email compromise
+      - procurement fraud
+      - phishing attacks
+      - social engineering
+      - account takeover
+    asset_terms:
+      - executive email accounts
+      - supplier payment systems
+      - contract repositories
+      - financial systems
+      - vendor relationships
+    industry_terms:
+      - energy sector procurement
+      - supply chain fraud
+      - manufacturing payments
+      - business operations security
+      - financial transaction security
+    time_focus_years: 2
+    notes: Business email compromise or procurement fraud targeting supplier payments, contract negotiations, or executive accounts. Lower-value but higher-probability scenario affecting financial controls and vendor relationships.
+  AE-008:
+    name: Defacement
+    threat_terms:
+      - web defacement
+      - website compromise
+      - public-facing attack
+      - reputational attack
+      - customer portal breach
+    asset_terms:
+      - public website
+      - customer portal
+      - web infrastructure
+      - brand reputation
+      - customer-facing services
+    industry_terms:
+      - energy sector reputation
+      - renewable energy brand
+      - customer trust
+      - public perception
+      - marketing infrastructure
+    time_focus_years: 2
+    notes: Public-facing website or customer portal defaced, causing reputational damage and loss of customer confidence. Lowest-value scenario but impacts brand perception and customer relationships in renewable energy market.
+  AE-009:
+    name: System failure
+    threat_terms:
+      - critical system failure
+      - infrastructure outage
+      - platform breakdown
+      - service interruption
+      - cascading failure
+    asset_terms:
+      - predictive maintenance platforms
+      - wind farm telemetry
+      - monitoring infrastructure
+      - data processing systems
+      - analytics engines
+    industry_terms:
+      - wind farm operations
+      - renewable energy monitoring
+      - predictive maintenance technology
+      - energy management systems
+      - operational technology reliability
+    time_focus_years: 2
+    notes: Critical failure across predictive maintenance platforms or wind farm telemetry causes unplanned downtime and service disruption. Moderate-to-high probability operational risk scenario affecting service delivery and revenue generation.
+query_modifiers:
+  news_set:
+    - "{threat} {asset} attack {year}"
+    - "{industry} {threat} {year}"
+    - "{threat} {asset} {industry}"
+    - "wind turbine {threat} {year}"
+    - "renewable energy {asset} {year}"
+  doc_set:
+    - "{threat} {asset} report pdf"
+    - "{industry} {threat} assessment"
+    - "{threat} {asset} impact cost"
+    - "manufacturing {threat} mitigation"
+    - "energy {asset} security standard"

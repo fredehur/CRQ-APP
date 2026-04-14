@@ -1,0 +1,227 @@
+register_id: wind_power_plant
+register_name: Wind Power Plant
+industry: energy
+sub_industry: renewable_energy
+geography:
+  primary:
+    - north_america
+    - europe
+  secondary:
+    - asia_pacific
+scenarios:
+  WP-001:
+    name: System intrusion
+    threat_terms:
+      - persistent access OT systems
+      - SCADA infiltration
+      - wind farm network intrusion
+      - operational technology compromise
+      - control system breach
+    asset_terms:
+      - SCADA control systems
+      - wind turbine controllers
+      - grid connection infrastructure
+      - operational technology networks
+      - remote monitoring systems
+    industry_terms:
+      - wind power operator
+      - renewable energy infrastructure
+      - critical energy assets
+      - distributed generation systems
+      - utility-scale wind farms
+    time_focus_years: 3
+    notes: |
+      Adversary gaining persistent access to OT/SCADA systems poses significant risk of sabotage, data theft, and ransomware staging. Wind farm operators increasingly face targeted intrusions from state-sponsored and criminal groups seeking to disrupt energy supply or establish long-dwell persistent access. Focus on recent ICS/OT intrusion patterns and SCADA-specific attack vectors documented by Dragos, CISA, and energy sector ISACs.
+  WP-002:
+    name: Ransomware
+    threat_terms:
+      - OT ransomware
+      - SCADA encryption attacks
+      - wind turbine ransomware
+      - industrial control system encryption
+      - energy sector extortion
+    asset_terms:
+      - wind turbine control systems
+      - SCADA infrastructure
+      - grid management systems
+      - generation capacity
+      - turbine monitoring systems
+    industry_terms:
+      - energy operator resilience
+      - critical infrastructure protection
+      - wind power security
+      - renewable energy disruption
+      - grid reliability
+    time_focus_years: 2
+    notes: |
+      Ransomware targeting OT/SCADA systems can cause full site shutdown and loss of grid generation capacity. Recent incidents like Heartland Exco and Colonial Pipeline demonstrate ransomware impact on energy infrastructure. Prioritize recent case studies, incident response costs, recovery timelines, and sector-specific ransomware variants identified by Dragos and CISA energy advisories.
+  WP-003:
+    name: Accidental disclosure
+    threat_terms:
+      - misconfiguration exposure
+      - unintentional data leakage
+      - cloud storage misconfiguration
+      - operational data exposure
+      - grid configuration disclosure
+    asset_terms:
+      - grid connection configurations
+      - maintenance schedules
+      - operational data
+      - system documentation
+      - wind farm topology data
+    industry_terms:
+      - energy operator data security
+      - infrastructure information protection
+      - wind farm operational transparency
+      - sensitive utility data
+      - grid architecture disclosure
+    time_focus_years: 2
+    notes: |
+      Unintentional exposure of grid connection configurations and operational data through misconfigured cloud storage, public repositories, or improper access controls. Search for incident patterns involving energy operators, cloud misconfiguration incidents, and data exposure impact assessments from SANS and Verizon DBIR reports.
+  WP-004:
+    name: Physical threat
+    threat_terms:
+      - physical sabotage
+      - infrastructure damage
+      - unauthorized site access
+      - deliberate equipment destruction
+      - drone-based attack
+    asset_terms:
+      - wind turbines
+      - electrical substations
+      - grid connection points
+      - transmission infrastructure
+      - remote unmanned sites
+    industry_terms:
+      - energy infrastructure security
+      - critical asset protection
+      - wind farm physical security
+      - energy sector vulnerabilities
+      - remote site protection
+    time_focus_years: 3
+    notes: |
+      Physical attacks on remote unmanned wind park sites including deliberate damage to turbines, substations, and grid infrastructure. Research physical security breaches at renewable energy facilities, insider physical threats, and environmental activism-driven sabotage. Include case studies from energy regulatory filings and security assessment reports from utility operators.
+  WP-005:
+    name: Insider misuse
+    threat_terms:
+      - insider privilege abuse
+      - malicious insider actions
+      - negligent operator access
+      - unauthorized system modification
+      - insider sabotage
+    asset_terms:
+      - turbine control systems
+      - grid connection configurations
+      - SCADA access credentials
+      - operational technology networks
+      - administrative access
+    industry_terms:
+      - energy sector insider threat
+      - wind farm operations personnel
+      - critical infrastructure insider risk
+      - utility employee threat
+      - access control management
+    time_focus_years: 3
+    notes: |
+      Malicious or negligent insiders misusing access to turbine control systems and grid configurations. Focus on energy sector insider threat statistics, vetting failures, access control best practices, and case studies from utility incident disclosures. Reference CERT insider threat research and energy-specific insider risk management frameworks.
+  WP-006:
+    name: DoS attack
+    threat_terms:
+      - denial of service attack
+      - DDoS energy infrastructure
+      - communication disruption
+      - remote monitoring outage
+      - SCADA communication jamming
+    asset_terms:
+      - SCADA communications
+      - remote monitoring systems
+      - grid management networks
+      - control system connectivity
+      - turbine visibility systems
+    industry_terms:
+      - energy operational resilience
+      - wind farm availability
+      - critical infrastructure disruption
+      - utility network availability
+      - generation control systems
+    time_focus_years: 2
+    notes: |
+      Denial-of-service attacks disrupting remote monitoring and SCADA communications, causing loss of operational visibility. Search for DoS incidents affecting energy operators, SCADA communication vulnerabilities, and impact assessment of monitoring loss. Include CISA alerts and Dragos threat briefings on energy-sector DoS attacks.
+  WP-007:
+    name: Scam or fraud
+    threat_terms:
+      - business email compromise
+      - payment fraud
+      - invoice fraud
+      - credential phishing
+      - social engineering
+    asset_terms:
+      - email systems
+      - payment processing
+      - contractor invoicing
+      - energy trading accounts
+      - financial systems
+    industry_terms:
+      - energy sector fraud
+      - utility operator fraud
+      - critical infrastructure business crime
+      - energy trading fraud
+      - contractor payment systems
+    time_focus_years: 2
+    notes: |
+      Business email compromise and payment fraud targeting maintenance contractor invoices and energy trading accounts. Research BEC attack patterns in utilities, phishing success rates in energy operators, and fraud recovery case studies. Reference FBI IC3 reports and industry-specific BEC intelligence from energy ISACs.
+  WP-008:
+    name: Defacement
+    threat_terms:
+      - website defacement
+      - web page compromise
+      - public-facing attack
+      - website vandalism
+      - reputational attack
+    asset_terms:
+      - public website
+      - corporate web presence
+      - operator portal
+      - brand assets
+      - customer communication
+    industry_terms:
+      - energy company reputation
+      - utility brand damage
+      - public infrastructure perception
+      - operator transparency
+      - stakeholder communication
+    time_focus_years: 2
+    notes: |
+      Public-facing operator website defacement causing minor reputational impact. Search for defacement case studies in energy sector, impact on public perception, incident response costs, and recovery timelines. Include website security best practices from OWASP and energy sector website hardening guidance.
+  WP-009:
+    name: System failure
+    threat_terms:
+      - system failure cascade
+      - critical system outage
+      - monitoring system failure
+      - control system breakdown
+      - software failure
+    asset_terms:
+      - turbine monitoring systems
+      - grid management systems
+      - SCADA infrastructure
+      - generation control systems
+      - operational technology platforms
+    industry_terms:
+      - wind farm reliability
+      - generation downtime
+      - operational technology stability
+      - energy infrastructure resilience
+      - system availability management
+    time_focus_years: 3
+    notes: |
+      Critical failure of turbine monitoring and grid management systems causing unplanned downtime and generation loss. Research failure modes in wind farm SCADA systems, mean time to recovery data, generation loss impact, and redundancy design patterns. Include IEEE and energy standards documentation on system resilience.
+query_modifiers:
+  news_set:
+    - "{threat} {asset} attack {year}"
+    - "{industry} {threat} {year}"
+    - "{threat} {asset} {industry}"
+  doc_set:
+    - "{threat} {asset} report pdf"
+    - "{industry} {threat} assessment"
+    - "{threat} {asset} impact cost"
