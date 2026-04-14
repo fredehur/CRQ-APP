@@ -42,7 +42,7 @@ This spec redesigns the Risk Register to put discovery first, wires stage-aware 
 | width | 22 | 1fr | 92 | 60 | 40 |
 
 The SOURCES column renders:
-- Up to 3 tier badges (`T1 T1 T2`) — mapped from the scenario's top 3 sources
+- Up to 3 tier badges (`T1 T1 T2`) — mapped from the scenario's top 3 sources by composite score (same ordering as the Evidence & Sources list). If the scenario has more than 3 sources only the top 3 tiers are shown in the list column; the full list still renders in the detail pane.
 - `⚠ NO COV` pill (amber) if `status == "no_authoritative_coverage"`
 - `—` dim dash if no snapshot exists for the scenario yet
 
@@ -70,8 +70,8 @@ def run_snapshot(
 ) -> Snapshot:
 ```
 
-- `on_progress` is called at each stage transition AND each scenario completion. The callback receives a dict: `{"stage": "discovery"|"scraping"|"summarizing", "scenario_id": sid, "status": "running"|"done", "counts": {"discovery": {"done": N, "total": M}, ...}}`. Callback is optional; tests and CLI pass `None`.
-- `scenario_id` when set restricts the pipeline to one scenario. Used for per-scenario reruns (see 2.3).
+- `on_progress` is called at each stage transition AND each scenario completion. The callback receives a dict: `{"stage": "discovery"|"scraping"|"summarizing", "scenario_id": sid, "status": "running"|"done", "counts": {"discovery": {"done": N, "total": M}, ...}}`. The `counts` semantics: `done` is the number of scenarios that have completed that stage; `total` is the number of scenarios the run is processing (9 for a register-wide run, 1 for a per-scenario rerun). Callback is optional; tests and CLI pass `None`.
+- `scenario_id` when set restricts the pipeline to one scenario AND **skips the final `write_snapshot` call** — the function returns a `Snapshot` object with just that scenario filled in, and the caller is responsible for merging + writing. Used for per-scenario reruns (see 2.3). Full-register runs still write normally.
 
 **Server change** — `server.py`:
 - `_research_runs[run_id]` gains `progress: dict` and `lock: threading.Lock`. The BackgroundTask closure passes `on_progress=_make_progress_writer(run_id)` which acquires the lock, deep-updates the progress dict, releases.
@@ -91,12 +91,11 @@ def run_snapshot(
 
 **Endpoint** — `POST /api/research/run?register=X&scenario=Y` — same handler as the register-wide run, just passes `scenario_id` through.
 
-**Merge logic** (load-bearing — own module, own tests):
-1. Load latest snapshot for the register via `list_snapshot_paths(register_id)` → `read_snapshot(path)`
-2. Run `run_snapshot(register_id, scenario_id=Y, on_progress=cb)` — pipeline runs discovery/scrape/summarize for one scenario only, returns a `Snapshot` with just that scenario filled in
-3. Construct merged snapshot: copy original, replace the entry with `scenario_id == Y`, bump `started_at`/`completed_at`, recompute hash
-4. **intent_hash stays the same** — the intent yaml didn't change
-5. Write new snapshot file via `write_snapshot()` — preserves history
+**Merge logic** (load-bearing — own module `tools/source_librarian/snapshot_merge.py`, own tests):
+1. Load latest snapshot for the register via `list_snapshot_paths(register_id)` → `read_snapshot(path)`. If none exists, error — per-scenario rerun requires a base snapshot.
+2. Run `run_snapshot(register_id, scenario_id=Y, on_progress=cb)` — pipeline runs discovery/scrape/summarize for one scenario only, returns a `Snapshot` with just that scenario filled in. **Does not write to disk** (see 2.2).
+3. Construct merged snapshot: copy original, replace the entry with `scenario_id == Y`, bump `started_at`/`completed_at`. The filename's short hash (the `_<hash8>.json` suffix, recomputed inside `snapshot_filename()`) changes because the content changed; **`intent_hash` stays the same** because the intent yaml didn't change.
+4. Write new snapshot file via `write_snapshot()` — preserves the previous file on disk as history.
 
 **UI** — small `↻ rerun this one` link in the Evidence & Sources header, right of `"3 authoritative · 2h ago"`. ~6 lines of JS.
 
@@ -150,16 +149,17 @@ Both states replace the Evidence & Sources section in-slot. No `alert()` modals 
 ```
 
 **Budgets (raised per user request):**
-- Max **5 iterations** per auto-tune session
-- Max **~$0.50 USD** of Haiku + Tavily + Firecrawl spend per session
-- Cancellable from UI at any point
+- **Iteration count is the primary budget: max 5 iterations.** Each iteration = one tuner call + one validator call + one discovery rerun.
+- **Cost is a soft secondary budget: ~$0.50 USD estimated per session.** Cost tracking is approximate — we count Haiku token usage from the SDK response and add a fixed per-iteration estimate for Tavily/Firecrawl calls (we don't have exact billing integration for those). The cost budget acts as a safety net against pathological cases, not a precise meter.
+- **Cancellable from UI at any point** via a cooperative `threading.Event` checked between iterations.
 
 **Agents** — two new sub-agents in `.claude/agents/`:
 
 1. **`intent-tuner-agent`** (Haiku)
    - **Input**: current intent yaml for the scenario, the rejected candidates list with reasons, the scenario description, a list of what's been tried in prior iterations this session
-   - **Output**: a JSON diff `{add_threat_terms: [...], remove_threat_terms: [...], add_asset_terms: [...], ...}` + a `reasoning` field explaining why
-   - **Stop hook**: validates the output is parseable JSON matching the diff schema
+   - **Output**: a JSON diff `{add_threat_terms: [...], remove_threat_terms: [...], add_asset_terms: [...], remove_asset_terms: [...], add_industry_terms: [...], remove_industry_terms: [...]}` + a `reasoning` field explaining why
+   - **Scope limit (v1):** the diff can ONLY modify the three term lists. It cannot change `time_focus_years`, `query_modifiers`, scenario name, or any other field of the intent yaml. This keeps the tuner's action surface narrow and auditable.
+   - **Stop hook**: validates the output is parseable JSON matching the diff schema and that only the six allowed keys appear
    - **Model**: `claude-haiku-4-5-20251001`
 
 2. **`intent-tuner-validator-agent`** (Haiku)
@@ -232,7 +232,7 @@ def read_log(register_id: str) -> list[dict]: ...  # used only by tests in v1
 
 **When shown**: if `load_intent(register_id).current_hash != latest_snapshot.intent_hash`.
 
-**Where**: small amber pill in the register header, right of the snapshot rollup: `⚠ INTENT CHANGED — RERUN`. Clicking it does the same thing as the REFRESH button but scrolls the button into view first.
+**Where**: small amber pill in the register header, right of the snapshot rollup: `⚠ INTENT CHANGED — RERUN`. **Informational only, not clickable** — the REFRESH button is already in the same header row and is the action. The badge just signals *why* you'd want to click it.
 
 **Implementation**: a new helper `intent_hash_current(register_id) -> str` in `tools/source_librarian/intents.py` (reuses the existing `intent_hash()` function on the raw yaml). The `/api/research/{register}/latest` endpoint returns both `snapshot.intent_hash` and `current_intent_hash` — client compares.
 
@@ -253,7 +253,7 @@ def read_log(register_id: str) -> list[dict]: ...  # used only by tests in v1
 - `tools/source_librarian/snapshot_merge.py` — per-scenario rerun merge logic (isolated because it's load-bearing and deserves its own tests)
 - `.claude/agents/intent-tuner-agent.md` — tuner sub-agent definition
 - `.claude/agents/intent-tuner-validator-agent.md` — validator sub-agent definition
-- `.claude/hooks/validators/intent-tuner-output.py` — stop hook validating tuner diff JSON schema
+- `.claude/hooks/validators/intent-tuner-output.py` — stop hook validating both the tuner diff JSON schema AND the validator verdict JSON schema (single file, two modes based on `INTENT_TUNER_ROLE` env var)
 - `tests/source_librarian/test_progress_callbacks.py` — progress callback wiring
 - `tests/source_librarian/test_per_scenario_rerun.py` — merge logic including intent_hash preservation
 - `tests/source_librarian/test_tuner.py` — loop termination (found, exhausted, cancelled), budget enforcement, in-memory diff isolation (disk yaml unchanged)
@@ -285,7 +285,7 @@ A run is successful if:
 3. **Refresh feels alive** — during a register-wide run, the user sees real per-scenario progress update at least every 2 seconds (not a silent spinner)
 4. **Cancellation works** — clicking `✕ CANCEL` during a run stops the loop within 5 seconds and leaves the snapshot file untouched
 5. **Per-scenario rerun preserves history** — rerunning WP-001 writes a new snapshot file without touching the existing file on disk, and the merged snapshot has 9 scenarios, not 1
-6. **Auto-tune terminates** — for any input, `run_autotune` returns within `max_iterations + 1` iterations and within the `max_cost_usd` budget, even under adversarial inputs (tuner returning nonsense, validator always rejecting, etc.)
+6. **Auto-tune terminates** — for any input, `run_autotune` returns within `max_iterations` iterations, even under adversarial inputs (tuner returning nonsense, validator always rejecting, zero coverage genuinely available). The cost budget acts as a secondary hard stop in case iteration counting is wrong.
 7. **Tuning log is append-only** — running auto-tune 10 times produces 10 new sessions in the JSONL file; no existing lines are modified
 8. **Stale indicator fires correctly** — editing an intent yaml and reloading the page shows the `⚠ INTENT CHANGED — RERUN` badge; rerunning the register clears it
 9. **Stop hooks pass** — tuner and validator sub-agents both have stop hooks that block malformed output
