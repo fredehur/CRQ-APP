@@ -53,8 +53,8 @@ def _live_collect(region: str, window_days: int) -> dict:
     # Load facility coords for POI search
     poi_alerts = []
     try:
-        profile = json.loads(Path("data/company_profile.json").read_text(encoding="utf-8"))
-        facilities = [f for f in profile.get("facilities", []) if f["region"] == region]
+        sites_doc = json.loads(Path("data/aerowind_sites.json").read_text(encoding="utf-8"))
+        facilities = [s for s in sites_doc.get("sites", []) if s["region"] == region]
         if facilities:
             pois = [[f["lon"], f["lat"], f["poi_radius_km"]] for f in facilities]
             poi_features = client.search_poi(pois, days=window_days)

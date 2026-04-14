@@ -1,0 +1,22 @@
+{
+  "registry_version": "2026-04-14",
+  "source_of_truth": "data/aerowind_sites.json",
+  "sourced_fields": [
+    "site_id (newly assigned, stable)",
+    "name", "region", "country", "lat", "lon", "type", "poi_radius_km"
+  ],
+  "mocked_fields": [
+    "personnel_count", "expat_count", "shift_pattern",
+    "criticality", "produces", "dependencies", "feeds_into",
+    "customer_dependencies", "previous_incidents",
+    "site_lead", "duty_officer", "embassy_contact", "notable_dates",
+    "subtype"
+  ],
+  "notes": [
+    "All personnel counts are plausible mocks in ranges per type (mfg 200-500, service 30-80, office/R&D 15-60).",
+    "~20% of sites assigned criticality=crown_jewel (manufacturing plants holding OT/SCADA + IP).",
+    "feeds_into edges populated for cascade demo: Kaohsiung+Palermo+Gdansk -> Hamburg.",
+    "Replace mocked fields with real values when AeroGrid HR/security data is available; sourced fields stay stable.",
+    "Hamburg Turbine Assembly (company_profile) merged with Hamburg Manufacturing Hub (aerowind_sites) by lat/lon proximity — kept aerowind_sites name."
+  ]
+}
