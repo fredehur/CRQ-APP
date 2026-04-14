@@ -1,0 +1,22 @@
+{
+  "results": [
+    {
+      "url": "https://www.dragos.com/year-in-review-2024",
+      "title": "OT Year in Review 2024",
+      "content": "Wind operators saw 68% YoY increase in OT incidents.",
+      "published_date": "2024-09-15"
+    },
+    {
+      "url": "https://www.bleepingcomputer.com/news/wind-ransomware",
+      "title": "Wind operator hit by ransomware",
+      "content": "European wind operator confirms ransomware.",
+      "published_date": "2025-02-10"
+    },
+    {
+      "url": "https://random-blog.example/wind-attack",
+      "title": "My take on wind attacks",
+      "content": "Some random opinion.",
+      "published_date": "2025-01-01"
+    }
+  ]
+}

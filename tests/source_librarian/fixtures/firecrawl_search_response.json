@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "url": "https://www.dragos.com/year-in-review-2024",
+      "title": "OT Year in Review 2024 (PDF)",
+      "description": "Annual OT threat landscape from Dragos.",
+      "metadata": {"publishedDate": "2024-09-15"}
+    },
+    {
+      "url": "https://www.cisa.gov/sites/default/files/wind-advisory.pdf",
+      "title": "Wind energy advisory",
+      "description": "CISA advisory on wind sector OT exposure.",
+      "metadata": {"publishedDate": "2025-03-01"}
+    }
+  ]
+}
