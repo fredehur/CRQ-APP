@@ -1,0 +1,20 @@
+{
+  "region": "APAC",
+  "collected_at": "2026-04-14T05:00:00Z",
+  "pillar": "physical",
+  "signals": [
+    {
+      "signal_id": "osint:physical:apac-001",
+      "title": "Typhoon track shifting toward Kaohsiung — JMA",
+      "category": "disaster",
+      "pillar": "physical",
+      "severity": 4,
+      "location": {"lat": 22.62, "lon": 120.30, "name": "Kaohsiung, Taiwan", "country_code": "TW"},
+      "url": "https://example.com/typhoon-kaohsiung",
+      "outlet": "Japan Meteorological Agency",
+      "source_count": 3,
+      "published_at": "2026-04-13T22:00:00Z"
+    }
+  ],
+  "source_provenance": "tavily+firecrawl"
+}

@@ -1,0 +1,20 @@
+{
+  "region": "MED",
+  "collected_at": "2026-04-14T05:00:00Z",
+  "pillar": "physical",
+  "signals": [
+    {
+      "signal_id": "osint:physical:med-001",
+      "title": "Wave of port-area protests in Morocco — Reuters",
+      "category": "unrest",
+      "pillar": "physical",
+      "severity": 3,
+      "location": {"lat": 33.59, "lon": -7.61, "name": "Casablanca, Morocco", "country_code": "MA"},
+      "url": "https://example.com/morocco-protests",
+      "outlet": "Reuters",
+      "source_count": 5,
+      "published_at": "2026-04-13T16:00:00Z"
+    }
+  ],
+  "source_provenance": "tavily+firecrawl"
+}
