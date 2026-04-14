@@ -571,9 +571,25 @@ async def get_region_sections(region: str):
     if not path.exists():
         return {}
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+    # Enrich OSINT sources with URLs from osint_signals.json
+    signals = _read_json(OUTPUT / "regional" / region.lower() / "osint_signals.json")
+    if signals and isinstance(signals.get("lead_indicators"), list):
+        url_map = {
+            ind["source_name"]: ind.get("source_url", "")
+            for ind in signals["lead_indicators"]
+            if isinstance(ind, dict) and ind.get("source_name")
+        }
+        sm = data.get("source_metadata", {})
+        osint = sm.get("osint", {})
+        raw_sources = osint.get("sources", [])
+        if raw_sources and isinstance(raw_sources[0], str):
+            osint["sources"] = [{"name": s, "url": url_map.get(s, "")} for s in raw_sources]
+            sm["osint"] = osint
+            data["source_metadata"] = sm
+    return data
 
 
 @app.get("/api/region/{region}/brief")
@@ -1327,6 +1343,64 @@ async def run_register_validation():
         )
     data = _read_json(VALIDATION / "register_validation.json")
     return data or {"status": "no_data"}
+
+
+# ── API: Source Librarian ─────────────────────────────────────────────────
+import uuid as _uuid
+from fastapi import BackgroundTasks
+
+_research_runs: dict[str, dict] = {}
+
+
+def _execute_research(run_id: str, register: str) -> None:
+    """Run snapshot synchronously inside a BackgroundTask thread."""
+    try:
+        from tools.source_librarian import run_snapshot
+        snap = run_snapshot(register)
+        _research_runs[run_id] = {
+            "status": "complete",
+            "register": register,
+            "snapshot": snap.model_dump(mode="json"),
+        }
+    except Exception as exc:
+        log.exception("[source_librarian] run failed")
+        _research_runs[run_id] = {
+            "status": "failed",
+            "register": register,
+            "error": str(exc),
+        }
+
+
+@app.post("/api/research/run")
+async def start_research(register: str, background: BackgroundTasks):
+    """Kick off a source_librarian snapshot for one register. Returns run_id."""
+    run_id = str(_uuid.uuid4())
+    _research_runs[run_id] = {
+        "status": "running",
+        "register": register,
+        "phase": "starting",
+    }
+    background.add_task(_execute_research, run_id, register)
+    return {"run_id": run_id, "status": "running"}
+
+
+@app.get("/api/research/{register}/status/{run_id}")
+async def research_status(register: str, run_id: str):
+    state = _research_runs.get(run_id)
+    if state is None:
+        return {"status": "unknown", "run_id": run_id}
+    if state.get("register") != register:
+        return JSONResponse({"error": "run_id does not match register"}, status_code=404)
+    return state
+
+
+@app.get("/api/research/{register}/latest")
+async def research_latest(register: str):
+    from tools.source_librarian import get_latest_snapshot
+    snap = get_latest_snapshot(register)
+    if snap is None:
+        return {"snapshot": None}
+    return snap.model_dump(mode="json")
 
 
 # ── API: Analyst Baseline ───────────────────────────────────────────────
