@@ -55,6 +55,19 @@ def run_check(script: str, *args) -> int:
     return result.returncode
 
 
+def parse_brief_filename(brief_path: Path) -> tuple[str, str]:
+    """rsm_brief_med_2026-04-14.md → ('MED', 'weekly')
+    rsm_daily_med_2026-04-14.md → ('MED', 'daily')
+    rsm_flash_med_2026-04-14T10-30Z.md → ('MED', 'flash')"""
+    parts = brief_path.stem.split("_")
+    if len(parts) < 3:
+        return ("UNKNOWN", "weekly")
+    kind = parts[1]
+    region = parts[2].upper()
+    cadence = {"brief": "weekly", "daily": "daily", "flash": "flash"}.get(kind, "weekly")
+    return (region, cadence)
+
+
 def main():
     brief_path = find_recent_rsm_brief()
 
@@ -64,10 +77,15 @@ def main():
 
     label = derive_label(brief_path)
     rel_path = brief_path.relative_to(BASE)
-    print(f"RSM STOP HOOK: auditing {rel_path}")
+    region, cadence = parse_brief_filename(brief_path)
+    print(f"RSM STOP HOOK: auditing {rel_path} (region={region}, cadence={cadence})")
 
-    exit_code = run_check("rsm-brief-auditor.py", str(rel_path), label)
-    sys.exit(exit_code)
+    auditor_exit = run_check("rsm-brief-auditor.py", str(rel_path), label)
+    if auditor_exit != 0:
+        sys.exit(auditor_exit)
+
+    context_exit = run_check("rsm-brief-context-checks.py", str(rel_path), region, cadence)
+    sys.exit(context_exit)
 
 
 if __name__ == "__main__":
