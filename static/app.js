@@ -376,10 +376,6 @@ function renderBriefSection(region, d) {
   const contentId = `brief-sections-${region}`;
   return `<div id="${contentId}">
     <div style="color:#6e7681;font-size:11px;padding:4px 0">Loading...</div>
-  </div>
-  <div id="evidence-panel-${region}" style="margin-top:8px;border-top:1px solid #21262d;padding-top:8px">
-    <button class="evidence-toggle" id="evidence-toggle-${region}" onclick="toggleEvidence('${region}')" style="background:none;border:none;color:#6e7681;font-size:10px;cursor:pointer;padding:0;font-family:inherit">▶ Source Evidence</button>
-    <div class="evidence-list" id="evidence-list-${region}" style="display:none;margin-top:6px;padding-left:4px"></div>
   </div>`;
 }
 
@@ -400,7 +396,6 @@ function _fetchBrief(region) {
       const el = document.getElementById(`brief-sections-${region}`);
       if (el) el.innerHTML = `<p style="color:#6e7681;font-size:11px">Brief not available.</p>`;
     });
-  _fetchEvidence(region);
 }
 
 window.toggleSrcBox = function(region, type) {
@@ -478,14 +473,18 @@ function _renderSourceBoxes(sm, headlines, region) {
   const artLabel  = artCount ? `${artCount} articles · 24h` : '';
 
   const corrHtml = sources.length ? sources.map(src => {
-    const name     = esc(src.name || src);
+    const name     = esc(typeof src === 'string' ? src : (src.name || ''));
+    const url      = typeof src === 'object' ? (src.url || '') : '';
     const articles = src.article_count || 1;
     const tier     = articles >= 2 ? 'confirmed' : 'single';
     const tierLbl  = articles >= 2 ? 'CONFIRMED' : '⚠ SINGLE-SOURCE';
     const rowClass = articles >= 2 ? 'crit' : 'high';
+    const nameHtml = url
+      ? `<a class="corr-name corr-name--link" href="${esc(url)}" target="_blank" rel="noopener">${name}</a>`
+      : `<span class="corr-name">${name}</span>`;
     return `<div class="corr-row ${rowClass}">
       <div class="corr-row-top">
-        <span class="corr-name">${name}</span>
+        ${nameHtml}
         <span class="corr-badge ${tier}">${tierLbl}</span>
       </div>
     </div>`;
@@ -3152,6 +3151,16 @@ function _renderScenarioDetail(scenario, valScenario) {
   const scenarioIndex = (window._activeScenarioIndex != null) ? window._activeScenarioIndex : 0;
   const baselineHtml = renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex);
 
+  const readingListZone = `<div id="rr-reading-list-${esc(scenario.scenario_id)}" style="margin:14px;border:1px solid #21262d;border-radius:3px;background:#060a0e">
+    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7a8590;font-family:'IBM Plex Mono',monospace">Reading List</div>
+      <div id="rr-reading-list-meta-${esc(scenario.scenario_id)}" style="font-size:9px;color:#484f58;margin-left:auto;font-family:'IBM Plex Mono',monospace"></div>
+      <button onclick="refreshReadingList('${esc(registerId)}')" id="rr-reading-refresh-btn"
+        style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:3px 9px;font-size:9px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace">↻ REFRESH</button>
+    </div>
+    <div id="rr-reading-list-body-${esc(scenario.scenario_id)}" style="padding:8px 12px;font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace">Loading…</div>
+  </div>`;
+
   el.innerHTML = `
     <div style="padding:14px 20px 12px 20px;border-bottom:1px solid #21262d;background:#060a0e;display:flex;align-items:baseline;justify-content:space-between;gap:12px">
       <div>
@@ -3163,7 +3172,9 @@ function _renderScenarioDetail(scenario, valScenario) {
     ${numbersZone}
     ${recommendationZone}
     <div style="padding:0 14px">${baselineHtml}</div>
-    ${validationZone}`;
+    ${validationZone}
+    ${readingListZone}`;
+  loadReadingListForScenario(registerId, scenario.scenario_id);
 }
 
 function _renderEditZone(scenarioId) {
@@ -4943,3 +4954,131 @@ async function refreshBaselineKnownIds() {
 // ── Init ──────────────────────────────────────────────────────────────
 loadLatestData();
 startEventStream();
+
+// ── Source Librarian reading list ─────────────────────────────────────
+window._readingListCache = window._readingListCache || {}; // {register_id: snapshot}
+
+async function loadReadingListForScenario(registerId, scenarioId) {
+  if (!registerId || !scenarioId) return;
+  let snap = window._readingListCache[registerId];
+  if (!snap) {
+    try {
+      const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/latest`);
+      const data = await resp.json();
+      snap = (data && data.snapshot !== null) ? data : null;
+      if (snap) window._readingListCache[registerId] = snap;
+    } catch (e) {
+      snap = null;
+    }
+  }
+  _renderReadingList(snap, scenarioId);
+}
+
+function _renderReadingList(snap, scenarioId) {
+  const body = document.getElementById(`rr-reading-list-body-${scenarioId}`);
+  const meta = document.getElementById(`rr-reading-list-meta-${scenarioId}`);
+  if (!body) return;
+
+  if (!snap) {
+    body.innerHTML = `<div style="color:#484f58;padding:6px 0">No reading list yet — click ↻ REFRESH to generate.</div>`;
+    if (meta) meta.textContent = '';
+    return;
+  }
+
+  const snapData = snap.scenarios ? snap : snap.snapshot;
+  if (!snapData) {
+    body.innerHTML = `<div style="color:#484f58;padding:6px 0">No reading list yet — click ↻ REFRESH to generate.</div>`;
+    return;
+  }
+
+  if (meta) meta.textContent = `${snapData.register_id || ''} · ${relTime(snapData.completed_at) || ''}`;
+
+  const sc = (snapData.scenarios || []).find(s => s.scenario_id === scenarioId);
+  if (!sc) {
+    body.innerHTML = `<div style="color:#484f58">No coverage for this scenario in latest snapshot.</div>`;
+    return;
+  }
+
+  if (sc.status === 'engines_down') {
+    body.innerHTML = `<div style="color:#f85149">⚠ Engines down on last run — try refresh.</div>`;
+    return;
+  }
+
+  if (sc.status === 'no_authoritative_coverage') {
+    const diag = sc.diagnostics || {};
+    const rejected = (diag.top_rejected || []).slice(0, 3).map(r =>
+      `<li style="color:#6e7681">${esc(r.title || r.url)} <span style="color:#484f58">(${esc(r.reason || '')})</span></li>`
+    ).join('');
+    body.innerHTML = `<div style="color:#d29922;padding-bottom:4px">⚠ No authoritative coverage (${diag.candidates_discovered || 0} candidates discovered, all T4)</div>
+      <ul style="margin:4px 0 0 16px;padding:0">${rejected}</ul>`;
+    return;
+  }
+
+  const rows = (sc.sources || []).map((src, idx) => {
+    const tierColor = src.publisher_tier === 'T1' ? '#3fb950' : src.publisher_tier === 'T2' ? '#58a6ff' : '#d29922';
+    const summary = src.summary
+      ? `<div style="color:#8b949e;line-height:1.6;margin:4px 0;font-family:'IBM Plex Sans',sans-serif;font-style:italic">${esc(src.summary)}</div>`
+      : `<div style="color:#484f58;font-style:italic;margin:4px 0">No summary (${esc(src.scrape_status || '')})</div>`;
+    const figs = (src.figures || []).map(f =>
+      `<span style="display:inline-block;background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;padding:1px 6px;border-radius:2px;margin:2px 4px 2px 0;font-size:9px">${esc(f)}</span>`
+    ).join('');
+    const dateStr = src.published_date || '—';
+    const engines = (src.discovered_by || []).join(' + ');
+    return `<div style="padding:8px 0;border-bottom:1px solid #161b22">
+      <div style="display:flex;align-items:baseline;gap:6px">
+        <span style="color:#484f58;font-size:9px">${idx+1}.</span>
+        <a href="${esc(src.url)}" target="_blank" style="color:#58a6ff;text-decoration:none;font-size:10px;font-weight:600">${esc(src.publisher)}</a>
+        <span style="color:#6e7681">— ${esc(src.title)}</span>
+        <span style="margin-left:auto;color:${tierColor};font-size:9px;font-weight:700">${esc(src.publisher_tier)}·${(src.score || 0).toFixed(2)}</span>
+      </div>
+      ${summary}
+      <div>${figs}</div>
+      <div style="color:#484f58;font-size:9px;margin-top:3px">${esc(dateStr)} · ${esc(engines)}</div>
+    </div>`;
+  }).join('');
+
+  body.innerHTML = rows || `<div style="color:#484f58">No sources.</div>`;
+}
+
+async function refreshReadingList(registerId) {
+  if (!registerId) return;
+  const btn = document.getElementById('rr-reading-refresh-btn');
+  if (btn) { btn.textContent = 'STARTING…'; btn.disabled = true; }
+  let runId = null;
+  try {
+    const resp = await fetch(`/api/research/run?register=${encodeURIComponent(registerId)}`, { method: 'POST' });
+    const data = await resp.json();
+    runId = data.run_id;
+  } catch (e) {
+    if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
+    alert('Failed to start research run');
+    return;
+  }
+  let tick = 0;
+  const poll = async () => {
+    tick += 1;
+    try {
+      const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/status/${encodeURIComponent(runId)}`);
+      const stateResp = await resp.json();
+      if (stateResp.status === 'complete') {
+        if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
+        delete window._readingListCache[registerId];
+        if (stateResp.snapshot) window._readingListCache[registerId] = stateResp.snapshot;
+        if (window.state && window.state.selectedScenarioId) {
+          _renderReadingList(stateResp.snapshot, window.state.selectedScenarioId);
+        }
+        return;
+      }
+      if (stateResp.status === 'failed') {
+        if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
+        alert('Research run failed: ' + (stateResp.error || 'unknown'));
+        return;
+      }
+      if (btn) btn.textContent = `RUNNING ${tick}…`;
+      setTimeout(poll, 5000);
+    } catch (e) {
+      if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
+    }
+  };
+  setTimeout(poll, 2000);
+}
