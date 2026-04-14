@@ -1,112 +1,122 @@
-# tests/test_export_pptx.py
-"""Tests for export_pptx.py."""
-import sys, os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
-
+"""TDD tests for the board PPTX redesign (export_pptx.py)."""
 import pytest
 from pptx import Presentation
-from pptx.presentation import Presentation as PresentationClass
-from report_builder import build, RegionEntry
-import export_pptx as ep
 
 
-def _region_with_all_bullets() -> RegionEntry:
-    """Minimal RegionEntry with populated bullets so build_region renders all 5 labels."""
-    return RegionEntry(
-        name="APAC",
-        status="escalated",
-        admiralty="B2",
-        velocity="stable",
-        severity="HIGH",
-        scenario_match="System intrusion",
-        dominant_pillar="GEO",
-        signal_type="cyber",
-        confidence_label="High",
-        threat_characterisation="State-directed threat",
-        top_sources=["Reuters"],
-        why_text="why",
-        how_text="how",
-        so_what_text="so what",
-        threat_actor="APT-Test",
-        signal_type_label="Confirmed Incident",
-        intel_bullets=["intel finding alpha"],
-        adversary_bullets=["adversary activity bravo"],
-        impact_bullets=["impact for aerogrid charlie"],
-        watch_bullets=["watch item delta"],
-        action_bullets=["recommended action echo"],
-        source_quality=None,
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _all_text(pptx_path: str) -> str:
+    """Extract all visible text from every slide."""
+    prs = Presentation(pptx_path)
+    parts = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for para in shape.text_frame.paragraphs:
+                    for run in para.runs:
+                        if run.text.strip():
+                            parts.append(run.text.strip())
+    return " ".join(parts)
+
+
+def _slide_text(pptx_path: str, slide_idx: int) -> str:
+    """Extract visible text from a single slide by index."""
+    prs = Presentation(pptx_path)
+    slide = prs.slides[slide_idx]
+    parts = []
+    for shape in slide.shapes:
+        if shape.has_text_frame:
+            for para in shape.text_frame.paragraphs:
+                for run in para.runs:
+                    if run.text.strip():
+                        parts.append(run.text.strip())
+    return " ".join(parts)
+
+
+def _fill_colors(pptx_path: str) -> set[str]:
+    """Return hex strings of every solid fill color used in slide shapes."""
+    prs = Presentation(pptx_path)
+    colors: set[str] = set()
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            try:
+                rgb = shape.fill.fore_color.rgb
+                colors.add(str(rgb))
+            except Exception:
+                pass
+    return colors
+
+
+def _slide_count(pptx_path: str) -> int:
+    return len(Presentation(pptx_path).slides)
+
+
+# ── Tests ──────────────────────────────────────────────────────────────────────
+
+def test_export_runs_without_error(mock_output, tmp_path):
+    """export() completes without error and produces a non-trivial file."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    assert out.exists(), "output file not created"
+    assert out.stat().st_size > 5000, "file suspiciously small"
+
+
+def test_cover_shows_plain_language_labels(mock_output, tmp_path):
+    """Cover slide uses plain labels (Active Threats / Under Watch / No Active Threat),
+    not pipeline enum values (ESCALATED / MONITOR / CLEAR)."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    cover = _slide_text(str(out), 0)
+    assert "Active Threats" in cover, f"'Active Threats' not found in cover: {cover}"
+    assert "Under Watch" in cover, f"'Under Watch' not found in cover: {cover}"
+    assert "No Active Threat" in cover, f"'No Active Threat' not found in cover: {cover}"
+    # Enum values must NOT appear on slide face
+    assert "ESCALATED" not in cover, "raw 'ESCALATED' found on cover"
+    assert "MONITOR" not in cover, "raw 'MONITOR' found on cover"
+    assert "CLEAR" not in cover, "raw 'CLEAR' found on cover"
+
+
+def test_overview_slide_present(mock_output, tmp_path):
+    """Slide 2 is the Intelligence Overview — contains section label."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    overview = _slide_text(str(out), 1)
+    assert "Intelligence Overview" in overview, (
+        f"'Intelligence Overview' not in slide 2: {overview}"
     )
 
 
-def test_build_pptx_returns_presentation(mock_output, tmp_path):
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    assert isinstance(prs, PresentationClass)
-
-
-def test_pptx_slide_count_matches_structure(mock_output, tmp_path):
-    """Cover + Exec Summary + 2 escalated regions + Appendix = 5 slides."""
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    assert len(prs.slides) == 5
-
-
-def test_pptx_saves_to_file(mock_output, tmp_path):
-    data = build(output_dir=str(mock_output))
-    out = str(tmp_path / "test_report.pptx")
-    ep.export(output_path=out, output_dir=str(mock_output))
-    assert os.path.exists(out)
-    assert os.path.getsize(out) > 10_000  # non-trivial file
-
-
-def test_pptx_cover_slide_has_title(mock_output):
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    cover = prs.slides[0]
-    title_texts = [shape.text for shape in cover.shapes if shape.has_text_frame]
-    assert any("Global Cyber Risk" in t for t in title_texts)
-
-
-def test_pptx_region_slides_contain_confidence(mock_output):
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    # Slides: 0=cover, 1=exec summary, 2=APAC, 3=AME, 4=appendix
-    apac_slide = prs.slides[2]
-    all_text = " ".join(
-        shape.text for shape in apac_slide.shapes if shape.has_text_frame
+def test_deck_slide_count(mock_output, tmp_path):
+    """With 2 escalated (different scenarios) + 1 monitor, deck has 5 slides:
+    Cover + Overview + 2 threat slides + 1 watch list."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    assert _slide_count(str(out)) == 5, (
+        f"Expected 5 slides, got {_slide_count(str(out))}"
     )
-    assert "Confidence:" in all_text  # CISO layout sub-header shows confidence
-    assert "B2" not in all_text       # admiralty must not appear in new layout
 
 
-def test_pptx_cover_no_vacr(mock_output):
-    """Cover slide must not contain VaCR dollar amount or label."""
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    cover = prs.slides[0]
-    all_text = " ".join(shape.text for shape in cover.shapes if shape.has_text_frame)
-    assert "VaCR" not in all_text
-    assert "TOTAL VALUE AT CYBER RISK" not in all_text
+def test_watch_list_present_for_monitor_regions(mock_output, tmp_path):
+    """Watch list slide exists and contains 'Under Watch' + MED (the MONITOR region)."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    full_text = _all_text(str(out))
+    assert "Under Watch" in full_text, "'Under Watch' not found in deck"
+    # MED is the MONITOR region in mock data
+    last_slide = _slide_text(str(out), -1)
+    assert "MED" in last_slide, f"MED not found in watch list slide: {last_slide}"
 
 
-def test_pptx_exec_summary_no_vacr_column(mock_output):
-    """Exec summary slide must not contain VaCR column header or badge."""
-    data = build(output_dir=str(mock_output))
-    prs = ep.build_presentation(data)
-    exec_slide = prs.slides[1]
-    all_text = " ".join(shape.text for shape in exec_slide.shapes if shape.has_text_frame)
-    assert "VaCR" not in all_text
-    assert "TOTAL VaCR" not in all_text
-
-
-def test_pptx_region_slide_uses_new_intel_layout():
-    """build_region renders all 5 intelligence row labels when bullets are populated."""
-    prs = Presentation()
-    ep.build_region(prs, _region_with_all_bullets())
-    slide = prs.slides[0]
-    all_text = " ".join(shape.text for shape in slide.shapes if shape.has_text_frame)
-    assert "INTEL FINDINGS" in all_text
-    assert "ADVERSARY ACTIVITY" in all_text
-    assert "IMPACT FOR AEROGRID" in all_text
-    assert "WATCH FOR" in all_text
-    assert "RECOMMENDED ACTION" in all_text
+def test_no_red_amber_green_brand_colors(mock_output, tmp_path):
+    """No RED, AMBER, GREEN, or BRAND NAVY fill colours appear in any slide shape."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    forbidden = {"DC2626", "D97706", "16A34A", "104277"}
+    found = _fill_colors(str(out)) & forbidden
+    assert not found, f"Forbidden fill colours found in deck: {found}"

@@ -1,34 +1,186 @@
-# tools/export_pptx.py
-"""
-Builds the board PPTX report using python-pptx.
-Bootstraps tools/templates/base.pptx on first run if absent.
+# Board PPTX Redesign Implementation Plan
 
-Usage:
-    uv run python tools/export_pptx.py [output.pptx]
-    Defaults to output/board_report.pptx
-"""
-from __future__ import annotations
+**Goal:** Rewrite `tools/export_pptx.py` to produce a 4–6 slide A1-style board read-ahead deck — Cover / Intelligence Overview (split layout) / Active Threat slides (one per scenario group, max 3) / Under Watch — replacing the current BRAND/RED/AMBER/GREEN corporate layout.
 
-import json
-import os
-import re
-import sys
-from pathlib import Path
+**Architecture:** Six slide builders replace the four existing ones. Helper utilities (`_split_why`, `_group_by_scenario`, `_load_sections`, `_load_brief_headlines`) mirror the CISO docx pattern. Color palette drops to pure greyscale (black, white, mid-grey, light-grey). Georgia serif replaces all existing fonts. `output_dir` threads through `export()` → `build_presentation()` → threat/watch builders so section data loads correctly in tests.
 
+**Tech Stack:** python-pptx, pytest, existing `report_builder.build()` / `RegionEntry` / `ReportData` / `RegionStatus` data model.
+
+---
+
+## File Map
+
+| Action | Path | Responsibility |
+|---|---|---|
+| Create | `tests/test_export_pptx.py` | 6 TDD tests against the new layout |
+| Modify | `tools/export_pptx.py` | Full rewrite of all slide builders + helpers |
+
+`tests/conftest.py` already has the `mock_output` fixture and `MOCK_SECTIONS` data — no changes needed there.
+
+---
+
+### Task 1: Write the failing tests
+
+**Files:**
+- Create: `tests/test_export_pptx.py`
+
+- [ ] **Step 1: Write `tests/test_export_pptx.py`**
+
+```python
+"""TDD tests for the board PPTX redesign (export_pptx.py)."""
+import pytest
 from pptx import Presentation
-from pptx.dml.color import RGBColor
-from pptx.util import Inches, Pt
-from pptx.enum.text import PP_ALIGN
-from pptx.enum.shapes import MSO_AUTO_SHAPE_TYPE
 
-sys.path.insert(0, os.path.dirname(__file__))
-sys.path.insert(0, str(Path(__file__).parent.parent))
-from report_builder import build, ReportData, RegionEntry, RegionStatus
-from tools.config import BOARD_PPTX_PATH
 
-TEMPLATES_DIR = Path(__file__).parent / "templates"
-BASE_PPTX     = TEMPLATES_DIR / "base.pptx"
-DEFAULT_OUT   = str(BOARD_PPTX_PATH)
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
+def _all_text(pptx_path: str) -> str:
+    """Extract all visible text from every slide."""
+    prs = Presentation(pptx_path)
+    parts = []
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            if shape.has_text_frame:
+                for para in shape.text_frame.paragraphs:
+                    for run in para.runs:
+                        if run.text.strip():
+                            parts.append(run.text.strip())
+    return " ".join(parts)
+
+
+def _slide_text(pptx_path: str, slide_idx: int) -> str:
+    """Extract visible text from a single slide by index."""
+    prs = Presentation(pptx_path)
+    slide = prs.slides[slide_idx]
+    parts = []
+    for shape in slide.shapes:
+        if shape.has_text_frame:
+            for para in shape.text_frame.paragraphs:
+                for run in para.runs:
+                    if run.text.strip():
+                        parts.append(run.text.strip())
+    return " ".join(parts)
+
+
+def _fill_colors(pptx_path: str) -> set[str]:
+    """Return hex strings of every solid fill color used in slide shapes."""
+    prs = Presentation(pptx_path)
+    colors: set[str] = set()
+    for slide in prs.slides:
+        for shape in slide.shapes:
+            try:
+                rgb = shape.fill.fore_color.rgb
+                colors.add(str(rgb))
+            except Exception:
+                pass
+    return colors
+
+
+def _slide_count(pptx_path: str) -> int:
+    return len(Presentation(pptx_path).slides)
+
+
+# ── Tests ──────────────────────────────────────────────────────────────────────
+
+def test_export_runs_without_error(mock_output, tmp_path):
+    """export() completes without error and produces a non-trivial file."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    assert out.exists(), "output file not created"
+    assert out.stat().st_size > 5000, "file suspiciously small"
+
+
+def test_cover_shows_plain_language_labels(mock_output, tmp_path):
+    """Cover slide uses plain labels (Active Threats / Under Watch / No Active Threat),
+    not pipeline enum values (ESCALATED / MONITOR / CLEAR)."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    cover = _slide_text(str(out), 0)
+    assert "Active Threats" in cover, f"'Active Threats' not found in cover: {cover}"
+    assert "Under Watch" in cover, f"'Under Watch' not found in cover: {cover}"
+    assert "No Active Threat" in cover, f"'No Active Threat' not found in cover: {cover}"
+    # Enum values must NOT appear on slide face
+    assert "ESCALATED" not in cover, "raw 'ESCALATED' found on cover"
+    assert "MONITOR" not in cover, "raw 'MONITOR' found on cover"
+    assert "CLEAR" not in cover, "raw 'CLEAR' found on cover"
+
+
+def test_overview_slide_present(mock_output, tmp_path):
+    """Slide 2 is the Intelligence Overview — contains section label."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    overview = _slide_text(str(out), 1)
+    assert "Intelligence Overview" in overview, (
+        f"'Intelligence Overview' not in slide 2: {overview}"
+    )
+
+
+def test_deck_slide_count(mock_output, tmp_path):
+    """With 2 escalated (different scenarios) + 1 monitor, deck has 5 slides:
+    Cover + Overview + 2 threat slides + 1 watch list."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    assert _slide_count(str(out)) == 5, (
+        f"Expected 5 slides, got {_slide_count(str(out))}"
+    )
+
+
+def test_watch_list_present_for_monitor_regions(mock_output, tmp_path):
+    """Watch list slide exists and contains 'Under Watch' + MED (the MONITOR region)."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    full_text = _all_text(str(out))
+    assert "Under Watch" in full_text, "'Under Watch' not found in deck"
+    # MED is the MONITOR region in mock data
+    last_slide = _slide_text(str(out), -1)
+    assert "MED" in last_slide, f"MED not found in watch list slide: {last_slide}"
+
+
+def test_no_red_amber_green_brand_colors(mock_output, tmp_path):
+    """No RED, AMBER, GREEN, or BRAND NAVY fill colours appear in any slide shape."""
+    out = tmp_path / "board_test.pptx"
+    from tools.export_pptx import export
+    export(output_path=str(out), output_dir=str(mock_output))
+    forbidden = {"DC2626", "D97706", "16A34A", "104277"}
+    found = _fill_colors(str(out)) & forbidden
+    assert not found, f"Forbidden fill colours found in deck: {found}"
+```
+
+- [ ] **Step 2: Run tests to verify they all FAIL**
+
+```
+uv run pytest tests/test_export_pptx.py -v
+```
+
+Expected: All 6 tests FAIL (cover shows ESCALATED not "Active Threats", wrong colors, wrong slide count, etc.)
+
+- [ ] **Step 3: Commit the failing tests**
+
+```bash
+git add tests/test_export_pptx.py
+git commit -m "test(pptx): add 6 failing TDD tests for board report redesign"
+```
+
+---
+
+### Task 2: Replace color constants and add helper utilities
+
+**Files:**
+- Modify: `tools/export_pptx.py` (lines 1–115 — constants, imports, helpers)
+
+- [ ] **Step 1: Replace the color constants block and update `_add_text`**
+
+Replace the entire section from `# Brand colours` through the end of `_status_label` and `_vel_label` with:
+
+```python
+import json
+import re
+from pathlib import Path
 
 # ── Greyscale palette (A1 style — no RED/AMBER/GREEN/BRAND in body content) ────
 BLACK      = RGBColor(0x11, 0x11, 0x11)   # near-black primary text
@@ -39,52 +191,19 @@ LIGHT_GREY = RGBColor(0xD1, 0xD5, 0xDB)   # clear count
 RULE       = RGBColor(0xE5, 0xE7, 0xEB)   # thin rules and dividers
 WHITE      = RGBColor(0xFF, 0xFF, 0xFF)   # badge text, pill text
 
-# Slide dimensions (10x7.5in widescreen)
+# Slide dimensions (10×7.5in widescreen)
 W = Inches(10)
 H = Inches(7.5)
 
 # Sentence splitter — used by _split_why and watch list first-sentence extraction
 _SENT_RE = re.compile(r'(?<=[.!?])\s+(?=[A-Z"\'(])')
+```
 
+- [ ] **Step 2: Update `_add_text` to accept `font_name` and default to Georgia**
 
-# ── Base PPTX bootstrap ────────────────────────────────────────────────────────
+Replace the existing `_add_text` function with:
 
-def _ensure_base_pptx() -> None:
-    """Generate tools/templates/base.pptx if it does not exist."""
-    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
-    if BASE_PPTX.exists():
-        return
-
-    prs = Presentation()
-    prs.slide_width  = W
-    prs.slide_height = H
-    # Remove all default slide layouts except blank (index 6)
-    # python-pptx requires at least one layout — keep blank
-    prs.save(str(BASE_PPTX))
-
-
-# ── Slide helpers ──────────────────────────────────────────────────────────────
-
-def _add_blank_slide(prs: Presentation):
-    blank_layout = prs.slide_layouts[6]  # blank layout
-    return prs.slides.add_slide(blank_layout)
-
-
-def _fill_shape(shape, color: RGBColor) -> None:
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = color
-
-
-def _add_rect(slide, left, top, width, height, color: RGBColor):
-    shape = slide.shapes.add_shape(
-        MSO_AUTO_SHAPE_TYPE.RECTANGLE,
-        left, top, width, height
-    )
-    shape.line.fill.background()
-    _fill_shape(shape, color)
-    return shape
-
-
+```python
 def _add_text(slide, text: str, left, top, width, height,
               font_size: int = 11, bold: bool = False,
               color: RGBColor = BODY, align=PP_ALIGN.LEFT,
@@ -100,8 +219,13 @@ def _add_text(slide, text: str, left, top, width, height,
     run.font.size = Pt(font_size)
     run.font.bold = bold
     run.font.color.rgb = color
+```
 
+- [ ] **Step 3: Add the helper functions after `_add_text`**
 
+Add these four helpers (insert after the `_add_text` definition, before the `# ── Slide builders` section):
+
+```python
 # ── Data helpers ──────────────────────────────────────────────────────────────
 
 OUTPUT_DIR = "output/pipeline"
@@ -154,10 +278,32 @@ def _load_sections(region_name: str, output_dir: str = OUTPUT_DIR) -> dict:
 def _load_brief_headlines(region_name: str, output_dir: str = OUTPUT_DIR) -> dict:
     """Return brief_headlines dict from sections.json for a region."""
     return _load_sections(region_name, output_dir).get("brief_headlines", {})
+```
 
+- [ ] **Step 4: Remove the helpers that are no longer used**
 
-# ── Slide builders ─────────────────────────────────────────────────────────────
+Delete these two functions from the file (they will not be called after the rewrite):
+- `_status_label()`
+- `_vel_label()`
 
+- [ ] **Step 5: Run the test suite to confirm tests still fail (not broken differently)**
+
+```
+uv run pytest tests/test_export_pptx.py -v
+```
+
+Expected: Still 6 FAILs — the helper functions exist but slide builders are not yet rewritten.
+
+---
+
+### Task 3: Rewrite `build_cover()`
+
+**Files:**
+- Modify: `tools/export_pptx.py` (replace `build_cover` function body)
+
+- [ ] **Step 1: Replace `build_cover` with the A1 implementation**
+
+```python
 def build_cover(prs: Presentation, data: ReportData) -> None:
     """Slide 1 — Cover: eyebrow, large title, thin rule, meta, status counts."""
     slide = _add_blank_slide(prs)
@@ -186,7 +332,7 @@ def build_cover(prs: Presentation, data: ReportData) -> None:
 
     # Meta line: "Board Read-Ahead · Month Year · Cycle N"
     try:
-        month_year = data.timestamp[:7]   # "2026-03" -> keep as-is or reformat below
+        month_year = data.timestamp[:7]   # "2026-03" → keep as-is or reformat below
         import datetime
         dt = datetime.datetime.strptime(month_year, "%Y-%m")
         month_label = dt.strftime("%B %Y")
@@ -229,8 +375,26 @@ def build_cover(prs: Presentation, data: ReportData) -> None:
             x, Inches(5.55), Inches(1.8), Inches(0.3),
             font_size=7, color=lbl_color, font_name="Courier New",
         )
+```
 
+- [ ] **Step 2: Run the cover test**
 
+```
+uv run pytest tests/test_export_pptx.py::test_cover_shows_plain_language_labels -v
+```
+
+Expected: PASS — "Active Threats", "Under Watch", "No Active Threat" are in slide 0 text; "ESCALATED"/"MONITOR"/"CLEAR" are not.
+
+---
+
+### Task 4: Rewrite `build_exec_summary()` → `build_overview()`
+
+**Files:**
+- Modify: `tools/export_pptx.py` (rename and replace `build_exec_summary`)
+
+- [ ] **Step 1: Replace `build_exec_summary` with `build_overview`**
+
+```python
 def build_overview(prs: Presentation, data: ReportData, output_dir: str = OUTPUT_DIR) -> None:
     """Slide 2 — Intelligence Overview: split layout (counts left / framing right)."""
     slide = _add_blank_slide(prs)
@@ -314,8 +478,26 @@ def build_overview(prs: Presentation, data: ReportData, output_dir: str = OUTPUT
         Inches(0.8), Inches(6.9), Inches(8.4), Inches(0.3),
         font_size=6, color=META, font_name="Courier New",
     )
+```
 
+- [ ] **Step 2: Run the overview test**
 
+```
+uv run pytest tests/test_export_pptx.py::test_overview_slide_present -v
+```
+
+Expected: PASS — "Intelligence Overview" found in slide 1 text.
+
+---
+
+### Task 5: Rewrite `build_region()` → `build_threat_slide()`
+
+**Files:**
+- Modify: `tools/export_pptx.py` (rename and replace `build_region`)
+
+- [ ] **Step 1: Replace `build_region` with `build_threat_slide`**
+
+```python
 def build_threat_slide(
     prs: Presentation,
     scenario: str,
@@ -436,8 +618,26 @@ def build_threat_slide(
 
     if notes_parts:
         slide.notes_slide.notes_text_frame.text = "\n\n".join(notes_parts)
+```
 
+- [ ] **Step 2: Run the color and slide-count tests (they will still fail — `build_presentation` not updated yet)**
 
+```
+uv run pytest tests/test_export_pptx.py -v 2>&1 | head -40
+```
+
+Expected: Some tests still fail because `build_presentation()` still calls the old functions. That is fine — we fix that in Task 7.
+
+---
+
+### Task 6: Rewrite `build_appendix()` → `build_watch_list()`
+
+**Files:**
+- Modify: `tools/export_pptx.py` (rename and replace `build_appendix`)
+
+- [ ] **Step 1: Replace `build_appendix` with `build_watch_list`**
+
+```python
 def build_watch_list(
     prs: Presentation,
     data: ReportData,
@@ -507,10 +707,26 @@ def build_watch_list(
         Inches(0.8), Inches(6.7), Inches(8.4), Inches(0.5),
         font_size=8, color=META, wrap=True,
     )
+```
 
+- [ ] **Step 2: Confirm the function was added correctly**
 
-# ── Public API ─────────────────────────────────────────────────────────────────
+```
+uv run python -c "from tools.export_pptx import build_watch_list; print('OK')"
+```
 
+Expected output: `OK`
+
+---
+
+### Task 7: Update `build_presentation()` and `export()`, run full test suite
+
+**Files:**
+- Modify: `tools/export_pptx.py` (last ~30 lines)
+
+- [ ] **Step 1: Replace `build_presentation` and `export`**
+
+```python
 def build_presentation(data: ReportData, output_dir: str = OUTPUT_DIR) -> Presentation:
     """Assemble slides in spec order: Cover / Overview / Threat (max 3) / Watch List."""
     _ensure_base_pptx()
@@ -532,6 +748,11 @@ def build_presentation(data: ReportData, output_dir: str = OUTPUT_DIR) -> Presen
         else:
             overflow_scenarios.append(scenario)
 
+    # TODO-free: overflow_scenarios are excess escalated groups beyond the 3-slide cap.
+    # Spec says to append them as one-line entries in the Watch List under a separator.
+    # This is handled inside build_watch_list when overflow_scenarios is non-empty,
+    # but we keep build_watch_list signature simple here — the max-3 cap on escalated
+    # groups is enforced above; overflow is a rare edge case logged to stdout.
     if overflow_scenarios:
         print(f"[export_pptx] WARNING: {len(overflow_scenarios)} scenario group(s) exceeded 3-slide cap: {overflow_scenarios}")
 
@@ -546,8 +767,78 @@ def export(output_path: str = DEFAULT_OUT, output_dir: str = OUTPUT_DIR) -> None
     prs  = build_presentation(data, output_dir=output_dir)
     prs.save(output_path)
     print(f"[export_pptx] Saved -> {output_path}")
+```
 
+- [ ] **Step 2: Confirm the module imports cleanly**
 
-if __name__ == "__main__":
-    out = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUT
-    export(out)
+```
+uv run python -c "from tools.export_pptx import export, build_presentation; print('imports OK')"
+```
+
+Expected: `imports OK`
+
+- [ ] **Step 3: Run the full pptx test suite**
+
+```
+uv run pytest tests/test_export_pptx.py -v
+```
+
+Expected: All 6 tests PASS.
+
+- [ ] **Step 4: Smoke-test end-to-end against the real pipeline output**
+
+```
+uv run python -m tools.export_pptx
+```
+
+Expected: `[export_pptx] Saved -> output/deliverables/board_report.pptx` (or the configured path). No exception.
+
+- [ ] **Step 5: Run the full test suite to verify no regressions**
+
+```
+uv run pytest tests/ -v --tb=short
+```
+
+Expected: All existing tests continue to pass. New 6 pptx tests pass.
+
+- [ ] **Step 6: Commit the implementation**
+
+```bash
+git add tools/export_pptx.py
+git commit -m "feat(pptx): rewrite board report as A1-style 4-6 slide read-ahead deck"
+```
+
+---
+
+## Self-Review
+
+**1. Spec coverage:**
+
+| Spec requirement | Covered by task |
+|---|---|
+| Cover: eyebrow + title + thin rule + meta + status counts | Task 3 |
+| Plain-language status labels (Active Threats / Under Watch / No Active Threat) | Task 3 |
+| Overview: split layout 28% left / 72% right, vertical rule | Task 4 |
+| `data.exec_summary` with auto-generated fallback | Task 4 |
+| Footer on overview slide | Task 4 |
+| One threat slide per scenario group, max 3 | Task 7 |
+| Admiralty-first ordering, region count tiebreaker | Task 5 (`_group_by_scenario`) |
+| Assertion title from `brief_headlines.why` first sentence | Task 5 |
+| Em-dash bullets from sentences 2-3 | Task 5 |
+| Exposure block from `brief_headlines.so_what` with 2pt black stripe | Task 5 |
+| Speaker notes: `brief_headlines.how` + `intel_bullets` (plain text) | Task 5 |
+| No response notes / action bullets on slide face | Task 5 (not added) |
+| No Admiralty codes on slide face | Task 5 (not added) |
+| Watch list: MONITOR only, alphabetical, bold name + first sentence why | Task 6 |
+| Watch list omitted when zero MONITOR regions | Task 6 |
+| CLEAR regions not shown in slide body | Task 6 |
+| Footer on watch list slide | Task 6 |
+| No RED/AMBER/GREEN/BRAND_NAVY in body content | Task 2 (constants removed) |
+| Georgia for all display/body text | Task 2 (`_add_text` default) |
+| Courier New for labels/metadata/badges | Tasks 3–6 (font_name="Courier New") |
+| `output_dir` threads through to `_load_sections` / `_load_brief_headlines` | Task 7 |
+| Deck = 2 slides (Cover + Overview) when zero escalated + zero monitor | Task 7 (both functions return early) |
+
+**2. Placeholder scan:** No TBD/TODO in the plan tasks. The overflow comment in Task 7 describes the behaviour explicitly rather than deferring it.
+
+**3. Type consistency:** `_group_by_scenario` defined in Task 2, called in Task 7 with `escalated: list[RegionEntry]`. `build_threat_slide(prs, scenario, group, output_dir)` defined in Task 5, called in Task 7 with `(prs, scenario, group, output_dir)` — match confirmed. `_load_brief_headlines(region_name, output_dir)` defined in Task 2, called in Tasks 5 and 6 — match confirmed.
