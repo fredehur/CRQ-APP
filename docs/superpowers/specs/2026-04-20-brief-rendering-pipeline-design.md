@@ -38,16 +38,32 @@ The handoff is the architecture, not a reference. Templates, CSS, DOM structure,
 
 Three explicit layers.
 
-### Layer 1 — Collect (existing, no change)
+### Layer 1 — Collect (existing, but with an input-schema requirement)
 
-Regional intelligence lands in:
-- `output/regional/{region}/osint_signals.json` — Seerist + Firecrawl + Tavily signals per region
-- `output/regional/{region}/sections.json` — analyst-authored narrative blocks
-- `output/regional/{region}/signal_clusters.json` — clustered event groupings
-- `output/pipeline/last_run_log.json` — pipeline run metadata
-- `data/aerowind_sites.json` — per-site context registry
+The RSM brief consumes:
+- `data/aerowind_sites.json` — per-site context registry (schema extension required — see below)
+- `output/regional/{region}/osint_signals.json` — per-signal event records
 
-No changes to this layer for this spec.
+**Required `osint_signals.json` per-item schema** (joins depend on this):
+```
+{
+  "id": str,
+  "timestamp": ISO8601,
+  "coordinates": { "lat": float, "lon": float },
+  "country": ISO-3166 alpha-2,
+  "category": one of {terrorism, unrest, conflict, crime, transportation, health, disaster, travel, elections},
+  "attack_type": seerist attackType id | null,
+  "perpetrator": seerist perpetrator id | null,
+  "severity": 0–10,
+  "headline": str,
+  "source": { "publisher": str, "url": str | null, "admiralty": grade },
+  "sector": seerist sector id | null
+}
+```
+
+If the current collector produces anything less, the implementation plan must include a collector-layer extension task to fill the gaps.
+
+`sections.json` and `signal_clusters.json` are **not consumed** by the RSM brief. They remain available for the Overview tab and regional-analyst flows.
 
 ### Layer 2 — Synthesize (new)
 
@@ -71,7 +87,7 @@ tools/briefs/
 2. Load this-week signals from `output/regional/{region}/osint_signals.json`
 3. Run deterministic joins: proximity (coords + poi_radius), pattern (relevant_attack_types × signal.attack_type), actor (threat_actors_of_interest × signal.perpetrator), calendar (upcoming window filter)
 4. Rank joined signals per site by hit count + severity + freshness
-5. Invoke `rsm-formatter-agent` to produce narrative fragments: `headline`, per-site `standing_notes_synthesis`, per-group `pattern_framing`, per-evidence-entry `why_it_is_here`
+5. Invoke `rsm-weekly-synthesizer` to produce narrative fragments: `headline`, per-site `standing_notes_synthesis`, per-group `pattern_framing`, per-evidence-entry `why_it_is_here`
 6. Agent output is JSON validated against the narrative sub-schema
 7. Merge computed data + narrative into `RsmBriefData`
 
@@ -147,58 +163,351 @@ tests/briefs/
 
 ## Data Contracts
 
-Defined in `tools/briefs/models.py`. All models inherit from a common `BriefData` base with shared fields (cover metadata, classification, preparer, issue date).
+Defined in `tools/briefs/models.py`. All models inherit from a common `BriefData` base with shared fields (cover metadata, classification, preparer, issue date). Every field strictly typed — no `dict[str, Any]` escape hatches.
 
-### `RsmBriefData` (most detailed — drives the context schema)
+### Provenance layering
 
-Top-level:
+Models are split by provenance so tests can mock each layer independently and downstream consumers (Context tab, agent) can take the slice they need.
+
+- **Static** — values that live in `data/aerowind_sites.json` or per-brief YAML/JSON config. Owned by humans (Context tab edits these). Stable across weeks.
+- **Computed** — values produced by the deterministic join and ranking pass. Owned by Python. Re-computed every render.
+- **Narrative** — short analyst-voice prose fragments. Owned by the LLM. Re-generated every render.
+
+Render-ready composite models (e.g. `SiteBlock`) combine all three.
+
+### `RsmBriefData` — top-level
+
 - `cover: CoverMeta` — region, week_of, issued_at, classification, prepared_by, distribution[]
-- `admiralty_physical`, `admiralty_cyber` — graded strings
-- `headline: str` — analyst-voice, LLM-produced
-- `baseline_strip: list[CountryPulse]` — country × pulse × forecast × note
-- `top_events: list[RankedEvent]` — ranked by site relevance
-- `cyber_strip: list[CyberStripItem]` — kind + text + ref
-- `baselines_moved: list[BaselineDelta]`
-- `reading_guide: list[TocEntry]`
-- `sites: list[SiteBlock]` — crown-jewel + primary (ordered by tier, then joined-hit count)
-- `regional_cyber: RegionalCyberPage`
-- `secondary_sites: list[SecondarySite]`
-- `minor_sites: list[MinorSiteRow]`
-- `evidence_physical: list[PhysicalEvidence]`
-- `evidence_cyber: list[CyberEvidence]`
+- `admiralty_physical`, `admiralty_cyber` — graded strings (static per-cycle)
+- `headline: str` — narrative
+- `baseline_strip: list[CountryPulse]` — country × pulse × forecast × note (computed)
+- `top_events: list[RankedEvent]` — ranked by site relevance (computed)
+- `cyber_strip: list[CyberStripItem]` — kind + text + ref (computed)
+- `baselines_moved: list[BaselineDelta]` — computed against last week
+- `reading_guide: list[TocEntry]` — computed from site count + tier mix
+- `sites: list[SiteBlock]` — crown-jewel + primary, ordered by tier then joined-hit count
+- `regional_cyber: RegionalCyberPage` — static cyber watchlist + computed this-week items + narrative standing notes
+- `secondary_sites: list[SecondarySite]` — inline blocks
+- `minor_sites: list[MinorSiteRow]` — table rows
+- `evidence_physical: list[PhysicalEvidence]` — E-prefix entries
+- `evidence_cyber: list[CyberEvidence]` — C-prefix entries
 
-`SiteBlock`:
-- Identity: `id, name, tier, country, seerist_country_code, coordinates, capital_distance_km`
-- Personnel: `personnel.total, .expat, .contractors`, `country_lead`
-- Criticality: `criticality_drivers, downstream_dependency, asset_type, sector, status`
-- Environment: `host_country_risk_baseline, last_incident, standing_notes`
-- Seerist join keys: `seerist_poi_radius_km, relevant_seerist_categories, threat_actors_of_interest, relevant_attack_types`
-- Cyber join keys: `ot_stack, site_cyber_actors_of_interest`
-- Computed (this-week): `baseline (pulse, forecast, days_since_incident, admiralty), proximity_hits, pattern_hits, actor_hits, calendar_ahead, cyber_callout`
-- Narrative (LLM): `standing_notes_synthesis` (optional override of static standing_notes for weekly context)
+### `SiteContext` (static — lives in `aerowind_sites.json`)
 
-The join key fields + Environment fields + People fields are exactly the schema the Context tab will inherit.
+```
+class SiteContext:
+    # Identity
+    id: str
+    name: str
+    region: Literal["APAC", "AME", "LATAM", "MED", "NCE"]
+    country: str
+    seerist_country_code: str                # ISO-3166 alpha-2
+    coordinates: Coordinates                 # lat, lon
+    capital_distance_km: float | None
+
+    # Criticality
+    tier: Literal["crown_jewel", "primary", "secondary", "minor"]
+    criticality_drivers: str                 # 1–2 sentences
+    downstream_dependency: str
+    asset_type: Literal["wind_farm", "substation", "ops_center",
+                        "manufacturing", "office", "port"]
+    sector: int | None                       # Seerist sector id
+    status: Literal["active", "commissioning", "decommissioned", "planned"]
+
+    # People
+    personnel: Personnel                     # total, expat, contractors
+    country_lead: CountryLead                # name, email, phone
+
+    # Environment
+    host_country_risk_baseline: Literal["low", "elevated", "high"]
+    last_incident: LastIncident | None       # date, summary
+    standing_notes: str                      # RSM-authored, carries week-to-week
+
+    # Seerist join keys
+    seerist_poi_radius_km: int               # crown:50, primary:25, secondary:15, minor:10
+    relevant_seerist_categories: list[str]
+    threat_actors_of_interest: list[int]     # Seerist perpetrator ids
+    relevant_attack_types: list[int]         # Seerist attackType ids
+
+    # Cyber join keys (optional — only where site has specific tech exposure)
+    ot_stack: list[OtStackItem] | None       # vendor + product
+    site_cyber_actors_of_interest: list[int] | None
+```
+
+This is the exact schema the Context tab (separate workstream) will edit. Exported as JSON Schema for the frontend to consume.
+
+### `SiteComputed` (this-week joins — produced by `tools/briefs/joins.py`)
+
+```
+class SiteComputed:
+    baseline: SiteBaseline                   # pulse, forecast, days_since_incident, admiralty
+    proximity_hits: list[JoinedEvent]        # events within seerist_poi_radius_km
+    pattern_hits: list[JoinedEvent]          # relevant_attack_types × country / 30d
+    actor_hits: list[JoinedEvent]            # threat_actors_of_interest × signals
+    calendar_ahead: list[CalendarItem]       # next 14 days
+    cyber_callout_computed: CyberCalloutComputed | None  # event stub + site match; narrative filled later
+```
+
+### `SiteNarrative` (LLM-produced — JSON from `rsm-weekly-synthesizer` agent)
+
+```
+class SiteNarrative:
+    standing_notes_synthesis: str | None     # optional weekly override of static standing_notes
+    pattern_framing: str | None              # one sentence framing the pattern hits
+    cyber_callout_text: str | None           # one-line text for the cyber callout
+```
+
+### `SiteBlock` (render-ready composite)
+
+```
+class SiteBlock:
+    context: SiteContext
+    computed: SiteComputed
+    narrative: SiteNarrative
+```
+
+Template reads `site.context.name`, `site.computed.proximity_hits`, `site.narrative.pattern_framing` — explicit provenance at the template level.
 
 ### `BoardBriefData`
-Covers: `cover`, `state_of_risk_line`, `posture_shift`, `board_takeaways[5]`, `delta_bar[5 regions]`, `key_developments[5]`, `also_tracking[3]`, `watch_next[3]`, `matrix_dots[8]`, `matrix_headline`, `matrix_bottom_line`, `scenarios[3]`, `methodology`, `end_matter`.
+
+```
+class BoardBriefData:
+    cover: BoardCover                        # quarter, issue_date, classification, preparer, reviewer, board_meeting
+    state_of_risk_line: str                  # narrative, one sentence
+    cover_thesis_title: str                  # "Two items warrant board action."
+    cover_thesis_subtitle: str               # "Six remain within management authority."
+
+    posture: PosturePanel
+        # overall_posture: Literal["LOW","MODERATE","HIGH","SEVERE"]
+        # posture_shift: str                 # "↑ from MEDIUM · Q1"
+        # admiralty: str
+        # admiralty_shift: str
+        # scenarios_on_watch: int
+        # scenarios_split: str               # "2 board-action · 6 mgmt"
+        # next_review: str
+
+    board_takeaways: list[BoardTakeaway]     # 3–5 items
+        # n: int
+        # severity: Literal["critical","high","medium","monitor"]
+        # body_markdown: str                 # includes <strong> emphasis
+        # anchor: str                        # "S-07 · MED" or "REG · EU"
+
+    delta_bar: list[RegionDelta]             # exactly 5
+        # region: Literal["MED","NCE","APAC","LATAM","AME"]
+        # direction: Literal["up","flat","down","cyber"]
+        # label: str                         # "Raised", "Quieted", "Baseline"
+        # cause: str                         # 1 line
+
+    key_developments: list[KeyDevelopment]   # 4–6
+        # n: int
+        # category: Literal["M","W","C","G","S"]
+        # headline: str
+        # body: str
+        # meaning: str                       # the "→" line
+        # severity: Literal["critical","high","medium","monitor"]
+        # region: str
+        # anchors: list[str]                 # ["E1","E2","C3"]
+
+    also_tracking: list[AlsoTrackingItem]    # 2–4
+        # head: str
+        # tail: str
+
+    watch_next: list[WatchNextItem]          # 2–3
+        # horizon: str                       # "6–12 weeks"
+        # head: str
+        # tail: str
+
+    matrix: RiskMatrix
+        # headline: str
+        # bottom_line: str
+        # dots: list[MatrixDot]              # 6–10
+        #   scenario_id: str
+        #   region: str
+        #   label: str                       # "Unrest · Cape Wind (MED)"
+        #   likelihood: int                  # 0–100
+        #   impact: int                      # 0–100
+        #   severity: Literal[...]
+        #   label_position: Literal["up","down","left","right"]
+        # register_tail: list[RegisterRow]   # compact 8-col strip
+
+    scenarios: list[BoardScenario]           # 2–3
+        # id: str                            # "S-07"
+        # region: str
+        # title: str
+        # type_tags: list[str]               # ["Political-security","Crown-jewel exposure","Horizon: 0–12 weeks"]
+        # posture: ScenarioPosture           # pill + severity + likelihood + admiralty + delta
+        # narrative: ScenarioNarrative       # lede + list[str] paragraphs
+        # implications: list[str]
+        # baselines_moved: list[str]         # each with <strong>…</strong>
+        # drivers: list[str]                 # 3–4 numbered
+        # actions: list[str]                 # 3–4 numbered; item[0] may start with "Board ask:"
+        # evidence_anchors: list[EvidenceRef]
+        #   ref: str                         # "E1" or "C2"
+        #   headline: str                    # source-line
+        #   admiralty: str                   # "B1"
+
+    methodology: Methodology
+        # sources: dict[str,str]             # "Commercial": "Seerist...", etc.
+        # rating_system: dict[str,str]
+        # reading_rules: list[ReadingRule]   # cond + then
+        # against_last_quarter: str + dict[str,str]
+
+    end_matter: EndMatter
+        # distribution: dict[str,str]
+        # provenance: dict[str,str]
+        # handling: list[str]                # 3 paragraphs
+        # linked_products: dict[str,str]
+```
 
 ### `CisoBriefData`
-Covers: `cover`, `state_of_risk_line`, `posture`, `ciso_takeaways[3]`, `regions_grid[5]`, `cross_regional_items[4]`, `coupling_strip` (physical + cyber tracks + summary), `cyber_surface` (sector / actor / vulnerability bundles), `cyber_physical_join_page` (facts + timeline + read), `scenarios[4 with delta ribbons]`, `evidence_physical[]`, `evidence_cyber[]`.
 
-All fields strictly typed. No `dict[str, Any]` escape hatches.
+```
+class CisoBriefData:
+    cover: CisoCover                         # month, issue_date, classification, preparer, reviewer, audience
 
-## Agent Change: `rsm-formatter-agent`
+    cover_thesis_primary: str                # "The month's dominant signal is..."
+    cover_thesis_secondary: str              # italic subline
+    state_of_risk_line: str                  # narrative
 
-Current: produces markdown brief.
-New: produces JSON fragment strictly matching the `RsmNarrativeFragment` sub-schema.
+    posture: CisoPosturePanel
+        # posture, posture_shift, admiralty, admiralty_shift,
+        # regions_moved: int (of 5), regions_movement_summary: str
+        # scenarios_watched: int, scenarios_delta_note: str
 
-**Input:** computed `RsmBriefData` with `headline`, `standing_notes_synthesis`, `pattern_framing`, `evidence_why_lines` left null.
-**Output:** JSON filling those fields.
-**Stop hook:** validates output against `RsmNarrativeFragment` schema; validates jargon filter + site discipline + admiralty attribution (existing hooks, unchanged).
+    ciso_takeaways: list[CisoTakeaway]       # 3
+        # n, severity: Literal["cyber","high","medium","monitor","critical"]
+        # body_markdown, anchor
 
-The agent's persona ("Strategic Geopolitical & Cyber Risk Analyst") stays. What changes is the output format — structured JSON instead of free markdown. The persona guidance and stop hooks already enforce voice quality; now voice lands in specific, bounded fields.
+    regions_grid: list[RegionCell]           # exactly 5
+        # region, classification: Literal["moved","cyber-pressed","quieted","baseline"]
+        # direction: Literal["up","flat","down","cyber"]
+        # status_label: str
+        # admiralty: str, admiralty_shift: str
+        # note: str
+        # why_clear_label: str, why_clear_body: str
 
-Markdown output for daily + flash briefs is unchanged this spec (those cadences aren't re-designed yet).
+    cross_regional_items: list[CrossRegionalItem]    # 3–4
+        # tag: str, tag_cyber: bool
+        # head: str, body: str
+        # delta: Literal["up","down","flat"], delta_label: str
+        # rail_note: str, anchors: list[str]
+
+    coupling_strip: CouplingStrip
+        # region: str, label: str
+        # physical_track: str (body prose)
+        # cyber_track: str (body prose)
+        # summary: str (the "Read: ..." line)
+
+    cyber_surface: CyberSurface
+        # sector_campaigns: list[CyberEntry]
+        # actor_activity: list[CyberEntry]
+        # vulnerability_signal: list[CyberEntry]
+        # where CyberEntry = { k: str, ctx: str, body: str, impact: str,
+        #                      severity: Literal[...], region_or_scope: str,
+        #                      admiralty: str, anchors: list[str] }
+
+    cyber_physical_join_page: CyberPhysicalJoin
+        # physical: { title, narrative_paragraphs: list[str], facts: dict[str,str] }
+        # cyber: { title, narrative_paragraphs: list[str], facts: dict[str,str] }
+        # timeline: Timeline
+        #   range_label: str
+        #   ticks: list[TimelineTick]        # date + label
+        #   physical_events: list[TimelineEvent]    # start_pct, width_pct, label, is_ghost
+        #   cyber_events: list[TimelineEvent]
+        #   join_marks: list[float]          # pct positions
+        # read_summary: str                  # the "CISO read" paragraph
+
+    scenarios: list[CisoScenario]            # 3–5
+        # id, region, title
+        # posture: ScenarioPosture
+        # delta_ribbon: { kind: Literal["moved-up","moved-new","moved-down","no-delta"],
+        #                 tag: str, body_markdown: str }
+        # narrative: str (with drivers line appended)
+        # side: dict[str,str]                # Delta, Horizon, Status/Asks, Next
+        # anchors: list[str]
+
+    evidence_physical: list[PhysicalEvidenceEntry]   # 8–12
+    evidence_cyber: list[CyberEvidenceEntry]         # 5–10
+        # Each: ref, headline, source, admiralty, timestamp, why
+```
+
+Both `BoardBriefData` and `CisoBriefData` are **fully static** this pass — their data modules return hardcoded instances matching the handoff's mock content. The Board quarterly synthesizer and CISO monthly synthesizer are future separate specs.
+
+## Agent Change: new `rsm-weekly-synthesizer`
+
+**Decision: new agent, not a mode on the existing one.** Daily and flash cadences continue with the existing `rsm-formatter-agent` producing markdown, unchanged. Weekly switches to a new dedicated agent producing structured JSON.
+
+Rationale:
+- Dual-mode on one agent means every prompt, stop hook, and failure path has to branch on cadence — brittle and hard to test.
+- Weekly has a different output contract (JSON, not markdown), a different input shape (computed data pre-filled), and stricter validation (Pydantic schema check) than daily/flash.
+- Splitting keeps the daily + flash pipeline stable while the weekly evolves independently.
+- The `rsm-weekly-synthesizer` can inherit the `rsm-formatter-agent` persona + jargon filter + site-discipline rules by reference — no duplication of voice guidance.
+
+### `rsm-weekly-synthesizer`
+
+**Persona:** "Strategic Geopolitical & Cyber Risk Analyst" (same as `rsm-formatter-agent`).
+
+**Input (prompt serialisation):**
+The data module serialises a `WeeklySynthesisInput` Pydantic model to JSON, embeds it in the prompt inside a `<data>…</data>` block, and precedes it with a `<task>` block describing exactly which fields to fill.
+
+```
+class WeeklySynthesisInput:
+    region: str
+    week_of: str                              # "2026-04-20 → 2026-04-26"
+    regional_admiralty_physical: str
+    regional_admiralty_cyber: str
+    baseline_strip: list[CountryPulse]        # computed
+    top_events: list[RankedEvent]             # computed, severity + distance populated
+    baselines_moved: list[BaselineDelta]      # computed vs last week
+    sites_to_narrate: list[SiteForNarration]
+        # SiteForNarration = {
+        #   id, name, tier, country, country_lead,
+        #   criticality_drivers,                     # static — for context
+        #   standing_notes_static,                   # static — RSM's rolling notes
+        #   pulse, host_baseline, days_since_incident,
+        #   proximity_hits: list[JoinedEvent],       # computed
+        #   pattern_hits: list[JoinedEvent],         # computed
+        #   actor_hits: list[JoinedEvent],           # computed
+        #   calendar_ahead: list[CalendarItem],      # computed
+        #   cyber_event_to_attach: CyberCalloutComputed | None
+        # }
+    regional_cyber_context: RegionalCyberContext     # watchlist + this-week items
+    evidence_entries: list[EvidenceEntryStub]
+        # EvidenceEntryStub = { ref, headline, source, admiralty, timestamp,
+        #                       supporting_sites: list[str],
+        #                       supporting_pattern_or_actor: str | None }
+```
+
+**Output (strictly validated):**
+```
+class WeeklySynthesisOutput:
+    headline: str                             # one sentence, regional characterisation
+    sites_narrative: list[SiteNarrativeOut]
+        # SiteNarrativeOut = {
+        #   site_id: str,
+        #   standing_notes_synthesis: str | null,   # optional weekly override
+        #   pattern_framing: str | null,            # one sentence
+        #   cyber_callout_text: str | null          # one sentence
+        # }
+    regional_cyber_standing_notes: str | null  # narrative framing for the cyber page
+    evidence_why_lines: dict[str, str]         # ref → "why it's here" (exactly one per evidence entry)
+```
+
+**Stop hook:** new Python validator at `.claude/hooks/validators/rsm-weekly-synthesizer-output.py`:
+1. Parse agent output as JSON.
+2. Validate against `WeeklySynthesisOutput` Pydantic schema.
+3. Confirm every `site_id` in the output matches a site in the input.
+4. Confirm `evidence_why_lines` covers every evidence ref in input (no missing, no extra).
+5. Re-run the existing jargon filter + site-discipline rules against all prose fields.
+6. On failure, the agent retries once with a compact error message; second failure raises a build error.
+
+### `rsm-formatter-agent` — unchanged
+
+Daily and flash cadences continue producing markdown as today. No frontmatter change, no stop hook change.
+
+### Deprecation note
+
+The current weekly markdown output of `rsm-formatter-agent` is superseded by this spec. The implementation plan removes the weekly branch from `rsm-formatter-agent` once the new pipeline proves out.
 
 ## CLI
 
@@ -260,8 +569,25 @@ The handoff HTML stash at `docs/design/handoff/` is NEVER deprecated — it's th
 
 - **IBM Plex Sans** loaded from Google Fonts with weights 400/500/600/700. If the environment is air-gapped, self-host the same four weights with `@font-face` pointing at `static/design/fonts/`.
 - **Playwright Chromium** installed and up to date. Font-ready wait + `print_background=True` + `prefer_css_page_size=True` are required.
-- **`data/aerowind_sites.json`** needs its schema extended with the fields listed in `RsmBriefData.SiteBlock` before the RSM brief can render with live data. The template's data requirements define the exact fields needed.
-- **`rsm-formatter-agent`** frontmatter updated to reflect JSON output; stop hook extended to validate schema.
+- **`rsm-weekly-synthesizer`** is a new agent defined in `.claude/agents/rsm-weekly-synthesizer.md`. Its stop hook validator is a new Python file.
+- **`rsm-formatter-agent`** unchanged for daily + flash. Weekly branch removed as a follow-up deprecation step.
+
+### Site registry population — explicit implementation task
+
+The RSM brief cannot render with live data until `data/aerowind_sites.json` is extended with the fields in `SiteContext`. This is a **blocking prerequisite** for any RSM live-render test.
+
+The implementation plan MUST include a dedicated task:
+
+1. Extend `data/aerowind_sites.json` schema to the full `SiteContext` shape.
+2. Populate every existing site with plausible real-ish content — criticality_drivers, downstream_dependency, standing_notes, threat_actors_of_interest, relevant_attack_types, ot_stack (where applicable), seerist_poi_radius_km (tier-default), host_country_risk_baseline, last_incident.
+3. Validate the whole file parses as `list[SiteContext]` via a smoke test.
+4. Commit as a content-only change separate from any code changes.
+
+This is content work, not engineering — expect a dedicated session. No automation, no heuristics, no "ask the LLM to fill it in". The values feed real RSM briefs and will surface in stakeholder reads. They need to be deliberate.
+
+### Input-data requirements
+
+- `output/regional/{region}/osint_signals.json` must emit per-signal records conforming to the schema in **Layer 1** above. If the current collector is missing fields (`attack_type`, `perpetrator`, `sector`), the implementation plan includes a collector-extension task. Verify current shape before scoping.
 
 ## Open Questions (for the implementation plan)
 
@@ -278,7 +604,7 @@ These are decisions for the plan, not the design.
 2. Running the same command for `--brief board` and `--brief ciso` produces polished PDFs from static mock data (ready to replace when the Board and CISO synthesizers get built).
 3. All three briefs render from the exact same `render_pdf()` function, differ only in template + data module.
 4. Pydantic validation catches any malformed data before rendering.
-5. The `rsm-formatter-agent` produces schema-conformant JSON; the stop hook rejects anything else.
+5. The `rsm-weekly-synthesizer` produces schema-conformant JSON; the stop hook rejects anything else. `rsm-formatter-agent` continues producing daily + flash markdown as today.
 6. The Reports tab in the app lists all three briefs with preview, download, and regenerate controls.
 7. The Context tab (separate workstream) reads the `SiteBlock` schema straight out of `tools/briefs/models.py` — no re-definition.
 8. Swapping the CRQ Design System v1.1 later means editing CSS files in `static/design/styles/` — nothing else moves.
