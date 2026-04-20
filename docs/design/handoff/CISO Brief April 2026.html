@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AeroGrid · CISO Brief · April 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/ciso.css">
+</head>
+<body>
+
+<div class="print-hint">
+  <span>AeroGrid · CISO Brief · April 2026 · 7pp A4 · digital-first</span>
+  <a class="btn" href="#" onclick="window.print();return false;">Print / Save as PDF</a>
+</div>
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 1 · COVER                              -->
+<!-- —————————————————————————————————————————— -->
+<section class="page cover" data-screen-label="01 Cover">
+  <div class="cover-grid">
+
+    <div class="cover-hairline">
+      <span>AeroGrid Wind Solutions · CISO Office</span>
+      <span>Internal — AeroGrid Security Leadership</span>
+    </div>
+
+    <div class="cover-num">
+      <div class="m">04<span class="slash">·</span>26</div>
+      <div class="side">
+        <div class="eyebrow">Monthly Risk Brief · CISO · April 2026</div>
+        <div class="sub">Geopolitical and cyber risk, cross-regional.</div>
+      </div>
+    </div>
+
+    <div class="cover-body">
+      <h1 class="cover-thesis">The month's dominant signal is <span class="cyber-accent">geopolitical–cyber coupling</span>.<br><em>State-actor cyber scanning is tracking state-actor physical activity.</em></h1>
+
+      <div class="cover-state">
+        <span class="lbl">State of risk · April 2026</span>
+        <span class="line">April 2026 was shaped by North African political volatility, sustained EU renewables ransomware pressure, and a quieting APAC transit picture. Three of five regions sit in stable baseline — that silence is itself an intelligence product.</span>
+      </div>
+    </div>
+
+    <div class="cover-meta">
+      <div>
+        <div class="lbl">Month</div>
+        <div class="val"><span class="tight">April 2026</span></div>
+      </div>
+      <div>
+        <div class="lbl">Issue date</div>
+        <div class="val tight">20 April 2026</div>
+      </div>
+      <div>
+        <div class="lbl">Posture</div>
+        <div class="val">HIGH · <span class="tight">B2</span><span class="shift">MED adm. tightened B3 → B2</span></div>
+      </div>
+      <div>
+        <div class="lbl">Version</div>
+        <div class="val tight">v1.0 — final</div>
+      </div>
+    </div>
+
+    <div class="cover-foot">
+      <span>Prep. D. Huang · Director, Threat Intelligence · Rev. A. Mendes (Head of Threat Intel)</span>
+      <span>Primary: CISO · Secondary: VP Security, GRC, Threat Intel</span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 2 · OPENING + REGIONS GRID             -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="02 Opening">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Opening · p. 2 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 1 · State of risk · regions at a glance</span>
+    <span class="meta">20 Apr 2026 · Admiralty B2 · Confidence HIGH</span>
+  </div>
+
+  <div class="pull-sor">
+    <div class="lbl">The month in one line</div>
+    <div class="line">April 2026 was shaped by North African political volatility, sustained EU renewables ransomware pressure, and a quieting APAC transit picture; the cross-cutting theme is <span class="coupling">rising geopolitical–cyber coupling</span> — state-actor cyber scanning tracking state-actor-of-interest physical activity.</div>
+  </div>
+
+  <div class="posture">
+    <div class="cell">
+      <div class="lbl">Posture</div>
+      <div class="val">HIGH <span class="shift">held from March</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Admiralty</div>
+      <div class="val"><span class="num">B2</span> <span class="shift">↑ B3 → B2 (MED coverage)</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Regions moved</div>
+      <div class="val"><span class="num">2</span> of 5 <span class="shift">MED ↑ · APAC ↓</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Scenarios watched</div>
+      <div class="val"><span class="num">4</span> <span class="shift">2 with delta this month</span></div>
+    </div>
+  </div>
+
+  <div class="page-mark" style="margin-bottom:0;">
+    <span class="kicker">§ 2 · CISO takeaways · April 2026</span>
+    <span class="meta">3 items · ordered by urgency</span>
+  </div>
+
+  <div class="takeaways">
+    <div class="takeaway">
+      <div class="n">01</div>
+      <div class="dot dot--cyber"></div>
+      <div class="body"><strong>The Moroccan election window is the month's dominant signal — read physical and cyber as one.</strong> Cape Wind is on raised watch; APT28 scanning of MA energy ASNs runs coincident with the election calendar. The coupling is the point.</div>
+      <div class="anchor">S-07 · MED</div>
+    </div>
+
+    <div class="takeaway">
+      <div class="n">02</div>
+      <div class="dot dot--high"></div>
+      <div class="body"><strong>SolarGlare is confirmed at multiple EU wind operators; NCE is exposed, not hypothetical.</strong> Treat Vendor X access as the primary vector. Patch rollout at 40% is not enough; tighten the SLA to 14 days for CVE-2026-1847.</div>
+      <div class="anchor">S-11 · NCE</div>
+    </div>
+
+    <div class="takeaway">
+      <div class="n">03</div>
+      <div class="dot dot--monitor"></div>
+      <div class="body"><strong>Three regions sit in stable baseline — and that is the report.</strong> LATAM, AME, and APAC physical are quiet. Silence is an intelligence product; the regions grid below carries the <em>why clear</em> for each.</div>
+      <div class="anchor">Cross-reg</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 22px;">
+    <div class="page-mark" style="margin-bottom: 0;">
+      <span class="kicker">§ 3 · Regions at a glance</span>
+      <span class="meta">Five regions · movement + why clear</span>
+    </div>
+    <div class="regions">
+      <div class="r moved">
+        <div class="reg">MED</div>
+        <div class="status"><span class="arrow arrow--up">↑</span>Raised</div>
+        <div class="adm">Adm. B2 · ↑ from B3</div>
+        <div class="note">Morocco election (Apr) + Italy port strike. APT28 scanning coincident. Raised posture through May.</div>
+        <div class="whyclear">
+          <span class="l">Triggers</span>
+          MA election; IT port strike; APT28 ASN scanning; Cape Wind raised-watch.
+        </div>
+      </div>
+      <div class="r cyber-pressed">
+        <div class="reg">NCE</div>
+        <div class="status"><span class="arrow arrow--cyber">⇌</span>Held · cyber ↑</div>
+        <div class="adm">Adm. B1 · held</div>
+        <div class="note">Physical quiet. Sector-targeting cyber active. SolarGlare confirmed at DE operators; probable at 4 more.</div>
+        <div class="whyclear">
+          <span class="l">Physical triggers</span>
+          None this month. Cyber pressure via shared-vendor vector; see §5.
+        </div>
+      </div>
+      <div class="r">
+        <div class="reg">APAC</div>
+        <div class="status"><span class="arrow arrow--down">↓</span>Quieted</div>
+        <div class="adm">Adm. B2 · held</div>
+        <div class="note">Transit-corridor stability improved. Short-term logistics risk eased; supply-chain watch retained.</div>
+        <div class="whyclear">
+          <span class="l">Why quieter</span>
+          Corridor advisories cleared; carrier volumes normalised; no sector cyber campaign material to portfolio.
+        </div>
+      </div>
+      <div class="r">
+        <div class="reg">LATAM</div>
+        <div class="status"><span class="arrow arrow--flat">→</span>Baseline</div>
+        <div class="adm">Adm. C2 · held</div>
+        <div class="note">No regional escalation. Host-country baselines stable.</div>
+        <div class="whyclear">
+          <span class="l">Why clear</span>
+          Brazil, Chile, Peru stable. Watchlist actors quiet. No new CVE or sector campaign material to portfolio. Next review: mid-May.
+        </div>
+      </div>
+      <div class="r">
+        <div class="reg">AME</div>
+        <div class="status"><span class="arrow arrow--flat">→</span>Baseline</div>
+        <div class="adm">Adm. C2 · held</div>
+        <div class="note">No regional escalation. Third-party vendor watch retained (S-09).</div>
+        <div class="whyclear">
+          <span class="l">Why clear</span>
+          No new triggers. Watchlist actors quiet. S-09 open on continuity only; no new evidence this month.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 2 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 3 · CROSS-REGIONAL PICTURE             -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="03 Cross-regional">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Cross-regional · p. 3 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 4 · Cross-regional intelligence picture</span>
+    <span class="meta">What patterns appeared across regions</span>
+  </div>
+
+  <h1 class="page-title">Patterns the RSMs can't see from a single region.</h1>
+  <p class="page-lede">Four movements, one coupling. The coupling strip below is the CISO-specific lens — what the brief exists to surface.</p>
+
+  <div class="cross-items">
+    <div class="it">
+      <div class="tag">MED moved</div>
+      <div class="body">
+        <span class="head">Morocco election + Italy port strike raised MED posture through May.</span>
+        Two independent events in the same region within the same fortnight. The Morocco signal is structural (election → coalition friction → protest activity); the Italy signal is labour-tactical and contained to port-access. Neither touches AeroGrid sites directly; both touch the operating rhythm.
+      </div>
+      <div class="rail">
+        <span class="delta up">↑ RAISED</span><br>
+        posture<br>
+        E1 · E2 · E3
+      </div>
+    </div>
+
+    <div class="it">
+      <div class="tag cyber">NCE held · cyber ↑</div>
+      <div class="body">
+        <span class="head">Physical quiet, cyber pressure mounting via a shared SCADA vendor.</span>
+        A sector-level pattern: SolarGlare is not a single-operator intrusion. Shared Vendor X access across the NCE fleet makes the exposure portfolio-wide by construction. Three of the confirmed or probable targets are within the AeroGrid NCE peer group.
+      </div>
+      <div class="rail">
+        <span class="delta up">↑ SECTOR</span><br>
+        cyber<br>
+        C1 · C2 · C3
+      </div>
+    </div>
+
+    <div class="it">
+      <div class="tag">APAC quieted</div>
+      <div class="body">
+        <span class="head">Transit-corridor stability improved; structural supplier concentration unchanged.</span>
+        The month's improvement is tactical. The 2027 blade cohort still sits on a single-source Chinese supplier; second-source qualification remains a Q4 2026 milestone. Track the milestone, not the month.
+      </div>
+      <div class="rail">
+        <span class="delta down">↓ EASED</span><br>
+        transit<br>
+        E9 · E11
+      </div>
+    </div>
+
+    <div class="it">
+      <div class="tag">LATAM + AME baseline</div>
+      <div class="body">
+        <span class="head">No regional escalation. Watchlist actors quiet. No new sector-level cyber material to portfolio.</span>
+        Silence here is not absence. Baselines were actively validated (not just read from the prior cycle). Seerist coverage remained steady; Firecrawl/Tavily discovery returned no new admiralty-grade entries touching AeroGrid.
+      </div>
+      <div class="rail">
+        <span class="delta flat">→ HELD</span><br>
+        baseline<br>
+        Admiralty C2
+      </div>
+    </div>
+  </div>
+
+  <!-- Coupling strip — the month's thesis -->
+  <div class="coupling-strip">
+    <div class="lbl"><span>§ Coupling signal · MED</span><span style="color:var(--ink-400); font-weight:500;">·</span><span class="phys">Physical</span><span style="color:var(--ink-400); font-weight:500;">+</span><span style="color:var(--cyber-ink);">Cyber</span></div>
+    <div class="body">
+      <div class="col">
+        <div class="h">Physical track</div>
+        <div class="txt">Moroccan general election (April) drives a <strong>0–12 week unrest window</strong> along the Casablanca corridor. Cape Wind (crown-jewel) is on raised watch. Security posture elevated; expat travel on essential-only.</div>
+      </div>
+      <div class="sep"></div>
+      <div class="col">
+        <div class="h">Cyber track</div>
+        <div class="txt"><strong>APT28 scanning of MA + ES energy ASNs</strong> runs coincident with the election calendar. Cadence up 3× over March. SOC observes no anomalies at Cape Wind; the signal is external posture, not intrusion.</div>
+      </div>
+    </div>
+    <div class="summary">
+      <span class="lbl">Read</span>
+      State-actor cyber posture is <strong>mirroring state-actor physical interest</strong>. Treat Cape Wind as a joint intelligence signal — not two separate streams. See §5 for the full join.
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 3 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 4 · CYBER SURFACE                      -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="04 Cyber surface">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Cyber surface · p. 4 / 7</span>
+  </header>
+
+  <div class="page-mark cyber">
+    <span class="kicker">§ 5 · Cyber surface · AeroGrid footprint</span>
+    <span class="meta">Sector · actor · vulnerability</span>
+  </div>
+
+  <h1 class="page-title">Three layers of cyber exposure, stacked.</h1>
+  <p class="page-lede">Sector campaigns that reach our peer group. Actor activity that touches our geography. Vulnerability signal that lives in our stack. Each layer is graded and anchored.</p>
+
+  <div class="cyber-surface">
+
+    <!-- SECTOR -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Sector-targeting campaigns</span>
+        <span class="sub">AeroGrid footprint: 7 NCE sites · 2 MED sites on Vendor X</span>
+      </div>
+      <div class="entry">
+        <div class="k">SolarGlare <span class="ctx">Ransomware · EU wind</span></div>
+        <div class="body">
+          Confirmed at 2 German wind operators. TTP pattern observed: initial access via Vendor X SCADA (v4.2), lateral via domain-joined OT bastion, extortion on grid-availability data. 4 additional EU operators report probable targeting; 3 within AeroGrid NCE peer group.
+          <span class="impact">AeroGrid NCE sites — no confirmed impact. Monitoring raised; CVE-2026-1847 patching is the primary mitigation.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--high">High</span><br>
+          NCE · DE<br>
+          Adm. A2<br>
+          <span class="anchor">C1 C2 C3</span>
+        </div>
+      </div>
+      <div class="entry">
+        <div class="k">EmberPass <span class="ctx">Phishing · renewables exec</span></div>
+        <div class="body">
+          Low-volume credential-harvest campaign targeting renewables-sector executives across EU. 6 AeroGrid accounts received messages; none engaged. Identity provider policy caught 4 of 6 at gateway.
+          <span class="impact">Contained. Identity team to retrospectively tighten external-domain display rules; no board-level concern.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--monitor">Monitor</span><br>
+          NCE · EU<br>
+          Adm. B2<br>
+          <span class="anchor">C6</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTOR -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Actor activity · watchlist</span>
+        <span class="sub">What moved this month</span>
+      </div>
+      <div class="entry">
+        <div class="k">APT28 <span class="ctx">State-linked · scanning</span></div>
+        <div class="body">
+          Scanning Moroccan and Spanish energy ASNs through April. Observed cadence up 3× over March. Coincident with the MA election calendar and with elevated diplomatic reporting on the Western Mediterranean. Cape Wind SOC — no anomalies observed.
+          <span class="impact">Treat as external posture signal; see §6 (coupling) for the physical join.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--medium">Medium</span><br>
+          MED · MA/ES<br>
+          Adm. B1<br>
+          <span class="anchor">C4 C5</span>
+        </div>
+      </div>
+      <div class="entry">
+        <div class="k">FIN12-adj <span class="ctx">Criminal · ransom-op</span></div>
+        <div class="body">
+          Tooling overlap with SolarGlare. Not attributed; tracked as an adjacent cluster. No direct AeroGrid touch; included because a confirmed link would move SolarGlare to a named-actor campaign and change disclosure calculus.
+          <span class="impact">Track; do not act. Re-evaluate on attribution.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--monitor">Monitor</span><br>
+          EU-wide<br>
+          Adm. C2<br>
+          <span class="anchor">C7</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- VULNERABILITY -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Vulnerability signal · stack</span>
+        <span class="sub">OT / ICS · SCADA · turbine · grid · identity · perimeter</span>
+      </div>
+      <div class="entry">
+        <div class="k">CVE-2026-1847 <span class="ctx">Turbine SCADA · Vendor X v4.2</span></div>
+        <div class="body">
+          Patch available. Portfolio rollout at 40% as of 18 Apr. The SolarGlare exploitation path terminates at this CVE in the confirmed DE intrusions. Accelerated SLA (14 d) recommended; approval required from CISO office.
+          <span class="impact">Primary recommended action of the month. See §7 · S-11.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--high">High</span><br>
+          Portfolio<br>
+          Adm. A1<br>
+          <span class="anchor">C3</span>
+        </div>
+      </div>
+      <div class="entry">
+        <div class="k">CVE-2026-1722 <span class="ctx">Grid HMI · vendor workaround only</span></div>
+        <div class="body">
+          Vendor patch not yet issued; workaround in place. 2 sites affected. Not known to be actively exploited. Compensating controls (network-segmentation audit) verified this month.
+          <span class="impact">Maintain workaround. Re-check vendor bulletin cadence at mid-May.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--medium">Medium</span><br>
+          2 sites<br>
+          Adm. B2<br>
+          <span class="anchor">C8</span>
+        </div>
+      </div>
+      <div class="entry">
+        <div class="k">Identity perimeter <span class="ctx">IdP provider · conditional access</span></div>
+        <div class="body">
+          Advisory issued on token-theft TTPs observed across financial sector; not yet active against energy. Conditional-access baseline reviewed; device-posture signal added to critical-app policies this month.
+          <span class="impact">Pre-emptive. Report on rollout completeness at next brief.</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--monitor">Monitor</span><br>
+          Global<br>
+          Adm. B1<br>
+          <span class="anchor">C9</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 4 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 5 · CYBER-PHYSICAL JOIN                -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="05 Cyber-physical join">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Coupling · p. 5 / 7</span>
+  </header>
+
+  <div class="page-mark cyber">
+    <span class="kicker">§ 6 · Cyber-physical join · MED</span>
+    <span class="meta">One signal, two streams</span>
+  </div>
+
+  <h1 class="page-title">Morocco is the month's <span class="cyber-accent">joint signal</span>.</h1>
+  <p class="page-lede">The election and the scanning are not independent events that happen to share a geography. Coincidence of this kind, at this cadence, across these actors, is a coupled signal and should be briefed as one.</p>
+
+  <div class="join-wrap">
+
+    <div class="col">
+      <div class="pane-label"><span class="tag">PHYS</span><span>Physical track · Morocco</span></div>
+      <h3>Cape Wind raised-watch window.</h3>
+      <p>The April general election closed without a clear coalition. Protest activity clustered in urban centres through the polling period and has not fully subsided. Security-force posture in the Casablanca corridor is elevated and expected to remain so until a governing coalition is named.</p>
+      <p>Cape Wind itself has not been the object of protest. Proximate risks are access-road disruption, expat movement, and secondary vendor-continuity effects. Base case is normalisation over a 6–12 week horizon.</p>
+      <div class="facts">
+        <div class="fact"><div class="k">Site</div><div class="v">Cape Wind · crown-jewel · Casablanca corridor</div></div>
+        <div class="fact"><div class="k">Posture</div><div class="v">Raised · expat travel essential-only</div></div>
+        <div class="fact"><div class="k">Horizon</div><div class="v">0–12 weeks · reassess at October board</div></div>
+        <div class="fact"><div class="k">Anchors</div><div class="v">E1 · E2 · E4</div></div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="pane-label cyber"><span class="tag">CYB</span><span>Cyber track · Morocco + Spain</span></div>
+      <h3>APT28 scanning coincident with the polling window.</h3>
+      <p>APT28 scanning of Moroccan and Spanish energy ASNs is up 3× over March and runs coincident with the election calendar. The SOC has observed no anomalies at Cape Wind; the signal is external posture, not intrusion.</p>
+      <p>The cadence, the target set, and the timing are the information. Treat as pre-positioning, not operation. Monitoring raised; no incident triggered.</p>
+      <div class="facts">
+        <div class="fact"><div class="k">Actor</div><div class="v">APT28 · state-linked</div></div>
+        <div class="fact"><div class="k">Target</div><div class="v">MA + ES energy ASNs</div></div>
+        <div class="fact"><div class="k">Cadence</div><div class="v">3× March baseline · window runs through May</div></div>
+        <div class="fact"><div class="k">Anchors</div><div class="v">C4 · C5</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline">
+    <div class="tl-head">
+      <span class="t">§ Timeline · physical + cyber co-occurrence · Mar–May 2026</span>
+      <span class="sub">Join marks show where streams overlap in time</span>
+    </div>
+    <div class="tl" style="height: 120px; padding-left: 58px;">
+      <div class="lane-label phys">PHYS</div>
+      <div class="lane-label cyb">CYB</div>
+      <div class="axis" style="left: 58px; right: 8px;"></div>
+      <div class="tick" style="left: 58px;"><span class="lbl">1 Mar</span></div>
+      <div class="tick" style="left: 23%;"><span class="lbl">15 Mar</span></div>
+      <div class="tick" style="left: 43%;"><span class="lbl">1 Apr</span></div>
+      <div class="tick" style="left: 58%;"><span class="lbl">15 Apr</span></div>
+      <div class="tick" style="left: 78%;"><span class="lbl">1 May</span></div>
+      <div class="tick" style="right: 8px;"><span class="lbl">15 May</span></div>
+
+      <!-- Physical events -->
+      <div class="evt phys ghost" style="left: 58px; width: calc(20% - 58px);">Pre-election campaigning</div>
+      <div class="evt phys" style="left: 43%; width: 26%;">Polling + protest window</div>
+      <div class="evt phys ghost" style="left: 70%; width: 28%;">Coalition formation</div>
+
+      <!-- Cyber events -->
+      <div class="evt cyb ghost" style="left: 58px; width: calc(30% - 58px);">APT28 baseline cadence</div>
+      <div class="evt cyb" style="left: 40%; width: 35%;">APT28 scanning · 3× cadence · MA + ES ASNs</div>
+      <div class="evt cyb ghost" style="left: 78%; width: 20%;">Expected taper</div>
+
+      <!-- Join marks at polling window -->
+      <div class="join-mark" style="left: 48%;"></div>
+      <div class="join-mark" style="left: 62%;"></div>
+    </div>
+  </div>
+
+  <div class="join-tail">
+    <span class="lbl">CISO read</span>
+    Cape Wind is <strong>one intelligence signal, two streams</strong>. Incident response planning for MA must include both the physical access-disruption scenario and the cyber pre-positioning hypothesis. Do not split them across two on-call rotations.
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 5 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 6 · SCENARIO WATCH                     -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="06 Scenario watch">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Scenario watch · p. 6 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 7 · Scenario watch</span>
+    <span class="meta">Delta ribbons mark what moved since March</span>
+  </div>
+
+  <h1 class="page-title">Four scenarios. Two moved.</h1>
+  <p class="page-lede">Where a scenario moved, the ribbon is the point — the delta, not the body. Continuity scenarios carry a neutral ribbon to make that visible too.</p>
+
+  <div class="scenarios">
+
+    <!-- S-07 -->
+    <div class="s-row">
+      <div class="s-id-row">
+        <div><span class="s-id">S-07</span><span class="s-reg">MED · Morocco</span></div>
+        <h2 class="s-title">Sustained civil unrest near Cape Wind.</h2>
+        <div class="s-posture">
+          <span class="pill pill--high">HIGH · MED likelihood</span><br>
+          Adm. B2
+        </div>
+      </div>
+      <div class="delta-ribbon moved-up">
+        <div class="dr-tag">↑ Severity · MED → HIGH</div>
+        <div class="dr-body">Moved this month. Post-election coalition friction is the driver. Cape Wind site watch stepped up to raised; expat travel essential-only. <strong>Read with S-07 cyber coupling (§6).</strong></div>
+      </div>
+      <div class="s-bod">
+        <div class="narrative">
+          Post-election window in Morocco drives a 0–12 week unrest horizon on the Casablanca corridor. Cape Wind itself is not the protest object; proximate risks are access-road disruption, expat movement, and vendor continuity. Base case normalises over coalition formation; tail case extends into Q3 and reaches the October board.
+          <span class="drivers">coalition friction · youth unemployment · regional economic stress</span>
+        </div>
+        <div class="side">
+          <div class="kv"><div class="k">Delta</div><div class="v">Severity ↑ · Adm. held</div></div>
+          <div class="kv"><div class="k">Horizon</div><div class="v">0–12 weeks</div></div>
+          <div class="kv"><div class="k">Posture</div><div class="v">Raised watch</div></div>
+          <div class="kv"><div class="k">Next</div><div class="v">Reassess Oct board</div></div>
+          <div class="anchors">
+            <span class="anchor">E1</span><span class="anchor">E2</span><span class="anchor">E4</span><span class="anchor">C4</span><span class="anchor">C5</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S-11 -->
+    <div class="s-row">
+      <div class="s-id-row">
+        <div><span class="s-id">S-11</span><span class="s-reg">NCE · OT vendor</span></div>
+        <h2 class="s-title">Cyber intrusion via OT vendor.</h2>
+        <div class="s-posture">
+          <span class="pill pill--high">HIGH · MED-HIGH likelihood</span><br>
+          Adm. B1
+        </div>
+      </div>
+      <div class="delta-ribbon moved-new">
+        <div class="dr-tag">◆ New evidence · DE confirmation</div>
+        <div class="dr-body">Moved this month. SolarGlare confirmed at 2 German wind operators; 4 more probable. <strong>Exposure reclassified from hypothetical to sector-level.</strong> Primary recommended action: accelerate CVE-2026-1847 to 14-day SLA.</div>
+      </div>
+      <div class="s-bod">
+        <div class="narrative">
+          Shared Vendor X SCADA across the NCE fleet makes exposure portfolio-wide by construction. Patch deployment at 40%. Vendor X access into AeroGrid environments has not been reviewed since Q3 2025. The governance question is whether current patch cadence and vendor-access posture are sufficient given the campaign's demonstrated velocity.
+          <span class="drivers">SolarGlare · unpatched SCADA · third-party vendor access</span>
+        </div>
+        <div class="side">
+          <div class="kv"><div class="k">Delta</div><div class="v">New evidence · DE</div></div>
+          <div class="kv"><div class="k">Horizon</div><div class="v">0–8 weeks</div></div>
+          <div class="kv"><div class="k">Asks</div><div class="v">14-day SLA · access review</div></div>
+          <div class="kv"><div class="k">Next</div><div class="v">Patch status at May brief</div></div>
+          <div class="anchors">
+            <span class="anchor">C1</span><span class="anchor">C2</span><span class="anchor">C3</span><span class="anchor">C6</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S-09 -->
+    <div class="s-row">
+      <div class="s-id-row">
+        <div><span class="s-id">S-09</span><span class="s-reg">AME · Third-party vendor</span></div>
+        <h2 class="s-title">Third-party vendor compromise.</h2>
+        <div class="s-posture">
+          <span class="pill pill--medium">MED · MED likelihood</span><br>
+          Adm. B2
+        </div>
+      </div>
+      <div class="delta-ribbon no-delta">
+        <div class="dr-tag">— No delta · continuity</div>
+        <div class="dr-body">Included for continuity. No new evidence this month; watchlist actors quiet; monitoring held. <strong>Re-check at May brief; retire if two more months hold.</strong></div>
+      </div>
+      <div class="s-bod">
+        <div class="narrative">
+          Vendor concentration in the AME region remains the structural exposure. No new indicators this month. The scenario carries forward because two consecutive quiet months does not yet justify a retirement — three does. The open question for the CISO office is whether to close out at May.
+          <span class="drivers">vendor concentration · regional monitoring · no new indicators</span>
+        </div>
+        <div class="side">
+          <div class="kv"><div class="k">Delta</div><div class="v">None</div></div>
+          <div class="kv"><div class="k">Horizon</div><div class="v">Rolling</div></div>
+          <div class="kv"><div class="k">Status</div><div class="v">Continuity only</div></div>
+          <div class="kv"><div class="k">Next</div><div class="v">Retire? · May review</div></div>
+          <div class="anchors">
+            <span class="anchor">E7</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- S-14 -->
+    <div class="s-row">
+      <div class="s-id-row">
+        <div><span class="s-id">S-14</span><span class="s-reg">APAC · Blade supply</span></div>
+        <h2 class="s-title">Supply chain disruption — turbine blades.</h2>
+        <div class="s-posture">
+          <span class="pill pill--medium">MED · LOW-MED likelihood</span><br>
+          Adm. B2
+        </div>
+      </div>
+      <div class="delta-ribbon moved-down">
+        <div class="dr-tag">↓ Improved · transit stabilised</div>
+        <div class="dr-body">Moved this month. Transit-corridor stability improved; short-term logistics risk eased. <strong>Structural single-source exposure unchanged;</strong> 2027 delivery timeline still rides on Q4 2026 second-source qualification.</div>
+      </div>
+      <div class="s-bod">
+        <div class="narrative">
+          The month's improvement is tactical, not structural. Second-source qualification remains the milestone to track; if it slips past Q1 2027, the scenario escalates to board-action. CISO office view: no action required this month; watch the milestone, not the weekly.
+          <span class="drivers">single-source supplier · export restriction risk · 2027 delivery</span>
+        </div>
+        <div class="side">
+          <div class="kv"><div class="k">Delta</div><div class="v">Likelihood ↓</div></div>
+          <div class="kv"><div class="k">Horizon</div><div class="v">2027 delivery</div></div>
+          <div class="kv"><div class="k">Milestone</div><div class="v">2nd-source · Q4 2026</div></div>
+          <div class="kv"><div class="k">Next</div><div class="v">Q3 board review</div></div>
+          <div class="anchors">
+            <span class="anchor">E9</span><span class="anchor">E11</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 6 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 7 · EVIDENCE APPENDIX                  -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="07 Evidence appendix">
+  <header class="ph-top">
+    <span class="brand">AeroGrid · CISO Brief · April 2026</span>
+    <span>Evidence · p. 7 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 8 · Evidence appendix</span>
+    <span class="meta">Admiralty-graded · every assertion traces here</span>
+  </div>
+
+  <div class="app-section">
+    <div class="app-head"><span>Physical · E-prefix</span><span class="sub">10 entries</span></div>
+    <ol class="app-list">
+      <li><div class="ref">E1</div><div class="body"><div class="headline">Moroccan general election — provisional results and coalition arithmetic.</div><div class="src">Reuters · 14 Apr 2026</div><div class="why">Primary physical signal driving S-07 posture change.</div></div><div class="adm"><span class="grade">B1</span><span class="ts">14 Apr · 18:40 UTC</span></div></li>
+      <li><div class="ref">E2</div><div class="body"><div class="headline">Casablanca protest tracker — week-over-week incident counts.</div><div class="src">Le360 · 16 Apr 2026</div><div class="why">Trendline for the 0–12 week unrest horizon.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">16 Apr · 09:10 UTC</span></div></li>
+      <li><div class="ref">E3</div><div class="body"><div class="headline">Italian dockworkers — 48h rolling stoppage, Taranto and Gioia Tauro.</div><div class="src">Reuters · 09 Apr 2026</div><div class="why">Second MED movement item; port access disruption near Taranto.</div></div><div class="adm"><span class="grade">B1</span><span class="ts">09 Apr · 11:20 UTC</span></div></li>
+      <li><div class="ref">E4</div><div class="body"><div class="headline">Country security advisory — raised travel posture, Morocco urban centres.</div><div class="src">Seerist · 15 Apr 2026</div><div class="why">Basis for raised-watch determination at Cape Wind.</div></div><div class="adm"><span class="grade">A2</span><span class="ts">15 Apr · 06:00 UTC</span></div></li>
+      <li><div class="ref">E5</div><div class="body"><div class="headline">Taranto Offshore — grid tie achieved, commissioning on schedule.</div><div class="src">Internal · Project Ops · 18 Apr 2026</div><div class="why">Confirms positive baseline; no escalation signal.</div></div><div class="adm"><span class="grade">A1</span><span class="ts">18 Apr · 14:05 UTC</span></div></li>
+      <li><div class="ref">E6</div><div class="body"><div class="headline">MED storm-season preparation review — offshore assets.</div><div class="src">Internal · Ops · 12 Apr 2026</div><div class="why">Seasonal baseline re-anchored for October review.</div></div><div class="adm"><span class="grade">A1</span><span class="ts">12 Apr · 09:00 UTC</span></div></li>
+      <li><div class="ref">E7</div><div class="body"><div class="headline">AME regional monitoring — no new indicators across watchlist countries.</div><div class="src">Internal · RSM-AME · 15 Apr 2026</div><div class="why">Anchors the LATAM + AME "why clear" treatment.</div></div><div class="adm"><span class="grade">C2</span><span class="ts">15 Apr · 12:00 UTC</span></div></li>
+      <li><div class="ref">E8</div><div class="body"><div class="headline">Draft EU OT/ICS resilience framework — Commission text.</div><div class="src">European Commission · 17 Apr 2026</div><div class="why">Relevant to S-11 disclosure calculus if campaign reaches operator.</div></div><div class="adm"><span class="grade">A1</span><span class="ts">17 Apr · 10:00 UTC</span></div></li>
+      <li><div class="ref">E9</div><div class="body"><div class="headline">APAC transit corridor — April carrier-volume and advisory roll-up.</div><div class="src">Seerist · 17 Apr 2026</div><div class="why">Basis for APAC quieting + S-14 likelihood reduction.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">17 Apr · 08:30 UTC</span></div></li>
+      <li><div class="ref">E10</div><div class="body"><div class="headline">Greek local election timing + AeroGrid regional footprint overlay.</div><div class="src">Internal · RSM-MED · 18 Apr 2026</div><div class="why">Context for May-window watch on minor GR sites.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">18 Apr · 11:00 UTC</span></div></li>
+    </ol>
+  </div>
+
+  <div class="app-section">
+    <div class="app-head cyber"><span>Cyber · C-prefix</span><span class="sub">9 entries · NCE + MED + global</span></div>
+    <ol class="app-list">
+      <li><div class="ref">C1</div><div class="body"><div class="headline">SolarGlare campaign — TTPs, indicators, and observed targeting across EU wind sector.</div><div class="src">CERT-EU · 16 Apr 2026</div><div class="why">Primary campaign anchor for S-11.</div></div><div class="adm"><span class="grade">A2</span><span class="ts">16 Apr · 07:15 UTC</span></div></li>
+      <li><div class="ref">C2</div><div class="body"><div class="headline">German wind operator discloses ransomware incident; Vendor X SCADA vector confirmed.</div><div class="src">Der Spiegel · 13 Apr 2026</div><div class="why">Confirmation changes NCE exposure classification.</div></div><div class="adm"><span class="grade">B1</span><span class="ts">13 Apr · 16:00 UTC</span></div></li>
+      <li><div class="ref">C3</div><div class="body"><div class="headline">CVE-2026-1847 — CISA advisory and patch guidance; turbine SCADA, Vendor X v4.2.</div><div class="src">CISA · 08 Apr 2026</div><div class="why">Exploitation path for SolarGlare; primary recommended action.</div></div><div class="adm"><span class="grade">A1</span><span class="ts">08 Apr · 15:00 UTC</span></div></li>
+      <li><div class="ref">C4</div><div class="body"><div class="headline">APT28 ASN scanning observed against Moroccan and Spanish energy infrastructure.</div><div class="src">CERT-MA (partner share) · 11 Apr 2026</div><div class="why">Physical track of the MED coupling signal.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">11 Apr · 13:45 UTC</span></div></li>
+      <li><div class="ref">C5</div><div class="body"><div class="headline">APT28 TTP update — cadence change, new infrastructure hashes.</div><div class="src">NCSC · 14 Apr 2026</div><div class="why">Supports the 3× cadence observation underpinning the join.</div></div><div class="adm"><span class="grade">B1</span><span class="ts">14 Apr · 09:30 UTC</span></div></li>
+      <li><div class="ref">C6</div><div class="body"><div class="headline">EmberPass — executive-targeted phishing across EU renewables.</div><div class="src">Internal · IR · 10 Apr 2026</div><div class="why">Contained; included for completeness of monthly surface.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">10 Apr · 17:20 UTC</span></div></li>
+      <li><div class="ref">C7</div><div class="body"><div class="headline">FIN12-adjacent cluster — tooling overlap with SolarGlare, unattributed.</div><div class="src">Mandiant brief · 16 Apr 2026</div><div class="why">Watch item; attribution change would move S-11.</div></div><div class="adm"><span class="grade">C2</span><span class="ts">16 Apr · 20:00 UTC</span></div></li>
+      <li><div class="ref">C8</div><div class="body"><div class="headline">CVE-2026-1722 — grid HMI, no vendor patch; workaround details.</div><div class="src">CISA · 02 Apr 2026</div><div class="why">Anchors the 2-site workaround posture.</div></div><div class="adm"><span class="grade">B2</span><span class="ts">02 Apr · 10:00 UTC</span></div></li>
+      <li><div class="ref">C9</div><div class="body"><div class="headline">Identity token-theft TTPs — cross-sector advisory, financial to energy crossover watch.</div><div class="src">CISA + partner · 17 Apr 2026</div><div class="why">Underpins pre-emptive conditional-access tightening this month.</div></div><div class="adm"><span class="grade">B1</span><span class="ts">17 Apr · 11:30 UTC</span></div></li>
+    </ol>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 7 / 7</span>
+  </footer>
+</section>
+
+</body>
+</html>

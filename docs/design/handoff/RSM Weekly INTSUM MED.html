@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>AeroGrid · MED Weekly INTSUM · 2026-W17</title>
+<meta name="viewport" content="width=820">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/rsm.css">
+</head>
+<body>
+
+<div class="print-hint hide-print">
+  <span>A4 · Print-ready briefing pack · 9 pages</span>
+  <a class="btn" href="javascript:window.print()">Print / Save as PDF</a>
+</div>
+
+<!-- ================ COVER ================ -->
+<section class="page cover">
+  <div class="cover-grid">
+    <div class="cover-band">
+      <span>INTERNAL — AEROGRID SECURITY</span>
+      <span>CLASSIFICATION · HANDLE WITH CARE</span>
+    </div>
+
+    <div class="cover-body">
+      <div>
+        <div class="meta-label" style="font-size: 10px;">AEROGRID WIND SOLUTIONS · INTELLIGENCE</div>
+        <div class="cover-title" style="margin-top: 10px;">
+          AEROGRID<span class="slash">//</span>MED<br/>
+          <span style="color: var(--ink-500); font-weight: 500;">Weekly INTSUM</span>
+        </div>
+        <div class="cover-sub" style="margin-top: 18px;">
+          Regional Security Manager briefing pack. Compressed correlation of site-joined physical and cyber intelligence
+          for the Mediterranean region — the intelligence an RSM would have gathered themselves with four hours of Seerist,
+          delivered in ten minutes of reading.
+        </div>
+      </div>
+
+      <div class="cover-meta-grid">
+        <div>
+          <div class="meta-label">REGION</div>
+          <div class="meta-val">Mediterranean · MED</div>
+        </div>
+        <div>
+          <div class="meta-label">WEEK OF</div>
+          <div class="meta-val">2026-04-20 → 2026-04-26</div>
+        </div>
+        <div>
+          <div class="meta-label">ISSUED</div>
+          <div class="meta-val">2026-04-21 · 06:00 UTC</div>
+        </div>
+        <div>
+          <div class="meta-label">PREPARED BY</div>
+          <div class="meta-val">AeroGrid Intelligence</div>
+        </div>
+        <div>
+          <div class="meta-label">REGIONAL ADMIRALTY</div>
+          <div class="meta-val">B2 · Physical<br/><span style="color: var(--ink-500); font-size: 10px;">B3 · Cyber</span></div>
+        </div>
+        <div>
+          <div class="meta-label">SITES IN SCOPE</div>
+          <div class="meta-val">2 crown-jewel · 1 primary<br/>2 secondary · 6 minor</div>
+        </div>
+      </div>
+
+      <div class="cover-dist">
+        <div class="label">ADDRESSED TO</div>
+        <div class="list">
+          <span>M. Keller · RSM MED</span>
+          <span>S. Ouazzani · Country Lead · MA</span>
+          <span>L. Ferrari · Country Lead · IT</span>
+          <span>R. Navarro · Country Lead · ES</span>
+          <span>A. Dimitriou · Country Lead · GR</span>
+          <span>H. El-Sayed · Country Lead · EG</span>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--ink-200); padding-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <div>
+          <div class="meta-label">READING GUIDE</div>
+          <div style="font-size: 10.5px; color: var(--ink-900); line-height: 1.55; margin-top: 6px;">
+            Start at <b>p1 — Intelligence Summary</b>. Crown-jewel and primary sites follow in criticality order;
+            Regional Cyber mirrors the site anatomy. Secondary and minor sites roll up at the back; evidence
+            appendix supports every <span style="color: var(--brand-bright); font-weight: 600;">[E#]</span> / <span style="color: var(--brand-bright); font-weight: 600;">[C#]</span> reference.
+          </div>
+        </div>
+        <div>
+          <div class="meta-label">REPLY CALLBACK</div>
+          <div style="font-size: 10.5px; color: var(--ink-900); line-height: 1.55; margin-top: 6px;">
+            Each page footer carries <b>ACCURATE / OVERSTATED / FALSE POSITIVE</b>.
+            Tick once per scan; RSM feedback tunes context weights for the next cycle.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-foot">
+      <span>AEROGRID INTELLIGENCE · CRQ DESIGN SYSTEM v1.0</span>
+      <span>Doc · RSM-MED-2026-W17 · v1.0</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================ p1 INTELLIGENCE SUMMARY ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div>
+    <div class="meta-label">p1 · INTELLIGENCE SUMMARY</div>
+    <div class="intsum-headline">
+      Elevated unrest across North African maritime corridor; Italy and Iberia quiet; Moroccan election
+      10 days out raises watch posture for southern sites.
+    </div>
+
+    <!-- Baseline strip -->
+    <div class="page-section" style="margin-top: 10px;">
+      <span>BASELINE STRIP</span>
+      <span class="sub">Country pulse · forecast · admiralty B2 (physical) · B3 (cyber)</span>
+    </div>
+    <div class="baseline-strip">
+      <div class="cell">
+        <span class="ctry">Morocco · MA</span>
+        <span class="pulseline"><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↘</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Forecast declining</span>
+      </div>
+      <div class="cell">
+        <span class="ctry">Italy · IT</span>
+        <span class="pulseline"><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Steady</span>
+      </div>
+      <div class="cell">
+        <span class="ctry">Egypt · EG</span>
+        <span class="pulseline"><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↗</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Elevated</span>
+      </div>
+      <div class="cell">
+        <span class="ctry">Spain · ES</span>
+        <span class="pulseline"><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Stable</span>
+      </div>
+      <div class="cell">
+        <span class="ctry">Greece · GR</span>
+        <span class="pulseline"><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Stable</span>
+      </div>
+      <div class="cell">
+        <span class="ctry">Region · MED</span>
+        <span class="pulseline"><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↘</span></span></span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">Mixed · trending down</span>
+      </div>
+    </div>
+
+    <!-- Top events -->
+    <div class="page-section">
+      <span>TOP EVENTS THIS WEEK</span>
+      <span class="sub">Ranked by site relevance · 6 items</span>
+    </div>
+    <table class="events">
+      <thead>
+        <tr>
+          <th style="width: 48%;">What / Where</th>
+          <th style="width: 14%;">When</th>
+          <th style="width: 16%;">Nearest site · dist</th>
+          <th style="width: 12%;">Severity</th>
+          <th style="width: 10%;">Ref</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>
+            <div class="e-head">Protest escalation — anti-government demonstration turned violent in Casablanca commercial district</div>
+            <div class="e-loc">Casablanca, MA</div>
+          </td>
+          <td class="col-when">2026-04-22</td>
+          <td class="col-dist">Cape Wind · <b>18 km</b></td>
+          <td class="col-sev"><span class="sev sev--medium">Medium</span></td>
+          <td><span class="ref">[E1]</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="e-head">Port labour strike — USB dockworkers 48-hour action over collective agreement</div>
+            <div class="e-loc">Taranto, IT</div>
+          </td>
+          <td class="col-when">2026-04-23</td>
+          <td class="col-dist">Taranto Offshore · <b>on-site</b></td>
+          <td class="col-sev"><span class="sev sev--medium">Medium</span></td>
+          <td><span class="ref">[E2]</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="e-head">Sabotage arrest — four detained near Agadir grid infrastructure; DGST announcement pending</div>
+            <div class="e-loc">Agadir province, MA</div>
+          </td>
+          <td class="col-when">2026-04-24</td>
+          <td class="col-dist">Agadir Substation · <b>35 km</b></td>
+          <td class="col-sev"><span class="sev sev--high">High</span></td>
+          <td><span class="ref">[E3]</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="e-head">Storm system — eastern Med low-pressure front, 5-day forecast landfall Ionian coast</div>
+            <div class="e-loc">Ionian Sea</div>
+          </td>
+          <td class="col-when">2026-04-26+</td>
+          <td class="col-dist">Taranto Offshore · <b>approach 5d</b></td>
+          <td class="col-sev"><span class="sev sev--medium">Medium</span></td>
+          <td><span class="ref">[E4]</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="e-head">Moroccan general election — polls 10 days out; campaigning enters national-intensity phase</div>
+            <div class="e-loc">National · MA</div>
+          </td>
+          <td class="col-when">2026-04-30</td>
+          <td class="col-dist">All MA sites · <b>national</b></td>
+          <td class="col-sev"><span class="sev sev--monitor">Monitor</span></td>
+          <td><span class="ref">[E5]</span></td>
+        </tr>
+        <tr>
+          <td>
+            <div class="e-head">Routine industrial action — CCOO port workers 24-hour stoppage at Algeciras container terminal</div>
+            <div class="e-loc">Algeciras, ES</div>
+          </td>
+          <td class="col-when">2026-04-22</td>
+          <td class="col-dist">No site proximity</td>
+          <td class="col-sev"><span class="sev sev--monitor">Monitor</span></td>
+          <td><span class="ref">[E6]</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Cyber strip -->
+    <div class="cyber-strip">
+      <div class="cyber-label">
+        CYBER STRIP · 3 ITEMS
+        <span class="tag" style="margin-left: auto;">Regional admiralty B3</span>
+      </div>
+      <ul class="cyber-list">
+        <li>
+          <span class="kind">ACTOR</span>
+          <span>APT28 observed scanning MA energy-sector ASNs; reconnaissance consistent with prior campaigns against North African renewables.</span>
+          <span class="ref">[C1]</span>
+        </li>
+        <li>
+          <span class="kind">SECTOR</span>
+          <span>SolarGlare ransomware campaign active against EU renewables — 2 confirmed German wind-operator intrusions last week.</span>
+          <span class="ref">[C2]</span>
+        </li>
+        <li>
+          <span class="kind">CVE</span>
+          <span>CVE-2026-1847 — turbine SCADA (Vendor X, v4.2); patch available via vendor portal since 2026-04-18.</span>
+          <span class="ref">[C3]</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Baselines moved + reading guide -->
+    <div class="two-col">
+      <div>
+        <div class="page-section" style="margin-top: 4px;">
+          <span>BASELINES MOVED</span>
+          <span class="sub">vs. cycle 2026-W16</span>
+        </div>
+        <div class="moved" style="margin-top: 6px;">
+          <div class="m-row"><span class="c">MA</span><span><b>Amber →</b> → <b>Amber ↘</b> · forecast declining; election window driver.</span></div>
+          <div class="m-row"><span class="c">EG</span><span><b>Amber →</b> → <b>Amber ↗</b> · background unrest uptick [E12].</span></div>
+          <div class="m-row"><span class="c">IT · ES · GR</span><span>Unchanged. Steady / stable.</span></div>
+          <div class="m-row"><span class="c">REGION</span><span>Physical admiralty unchanged (B2). Cyber admiralty unchanged (B3).</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="page-section" style="margin-top: 4px;">
+          <span>READING GUIDE</span>
+          <span class="sub">This pack · 9 pages</span>
+        </div>
+        <div class="toc" style="margin-top: 6px;">
+          <div class="grp">Crown-jewel &amp; primary</div>
+          <div class="row"><span class="ttl">Cape Wind · MA</span><span class="dots"></span><span class="pg">p 3</span></div>
+          <div class="row"><span class="ttl">Taranto Offshore · IT</span><span class="dots"></span><span class="pg">p 4</span></div>
+          <div class="row"><span class="ttl">Agadir Substation · MA</span><span class="dots"></span><span class="pg">p 5</span></div>
+          <div class="grp">Regional</div>
+          <div class="row"><span class="ttl">Cyber — MED</span><span class="dots"></span><span class="pg">p 6</span></div>
+          <div class="grp">Secondary &amp; minor</div>
+          <div class="row"><span class="ttl">Murcia Solar · ES · Kavala Wind · GR</span><span class="dots"></span><span class="pg">p 7</span></div>
+          <div class="row"><span class="ttl">Minor sites table · 6 rows</span><span class="dots"></span><span class="pg">p 8</span></div>
+          <div class="grp">Appendix</div>
+          <div class="row"><span class="ttl">Evidence — physical E1–E12 · cyber C1–C5</span><span class="dots"></span><span class="pg">p 9</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 2 / 9</span>
+  </div>
+</section>
+
+<!-- ================ CAPE WIND (Crown jewel 1) ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div class="meta-label">SITE BLOCK · CROWN JEWEL · 01 OF 02</div>
+
+  <div class="site-head">
+    <div class="left">
+      <div class="name-row">
+        <span class="site-name">Cape Wind</span>
+        <span class="tier tier--crown">Crown Jewel</span>
+        <span class="country">Morocco · MA</span>
+      </div>
+      <div class="facts">
+        <div class="cell"><span class="meta-label">COORDS</span><span class="meta-val num">33.58°N · 7.62°W</span></div>
+        <div class="cell"><span class="meta-label">PERSONNEL</span><span class="meta-val num">142 total · 38 expat · 51 contractors</span></div>
+        <div class="cell"><span class="meta-label">COUNTRY LEAD</span><span class="meta-val">S. Ouazzani</span></div>
+        <div class="cell"><span class="meta-label">NAMEPLATE</span><span class="meta-val num">620 MW</span></div>
+      </div>
+    </div>
+    <div class="map-thumb">
+      <div class="coast" style="left: -6px; right: 40%; top: 12px; bottom: 12px; border-right: 1px dashed var(--ink-400);"></div>
+      <div class="pin" style="top: 48%; left: 64%;"></div>
+      <div class="label">33.58°N · 7.62°W</div>
+    </div>
+  </div>
+
+  <div class="site-body">
+    <div class="baseline">
+      <div class="b-row"><span class="lbl">Pulse</span><span class="val"><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↘</span></span></span></div>
+      <div class="b-row"><span class="lbl">Host baseline</span><span class="val">Elevated · MA</span></div>
+      <div class="b-row"><span class="lbl">Days since<br/>last incident</span><span class="val num">67</span></div>
+      <div class="b-row"><span class="lbl">Admiralty</span><span class="val">B2 · site-level</span></div>
+      <div class="standing">
+        <span class="lbl">Criticality drivers</span>
+        Single largest MED offtake node. 620 MW nameplate. Downstream: Moroccan national grid balancing.
+      </div>
+      <div class="standing">
+        <span class="lbl">Standing notes · RSM</span>
+        Watch cadence raised for election window through May 6. Country lead coordinating with local police liaison.
+      </div>
+    </div>
+
+    <div class="feed">
+      <div class="group-title">PROXIMITY HITS <span class="hint">within 50 km POI</span></div>
+      <div class="item">
+        <div class="what">Casablanca unrest — protest escalation in commercial district<br/><span class="loc">Casablanca, MA</span></div>
+        <div class="col-meta">18 KM · 2026-04-22</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[E1]</span></div>
+      </div>
+      <div class="item">
+        <div class="what">Sabotage arrest — four detained near Agadir grid infrastructure<br/><span class="loc">Agadir province, MA</span></div>
+        <div class="col-meta">35 KM (SIBLING SITE) · 2026-04-24</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[E3]</span></div>
+      </div>
+
+      <div class="group-title">PATTERN HITS <span class="hint">relevant attack types · MA / 30d</span></div>
+      <div class="item">
+        <div class="what">Two energy-sector sabotage arrests in MA past 30 days — pattern consistent with elevated pre-election posture.</div>
+        <div class="col-meta">30D ROLLING · MA</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[E7] [E8]</span></div>
+      </div>
+
+      <div class="group-title">ACTOR HITS <span class="hint">threat actors of interest</span></div>
+      <div class="item">
+        <div class="what">FAM-7 activity up — anti-infrastructure leaflets distributed in Casablanca; call for &ldquo;action&rdquo; during election week.</div>
+        <div class="col-meta">2026-04-22 · FAM-7</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[E9]</span></div>
+      </div>
+
+      <div class="group-title">CALENDAR AHEAD <span class="hint">next 14 days</span></div>
+      <div class="item">
+        <div class="what">Moroccan general election — national polls; post-result demonstrations routine in Casablanca/Rabat axis.</div>
+        <div class="col-meta">D+10 · 2026-04-30</div>
+        <div><span class="sev sev--monitor">MON</span> <span class="ref">[E5]</span></div>
+      </div>
+
+      <div class="cyber-callout">
+        <span class="tag">CYBER</span>
+        <span>APT28 scanning MA energy sector; no Cape Wind telemetry anomalies observed to date.</span>
+        <span class="ref">[C1]</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY · CAPE WIND / MA</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 3 / 9</span>
+  </div>
+</section>
+
+<!-- ================ TARANTO OFFSHORE (Crown jewel 2 — half page + next site) ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div class="meta-label">SITE BLOCK · CROWN JEWEL · 02 OF 02 · QUIET WEEK</div>
+
+  <div class="site-head">
+    <div class="left">
+      <div class="name-row">
+        <span class="site-name">Taranto Offshore</span>
+        <span class="tier tier--crown">Crown Jewel</span>
+        <span class="country">Italy · IT</span>
+      </div>
+      <div class="facts">
+        <div class="cell"><span class="meta-label">COORDS</span><span class="meta-val num">40.47°N · 17.24°E</span></div>
+        <div class="cell"><span class="meta-label">PERSONNEL</span><span class="meta-val num">89 total · 11 expat · 34 contractors</span></div>
+        <div class="cell"><span class="meta-label">COUNTRY LEAD</span><span class="meta-val">L. Ferrari</span></div>
+        <div class="cell"><span class="meta-label">ASSET</span><span class="meta-val">Floating offshore · WTG-01–20</span></div>
+      </div>
+    </div>
+    <div class="map-thumb">
+      <div class="coast" style="left: 8px; right: 8px; top: 40%; bottom: 8px; border-top: 1px dashed var(--ink-400); border-left: 0; border-right: 0;"></div>
+      <div class="pin" style="top: 62%; left: 45%;"></div>
+      <div class="label">40.47°N · 17.24°E</div>
+    </div>
+  </div>
+
+  <div class="site-body" style="padding-bottom: 14px;">
+    <div class="baseline">
+      <div class="b-row"><span class="lbl">Pulse</span><span class="val"><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></span></div>
+      <div class="b-row"><span class="lbl">Host baseline</span><span class="val">Low · IT</span></div>
+      <div class="b-row"><span class="lbl">Days since<br/>last incident</span><span class="val num">214</span></div>
+      <div class="b-row"><span class="lbl">Admiralty</span><span class="val">B2 · site-level</span></div>
+      <div class="standing">
+        <span class="lbl">Criticality drivers</span>
+        Italian south grid stability; first commercial floating offshore in AeroGrid portfolio.
+      </div>
+      <div class="standing">
+        <span class="lbl">Standing notes · RSM</span>
+        Quiet week. Routine maintenance on WTG-14 completes 2026-04-25.
+      </div>
+    </div>
+
+    <div class="feed">
+      <div class="group-title">PROXIMITY HITS <span class="hint">within 50 km POI</span></div>
+      <div class="item">
+        <div class="what">Taranto port labour strike — USB 48h action; gate access delays likely Wed–Thu.<br/><span class="loc">Port of Taranto, IT · on-site</span></div>
+        <div class="col-meta">ON-SITE · 2026-04-23</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[E2]</span></div>
+      </div>
+
+      <div class="group-title">CALENDAR AHEAD <span class="hint">next 14 days</span></div>
+      <div class="item">
+        <div class="what">Storm system — Ionian low-pressure front forecast landfall Sun–Mon; crew-transfer vessel windows tight.</div>
+        <div class="col-meta">D+5 · 2026-04-26+</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[E4]</span></div>
+      </div>
+
+      <div class="group-title">PATTERN · ACTOR <span class="hint">threat actors of interest</span></div>
+      <div class="item">
+        <div class="what" style="color: var(--ink-400); font-style: italic;">No pattern or actor hits this week. Baseline quiet.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+
+      <div class="group-title">CYBER CALLOUT</div>
+      <div class="item">
+        <div class="what" style="color: var(--ink-400); font-style: italic;">No cyber events joined to this site this week.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================ AGADIR SUBSTATION (Primary — stepped down) ================ -->
+  <div style="margin-top: 14px;">
+    <div class="meta-label">SITE BLOCK · PRIMARY · STEPPED-DOWN ANATOMY</div>
+
+    <div class="site-head" style="border-top-color: var(--ink-700); border-top-width: 1px;">
+      <div class="left">
+        <div class="name-row">
+          <span class="site-name" style="font-size: 17px;">Agadir Substation</span>
+          <span class="tier tier--primary">Primary</span>
+          <span class="country">Morocco · MA</span>
+        </div>
+        <div class="facts">
+          <div class="cell"><span class="meta-label">COORDS</span><span class="meta-val num">30.43°N · 9.60°W</span></div>
+          <div class="cell"><span class="meta-label">PERSONNEL</span><span class="meta-val num">24 total · 3 expat · 12 contractors</span></div>
+          <div class="cell"><span class="meta-label">COUNTRY LEAD</span><span class="meta-val">S. Ouazzani</span></div>
+        </div>
+      </div>
+      <div class="map-thumb" style="width: 90px; height: 60px;">
+        <div class="coast" style="left: -6px; right: 35%; top: 8px; bottom: 8px; border-right: 1px dashed var(--ink-400);"></div>
+        <div class="pin" style="top: 55%; left: 70%;"></div>
+        <div class="label">30.43°N</div>
+      </div>
+    </div>
+
+    <div class="site-body" style="border-bottom: 0;">
+      <div class="baseline">
+        <div class="b-row"><span class="lbl">Pulse</span><span class="val"><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↘</span></span></span></div>
+        <div class="b-row"><span class="lbl">Host baseline</span><span class="val">Elevated · MA</span></div>
+        <div class="standing">
+          <span class="lbl">Criticality drivers</span>
+          Critical grid node for southern MA offtake from Cape Wind.
+        </div>
+      </div>
+
+      <div class="feed">
+        <div class="group-title">PROXIMITY HITS</div>
+        <div class="item">
+          <div class="what">Sabotage arrest — four detained near Agadir grid infrastructure.<br/><span class="loc">Agadir province, MA</span></div>
+          <div class="col-meta">35 KM · 2026-04-24</div>
+          <div><span class="sev sev--high">HIGH</span> <span class="ref">[E3]</span></div>
+        </div>
+
+        <div class="group-title">PATTERN HITS</div>
+        <div class="item">
+          <div class="what">Two MA energy-sector sabotage arrests past 30 days — country-level pattern.</div>
+          <div class="col-meta">30D ROLLING · MA</div>
+          <div><span class="sev sev--high">HIGH</span> <span class="ref">[E7] [E8]</span></div>
+        </div>
+
+        <div class="cyber-callout">
+          <span class="tag">CYBER</span>
+          <span>APT28 scanning MA energy sector. Watch for credential-harvesting attempts against remote SCADA gateways.</span>
+          <span class="ref">[C1]</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY · TARANTO / AGADIR</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 4 / 9</span>
+  </div>
+</section>
+
+<!-- ================ REGIONAL CYBER PAGE ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div class="meta-label">REGIONAL CYBER · MIRRORS SITE ANATOMY</div>
+
+  <div class="site-head" style="border-top: 2px solid #06b6d4;">
+    <div class="left">
+      <div class="name-row">
+        <span class="site-name">Cyber — Mediterranean</span>
+        <span class="tier tier--crown" style="background: #0a7a8b;">Regional</span>
+        <span class="country" style="color: #0a7a8b;">MED · Sector focus: Energy / Renewables</span>
+      </div>
+      <div class="facts">
+        <div class="cell"><span class="meta-label">ADMIRALTY</span><span class="meta-val">B3 · cyber</span></div>
+        <div class="cell"><span class="meta-label">WATCHLIST</span><span class="meta-val num">7 actors · 4 CVEs on watch</span></div>
+        <div class="cell"><span class="meta-label">ACTIVE CAMPAIGNS</span><span class="meta-val num">2 regional · 1 sectoral</span></div>
+        <div class="cell"><span class="meta-label">SCOPE</span><span class="meta-val">MA · IT · ES · GR · EG · TN · CY</span></div>
+      </div>
+    </div>
+    <div class="map-thumb">
+      <div class="coast" style="left: 6px; right: 6px; top: 18px; bottom: 18px; border: 1px dashed var(--ink-300); border-radius: 50%;"></div>
+      <div class="pin" style="top: 58%; left: 22%; background: var(--sev-high); box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--sev-high);"></div>
+      <div class="pin" style="top: 46%; left: 52%; background: var(--sev-medium); box-shadow: 0 0 0 2px var(--white), 0 0 0 3px var(--sev-medium);"></div>
+      <div class="label">MED coverage</div>
+    </div>
+  </div>
+
+  <div class="site-body">
+    <div class="baseline">
+      <div class="b-row"><span class="lbl">Sector posture</span><span class="val"><span class="sev sev--high" style="margin-right: 4px;">HIGH</span> Energy targeting active</span></div>
+      <div class="b-row"><span class="lbl">Regional campaigns</span><span class="val num">2 active</span></div>
+      <div class="b-row"><span class="lbl">CVE watchlist</span><span class="val num">4 on watch · 1 new</span></div>
+      <div class="b-row"><span class="lbl">Admiralty</span><span class="val">B3 · regional</span></div>
+      <div class="standing">
+        <span class="lbl">Regional standing notes</span>
+        EU renewables under sustained ransomware pressure since Q1 2026. Hacktivist surface-probing and state-aligned reconnaissance
+        both elevated. No confirmed operator-side intrusions on AeroGrid estate this cycle.
+      </div>
+    </div>
+
+    <div class="feed">
+      <div class="group-title" style="color: #0a7a8b;">SECTOR SIGNAL <span class="hint">energy / wind / utilities · last 7d</span></div>
+      <div class="item">
+        <div class="what">SolarGlare ransomware confirmed at 2 German wind operators last week; affiliate-operator TTPs consistent with Q1 intrusions.</div>
+        <div class="col-meta">DE · 2026-04-14–19</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[C2]</span></div>
+      </div>
+
+      <div class="group-title" style="color: #0a7a8b;">ACTOR ACTIVITY <span class="hint">global + regional watchlist</span></div>
+      <div class="item">
+        <div class="what">APT28 — scanning MA energy ASNs; reconnaissance against public-facing OT management interfaces.</div>
+        <div class="col-meta">MA · 2026-04-19–21</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[C1]</span></div>
+      </div>
+      <div class="item">
+        <div class="what">Ghosts-of-Barca (hacktivist) — claimed DDoS against Italian utility customer-portal; outage ~22 min.</div>
+        <div class="col-meta">IT · 2026-04-20</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[C4]</span></div>
+      </div>
+
+      <div class="group-title" style="color: #0a7a8b;">GEOGRAPHY OVERLAY <span class="hint">host-country cyber activity</span></div>
+      <div class="item">
+        <div class="what">Morocco — state-actor cyber activity elevated; origin assessed as suspected regional rival (low confidence on attribution).</div>
+        <div class="col-meta">MA · ONGOING</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[C1]</span></div>
+      </div>
+      <div class="item">
+        <div class="what">Italy — low; no sector-aligned intrusions against renewables operators observed this cycle.</div>
+        <div class="col-meta">IT · BASELINE</div>
+        <div><span class="sev sev--monitor">MON</span></div>
+      </div>
+
+      <div class="group-title" style="color: #0a7a8b;">VULNERABILITY SIGNAL <span class="hint">touching ot_stack · cve_watch_categories</span></div>
+      <div class="item">
+        <div class="what">CVE-2026-1847 — turbine SCADA (Vendor X, v4.2). Patch available. Applicable: Cape Wind, Taranto Offshore, Kavala.</div>
+        <div class="col-meta">CVSS 8.8 · PATCH</div>
+        <div><span class="sev sev--high">HIGH</span> <span class="ref">[C3]</span></div>
+      </div>
+      <div class="item">
+        <div class="what">CVE-2026-1722 — grid HMI (Vendor Y). Workaround only; segmentation + MFA advised.</div>
+        <div class="col-meta">CVSS 7.2 · WORKAROUND</div>
+        <div><span class="sev sev--medium">MED</span> <span class="ref">[C5]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY · CYBER / MED</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 5 / 9</span>
+  </div>
+</section>
+
+<!-- ================ SECONDARY SITES + MINOR TABLE ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div class="meta-label">SECONDARY SITES · INLINE</div>
+  <div class="page-section" style="margin-top: 8px;">
+    <span>SECONDARY · 2 OF 2 SHOWN</span>
+    <span class="sub">Site header + joined events · quiet rolls up to minor table</span>
+  </div>
+
+  <div class="sec-site">
+    <div class="head">
+      <span class="tier tier--secondary">Secondary</span>
+      <span class="name">Murcia Solar</span>
+      <span class="meta">Spain · ES · R. Navarro</span>
+      <span class="pulse pulse--green" style="margin-left: auto;"><span class="dot"></span>GREEN <span class="arrow">→</span></span>
+    </div>
+    <div class="events-inline">
+      <div class="e">
+        <div>Minor industrial action — CCOO port workers at Almería container terminal; 90 km from site, no operational touch.
+          <span class="loc" style="color: var(--ink-500); font-size: 9.5px; display: block; margin-top: 2px;">Almería, ES</span>
+        </div>
+        <div class="col-meta" style="font-size: 9px; color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase;">90 KM · 2026-04-22</div>
+        <div><span class="sev sev--monitor">MON</span> <span class="ref">[E10]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-site">
+    <div class="head">
+      <span class="tier tier--secondary">Secondary</span>
+      <span class="name">Kavala Wind</span>
+      <span class="meta">Greece · GR · A. Dimitriou</span>
+      <span class="pulse pulse--green" style="margin-left: auto;"><span class="dot"></span>GREEN <span class="arrow">→</span></span>
+    </div>
+    <div class="events-inline">
+      <div class="e">
+        <div>Local election 3 weeks out — Kavala municipality; no security implication at current posture.
+          <span class="loc" style="color: var(--ink-500); font-size: 9.5px; display: block; margin-top: 2px;">Kavala, GR</span>
+        </div>
+        <div class="col-meta" style="font-size: 9px; color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase;">D+21 · 2026-05-11</div>
+        <div><span class="sev sev--monitor">MON</span> <span class="ref">[E11]</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Minor sites table -->
+  <div style="margin-top: 28px;">
+    <div class="meta-label">MINOR SITES · TABLE</div>
+    <div class="page-section" style="margin-top: 8px;">
+      <span>MINOR · 6 SITES</span>
+      <span class="sub">One row per site · hot weeks promote to secondary inline</span>
+    </div>
+    <table class="minor">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Site</th>
+          <th style="width: 10%;">Country</th>
+          <th style="width: 14%;">Pulse</th>
+          <th style="width: 10%; text-align: right;">Δ count</th>
+          <th style="width: 44%;">Top-1 event · note</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="head">Nador Office</td>
+          <td>MA</td>
+          <td><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">→</span></span></td>
+          <td class="num">2</td>
+          <td class="note">Monitoring Casablanca unrest spillover — no proximity hits yet.</td>
+        </tr>
+        <tr>
+          <td class="head">Barcelona HQ</td>
+          <td>ES</td>
+          <td><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></td>
+          <td class="num">0</td>
+          <td class="note">Quiet.</td>
+        </tr>
+        <tr>
+          <td class="head">Naples Ops</td>
+          <td>IT</td>
+          <td><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></td>
+          <td class="num">1</td>
+          <td class="note">Taranto port strike spillover — inventory staging delayed &lt; 24 h. <span class="ref" style="color: var(--brand-bright); font-weight: 600;">[E2]</span></td>
+        </tr>
+        <tr>
+          <td class="head">Tunis Warehouse</td>
+          <td>TN</td>
+          <td><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">→</span></span></td>
+          <td class="num">0</td>
+          <td class="note">Quiet.</td>
+        </tr>
+        <tr>
+          <td class="head">Limassol Port</td>
+          <td>CY</td>
+          <td><span class="pulse pulse--green"><span class="dot"></span>GREEN <span class="arrow">→</span></span></td>
+          <td class="num">0</td>
+          <td class="note">Quiet.</td>
+        </tr>
+        <tr>
+          <td class="head">Alexandria Office</td>
+          <td>EG</td>
+          <td><span class="pulse pulse--amber"><span class="dot"></span>AMBER <span class="arrow">↗</span></span></td>
+          <td class="num">1</td>
+          <td class="note">Background unrest uptick — cost-of-living protests weekly cadence. <span class="ref" style="color: var(--brand-bright); font-weight: 600;">[E12]</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY · SECONDARY + MINOR</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 6 / 9</span>
+  </div>
+</section>
+
+<!-- ================ EVIDENCE APPENDIX ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">AEROGRID // MED WEEKLY INTSUM</span>
+    <span>Week of 2026-04-20 · Issued 2026-04-21 06:00Z</span>
+  </div>
+
+  <div class="meta-label">EVIDENCE APPENDIX · PHYSICAL &amp; CYBER</div>
+
+  <div class="app-section">
+    <div class="app-head">
+      <span>PHYSICAL EVIDENCE · E1 — E12</span>
+      <span style="color: var(--ink-400); font-weight: 500;">Admiralty range A1 — C3 · all timestamps UTC</span>
+    </div>
+    <ul class="app-list">
+      <li>
+        <div class="ref">E1</div>
+        <div class="body">
+          <div class="headline">Casablanca — anti-government protest turned violent in commercial district; two police vehicles damaged.</div>
+          <div class="src">Reuters · Le360 · Seerist Verified</div>
+          <div class="why">Cape Wind proximity · 18 km · underwrites elevated-posture headline.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-22 14:10Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E2</div>
+        <div class="body">
+          <div class="headline">Taranto — USB dockworkers announce 48-hour strike over collective-agreement dispute.</div>
+          <div class="src">Corriere della Sera · Ansa</div>
+          <div class="why">Taranto Offshore on-site impact; Naples Ops spillover.</div>
+        </div>
+        <div class="adm"><span class="grade">B1</span><span class="ts">2026-04-21 08:45Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E3</div>
+        <div class="body">
+          <div class="headline">Agadir province — DGST detains four suspected of planning attack on grid infrastructure.</div>
+          <div class="src">Le360 · Reuters · Seerist Verified</div>
+          <div class="why">Agadir Substation proximity · 35 km · Cape Wind sibling-site risk.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-24 11:20Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E4</div>
+        <div class="body">
+          <div class="headline">Ionian low — 5-day storm forecast; sustained winds 55–70 kn landfall Sun–Mon.</div>
+          <div class="src">ECMWF · Meteo.it</div>
+          <div class="why">Taranto Offshore operations window impact.</div>
+        </div>
+        <div class="adm"><span class="grade">A2</span><span class="ts">2026-04-21 06:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E5</div>
+        <div class="body">
+          <div class="headline">Morocco — general election campaigning enters national-intensity phase; polls 2026-04-30.</div>
+          <div class="src">Le Monde · Hespress</div>
+          <div class="why">All MA sites · calendar watchpoint; underwrites Cape Wind / Agadir posture.</div>
+        </div>
+        <div class="adm"><span class="grade">A1</span><span class="ts">2026-04-20 00:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E6</div>
+        <div class="body">
+          <div class="headline">Algeciras — CCOO 24-hour stoppage at container terminal; no AeroGrid counterparty exposure.</div>
+          <div class="src">El País · Europa Press</div>
+          <div class="why">Regional context only · no site proximity.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-22 07:30Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E7</div>
+        <div class="body">
+          <div class="headline">Kenitra — two arrested for planning sabotage of fuel depot; disclosure 2026-04-04.</div>
+          <div class="src">Le360 · Seerist Verified</div>
+          <div class="why">MA pattern · energy-sector sabotage arrests, 30-day rolling.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-04 13:15Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E8</div>
+        <div class="body">
+          <div class="headline">Tangier — one detained after reconnaissance near port-adjacent substation; released pending charges.</div>
+          <div class="src">Hespress · AP</div>
+          <div class="why">MA pattern · energy-sector sabotage arrests, 30-day rolling.</div>
+        </div>
+        <div class="adm"><span class="grade">C2</span><span class="ts">2026-04-11 09:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E9</div>
+        <div class="body">
+          <div class="headline">Casablanca — FAM-7 leaflets distributed at three public squares; call for "action during election week".</div>
+          <div class="src">Seerist Verified · OSINT — Telegram channel monitoring</div>
+          <div class="why">Cape Wind actor hit · FAM-7 in threat_actors_of_interest.</div>
+        </div>
+        <div class="adm"><span class="grade">B3</span><span class="ts">2026-04-22 18:50Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E10</div>
+        <div class="body">
+          <div class="headline">Almería — CCOO port workers hold 6-hour picket; terminal operations resume by afternoon.</div>
+          <div class="src">El País · La Voz de Almería</div>
+          <div class="why">Murcia Solar · 90 km · no operational touch, note only.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-22 12:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E11</div>
+        <div class="body">
+          <div class="headline">Kavala — municipal electoral commission confirms 2026-05-11 local election.</div>
+          <div class="src">Kathimerini</div>
+          <div class="why">Kavala Wind · calendar watchpoint.</div>
+        </div>
+        <div class="adm"><span class="grade">A1</span><span class="ts">2026-04-20 10:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">E12</div>
+        <div class="body">
+          <div class="headline">Alexandria — cost-of-living demonstrations continue at weekly cadence; low turnout, no escalation.</div>
+          <div class="src">Ahram Online · Reuters</div>
+          <div class="why">Alexandria Office · background unrest uptick underwriting pulse shift.</div>
+        </div>
+        <div class="adm"><span class="grade">B3</span><span class="ts">2026-04-19 16:40Z</span></div>
+      </li>
+    </ul>
+  </div>
+
+  <div class="app-section" style="margin-top: 24px;">
+    <div class="app-head cyber">
+      <span>CYBER EVIDENCE · C1 — C5</span>
+      <span style="color: var(--ink-400); font-weight: 500;">Regional cyber admiralty B3</span>
+    </div>
+    <ul class="app-list">
+      <li>
+        <div class="ref">C1</div>
+        <div class="body">
+          <div class="headline">APT28 reconnaissance against MA energy-sector ASNs; TCP/443 + TCP/502 scanning, OSINT fingerprinting of public-facing HMIs.</div>
+          <div class="src">Seerist Cyber · CERT-MA advisory · Mandiant Advantage</div>
+          <div class="why">Cape Wind + Agadir cyber callouts; MA geography overlay.</div>
+        </div>
+        <div class="adm"><span class="grade">B2</span><span class="ts">2026-04-19 — 04-21</span></div>
+      </li>
+      <li>
+        <div class="ref">C2</div>
+        <div class="body">
+          <div class="headline">SolarGlare ransomware — 2 German wind-operator intrusions last week; initial access via unpatched VPN appliances.</div>
+          <div class="src">CISA advisory AA26-111 · BleepingComputer · Recorded Future Insikt</div>
+          <div class="why">EU sector signal; underwrites MED sector posture HIGH.</div>
+        </div>
+        <div class="adm"><span class="grade">A2</span><span class="ts">2026-04-14 — 04-19</span></div>
+      </li>
+      <li>
+        <div class="ref">C3</div>
+        <div class="body">
+          <div class="headline">CVE-2026-1847 — turbine SCADA (Vendor X, v4.2). Remote auth bypass. CVSS 8.8. Patch available 2026-04-18.</div>
+          <div class="src">Vendor X PSIRT · NVD · CERT-EU</div>
+          <div class="why">Applicable to Cape Wind · Taranto Offshore · Kavala Wind ot_stack.</div>
+        </div>
+        <div class="adm"><span class="grade">A1</span><span class="ts">2026-04-18 12:00Z</span></div>
+      </li>
+      <li>
+        <div class="ref">C4</div>
+        <div class="body">
+          <div class="headline">Ghosts-of-Barca — claimed DDoS against Italian utility customer-portal; ~22-min outage; Layer-7 HTTP flood.</div>
+          <div class="src">Seerist Cyber · Italian utility press release</div>
+          <div class="why">IT geography overlay; hacktivist actor activity.</div>
+        </div>
+        <div class="adm"><span class="grade">B3</span><span class="ts">2026-04-20 15:12Z</span></div>
+      </li>
+      <li>
+        <div class="ref">C5</div>
+        <div class="body">
+          <div class="headline">CVE-2026-1722 — grid HMI (Vendor Y). Stack overflow in protocol handler. CVSS 7.2. Workaround only.</div>
+          <div class="src">Vendor Y PSIRT · CERT-EU · CISA ICS-CERT</div>
+          <div class="why">Applicable to Agadir Substation · Murcia Solar ot_stack.</div>
+        </div>
+        <div class="adm"><span class="grade">A2</span><span class="ts">2026-04-17 09:00Z</span></div>
+      </li>
+    </ul>
+  </div>
+
+  <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--ink-200); font-size: 9px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">
+    All evidence retained in AeroGrid Intelligence archive · case RSM-MED-2026-W17 · 30-day retention minimum · contact intel@aerogrid.internal for source URLs.
+  </div>
+
+  <div class="ph-bot">
+    <span>INTERNAL — AEROGRID SECURITY · APPENDIX</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE · p 7 / 9</span>
+  </div>
+</section>
+
+</body>
+</html>
