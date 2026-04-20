@@ -1480,76 +1480,138 @@ Commit each task separately.
 
 ---
 
-## Phase 5 — Site registry extension (content session)
+## Phase 5 — Site registry additive migration (content session)
 
-This is a **content-only** phase — expect a dedicated session where a human (with Claude as co-editor) fills every field thoughtfully. No automation, no LLM fill-in.
+This is a **content-only** phase — expect a dedicated session where a human (with Claude as co-editor) fills every new field thoughtfully. No automation, no LLM fill-in.
 
-### Task 5.1: Schema extension — add missing fields with defaults
+**Critical migration rule: additive, not replacing.** `data/aerowind_sites.json` is already consumed by:
+- `tools/poi_proximity.py` — reads `site["lat"]`, `site["lon"]`, `site["poi_radius_km"]`, `site["criticality"]`, `site["personnel_count"]`, `site["feeds_into"]`, `site.get("produces")`
+- `tools/seerist_collector.py` — reads `site["lon"]`, `site["lat"]`, `site["poi_radius_km"]`
+- `tools/threshold_evaluator.py` — reads `site["lat"]`, `site["lon"]`
+- `tools/rsm_input_builder.py` — reads `site.get("previous_incidents")`, `site.get("notable_dates")`
+- `tools/build_context.py` — reads `site["name"]`, `site["type"]`, `site["criticality"]`, `site["country"]`
+- `.claude/hooks/validators/rsm-brief-context-checks.py` — reads personnel_count via site records
+- `tests/test_site_registry.py`, `tests/test_threshold_evaluator.py` — assume flat `lat`/`lon`
+
+**Do not rename, flatten, or delete any existing field.** `SiteContext` is designed as an additive superset via `extra="ignore"` and computed properties — existing consumers continue to work untouched. Phase 5.3 explicitly re-runs the full test suite to prove it.
+
+### Task 5.1: Add new fields to every site — preserve all existing fields
 
 **Files:**
 - Modify: `data/aerowind_sites.json`
 
-- [ ] **Step 1: Add the new fields to every site record**
+- [ ] **Step 1: Add the new fields additively**
 
-For every site in `data/aerowind_sites.json`, add the following keys after `criticality`. Where the old `criticality` was `crown_jewel | major | standard`, map it: `crown_jewel → crown_jewel`, `major → primary`, `standard → secondary` (unless the site is obviously minor — an office with ≤20 personnel).
+For every site in `data/aerowind_sites.json`, add the following keys. **Do not remove or rename anything that exists** — the file's existing shape stays intact.
 
 ```json
-"tier": "crown_jewel" | "primary" | "secondary" | "minor",
-"criticality_drivers": "<1–2 sentence analyst-written description>",
-"downstream_dependency": "<what breaks if the site goes down>",
-"asset_type": "wind_farm" | "substation" | "ops_center" | "manufacturing" | "office" | "port",
-"status": "active" | "commissioning" | "decommissioned" | "planned",
-"seerist_country_code": "<ISO-3166 alpha-2>",
-"host_country_risk_baseline": "low" | "elevated" | "high",
-"last_incident": null | {"date": "YYYY-MM-DD", "summary": "..."},
-"standing_notes": "<RSM-authored rolling notes>",
-"seerist_poi_radius_km": 50 | 25 | 15 | 10,
-"relevant_seerist_categories": ["terrorism", "unrest", ...],
-"threat_actors_of_interest": [<Seerist perpetrator ids>],
-"relevant_attack_types": [<Seerist attackType ids>],
-"ot_stack": null | [{"vendor": "...", "product": "...", "version": "..."}],
-"site_cyber_actors_of_interest": null | [<perpetrator ids>]
+{
+  "...existing fields unchanged (site_id, name, region, country, lat, lon, type, subtype, poi_radius_km, personnel_count, expat_count, shift_pattern, criticality, produces, dependencies, feeds_into, customer_dependencies, previous_incidents, site_lead, duty_officer, embassy_contact, notable_dates)...": "",
+
+  "tier":                         "crown_jewel | primary | secondary | minor",
+  "criticality_drivers":          "<1–2 sentence analyst-written description>",
+  "downstream_dependency":        "<one-line summary; complements existing feeds_into / customer_dependencies>",
+  "asset_type":                   "wind_farm | substation | ops_center | manufacturing | office | port",
+  "status":                       "active | commissioning | decommissioned | planned",
+  "seerist_country_code":         "<ISO-3166 alpha-2 — often identical to existing 'country' field>",
+  "contractors_count":            0,
+  "country_lead":                 {"name": "...", "email": "...", "phone": "..."},
+  "host_country_risk_baseline":   "low | elevated | high",
+  "standing_notes":               "<RSM-authored rolling notes>",
+  "relevant_seerist_categories":  ["terrorism", "unrest", "..."],
+  "threat_actors_of_interest":    [1, 2, 3],
+  "relevant_attack_types":        [1, 2, 3],
+  "ot_stack":                     [{"vendor": "...", "product": "...", "version": "..."}],
+  "site_cyber_actors_of_interest": null
+}
 ```
 
-Preserve all existing fields — the new ones are additive. `personnel_count` and `expat_count` become `personnel.total` and `personnel.expat` with a new `personnel.contractors` (best-estimate). `site_lead` becomes `country_lead` with `phone` and a best-estimate `email` field added.
+**Derivation rule for `tier` (initial pass):** map from existing `criticality`:
+- `crown_jewel` → `crown_jewel`
+- `major` → `primary`
+- `standard` → `secondary`
 
-- [ ] **Step 2: Validate JSON parses and every site has all required fields**
+Downgrade to `minor` explicitly where obvious (e.g., an office with ≤20 personnel whose `criticality` was `standard`). The explicit `tier` field lets you override the default mapping per-site.
 
-Write a one-off smoke test:
-```python
-# tests/briefs/test_site_registry.py
-import json
-from pathlib import Path
-from tools.briefs.models import SiteContext
+- [ ] **Step 2: Populate each site's content thoughtfully**
 
-def test_every_site_matches_site_context():
-    data = json.loads(Path("data/aerowind_sites.json").read_text())
-    assert "sites" in data
-    for raw_site in data["sites"]:
-        SiteContext.model_validate(raw_site)
-```
-
-This test will fail until Task 5.1 completes for every site.
-
-- [ ] **Step 3: Populate each site's content thoughtfully**
-
-For every site, fill `criticality_drivers`, `downstream_dependency`, `standing_notes`, `threat_actors_of_interest`, `relevant_attack_types`, `ot_stack`, `host_country_risk_baseline`, `last_incident` with content that reflects the real operational picture. Crown-jewel sites get richer `criticality_drivers` (grid offtake, export terminal, manufacturing capacity) — minor sites can keep terse entries.
+For every site, fill `criticality_drivers`, `downstream_dependency`, `standing_notes`, `threat_actors_of_interest`, `relevant_attack_types`, `ot_stack`, `host_country_risk_baseline`, `country_lead.email` with content that reflects the real operational picture. Crown-jewel sites get richer `criticality_drivers` (grid offtake, export terminal, manufacturing capacity) — minor sites can keep terse entries. Leave `last_incident` blank — it's derived from the existing `previous_incidents[-1]` by the Pydantic computed property.
 
 Reference: the handoff's Cape Wind / Taranto / Agadir / Murcia / Kavala entries show the voice and density expected.
 
 Expect to spend a focused session on this — it's the input that makes every RSM brief feel real. Do not ship live RSM until this is done well.
 
-- [ ] **Step 4: Run validation test**
-
-Run: `uv run pytest tests/briefs/test_site_registry.py -v`
-Expected: PASS.
-
-- [ ] **Step 5: Commit — content only, separate from code**
+- [ ] **Step 3: Commit the content**
 
 ```bash
-git add data/aerowind_sites.json tests/briefs/test_site_registry.py
-git commit -m "data(sites): extend aerowind_sites.json schema — SiteContext fields populated"
+git add data/aerowind_sites.json
+git commit -m "data(sites): additive SiteContext fields — new keys alongside existing schema"
 ```
+
+### Task 5.2: Smoke test — every site parses as SiteContext
+
+**Files:**
+- Create: `tests/briefs/test_site_registry_siteccontext.py`
+
+- [ ] **Step 1: Write the test**
+
+```python
+# tests/briefs/test_site_registry_sitecontext.py
+import json
+from pathlib import Path
+from tools.briefs.models import SiteContext
+
+def test_every_site_parses_as_site_context():
+    data = json.loads(Path("data/aerowind_sites.json").read_text())
+    assert "sites" in data
+    for raw_site in data["sites"]:
+        sc = SiteContext.model_validate(raw_site)
+        # verify computed properties work
+        assert sc.coordinates.lat == raw_site["lat"]
+        assert sc.coordinates.lon == raw_site["lon"]
+        assert sc.seerist_poi_radius_km == raw_site["poi_radius_km"]
+        assert sc.personnel.total == raw_site["personnel_count"]
+        assert sc.personnel.expat == raw_site["expat_count"]
+        assert sc.resolved_tier in ("crown_jewel", "primary", "secondary", "minor")
+```
+
+- [ ] **Step 2: Run**
+
+Run: `uv run pytest tests/briefs/test_site_registry_sitecontext.py -v`
+Expected: PASS once Task 5.1 completes.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add tests/briefs/test_site_registry_sitecontext.py
+git commit -m "test(briefs): every site parses as SiteContext with computed properties"
+```
+
+### Task 5.3: Existing-consumer regression check
+
+**Files:**
+- None new; verifies existing tests still pass.
+
+- [ ] **Step 1: Run the existing site-registry-dependent tests**
+
+Run:
+```bash
+uv run pytest tests/test_site_registry.py tests/test_rsm_parallel_fanout.py tests/test_threshold_evaluator.py -v
+```
+
+Expected: all PASS. If anything fails, either (a) the Task 5.1 edit accidentally dropped or renamed an existing field — revert that part, or (b) the new field value breaks an assumption in a test — update the test only if the test is clearly wrong; otherwise fix the data.
+
+- [ ] **Step 2: Smoke-run `poi_proximity.py` and `seerist_collector.py` entry points**
+
+```bash
+uv run python tools/poi_proximity.py MED --mock 2>&1 | tail -20
+```
+
+Expected: runs without KeyError/TypeError on any site record. Output reasonable proximity pairs.
+
+- [ ] **Step 3: No commit if nothing changed**
+
+If regressions were found and fixed, commit those fixes separately with a clear message referencing this task.
 
 ---
 
@@ -2069,9 +2131,16 @@ This is a follow-up task, not blocking the initial pipeline — joins degrade gr
 **Type consistency:**
 - `Severity` type used consistently across Board and CISO models.
 - `Region` type used consistently.
-- `SiteContext.tier` = `"crown_jewel" | "primary" | "secondary" | "minor"` — matches what templates expect via `site.context.tier`.
+- `SiteContext.tier` is optional; templates read `site.context.resolved_tier` (computed — falls back to mapping from existing `criticality`).
 - `CoverMeta.issued_at` is `date` everywhere.
 - `JoinedEvent` fields consistent between `joins.py` return and `SiteComputed.proximity_hits` field type.
+
+**Cross-workstream consistency (Context tab brief):**
+- The Context tab brief at `docs/superpowers/plans/2026-04-20-context-tab-architecture-brief.md` was updated in the same commit as this plan to codify the additive-migration principle. Both documents agree:
+  - Existing fields (`lat`, `lon`, `poi_radius_km`, `criticality`, `personnel_count`, `expat_count`, `feeds_into`, `previous_incidents`, `notable_dates`, `site_lead`, `duty_officer`, `embassy_contact`, `produces`, `dependencies`, `customer_dependencies`, `type`, `subtype`, `shift_pattern`) stay unchanged and flat.
+  - New fields listed in Task 5.1 are additive.
+  - Nested shapes the RSM template needs (`coordinates`, `personnel`, `resolved_tier`, `last_incident`, `resolved_country_lead`) are computed properties on `SiteContext`, not stored shapes.
+  - Every consumer of `aerowind_sites.json` continues to work untouched — verified in Task 5.3.
 
 All consistent.
 

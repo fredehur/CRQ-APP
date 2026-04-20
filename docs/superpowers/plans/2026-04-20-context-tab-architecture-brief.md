@@ -49,6 +49,24 @@ No single place for an RSM or country lead to edit the intelligence context thei
   - People (regional) — personnel overlays if not on site records
   - Scenarios (global) — master scenario catalog
 
+## Migration principle — additive, not replacing
+
+`data/aerowind_sites.json` is already consumed by several modules: `tools/poi_proximity.py`, `tools/seerist_collector.py`, `tools/threshold_evaluator.py`, `tools/rsm_input_builder.py`, `tools/build_context.py`, `tools/generate_sites.py`, and `.claude/hooks/validators/rsm-brief-context-checks.py`. These access **flat** keys (`site["lat"]`, `site["lon"]`, `site["poi_radius_km"]`, `site["criticality"]`, `site["personnel_count"]`, `site["expat_count"]`, `site["feeds_into"]`, `site.get("previous_incidents")`, `site.get("notable_dates")`, `site["site_lead"]`, etc.).
+
+**Rule:** the Context tab's schema is **additive** — it extends the existing record with new fields but never renames, flattens, or drops existing ones. Every existing consumer continues to work without edits.
+
+- Existing flat fields stay flat: `lat`, `lon`, `poi_radius_km`, `criticality`, `personnel_count`, `expat_count`, `country`, `region`, `type`, `subtype`, `shift_pattern`, `produces`, `dependencies`, `feeds_into`, `customer_dependencies`, `previous_incidents`, `notable_dates`, `site_lead`, `duty_officer`, `embassy_contact`.
+- New fields listed below are **added alongside**.
+- Where the RSM brief / Context tab UI needs a derived shape (nested `coordinates`, `tier` enum, `personnel` object, `last_incident`), it's computed from the stored flat fields — not replacing them.
+- `criticality → tier` derivation: `crown_jewel → crown_jewel`, `major → primary`, `standard → secondary` (downgrade to `minor` explicitly per-site where appropriate — e.g., offices with ≤20 personnel).
+- `lat + lon → coordinates`: computed property.
+- `personnel_count + expat_count + new contractors_count → personnel`: computed struct.
+- `previous_incidents[latest] → last_incident`: computed property.
+- `poi_radius_km → seerist_poi_radius_km` (naming clarification): stored field stays `poi_radius_km`; callers referring to it by either name must resolve to the same value.
+- `site_lead → country_lead`: both present. `country_lead` (new) can optionally be a richer record with email; `site_lead` (existing) retained for backward compatibility with current consumers.
+
+The Context tab edits the full record. Consumers choose which shape to read from.
+
 ## Consolidated context schema
 
 ### Global layer (one org, one appetite)
@@ -69,44 +87,50 @@ No single place for an RSM or country lead to edit the intelligence context thei
 
 ### Regional layer — Site registry
 
-Per site, one record. All fields below.
+Per site, one record. Existing fields (flat, unchanged) + new fields (additive).
 
-**Identity**
-- `id` — stable key
-- `name`
-- `region` — `APAC | AME | LATAM | MED | NCE`
-- `country` — free text
-- `seerist_country_code` — ISO-3166 Alpha-2 (query key for Seerist)
-- `coordinates` — `{ lat, lon }`
-- `capital_distance_km` — cached, derivable from coords
+**Existing — flat, preserved for backward compatibility**
+- `site_id`, `name`, `region`, `country`, `type`, `subtype`, `shift_pattern`, `criticality` (`crown_jewel | major | standard`)
+- `lat`, `lon` — flat numbers
+- `poi_radius_km` — flat integer
+- `personnel_count`, `expat_count` — flat integers
+- `produces`, `dependencies[]`, `feeds_into[]`, `customer_dependencies[]`
+- `previous_incidents[]` — list of `{date, type, summary, outcome}`
+- `notable_dates[]` — list of `{date, event, risk}`
+- `site_lead` — `{name, phone}`
+- `duty_officer` — `{name, phone}`
+- `embassy_contact` — `{country_of_origin, contact, phone}`
 
-**Criticality** (drives RSM block size + analysis depth)
-- `tier` — `crown_jewel | primary | secondary | minor`
+**New — additive fields for the RSM brief pipeline and Context tab UI**
+
+*Identity*
+- `seerist_country_code` — ISO-3166 Alpha-2 (query key for Seerist). Often same as `country` but explicit for querying.
+- `capital_distance_km` — cached, derivable from coords (optional)
+
+*Criticality* (drives RSM block size + analysis depth)
+- `tier` — `crown_jewel | primary | secondary | minor`. Initially derivable from `criticality` per the mapping above; explicit field lets a site be downgraded to `minor` where numeric size alone would overstate it.
 - `criticality_drivers` — 1–2 sentences, *why* this site matters
-- `downstream_dependency` — what breaks if it goes down (grid offtake, export terminal, single-source manufacturing)
-- `asset_type` — `wind_farm | substation | ops_center | manufacturing | office | port`
+- `downstream_dependency` — what breaks if it goes down (one line summary; complements `feeds_into` / `customer_dependencies` which remain as the graph)
+- `asset_type` — `wind_farm | substation | ops_center | manufacturing | office | port` (complements existing `type`/`subtype`)
 - `sector` — matches Seerist `sectors` config IDs (for verified-event filtering)
 - `status` — `active | commissioning | decommissioned | planned`
 
-**People**
-- `personnel.total`
-- `personnel.expat`
-- `personnel.contractors`
-- `country_lead` — `{ name, email, phone }` (for briefing pack header)
+*People*
+- `contractors_count` — flat integer, additive to existing `personnel_count` / `expat_count`
+- `country_lead` — `{ name, email, phone }` (additive to existing `site_lead`; often identical with email added)
 
-**Environment** (baseline backdrop — deltas read against this)
+*Environment* (baseline backdrop — deltas read against this)
 - `host_country_risk_baseline` — `low | elevated | high`
-- `last_incident` — `{ date, summary }`
 - `standing_notes` — free text, RSM-authored, carries week to week
+- `last_incident` (derived, not stored) — computed as the most recent entry in `previous_incidents`
 
-**Seerist join keys** (enable agent analysis, not just query)
-- `seerist_poi_radius_km` — query radius for events-near-site (crown jewel: 50; primary: 25; secondary: 15; minor: 10)
+*Seerist join keys* (enable agent analysis, not just query)
 - `relevant_seerist_categories[]` — subset of `{ terrorism, unrest, conflict, crime, transportation, health, disaster, travel, elections }` — which categories matter here
 - `threat_actors_of_interest[]` — Seerist `perpetrators` IDs the agent should prioritize for this site
 - `relevant_attack_types[]` — Seerist `attackTypes` IDs that match this site's exposure
 
-**Cyber join keys** (optional per site — drives per-site cyber callouts)
-- `ot_stack[]` — SCADA, turbine control, grid management tech the site runs (vendor + product). Skip if unknown. Enables CVE/advisory matching.
+*Cyber join keys* (optional per site — drives per-site cyber callouts)
+- `ot_stack[]` — SCADA, turbine control, grid management tech the site runs (vendor + product + version). Skip if unknown. Enables CVE/advisory matching.
 - `site_cyber_actors_of_interest[]` — optional per-site overrides on top of the global cyber watchlist (rare — use only if a site has specific exposure not reflected globally).
 
 ### Regional layer — Cyber watchlist (regional overlay)

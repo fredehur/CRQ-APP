@@ -194,45 +194,99 @@ Render-ready composite models (e.g. `SiteBlock`) combine all three.
 
 ### `SiteContext` (static — lives in `aerowind_sites.json`)
 
+**Migration constraint:** `data/aerowind_sites.json` is already consumed by `tools/poi_proximity.py`, `tools/seerist_collector.py`, `tools/threshold_evaluator.py`, `tools/rsm_input_builder.py`, `tools/build_context.py`, and `.claude/hooks/validators/rsm-brief-context-checks.py`. These access flat keys (`site["lat"]`, `site["lon"]`, `site["poi_radius_km"]`, `site["criticality"]`, `site["personnel_count"]`, `site["expat_count"]`, `site["feeds_into"]`, `site["previous_incidents"]`, `site["notable_dates"]`, `site["site_lead"]`, etc.).
+
+**Rule:** `SiteContext` is an **additive superset** — existing flat fields stay flat; new RSM-brief fields are added alongside; nested shapes the template needs (`coordinates`, `personnel`, `last_incident`) are **computed properties** on the Pydantic model, not stored shapes. Existing consumers continue to work without edits.
+
 ```
-class SiteContext:
-    # Identity
-    id: str
+class SiteContext(BaseModel):
+    model_config = ConfigDict(extra="ignore")   # tolerate unknown existing fields
+
+    # Existing flat fields — preserved
+    site_id: str
     name: str
     region: Literal["APAC", "AME", "LATAM", "MED", "NCE"]
-    country: str
-    seerist_country_code: str                # ISO-3166 alpha-2
-    coordinates: Coordinates                 # lat, lon
-    capital_distance_km: float | None
+    country: str                                 # ISO-3166 alpha-2 (existing convention)
+    lat: float
+    lon: float
+    poi_radius_km: int
+    type: str
+    subtype: str | None = None
+    shift_pattern: str | None = None
+    criticality: Literal["crown_jewel", "major", "standard"]
+    personnel_count: int
+    expat_count: int
+    produces: str | None = None
+    dependencies: list[str] = Field(default_factory=list)
+    feeds_into: list[str] = Field(default_factory=list)
+    customer_dependencies: list[dict] = Field(default_factory=list)
+    previous_incidents: list[dict] = Field(default_factory=list)
+    notable_dates: list[dict] = Field(default_factory=list)
+    site_lead: dict                              # {name, phone}
+    duty_officer: dict | None = None
+    embassy_contact: dict | None = None
 
-    # Criticality
-    tier: Literal["crown_jewel", "primary", "secondary", "minor"]
-    criticality_drivers: str                 # 1–2 sentences
-    downstream_dependency: str
+    # New additive fields — RSM brief pipeline
+    tier: Literal["crown_jewel", "primary", "secondary", "minor"] | None = None
+    criticality_drivers: str = ""
+    downstream_dependency: str = ""
     asset_type: Literal["wind_farm", "substation", "ops_center",
-                        "manufacturing", "office", "port"]
-    sector: int | None                       # Seerist sector id
-    status: Literal["active", "commissioning", "decommissioned", "planned"]
+                        "manufacturing", "office", "port"] | None = None
+    sector: int | None = None
+    status: Literal["active", "commissioning", "decommissioned", "planned"] = "active"
+    seerist_country_code: str | None = None      # defaults to .country at read
+    contractors_count: int = 0
+    country_lead: dict | None = None             # {name, email, phone} — falls back to site_lead
+    host_country_risk_baseline: Literal["low", "elevated", "high"] = "elevated"
+    standing_notes: str = ""
+    relevant_seerist_categories: list[str] = Field(default_factory=list)
+    threat_actors_of_interest: list[int] = Field(default_factory=list)
+    relevant_attack_types: list[int] = Field(default_factory=list)
+    ot_stack: list[dict] | None = None           # [{vendor, product, version}]
+    site_cyber_actors_of_interest: list[int] | None = None
 
-    # People
-    personnel: Personnel                     # total, expat, contractors
-    country_lead: CountryLead                # name, email, phone
+    # Computed properties — shapes the RSM template needs
+    @computed_field
+    @property
+    def coordinates(self) -> Coordinates:
+        return Coordinates(lat=self.lat, lon=self.lon)
 
-    # Environment
-    host_country_risk_baseline: Literal["low", "elevated", "high"]
-    last_incident: LastIncident | None       # date, summary
-    standing_notes: str                      # RSM-authored, carries week-to-week
+    @computed_field
+    @property
+    def seerist_poi_radius_km(self) -> int:
+        return self.poi_radius_km
 
-    # Seerist join keys
-    seerist_poi_radius_km: int               # crown:50, primary:25, secondary:15, minor:10
-    relevant_seerist_categories: list[str]
-    threat_actors_of_interest: list[int]     # Seerist perpetrator ids
-    relevant_attack_types: list[int]         # Seerist attackType ids
+    @computed_field
+    @property
+    def resolved_tier(self) -> Literal["crown_jewel", "primary", "secondary", "minor"]:
+        if self.tier:
+            return self.tier
+        # Default mapping from legacy `criticality`
+        return {"crown_jewel": "crown_jewel",
+                "major": "primary",
+                "standard": "secondary"}[self.criticality]
 
-    # Cyber join keys (optional — only where site has specific tech exposure)
-    ot_stack: list[OtStackItem] | None       # vendor + product
-    site_cyber_actors_of_interest: list[int] | None
+    @computed_field
+    @property
+    def personnel(self) -> Personnel:
+        return Personnel(total=self.personnel_count,
+                         expat=self.expat_count,
+                         contractors=self.contractors_count)
+
+    @computed_field
+    @property
+    def resolved_country_lead(self) -> dict:
+        return self.country_lead or {**self.site_lead, "email": None}
+
+    @computed_field
+    @property
+    def last_incident(self) -> dict | None:
+        if not self.previous_incidents:
+            return None
+        return sorted(self.previous_incidents, key=lambda i: i.get("date", ""))[-1]
 ```
+
+Templates read the computed properties (`site.context.coordinates.lat`, `site.context.personnel.total`, `site.context.resolved_tier`). Existing consumers continue reading flat fields. The Context tab edits the full record — stored fields + new fields — and respects the invariant that renames are additions, not replacements.
 
 This is the exact schema the Context tab (separate workstream) will edit. Exported as JSON Schema for the frontend to consume.
 
@@ -572,16 +626,21 @@ The handoff HTML stash at `docs/design/handoff/` is NEVER deprecated — it's th
 - **`rsm-weekly-synthesizer`** is a new agent defined in `.claude/agents/rsm-weekly-synthesizer.md`. Its stop hook validator is a new Python file.
 - **`rsm-formatter-agent`** unchanged for daily + flash. Weekly branch removed as a follow-up deprecation step.
 
-### Site registry population — explicit implementation task
+### Site registry population — explicit, additive implementation task
 
-The RSM brief cannot render with live data until `data/aerowind_sites.json` is extended with the fields in `SiteContext`. This is a **blocking prerequisite** for any RSM live-render test.
+The RSM brief cannot render with live data until `data/aerowind_sites.json` carries the new `SiteContext` fields. This is a **blocking prerequisite** for any RSM live-render test.
+
+**Migration rule: additive, not replacing.** Existing fields stay unchanged — `tools/poi_proximity.py`, `tools/seerist_collector.py`, `tools/threshold_evaluator.py`, `tools/rsm_input_builder.py`, `tools/build_context.py`, and `.claude/hooks/validators/rsm-brief-context-checks.py` all continue to work without edits.
 
 The implementation plan MUST include a dedicated task:
 
-1. Extend `data/aerowind_sites.json` schema to the full `SiteContext` shape.
-2. Populate every existing site with plausible real-ish content — criticality_drivers, downstream_dependency, standing_notes, threat_actors_of_interest, relevant_attack_types, ot_stack (where applicable), seerist_poi_radius_km (tier-default), host_country_risk_baseline, last_incident.
-3. Validate the whole file parses as `list[SiteContext]` via a smoke test.
-4. Commit as a content-only change separate from any code changes.
+1. Add new fields alongside existing ones in `data/aerowind_sites.json`:
+   - `tier`, `criticality_drivers`, `downstream_dependency`, `asset_type`, `status`, `seerist_country_code`, `contractors_count`, `country_lead`, `host_country_risk_baseline`, `standing_notes`, `relevant_seerist_categories`, `threat_actors_of_interest`, `relevant_attack_types`, `ot_stack`, `site_cyber_actors_of_interest`.
+2. Do NOT rename, flatten, or delete any existing field (`lat`, `lon`, `poi_radius_km`, `criticality`, `personnel_count`, `expat_count`, `feeds_into`, `previous_incidents`, `notable_dates`, `site_lead`, etc. all stay).
+3. Populate new fields with plausible real-ish content per site — crown-jewel sites get richer content than minor ones.
+4. Validate the whole file parses as `list[SiteContext]` via a smoke test (model uses `extra="ignore"` so truly unknown fields pass through).
+5. Run the existing test suite: `uv run pytest tests/test_site_registry.py tests/test_rsm_parallel_fanout.py tests/test_threshold_evaluator.py -v`. Expected: all pass — existing consumers untouched.
+6. Commit as a content-only change separate from any code changes.
 
 This is content work, not engineering — expect a dedicated session. No automation, no heuristics, no "ask the LLM to fill it in". The values feed real RSM briefs and will surface in stakeholder reads. They need to be deliberate.
 
