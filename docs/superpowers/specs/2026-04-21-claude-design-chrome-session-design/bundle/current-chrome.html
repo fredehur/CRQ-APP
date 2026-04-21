@@ -1,0 +1,92 @@
+<!--
+  AeroGrid CRQ Command Center — Current Chrome Markup Excerpt
+  Extracted verbatim from static/index.html (lines 984–1044) on 2026-04-21.
+
+  This is the markup Claude Design must restyle. Key rules for the output:
+    - All IDs marked below MUST be preserved (app.js binds to them).
+    - All onclick handlers MUST be preserved.
+    - Inline `style=""` attributes will be replaced by class names in the new design.
+    - The nesting structure is load-bearing for layout; keep elements in the same parent-child relationships.
+
+  IDs used by app.js (must remain):
+    #app-header, #register-bar, #register-bar-name, #register-bar-count,
+    #register-bar-toggle, #register-drawer, #register-list, #register-form-panel,
+    #progress-bar-container, #progress-label, #progress-fill,
+    #nav-overview, #nav-reports, #nav-trends, #nav-history, #nav-validate,
+    #nav-sources, #nav-pipeline, #nav-runlog, #nav-config,
+    #window-select, #btn-run-all
+
+  Behaviors:
+    - switchTab(name)         — switches tab content (called by each nav-tab click)
+    - toggleRegisterDrawer()  — opens/closes #register-drawer
+    - showRegisterForm()      — reveals #register-form-panel inside the drawer
+    - runAll()                — triggers a pipeline run; app.js toggles
+                                 #progress-bar-container visibility and updates
+                                 #progress-label + #progress-fill width live
+-->
+
+<!-- Fixed header -->
+<header id="app-header">
+  <div style="display:flex;align-items:center;gap:0">
+    <span style="color:#3fb950;font-size:11px;letter-spacing:0.05em;margin-right:20px">// CRQ ANALYST</span>
+    <nav style="display:flex;height:36px">
+      <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
+      <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
+      <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
+      <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
+      <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
+      <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Library</div>
+      <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
+      <div class="nav-tab" id="nav-runlog" onclick="switchTab('runlog')">Run Log</div>
+    </nav>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button id="nav-config" onclick="switchTab('config')" title="Config"
+      style="background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:3px;
+             font-size:15px;color:#6e7681;transition:color 0.15s;line-height:1"
+      onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#6e7681'">⚙</button>
+    <select id="window-select">
+      <option value="1d">Last 24h</option>
+      <option value="7d" selected>Last 7 days</option>
+      <option value="30d">Last 30 days</option>
+      <option value="90d">Last quarter</option>
+    </select>
+    <button id="btn-run-all" onclick="runAll()">&#9654; RUN ALL</button>
+  </div>
+</header>
+
+<!-- Register bar -->
+<div id="register-bar">
+  <span style="color:#6e7681">▣</span>
+  <span style="color:#6e7681">Active:</span>
+  <span id="register-bar-name" style="color:#c9d1d9;font-weight:600">—</span>
+  <span style="color:#21262d">·</span>
+  <span id="register-bar-count" style="color:#484f58">— scenarios</span>
+  <span style="color:#21262d">·</span>
+  <span id="register-bar-toggle" onclick="toggleRegisterDrawer()"
+    style="color:#6e7681;cursor:pointer;letter-spacing:0.04em">Switch ▾</span>
+</div>
+
+<!-- Register drawer (hidden by default; #register-drawer.display = 'block' when open) -->
+<div id="register-drawer">
+  <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #21262d">
+    <span style="font-size:10px;font-weight:600;color:#8b949e;letter-spacing:0.05em">RISK REGISTERS</span>
+    <button onclick="showRegisterForm()" style="background:#238636;color:#fff;border:none;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">+ New</button>
+  </div>
+  <div id="register-list" style="max-height:240px;overflow-y:auto">
+    <!-- Populated by app.js. Each row is a register card showing: name, scenario count, last-updated timestamp. Clicking selects it as active. -->
+  </div>
+  <div id="register-form-panel" style="display:none;border-top:1px solid #21262d;padding:12px">
+    <!-- Populated by app.js when "+ New" is clicked. Form fields: name, description, list of scenarios. -->
+  </div>
+</div>
+
+<!-- Progress bar (shown while a run is in progress) -->
+<div id="progress-bar-container" class="hidden" style="padding:4px 16px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span id="progress-label" style="font-size:10px;color:#6e7681;white-space:nowrap">Initializing...</span>
+    <div style="flex:1;background:#21262d;border-radius:2px;height:2px;overflow:hidden">
+      <div id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+</div>

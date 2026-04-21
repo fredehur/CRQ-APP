@@ -1,10 +1,12 @@
-# AeroGrid CRQ Command Center — Chrome Redesign Brief
+# AeroGrid CRQ Command Center — Web Design System Brief
 
 ## What this is
 
-AeroGrid Wind Solutions runs a Python-based multi-agent intelligence pipeline that produces geopolitical + cyber risk reports for a renewable-energy company. This brief is scoped to redesigning the **chrome** (shell + primitive components) of the internal web app — the "command center" where analysts operate the pipeline and consume its output.
+AeroGrid Wind Solutions runs a Python-based multi-agent intelligence pipeline that produces geopolitical + cyber risk reports for a renewable-energy company. This brief is scoped to producing a **web design system** for the internal web app — the "command center" where analysts operate the pipeline and consume its output.
 
-The web app is a dark-theme FastAPI + Jinja + Tailwind dashboard at `static/index.html`. We are not redesigning information architecture; we are restyling what exists so the app speaks the same visual language as the reports it produces.
+The output of this session is the visual vocabulary (tokens extension + component library + shared chrome) that every subsequent per-tab redesign session will consume as locked input. We're not redesigning any tab's internal layout in this session — that's follow-up work.
+
+The web app is a dark-theme FastAPI + Jinja + Tailwind dashboard at `static/index.html`. We are not redesigning information architecture; we are producing the design language the app speaks, so it matches the polished reports it generates.
 
 ## Audience
 
@@ -21,22 +23,33 @@ Total organization: ~30,000 employees across five regions (APAC, AME, LATAM, MED
 
 **Two files.**
 
-### 1. `Command Center App.html`
+### 1. `Command Center Design System.html`
 
-A single self-contained HTML file that functions as a golden-reference mockup of the chrome. It must include, all on one page:
+A single self-contained HTML file that documents the entire web design system on one page. Structure:
 
-- **State A — empty.** The app chrome before any pipeline run has happened. Register bar shows a default register; progress bar is not visible; synthesis area shows the "No run data" message.
-- **State B — mid-run.** Progress bar is active showing a run in progress; synthesis area is still empty; register bar unchanged.
-- **State C — populated.** After a run completes. Register bar shows active register + scenario count; progress bar hidden; synthesis area shows status counts + narrative.
-- **Register drawer open** — the overlay dropdown activated from the register bar, showing a list of registers and a "+ New" action.
+**Section A — Primitive component library (the centerpiece).**
+Every primitive listed in "Primitives required" below, with labelled examples and all relevant variants. This is the canonical reference every future per-tab session will consume. Treat it as thoroughly as the `CRQ Design System.html` spec treats print components.
 
-Plus a **component gallery** section below the state mockups covering every primitive listed in "Primitives required" below.
+**Section B — Shared chrome applied.**
+The app's shell components, shown in their default/active states:
+
+- Top header — brand mark, tab strip, time-window selector, primary action button, settings icon.
+- Register bar — the "Active: <register> · <N> scenarios · Switch ▾" persistent indicator below the header.
+- Register drawer — the overlay shown when Switch is clicked.
+- Progress bar — appears during pipeline runs (describe in the mockup as a labelled horizontal fill, e.g. "Running APAC… step 3 of 5").
+- Tab strip — nine top-nav tabs plus a gear icon, with dev-tools-subordinated.
+- Toast / notification surface — neutral, success, warning, error variants.
+- Empty state template — for tabs with no data.
+- Loading state template — for tab-level loading.
+
+**Section C — Token reference card (brief).**
+One small table or callout showing the tokens you actually used from `tokens.css`, grouped (color, spacing, type). Not a full re-listing — just a bookmark.
 
 The HTML must:
 
 - Link exactly two stylesheets: `styles/tokens.css` + `styles/app.css`.
 - Use IBM Plex Sans as the type family (same as the print design system). Do not default to IBM Plex Mono — the existing app does, and it is one of the pain points being fixed.
-- Preserve the semantic DOM skeleton of the current chrome (see `current-chrome.html` in this bundle) so the resulting markup can be retrofit into the running app without JS changes. IDs matter: `#app-header`, `#register-bar`, `#register-drawer`, `#progress-bar-container`, `#progress-fill`, `#global-synthesis`, `#synthesis-empty`, `#synthesis-populated`, `#synthesis-brief`, `#status-counts`, `#run-meta` must all remain intact and in the same nesting relationships.
+- Preserve the semantic DOM skeleton of the current chrome (see `current-chrome.html` in this bundle) so the resulting markup can be retrofit into the running app without JS changes. IDs matter: `#app-header`, `#register-bar`, `#register-drawer`, `#progress-bar-container`, `#progress-fill` and all the `#nav-*` IDs must all remain intact and in the same nesting relationships. See `current-chrome.html` for the full list.
 
 ### 2. `styles/app.css`
 
@@ -46,14 +59,14 @@ A single CSS file that extends `tokens.css`. Rules:
 - **No hard-coded hex values.** Zero exceptions. If you need a color that isn't in tokens, flag it in the chat — do not invent one.
 - **No parallel severity scale.** Do not create `sev-c`, `sev-h`, etc. Use `--sev-critical`, `--sev-high`, `--sev-medium`, `--sev-monitor` exactly as the print system does.
 - **IBM Plex Sans default.** Use the same font-loading approach as the print briefs (Google Fonts preconnect + weights 400/500/600/700).
+- **Semantic class names.** Classes should describe the component (`.btn-primary`, `.pill-severity`, `.card`, `.table-default`), not the appearance (`.green`, `.padded-16`). Future tab sessions will compose them.
 
 ## Design system you must consume
 
-Three files are attached:
+Two files are attached:
 
 - `design-system/tokens.css` — the locked token foundation. Color, type scale, spacing, severity semantics, category circles. This is immutable.
-- `design-system/CRQ Design System.html` — the spec page that documents tokens + component patterns. Use this as the visual vocabulary.
-- `design-system/Board Report Q2 2026.html` — a full working example of the print design language. The web app should feel like a live, interactive extension of this.
+- `design-system/CRQ Design System.html` — the spec page that documents tokens + component patterns. Use this as the visual vocabulary. Note: this page is light-themed because it's the print-first spec — the web app is **dark**-themed; consume the tokens and component patterns, not the theme.
 
 ## Design invariants carried over from the print system
 
@@ -67,11 +80,11 @@ These rules are already enforced in print and must hold in the web app too:
 
 ## The web app is dark-theme
 
-Unlike the print briefs (which are light), the web app chrome is dark. Keep it dark. Use the ink scale from `tokens.css` to establish the dark surface hierarchy — do not invent a new dark palette.
+Unlike the print briefs (which are light), the web app is dark. Keep it dark. Use the ink scale from `tokens.css` to establish the dark surface hierarchy — do not invent a new dark palette.
 
-## Primitives required in the component gallery
+## Primitives required in the component library
 
-Each primitive needs a labelled example (or a small grid of variants).
+Each primitive needs a labelled example (or a small grid of variants). Be thorough — future per-tab sessions will compose from this list, so anything missing here will need to be added retroactively.
 
 - **Button** — primary, secondary, icon-only, ghost, destructive. Include disabled state for primary.
 - **Select / dropdown** — closed + open. Include the register-drawer pattern as a specialized case.
@@ -85,18 +98,18 @@ Each primitive needs a labelled example (or a small grid of variants).
 - **Divider / section header** — labeled horizontal rule.
 - **Tab button** — inside a tab's content (not the top nav). Active + inactive.
 
-## Chrome (shell) required
+## Chrome (shell) applied in Section B
 
-- **Top app header (36px tall).** Brand mark on the left ("AeroGrid · CRQ Command Center" or similar). Tab nav in the middle or right. Current tabs (9): Overview, Reports, Sources, Validate, Trends, History, Run Log, Pipeline, Config. The last three (Run Log, Pipeline, Config) are developer tools and should visually recede. A tenth tab, **Context**, is imminent (separate in-flight spec) — the tab strip must accommodate it without re-layout. Time-window selector (dropdown: "Last 24h", "Last 7 days", "Last 30 days", "Last quarter"). Primary action button: "▶ RUN ALL". Settings icon button (⚙).
-- **Register bar (24px tall, directly below header).** Shows "Active: <register name> · <N> scenarios" and a "Switch ▾" toggle. Minimal, read-only-feeling.
+- **Top app header (36px tall).** Brand mark on the left ("// CRQ ANALYST" today — open to refinement). Tab nav in the header. Current labels, in order: **Overview, Reports, Trends, History, Risk Register, Source Library, Pipeline, Run Log**, plus a separate gear icon (⚙) for **Config**. Pipeline, Run Log, and Config are developer tools and should visually recede. Overview, Reports, Risk Register, Source Library are stakeholder-leading. Trends and History are analyst-secondary (keep them in the main group, not demoted). A new tab, **Context**, is imminent (separate in-flight spec) — the tab strip must accommodate a 9th top-nav label without re-layout. Time-window selector (dropdown: "Last 24h", "Last 7 days", "Last 30 days", "Last quarter"). Primary action button: "▶ RUN ALL".
+- **Register bar (24px tall, directly below header).** Shows "Active: <register name> · <N> scenarios" and a "Switch ▾" toggle. Minimal, persistent-indicator feeling — not a navigation destination.
 - **Register drawer.** Overlay that appears when Switch is clicked. Shows a list of registers with their scenario counts, plus a "+ New" button. Width ~320px.
-- **Progress bar.** Appears between register bar and tab content when a run is in progress. Shows a label ("Running APAC… step 3 of 5") + a thin progress fill.
-- **Tab strip.** Below register bar (or integrated into header — your call). 9 tabs. Active tab clearly indicated.
+- **Progress bar.** Between register bar and tab content. Shown only while a run is active. Label ("Running APAC… step 3 of 5") + thin horizontal fill.
+- **Tab strip.** Where the tab labels live. Active tab clearly indicated; dev tabs visually subordinate.
 - **Toast / notification surface.** Bottom-right corner. Neutral, success, warning, error variants.
-- **Empty state template.** For tabs that have no data yet. Includes a message + a primary action.
-- **Loading state template.** For in-tab loading. Skeleton or spinner — your call, but keep it token-driven.
+- **Empty state template.** Used by tabs with no data. Headline + supporting line + primary action.
+- **Loading state template.** Tab-level loading. Skeleton or spinner — your call, but token-driven.
 
-## Pain points in the current chrome (what you are fixing)
+## Pain points you are fixing
 
 1. **Color drift.** Hex values like `#0d1117`, `#21262d`, `#c9d1d9` are duplicated inline across hundreds of elements instead of consuming `tokens.css` custom properties. Result: the app cannot be retoned without a 1400-line search-and-replace.
 2. **Font mismatch.** Current app defaults to IBM Plex Mono (developer aesthetic). The reports it produces use IBM Plex Sans. Analysts mentally context-switch between "the tool" and "the deliverable." We want one voice.
@@ -104,23 +117,23 @@ Each primitive needs a labelled example (or a small grid of variants).
 4. **Severity tokens duplicated.** The app declares its own `sev-c`, `sev-h`, `sev-m`, `sev-ok`, `sev-mon` via a custom Tailwind config. The print system uses `--sev-critical`, `--sev-high`, `--sev-medium`, `--sev-monitor`. One brand, two vocabularies.
 5. **Ad-hoc buttons.** `RUN ALL` uses one green; `+ New` uses a different green; icon buttons have their own hover treatments. No primary/secondary concept exists.
 6. **No spacing rhythm.** Padding values are `8px 16px`, `10px 16px`, `12px 16px` scattered inline. The print system has `--s-1` through `--s-6`. Adopt the print rhythm.
-7. **Tab nav is weak.** All 9 tabs currently look equal. Config, Run Log, and Pipeline are developer tools that should visually recede. Overview, Reports, Sources (and the imminent Context tab) are stakeholder-facing and should lead. Risk Register management is handled via the register bar/drawer (not a top-nav tab) — that flow is separate and should feel like an app-level state switcher, not a navigation destination.
+7. **Tab nav is weak.** All tabs currently look equal. Pipeline, Run Log, and Config are developer tools that should visually recede. Overview, Reports, Risk Register, Source Library (and the imminent Context tab) are stakeholder-facing and should lead. Trends and History are analyst-secondary — keep them in the main group, not demoted. Note: there IS a "Risk Register" top-nav tab (it opens a register-level UI); the separate **register bar** below the header is a distinct app-level state switcher for choosing WHICH register is active — design that as a persistent indicator, not a navigation destination.
 
 ## What you should NOT do
 
-- **Do not redesign any tab's internal layout.** Out of scope. Per-tab work is a separate future session.
+- **Do not redesign any tab's internal layout.** Out of scope. Per-tab work is a separate future session that will consume this design system as input.
 - **Do not touch `app.js`.** Out of scope. The markup must accept the same JS bindings.
 - **Do not invent new tokens.** Extend, don't fork.
 - **Do not apply cyan to physical-pillar chrome.** Cyan is cyber-only.
 - **Do not apply severity color to headlines, body copy, or backgrounds.** Pills, dots, chips only.
-- **Do not remove any IDs listed in the "semantic DOM skeleton" section above.** The retrofit depends on them.
+- **Do not remove any IDs listed in `current-chrome.html`.** The retrofit depends on them.
 - **Do not propose a light theme.** The app is dark; it stays dark.
 
 ## Deliverable format
 
 Export as a ZIP or as separate files:
 
-- `Command Center App.html`
+- `Command Center Design System.html`
 - `app.css`
 
 Both must open correctly in a standalone browser with only `tokens.css` + `app.css` present in a `styles/` subfolder.
