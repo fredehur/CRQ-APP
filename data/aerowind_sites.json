@@ -28,7 +28,25 @@
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Taipei", "phone": "+886-2-2718-2101"},
       "notable_dates": [
         {"date": "2026-04-30", "event": "Labour Day", "risk": "elevated unrest probability"}
-      ]
+      ],
+      "tier": "crown_jewel",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "TW",
+      "contractors_count": 45,
+      "country_lead": {"name": "Chen Wei-Ming", "email": "c.wei-ming@aerogrid.com", "phone": "+886-7-555-0142"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Sole APAC facility producing nacelle final assemblies and blade root sections; single-source provider in the Kaohsiung–Hamburg pipeline. Any multi-day disruption cascades directly to European offshore delivery commitments and Vestas Q3 contract obligations.",
+      "downstream_dependency": "Blade root sections and nacelle final assemblies feed Hamburg (nce-hamburg-mfg) exclusively; delays propagate to Orsted Q4 turbine delivery.",
+      "standing_notes": "Cross-strait tension watch maintained as standard posture. Labour Day (30 Apr) port disruption window monitored annually — 2024 strike lasted 4 days. No active incidents.",
+      "relevant_seerist_categories": ["civil_unrest", "labour_dispute", "maritime"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [3, 4],
+      "ot_stack": [
+        {"vendor": "Siemens Gamesa", "product": "Nacelle Control Unit", "version": "NCU-5.2"},
+        {"vendor": "ABB", "product": "AC500 PLC", "version": "3.x"}
+      ],
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "apac-taipei-blade",
@@ -52,7 +70,24 @@
       "site_lead": {"name": "Lin Chia-Hao", "phone": "+886-2-555-0188"},
       "duty_officer": {"name": "APAC Duty Desk", "phone": "+65-6555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Taipei", "phone": "+886-2-2718-2101"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "primary",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "TW",
+      "contractors_count": 20,
+      "country_lead": {"name": "Lin Chia-Hao", "email": "l.chia-hao@aerogrid.com", "phone": "+886-2-555-0188"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Produces blade molds for Kaohsiung final assembly; upstream bottleneck in the APAC–NCE pipeline. No alternate supplier qualified.",
+      "downstream_dependency": "Blade molds feed Kaohsiung (apac-kaohsiung-mfg); halted production delays nacelle timeline by 2–3 weeks.",
+      "standing_notes": "Stable operations. Cross-strait watch maintained. No active incidents.",
+      "relevant_seerist_categories": ["civil_unrest", "labour_dispute"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [3, 4],
+      "ot_stack": [
+        {"vendor": "Vestas", "product": "Blade Mold Control System", "version": "BMCS-3.x"}
+      ],
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "apac-shanghai-svc",
@@ -76,7 +111,22 @@
       "site_lead": {"name": "Zhang Wei", "phone": "+86-21-555-0200"},
       "duty_officer": {"name": "APAC Duty Desk", "phone": "+65-6555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Beijing", "phone": "+86-10-8702-0200"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "secondary",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "CN",
+      "contractors_count": 8,
+      "country_lead": {"name": "Zhang Wei", "email": "z.wei@aerogrid.com", "phone": "+86-21-555-0200"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Service dispatch hub for mainland China customers; disruption affects O&M response times but has no direct production impact.",
+      "downstream_dependency": "No direct production dependency; supports Chinese customer service SLAs.",
+      "standing_notes": "Monitor Chinese regulatory environment for data-transfer and employment law changes. No active incidents.",
+      "relevant_seerist_categories": ["civil_unrest", "regulatory"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "apac-tokyo-office",
@@ -100,7 +150,22 @@
       "site_lead": {"name": "Tanaka Hiroshi", "phone": "+81-3-5555-0140"},
       "duty_officer": {"name": "APAC Duty Desk", "phone": "+65-6555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Tokyo", "phone": "+81-3-3496-3001"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "minor",
+      "asset_type": "office",
+      "status": "active",
+      "seerist_country_code": "JP",
+      "contractors_count": 0,
+      "country_lead": {"name": "Tanaka Hiroshi", "email": "t.hiroshi@aerogrid.com", "phone": "+81-3-5555-0140"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "Small regional admin presence with no production or service delivery role; 22 personnel, expat-light.",
+      "downstream_dependency": "None — purely administrative coordination.",
+      "standing_notes": "Stable. No active incidents or watch.",
+      "relevant_seerist_categories": ["terrorism"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "apac-chennai-svc",
@@ -124,7 +189,22 @@
       "site_lead": {"name": "Ravi Subramanian", "phone": "+91-44-5555-0150"},
       "duty_officer": {"name": "APAC Duty Desk", "phone": "+65-6555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy New Delhi", "phone": "+91-11-4209-0700"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "secondary",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "IN",
+      "contractors_count": 12,
+      "country_lead": {"name": "Ravi Subramanian", "email": "r.subramanian@aerogrid.com", "phone": "+91-44-5555-0150"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Key onshore O&M dispatch for South Asian customer base; two-shift operations sustain regional turbine uptime SLAs.",
+      "downstream_dependency": "No direct production dependency; supports Indian offshore and onshore customer O&M commitments.",
+      "standing_notes": "Monsoon season (Jun–Sep) affects field access; elevated staff safety review in that window. No active incidents.",
+      "relevant_seerist_categories": ["civil_unrest", "weather", "terrorism"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [4],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "ame-houston-ops",
@@ -150,7 +230,22 @@
       "site_lead": {"name": "Sarah Mitchell", "phone": "+1-713-555-0180"},
       "duty_officer": {"name": "AME Duty Desk", "phone": "+1-713-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Washington", "phone": "+1-202-234-4300"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "primary",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "US",
+      "contractors_count": 10,
+      "country_lead": {"name": "Sarah Mitchell", "email": "s.mitchell@aerogrid.com", "phone": "+1-713-555-0180"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "AME regional headquarters and primary crisis coordination node; manages ExxonMobil turbine delivery (Q3) and third-party vendor access. Loss disrupts all AME service dispatch.",
+      "downstream_dependency": "Coordinates regional service operations; vendor access and supply chain oversight for AME customer commitments.",
+      "standing_notes": "Third-party vendor access review ongoing (Q2 2026). Hurricane season (Jun–Nov) watch standard posture. No active incidents.",
+      "relevant_seerist_categories": ["terrorism", "criminal", "weather"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [1, 5],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "ame-toronto-eng",
@@ -174,7 +269,22 @@
       "site_lead": {"name": "Marc Tremblay", "phone": "+1-416-555-0190"},
       "duty_officer": {"name": "AME Duty Desk", "phone": "+1-713-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Ottawa", "phone": "+1-613-562-1811"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "secondary",
+      "asset_type": "office",
+      "status": "active",
+      "seerist_country_code": "CA",
+      "contractors_count": 5,
+      "country_lead": {"name": "Marc Tremblay", "email": "m.tremblay@aerogrid.com", "phone": "+1-416-555-0190"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "Engineering services hub; hosts specialist knowledge for AME product customisation. Low physical risk profile.",
+      "downstream_dependency": "Engineering support flows to Houston (ame-houston-ops) and AME customer projects.",
+      "standing_notes": "Stable. No active incidents.",
+      "relevant_seerist_categories": ["civil_unrest"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "latam-saopaulo-office",
@@ -198,7 +308,22 @@
       "site_lead": {"name": "Carlos Pereira", "phone": "+55-11-5555-0210"},
       "duty_officer": {"name": "LATAM Duty Desk", "phone": "+55-11-5555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Brasilia", "phone": "+55-61-3443-3266"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "minor",
+      "asset_type": "office",
+      "status": "active",
+      "seerist_country_code": "BR",
+      "contractors_count": 0,
+      "country_lead": {"name": "Carlos Pereira", "email": "c.pereira@aerogrid.com", "phone": "+55-11-5555-0210"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Regional administrative presence in Brazil; no production or direct service delivery role.",
+      "downstream_dependency": "None — regional admin only.",
+      "standing_notes": "Urban crime watch standard posture for Sao Paulo. No active incidents.",
+      "relevant_seerist_categories": ["criminal", "civil_unrest"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [6],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "latam-santiago-svc",
@@ -222,7 +347,22 @@
       "site_lead": {"name": "Diego Rojas", "phone": "+56-2-5555-0220"},
       "duty_officer": {"name": "LATAM Duty Desk", "phone": "+55-11-5555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Santiago", "phone": "+56-2-2941-5300"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "secondary",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "CL",
+      "contractors_count": 8,
+      "country_lead": {"name": "Diego Rojas", "email": "d.rojas@aerogrid.com", "phone": "+56-2-5555-0220"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Andean O&M dispatch hub supporting high-altitude Chilean wind portfolio; essential for field access during seismic and weather events.",
+      "downstream_dependency": "No direct production dependency; supports Chilean customer O&M SLAs.",
+      "standing_notes": "Monitor labour and social unrest calendar — Chilean political environment remains active. Seismic watch standard posture.",
+      "relevant_seerist_categories": ["civil_unrest", "labour_dispute", "political_violence"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [3, 4],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "med-casablanca-ops",
@@ -252,7 +392,25 @@
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Rabat", "phone": "+212-537-67-7800"},
       "notable_dates": [
         {"date": "2026-05-01", "event": "Labour Day", "risk": "elevated unrest probability in port cities"}
-      ]
+      ],
+      "tier": "crown_jewel",
+      "asset_type": "wind_farm",
+      "status": "active",
+      "seerist_country_code": "MA",
+      "contractors_count": 15,
+      "country_lead": {"name": "Karim Benali", "email": "k.benali@aerogrid.com", "phone": "+212-522-555-040"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "AeroGrid's primary North African wind O&M hub managing the ONEE Morocco power purchase agreement on the Casablanca corridor; sole facility in the region with 24/7 operations. Political stability of the Casablanca port corridor is the portfolio's highest geopolitical exposure this quarter.",
+      "downstream_dependency": "ONEE Morocco PPA grid-delivery commitment; nacelle replacement via Casablanca port means port disruption directly halts on-farm O&M capability.",
+      "standing_notes": "April general election raised short-term unrest posture through Q3 2026. Port strike risk elevated through May Labour Day. APT28 scanning of Moroccan energy ASNs noted — physical and cyber exposure treated as joint signal. Posture raised through May; reassess at Q3 board.",
+      "relevant_seerist_categories": ["civil_unrest", "terrorism", "political_violence", "labour_dispute"],
+      "threat_actors_of_interest": [28],
+      "relevant_attack_types": [1, 3, 4],
+      "ot_stack": [
+        {"vendor": "Siemens Gamesa", "product": "SG SCADA Wind", "version": "5.x"},
+        {"vendor": "Schneider Electric", "product": "EcoStruxure", "version": "2.x"}
+      ],
+      "site_cyber_actors_of_interest": [28]
     },
     {
       "site_id": "med-palermo-offshore",
@@ -276,7 +434,25 @@
       "site_lead": {"name": "Giulia Romano", "phone": "+39-091-555-0250"},
       "duty_officer": {"name": "MED Duty Desk", "phone": "+39-091-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Rome", "phone": "+39-06-9774-8300"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "crown_jewel",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "IT",
+      "contractors_count": 30,
+      "country_lead": {"name": "Giulia Romano", "email": "g.romano@aerogrid.com", "phone": "+39-091-555-0250"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Sole facility producing offshore tower segments for the Mediterranean and NCE project pipeline; feeds Hamburg directly. Italian port strike risk creates seasonal delivery disruption exposure on the Palermo–Hamburg route.",
+      "downstream_dependency": "Offshore tower segments flow to Hamburg (nce-hamburg-mfg); Orsted Q4 offshore farm delivery exposed to any Palermo shutdown.",
+      "standing_notes": "Port strike watch active — Italian labour calendar historically elevated in spring. Taranto commissioning on track. No active incidents at Palermo.",
+      "relevant_seerist_categories": ["labour_dispute", "civil_unrest", "maritime"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [3, 7],
+      "ot_stack": [
+        {"vendor": "GE Vernova", "product": "Mark VIe", "version": "06.x"},
+        {"vendor": "ABB", "product": "Symphony Plus", "version": "3.x"}
+      ],
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "med-malaga-svc",
@@ -300,7 +476,22 @@
       "site_lead": {"name": "Ana Morales", "phone": "+34-95-555-0260"},
       "duty_officer": {"name": "MED Duty Desk", "phone": "+39-091-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Madrid", "phone": "+34-91-432-8400"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "minor",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "ES",
+      "contractors_count": 4,
+      "country_lead": {"name": "Ana Morales", "email": "a.morales@aerogrid.com", "phone": "+34-95-555-0260"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "Small offshore O&M dispatch hub for the Spanish Mediterranean portfolio; minimal production exposure.",
+      "downstream_dependency": "No direct production dependency; services Spanish offshore customer SLAs.",
+      "standing_notes": "APT28 scanning of Spanish energy ASNs noted — no direct impact at Malaga confirmed. Standard cyber watch.",
+      "relevant_seerist_categories": ["terrorism", "civil_unrest", "cyber"],
+      "threat_actors_of_interest": [28],
+      "relevant_attack_types": [1, 5],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": [28]
     },
     {
       "site_id": "nce-hamburg-mfg",
@@ -326,7 +517,26 @@
       "site_lead": {"name": "Klaus Bauer", "phone": "+49-40-555-0310"},
       "duty_officer": {"name": "NCE Duty Desk", "phone": "+45-33-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Berlin", "phone": "+49-30-5050-2000"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "crown_jewel",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "DE",
+      "contractors_count": 60,
+      "country_lead": {"name": "Klaus Bauer", "email": "k.bauer@aerogrid.com", "phone": "+49-40-555-0310"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "AeroGrid's sole final-assembly facility; integrates blades from Kaohsiung and Gdansk with tower segments from Palermo into complete turbines for Orsted Q4 delivery. Any disruption here terminates delivery capability across the entire product pipeline — no short-term mitigation exists.",
+      "downstream_dependency": "Turbine final assembly for Orsted Q4 offshore farm; loss of Hamburg production has no interim mitigation.",
+      "standing_notes": "SolarGlare ransomware confirmed at two German wind operators; AeroGrid NCE sites treated as exposed. CVE-2026-1847 turbine SCADA patching at 40% — accelerated rollout requested. Physical security normal.",
+      "relevant_seerist_categories": ["cyber", "terrorism", "labour_dispute"],
+      "threat_actors_of_interest": [33, 41],
+      "relevant_attack_types": [5, 7],
+      "ot_stack": [
+        {"vendor": "Siemens Gamesa", "product": "SG SCADA Wind", "version": "5.x"},
+        {"vendor": "Schneider Electric", "product": "EcoStruxure", "version": "2.x"},
+        {"vendor": "Siemens", "product": "S7-1500 PLC", "version": "2.x"}
+      ],
+      "site_cyber_actors_of_interest": [33, 41]
     },
     {
       "site_id": "nce-gdansk-blade",
@@ -350,7 +560,24 @@
       "site_lead": {"name": "Anna Kowalski", "phone": "+48-58-555-0320"},
       "duty_officer": {"name": "NCE Duty Desk", "phone": "+45-33-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "Royal Danish Embassy Warsaw", "phone": "+48-22-565-2900"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "primary",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "PL",
+      "contractors_count": 25,
+      "country_lead": {"name": "Anna Kowalski", "email": "a.kowalski@aerogrid.com", "phone": "+48-58-555-0320"},
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Key blade production facility in the Gdansk–Hamburg pipeline; upstream bottleneck with no alternate qualified supplier for Hamburg's blade geometry requirements.",
+      "downstream_dependency": "Blade molds flow to Hamburg (nce-hamburg-mfg); a Gdansk shutdown delays final assembly by 2–4 weeks.",
+      "standing_notes": "Poland geopolitical environment elevated — border and transit risk monitored for parts shipments to Hamburg. No active incidents at Gdansk.",
+      "relevant_seerist_categories": ["civil_unrest", "labour_dispute", "terrorism"],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [3, 5],
+      "ot_stack": [
+        {"vendor": "Vestas", "product": "Blade Mold Control System", "version": "BMCS-3.x"}
+      ],
+      "site_cyber_actors_of_interest": null
     },
     {
       "site_id": "nce-copenhagen-rd",
@@ -374,7 +601,22 @@
       "site_lead": {"name": "Mette Nielsen", "phone": "+45-33-555-0330"},
       "duty_officer": {"name": "NCE Duty Desk", "phone": "+45-33-555-0100"},
       "embassy_contact": {"country_of_origin": "DK", "contact": "(domestic)", "phone": "(domestic)"},
-      "notable_dates": []
+      "notable_dates": [],
+      "tier": "primary",
+      "asset_type": "office",
+      "status": "active",
+      "seerist_country_code": "DK",
+      "contractors_count": 8,
+      "country_lead": {"name": "Mette Nielsen", "email": "m.nielsen@aerogrid.com", "phone": "+45-33-555-0330"},
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "Hosts proprietary aerodynamic design IP and blade geometry files; key intellectual property concentration risk for next-generation product line.",
+      "downstream_dependency": "Aerodynamic design IP feeds blade geometry to Kaohsiung and Gdansk mold designs; loss would affect next-generation product delivery.",
+      "standing_notes": "State-sponsored IP theft risk elevated for Danish energy sector. Cyber hygiene review scheduled Q2 2026. No physical incidents.",
+      "relevant_seerist_categories": ["cyber", "terrorism"],
+      "threat_actors_of_interest": [28, 55],
+      "relevant_attack_types": [5],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": [28, 55]
     }
   ]
 }
