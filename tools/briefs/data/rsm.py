@@ -1,6 +1,8 @@
 """Live RSM data loader: joins sites with physical/cyber signals, returns RsmBriefData."""
 from __future__ import annotations
+import re
 from datetime import date
+from pathlib import Path
 
 from tools.briefs.loaders import (
     load_sites_for_region,
@@ -29,6 +31,9 @@ from tools.briefs.models import (
     CyberEvidence,
     JoinedEvent,
     CyberIndicator,
+    SiteForNarration,
+    WeeklySynthesisInput,
+    WeeklySynthesisOutput,
 )
 
 _SEVERITY_RANK = {"critical": 0, "high": 1, "medium": 2, "monitor": 3}
@@ -36,7 +41,7 @@ _BASELINE_SEVERITY = {"low": "green", "elevated": "amber", "high": "red"}
 _BASELINE_LABEL = {"low": "Stable", "elevated": "Watch", "high": "Raised"}
 
 
-def load_rsm_data(region: str, week_of: str | None = None) -> RsmBriefData:
+def load_rsm_data(region: str, week_of: str | None = None, narrate: bool = False) -> RsmBriefData:
     reg = region.upper()
     sites = load_sites_for_region(reg)
     phys = load_physical_signals(reg)
@@ -61,7 +66,7 @@ def load_rsm_data(region: str, week_of: str | None = None) -> RsmBriefData:
         )
         site_blocks.append(SiteBlock(context=ctx, computed=computed, narrative=narrative))
 
-    return RsmBriefData(
+    brief = RsmBriefData(
         cover=_build_cover(reg, week_of),
         admiralty_physical="B3",
         admiralty_cyber="B3",
@@ -78,6 +83,9 @@ def load_rsm_data(region: str, week_of: str | None = None) -> RsmBriefData:
         evidence_physical=_build_evidence_phys(phys, site_blocks),
         evidence_cyber=_build_evidence_cyb(cyb),
     )
+    if narrate:
+        brief = _narrate(brief, reg, week_of)
+    return brief
 
 
 def _build_cover(region: str, week_of: str | None) -> CoverMeta:
@@ -303,3 +311,158 @@ def _build_evidence_cyb(cyb: list[CyberIndicator]) -> list[CyberEvidence]:
 
 def _placeholder_headline(region: str) -> str:
     return f"{region} — regional intelligence summary for w/e {date.today().isoformat()}."
+
+
+# ---- Phase 8.3: agent narration ----
+
+_AGENT_PROMPT: str | None = None
+_AGENT_MD = Path(__file__).resolve().parents[3] / ".claude" / "agents" / "rsm-weekly-synthesizer.md"
+
+
+def _get_agent_prompt() -> str:
+    global _AGENT_PROMPT
+    if _AGENT_PROMPT is not None:
+        return _AGENT_PROMPT
+    raw = _AGENT_MD.read_text(encoding="utf-8")
+    if raw.startswith("---"):
+        end = raw.index("---", 3)
+        raw = raw[end + 3:].strip()
+    _AGENT_PROMPT = raw
+    return _AGENT_PROMPT
+
+
+def _build_synthesis_input(
+    brief: RsmBriefData, region: str, week_of: str
+) -> WeeklySynthesisInput:
+    sites_to_narrate = []
+    for block in brief.sites:
+        ctx = block.context
+        comp = block.computed
+        sites_to_narrate.append(SiteForNarration(
+            id=ctx.site_id,
+            name=ctx.name,
+            tier=ctx.resolved_tier,
+            country=ctx.country,
+            country_lead=ctx.resolved_country_lead,
+            criticality_drivers=ctx.criticality_drivers,
+            standing_notes_static=ctx.standing_notes,
+            pulse_label=comp.baseline.pulse_label,
+            pulse_severity=comp.baseline.pulse_severity,
+            forecast_arrow=comp.baseline.forecast_arrow,
+            host_baseline=comp.baseline.host_baseline,
+            days_since_incident=comp.baseline.days_since_incident,
+            proximity_hits=list(comp.proximity_hits),
+            pattern_hits=list(comp.pattern_hits),
+            actor_hits=list(comp.actor_hits),
+            calendar_ahead=list(comp.calendar_ahead),
+            cyber_event_to_attach=comp.cyber_callout_computed,
+        ))
+    evidence_entries = [
+        {"ref": e.ref, "headline": e.headline, "source": e.source,
+         "admiralty": e.admiralty, "timestamp": e.timestamp}
+        for e in list(brief.evidence_physical) + list(brief.evidence_cyber)
+    ]
+    return WeeklySynthesisInput(
+        region=region,
+        week_of=week_of,
+        regional_admiralty_physical=brief.admiralty_physical,
+        regional_admiralty_cyber=brief.admiralty_cyber,
+        baseline_strip=list(brief.baseline_strip),
+        top_events=list(brief.top_events),
+        baselines_moved=list(brief.baselines_moved),
+        sites_to_narrate=sites_to_narrate,
+        regional_cyber_context=brief.regional_cyber,
+        evidence_entries=evidence_entries,
+    )
+
+
+def _call_synthesizer(synth_input: WeeklySynthesisInput) -> WeeklySynthesisOutput:
+    import anthropic as _anthropic
+
+    client = _anthropic.Anthropic()
+    data_json = synth_input.model_dump_json(indent=2)
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=2048,
+        system=_get_agent_prompt(),
+        messages=[{"role": "user", "content": f"<data>\n{data_json}\n</data>"}],
+    )
+    text = response.content[0].text.strip()
+    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", text, re.DOTALL)
+    if m:
+        text = m.group(1)
+    return WeeklySynthesisOutput.model_validate_json(text)
+
+
+def _apply_narration(brief: RsmBriefData, output: WeeklySynthesisOutput) -> RsmBriefData:
+    site_narr = {sn.site_id: sn for sn in output.sites_narrative}
+
+    new_sites = []
+    for block in brief.sites:
+        narr_out = site_narr.get(block.context.site_id)
+        new_narr = SiteNarrative(
+            standing_notes_synthesis=narr_out.standing_notes_synthesis if narr_out else None,
+            pattern_framing=narr_out.pattern_framing if narr_out else None,
+            cyber_callout_text=narr_out.cyber_callout_text if narr_out else None,
+        )
+        new_sites.append(SiteBlock(
+            context=block.context,
+            computed=block.computed,
+            narrative=new_narr,
+        ))
+
+    why = output.evidence_why_lines
+    new_phys = [
+        PhysicalEvidence(
+            ref=e.ref, headline=e.headline, source=e.source,
+            admiralty=e.admiralty, timestamp=e.timestamp,
+            why=why.get(e.ref, e.why),
+        )
+        for e in brief.evidence_physical
+    ]
+    new_cyb = [
+        CyberEvidence(
+            ref=e.ref, headline=e.headline, source=e.source,
+            admiralty=e.admiralty, timestamp=e.timestamp,
+            why=why.get(e.ref, e.why),
+        )
+        for e in brief.evidence_cyber
+    ]
+
+    regional_cyber = brief.regional_cyber
+    if output.regional_cyber_standing_notes:
+        regional_cyber = RegionalCyberPage(
+            admiralty=regional_cyber.admiralty,
+            actors_count=regional_cyber.actors_count,
+            cves_on_watch=regional_cyber.cves_on_watch,
+            active_campaigns=regional_cyber.active_campaigns,
+            standing_notes=output.regional_cyber_standing_notes,
+            sector_signal=list(regional_cyber.sector_signal),
+            actor_activity=list(regional_cyber.actor_activity),
+            geography_overlay=list(regional_cyber.geography_overlay),
+            vulnerability_signal=list(regional_cyber.vulnerability_signal),
+        )
+
+    return RsmBriefData(
+        cover=brief.cover,
+        admiralty_physical=brief.admiralty_physical,
+        admiralty_cyber=brief.admiralty_cyber,
+        headline=output.headline,
+        baseline_strip=list(brief.baseline_strip),
+        top_events=list(brief.top_events),
+        cyber_strip=list(brief.cyber_strip),
+        baselines_moved=list(brief.baselines_moved),
+        reading_guide=list(brief.reading_guide),
+        sites=new_sites,
+        regional_cyber=regional_cyber,
+        secondary_sites=list(brief.secondary_sites),
+        minor_sites=list(brief.minor_sites),
+        evidence_physical=new_phys,
+        evidence_cyber=new_cyb,
+    )
+
+
+def _narrate(brief: RsmBriefData, region: str, week_of: str) -> RsmBriefData:
+    synth_input = _build_synthesis_input(brief, region, week_of)
+    output = _call_synthesizer(synth_input)
+    return _apply_narration(brief, output)
