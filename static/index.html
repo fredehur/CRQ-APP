@@ -966,24 +966,22 @@
 
 <!-- Fixed header -->
 <header id="app-header">
-  <div style="display:flex;align-items:center;gap:0">
-    <span style="color:#3fb950;font-size:11px;letter-spacing:0.05em;margin-right:20px">// CRQ ANALYST</span>
-    <nav style="display:flex;height:36px">
+  <div>
+    <span class="brand-mark">// CRQ ANALYST</span>
+    <nav>
       <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
       <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
       <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
       <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
       <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
       <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Library</div>
-      <div class="nav-tab" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
-      <div class="nav-tab" id="nav-runlog" onclick="switchTab('runlog')">Run Log</div>
+      <div class="nav-sep" aria-hidden="true"></div>
+      <div class="nav-tab nav-tab-dev" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
+      <div class="nav-tab nav-tab-dev" id="nav-runlog" onclick="switchTab('runlog')">Run Log</div>
     </nav>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <button id="nav-config" onclick="switchTab('config')" title="Config"
-      style="background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:3px;
-             font-size:15px;color:#6e7681;transition:color 0.15s;line-height:1"
-      onmouseover="this.style.color='#e6edf3'" onmouseout="this.style.color='#6e7681'">⚙</button>
+  <div class="header-actions">
+    <button id="nav-config" onclick="switchTab('config')" title="Config" class="btn-icon">⚙</button>
     <select id="window-select">
       <option value="1d">Last 24h</option>
       <option value="7d" selected>Last 7 days</option>
@@ -996,31 +994,30 @@
 
 <!-- Register bar -->
 <div id="register-bar">
-  <span style="color:#6e7681">▣</span>
-  <span style="color:#6e7681">Active:</span>
-  <span id="register-bar-name" style="color:#c9d1d9;font-weight:600">—</span>
-  <span style="color:#21262d">·</span>
-  <span id="register-bar-count" style="color:#484f58">— scenarios</span>
-  <span style="color:#21262d">·</span>
-  <span id="register-bar-toggle" onclick="toggleRegisterDrawer()"
-    style="color:#6e7681;cursor:pointer;letter-spacing:0.04em">Switch ▾</span>
+  <span class="reg-icon">▣</span>
+  <span class="reg-label">Active:</span>
+  <span id="register-bar-name">—</span>
+  <span class="reg-sep">·</span>
+  <span id="register-bar-count">— scenarios</span>
+  <span class="reg-sep">·</span>
+  <span id="register-bar-toggle" onclick="toggleRegisterDrawer()">Switch ▾</span>
 </div>
 
 <!-- Register drawer (hidden by default) -->
 <div id="register-drawer">
-  <div style="padding:8px 12px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #21262d">
-    <span style="font-size:10px;font-weight:600;color:#8b949e;letter-spacing:0.05em">RISK REGISTERS</span>
-    <button onclick="showRegisterForm()" style="background:#238636;color:#fff;border:none;border-radius:3px;padding:3px 8px;font-size:10px;cursor:pointer">+ New</button>
+  <div class="drawer-head">
+    <span class="drawer-title">Risk Registers</span>
+    <button onclick="showRegisterForm()" class="btn btn-secondary btn-sm">+ New</button>
   </div>
-  <div id="register-list" style="max-height:240px;overflow-y:auto"></div>
-  <div id="register-form-panel" style="display:none;border-top:1px solid #21262d;padding:12px"></div>
+  <div id="register-list"></div>
+  <div id="register-form-panel"></div>
 </div>
 
 <!-- Progress bar -->
-<div id="progress-bar-container" class="hidden" style="padding:4px 16px">
-  <div style="display:flex;align-items:center;gap:10px">
-    <span id="progress-label" style="font-size:10px;color:#6e7681;white-space:nowrap">Initializing...</span>
-    <div style="flex:1;background:#21262d;border-radius:2px;height:2px;overflow:hidden">
+<div id="progress-bar-container" class="hidden">
+  <div>
+    <span id="progress-label">Initializing...</span>
+    <div class="progress-track">
       <div id="progress-fill" style="width:0%"></div>
     </div>
   </div>
