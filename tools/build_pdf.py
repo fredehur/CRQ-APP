@@ -20,7 +20,7 @@ def _load_data(brief: str, args: argparse.Namespace):
             from tools.briefs.data._rsm_mock import rsm_med_w17_mock
             return rsm_med_w17_mock()
         from tools.briefs.data.rsm import load_rsm_data
-        return load_rsm_data(args.region, args.week_of)
+        return load_rsm_data(args.region, args.week_of, narrate=args.narrate)
     raise SystemExit(f"unknown brief: {brief}")
 
 
@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--quarter", help="Board: e.g. 2026Q2")
     p.add_argument("--month", help="CISO: YYYY-MM")
     p.add_argument("--mock", action="store_true", help="RSM: use static mock data")
+    p.add_argument("--narrate", action="store_true", help="RSM: call synthesizer agent via Anthropic API")
     args = p.parse_args(argv)
     data = _load_data(args.brief, args)
     asyncio.run(render_pdf(args.brief, data, args.out))

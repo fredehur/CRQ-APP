@@ -84,7 +84,10 @@ def load_rsm_data(region: str, week_of: str | None = None, narrate: bool = False
         evidence_cyber=_build_evidence_cyb(cyb),
     )
     if narrate:
-        brief = _narrate(brief, reg, week_of)
+        from datetime import date as _date
+        iso = _date.today().isocalendar()
+        resolved_week = week_of or f"{iso[0]}-W{iso[1]:02d}"
+        brief = _narrate(brief, reg, resolved_week)
     return brief
 
 
