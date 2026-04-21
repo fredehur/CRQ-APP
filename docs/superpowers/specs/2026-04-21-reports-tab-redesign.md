@@ -1,6 +1,6 @@
 # Reports Tab Redesign — Design Spec
 
-**Date:** 2026-04-21 (v4 — filesystem archive, DB deferred)
+**Date:** 2026-04-21 (v5 — pipeline run ID plumbing, orphan sweep, download filename)
 **Status:** Approved, ready for implementation plan
 **Context:** Brief PDF pipeline shipped v1.0 (Board, CISO, RSM) on 2026-04-21. The Reports tab is now misaligned with the deliverable — it renders its own in-browser versions of each brief in parallel with the PDFs, creating drift and ~800 lines of maintenance surface that will rot.
 
@@ -60,6 +60,7 @@ Input props:
 - `id` — e.g. `ciso`, `board`, `rsm-med`
 - `title` — display name
 - `latest_meta` — `{version_ts, pipeline_run_id, stale, generated_by, narrated}` for the Latest version (or `null` if no versions exist yet)
+- `versions` — newest-first list of `VersionRecord` (empty list if no versions yet)
 - `canNarrate` — boolean, true only for RSM
 
 Renders:
@@ -72,7 +73,11 @@ Renders:
 Local state per card: in-flight (disables buttons + shows spinner on that card), error (shows strip). Card state never leaks to other cards.
 
 ### 2. `ThumbnailGenerator` (server-side)
-A small addition to the PDF render path in `tools/briefs/renderer.py`: after Playwright creates the PDF, take an element screenshot of the first `.page` (the cover) via `await page.locator('section.page').first.screenshot(path=thumbnail_path)`, resized to ~480px wide (~40–80 KB). The renderer writes PDF + PNG to caller-provided paths (tmp dir); `storage.record_version()` then moves both files into the archive layout. One Playwright session produces both artifacts.
+Added to `tools/briefs/renderer.render_pdf(...)` — the existing shared render entry point. After Playwright creates the PDF:
+```python
+await page.locator('section.page').first.screenshot(path=thumbnail_path)
+```
+This takes an element screenshot of the cover page. To keep file size manageable without adding a PIL dependency, set Playwright viewport width to `480px` for the screenshot pass only (re-use the same browser context but a second page, or downscale via `clip`). Expect ~80–150 KB PNGs. The renderer writes PDF + PNG to caller-provided tmp paths; `storage.record_version()` moves both into the archive. One Playwright session produces both artifacts.
 
 ### 3. `RelativeDate` helper
 Pure function `formatRelative(iso_utc) → string`. Examples:
@@ -84,7 +89,7 @@ Pure function `formatRelative(iso_utc) → string`. Examples:
 A `▾` icon-button rendered at the end of the action row when an audience has secondary formats. CISO has this (DOCX). Board and RSM currently don't.
 
 ### 5. `VersionMenu` (per card)
-A compact dropdown next to the freshness label.
+The freshness label IS the dropdown trigger — not a separate element. Clicking the freshness label opens the menu.
 - **Closed state, viewing Latest:** `"Latest · <relative date · UTC time> ▾"`
 - **Closed state, viewing a prior version:** `"<relative date · UTC time> ▾"` with a subtle "Viewing older version · return to Latest" affordance.
 - **Open state:** lists all versions newest-first (including Latest, marked); each row shows relative date + UTC time + narrated indicator if applicable.
@@ -225,6 +230,24 @@ Sidecar-written-last is the completeness marker: `list_versions()` ignores direc
 - `prune(audience_id)` lists versions newest-first, keeps the first N, deletes the remainder (pdf + png + json, in that order so the sidecar goes last).
 - Changing the env var requires a server restart — acceptable for a local-run tool.
 
+### Orphan file sweep
+
+If a render crashes between moving pdf/png and writing the sidecar, orphan files accumulate. `storage.sweep_orphans(audience_id)` scans an audience directory, removes `.pdf` / `.png` pairs that have no matching `.json` sidecar. It runs:
+1. Once on server startup, for every known `audience_id`.
+2. Opportunistically at the start of each `record_version()` call for the target audience (cheap — `os.listdir` on a small directory).
+
+### Download filename
+
+`FileResponse(archive_path)` defaults to the archive filename (`20260421T041200Z.pdf`) which is analyst-hostile. Endpoints that serve PDFs set `Content-Disposition: attachment; filename={audience}_{version_ts_human}.pdf` explicitly, where `version_ts_human` is the ISO 8601 date part + HHMM, e.g.:
+- `ciso_2026-04-21_0412.pdf`
+- `rsm-med_2026-04-18_1403.pdf`
+
+`Preview` does not set `attachment`; the browser renders inline. `Download` does.
+
+### URL `?version=` format
+
+Always the compact form (`20260421T041200Z`) — matches filenames, no URL encoding needed. The server's `version_ts` helper converts to/from ISO 8601 at the API boundary; sidecars and API response bodies keep ISO 8601 for human readability.
+
 ### Future migration to SQLite (design note)
 
 When query needs grow (e.g., cross-audience filtering, analytics queries), the filesystem archive migrates cleanly:
@@ -234,6 +257,50 @@ When query needs grow (e.g., cross-audience filtering, analytics queries), the f
 4. Callers (`server.py` routes, tests) don't change — the interface is the same.
 
 The sidecar JSON schema is deliberately identical to the future SQL schema fields — no remapping at migration time.
+
+## Pipeline run ID plumbing
+
+Stale detection needs every version to know which pipeline run produced its input data. Two pieces:
+
+### Data loaders return run IDs
+
+The brief data loaders are extended to return `(data, pipeline_run_id)` instead of just `data`:
+
+```python
+def load_ciso_data(month: str) -> tuple[CisoBrief, str | None]: ...
+def load_board_data(quarter: str) -> tuple[BoardBrief, str | None]: ...
+def load_rsm_data(region: str, week_of: str | None = None, narrate: bool = False) -> tuple[RsmBrief, str | None]: ...
+```
+
+`pipeline_run_id` is `None` when the loader is reading a mock fixture or there's no live pipeline run backing the data (preserves current mock-mode behaviour).
+
+Sources for the run id:
+- **CISO, Board** → `output/pipeline/last_run_log.json` top-level `run_id` field (global pipeline run).
+- **RSM** → per-region state. Each regional pipeline writes a `run_id` into its regional artifacts (e.g., `output/regional/{region}/meta.json` — create if not already present). Reading the regional run id is a `region_run_id(region)` helper.
+
+### `tools/briefs/pipeline_state.py` (new, small)
+
+Centralises pipeline-run-id resolution so loaders and the `/meta` endpoints agree on the source of truth:
+
+```python
+def global_run_id() -> str | None: ...
+def region_run_id(region: str) -> str | None: ...
+def current_run_id(audience_id: str) -> str | None:
+    if audience_id.startswith("rsm-"):
+        return region_run_id(audience_id.removeprefix("rsm-"))
+    return global_run_id()
+```
+
+### Stale computation
+
+`/meta` endpoints call `current_run_id(audience_id)` and compare against the version's stored `pipeline_run_id`:
+- Both non-null + unequal → stale.
+- Either null → not stale (manual render, or no current run recorded).
+- Equal → not stale.
+
+### Mock-mode behaviour
+
+Running CLI with `--mock` produces versions with `pipeline_run_id = null`. These never go stale — consistent with their nature (fixtures, not live pipeline output).
 
 ## States
 
@@ -285,22 +352,31 @@ All endpoints route through `tools/briefs/storage.py` (new) for DB access; none 
 
 ### New modules
 - `tools/briefs/storage.py` — filesystem-backed archive with the interface described in "Storage & archive." No DB, no new dependencies. Future SQLite migration swaps the internals without changing callers.
+- `tools/briefs/pipeline_state.py` — `global_run_id()`, `region_run_id(region)`, `current_run_id(audience_id)`. Sole source of truth for "what pipeline run is current for this audience."
+
+### Modified in `tools/briefs/data/{ciso,board,rsm}.py`
+- Return signature changes to `(data, pipeline_run_id)`. `pipeline_run_id` read via `pipeline_state.global_run_id()` (CISO/Board) or `pipeline_state.region_run_id(region)` (RSM); null in mock mode or when no run is recorded.
+- All call sites (build_pdf CLI, FastAPI endpoints, tests that call loaders directly) updated to accept the new tuple. Existing `tests/briefs/` cases touching loaders get the minimum destructuring change.
+
+### Modified in `tools/briefs/renderer.py`
+- `render_pdf(...)` extended to accept a `thumbnail_path` argument and produce the cover-page PNG alongside the PDF in the same Playwright session.
+- Paths are caller-provided (typically a tmp dir). `storage.record_version()` is responsible for moving both files into the archive layout atomically.
+
+### Modified in regional pipeline
+- Each regional pipeline run must write `run_id` into `output/regional/{region}/meta.json` (create the file if absent). The run id can reuse whatever the global pipeline already generates (ISO timestamp or ULID). One-line change in the regional runner.
 
 ### Modified in `tools/build_pdf.py` (CLI)
 Current behaviour: writes to `--out` path, no archive. Updated behaviour:
 - Default (no `--out`): render → `storage.record_version()` → file lands in archive, nothing more.
 - With `--out PATH` (ad-hoc dev): render to the given path, **also** call `storage.record_version()` so the archive stays authoritative. The `--out` copy is a convenience; the archive always reflects the render.
 - New `--no-archive` flag (escape hatch): render to `--out` only, skip the archive. Useful for one-off test renders that shouldn't pollute history.
-
-### Modified in `tools/briefs/renderer.py`
-- `render_pdf(...)` extended to accept a `thumbnail_path` argument and produce the cover-page PNG alongside the PDF in the same Playwright session.
-- Neither the PDF nor the PNG is written to a final destination by the renderer — paths are caller-provided (typically a tmp dir). `storage.record_version()` is responsible for moving both files into the archive layout atomically.
+- `--mock` and `--narrate` flags continue to work; both produce regular archive entries (mock versions have `pipeline_run_id=null`).
 
 ### Explicitly out of scope
 - PPTX board endpoint / backend (legacy, not exposed in UI).
 - CISO DOCX endpoint (stays reachable via "Other formats ▾" on the CISO card).
 - History tab (`#tab-history`) merge — separate concern.
-- Pipeline agents, brief data loaders, templates — v1.0, don't touch.
+- Pipeline agents and brief templates — v1.0, don't touch. (The brief data loaders are touched, but narrowly: the return signature gains a `pipeline_run_id` alongside the existing data model.)
 - Non-Chromium browsers.
 
 ## Testing
@@ -313,16 +389,30 @@ Current behaviour: writes to `--out` path, no archive. Updated behaviour:
 5. `prune()` with `BRIEFS_RETENTION=3` and 5 versions → keeps newest 3, deletes 2 each of pdf/png/json from disk.
 6. `prune()` with `BRIEFS_RETENTION=0` → no-op, everything retained.
 7. Timestamp format helper converts `YYYYMMDDTHHMMSSZ` ↔ `YYYY-MM-DDTHH:MM:SSZ` round-trip.
-8. `pipeline_run_id=null` produces a `VersionRecord` where `stale` computes to false regardless of current pipeline state.
+8. `sweep_orphans()` deletes pdf/png pairs without sidecars; preserves all complete versions; runs cleanly on an empty directory.
+9. `pipeline_run_id=null` produces a `VersionRecord` where `stale` computes to false regardless of current pipeline state.
+
+### New pipeline-state tests (`tests/briefs/test_pipeline_state.py`)
+1. `global_run_id()` returns the `run_id` field from `output/pipeline/last_run_log.json`; returns `None` when the file is missing.
+2. `region_run_id('med')` returns the `run_id` from `output/regional/med/meta.json`; returns `None` when the file is missing.
+3. `current_run_id('ciso')` / `current_run_id('board')` delegates to `global_run_id()`.
+4. `current_run_id('rsm-med')` delegates to `region_run_id('med')`.
+5. Unknown audience id → raises a `ValueError` (prevents silent misuse).
+
+### Loader return-signature tests (update existing `tests/briefs/test_loaders.py`)
+- `load_ciso_data(...)` returns `(CisoBrief, str | None)`; `pipeline_run_id` matches the global state when live; `None` in mock mode.
+- Same for `load_board_data`, `load_rsm_data`.
+- Existing assertions about the brief models continue to pass (destructure the tuple before asserting).
 
 ### New server tests (`tests/briefs/test_api.py`)
 1. `GET /api/briefs/` returns all 7 audiences with `latest_meta` and `versions` list; empty archive → `latest_meta=null`, `versions=[]`, still 200.
 2. `GET /api/briefs/ciso/pdf?version=<ts>` serves the right file; no `?version` → Latest; unknown version → 404.
-3. `GET /api/briefs/ciso/thumbnail?version=<ts>` serves PNG bytes.
-4. `POST /api/briefs/ciso/regenerate` — mocks Playwright render, verifies new version appears in `list_versions()`, prior version still resolves by `?version=`.
-5. `POST /api/briefs/rsm-med/regenerate` with `{narrate: true}` — new sidecar has `narrated: true`; narrate flag reaches `load_rsm_data` (mock Anthropic).
-6. Stale flag: after a regenerate then a new pipeline run, Latest has `stale=true`; regenerating again clears it. Prior versions always `stale=false`.
-7. Error paths — unknown audience → 404; pipeline data missing for CISO → 4xx with descriptive body.
+3. `GET /api/briefs/ciso/pdf?version=<ts>` response has `Content-Disposition: attachment; filename=ciso_YYYY-MM-DD_HHMM.pdf`.
+4. `GET /api/briefs/ciso/thumbnail?version=<ts>` serves PNG bytes.
+5. `POST /api/briefs/ciso/regenerate` — mocks Playwright render, verifies new version appears in `list_versions()`, prior version still resolves by `?version=`.
+6. `POST /api/briefs/rsm-med/regenerate` with `{narrate: true}` — new sidecar has `narrated: true`; narrate flag reaches `load_rsm_data` (mock Anthropic).
+7. Stale flag: after a regenerate then a new pipeline run id advance, Latest has `stale=true`; regenerating again clears it. Prior versions always `stale=false`. Versions with `pipeline_run_id=null` always `stale=false`.
+8. Error paths — unknown audience → 404; pipeline data missing for CISO → 4xx with descriptive body.
 
 ### Client testing — manual only
 No automated client tests in this redesign. The app has no existing JS test harness; standing up Playwright for this alone is out of scope. Client correctness is verified via the manual acceptance checklist below. If/when Playwright is added to the project (flagged as upcoming for Risk Register UI), the scenarios below become the test suite.
@@ -353,14 +443,17 @@ No automated client tests in this redesign. The app has no existing JS test harn
 
 ## Success criteria
 
-1. Reports tab loads a card grid with 7 cards (CISO, Board, 5 RSM regions), each showing a thumbnail, a relative freshness label, and a VersionMenu.
+1. Reports tab loads a card grid with 7 cards (CISO, Board, 5 RSM regions), each showing a thumbnail, a relative freshness label (which is also the VersionMenu trigger), and action buttons.
 2. Preview button opens the selected version's PDF in a new browser tab; native PDF viewer loads with full controls.
-3. Regenerate writes PDF + thumbnail + sidecar JSON to the archive, prunes per retention, and the card refreshes without a full page reload.
-4. Narrate is visible only on RSM cards, separate from Regenerate, produces a sidecar with `narrated: true`, and threads through to `load_rsm_data(..., narrate=True)`.
-5. Per-region stale detection: running the pipeline for MED marks only MED's Latest stale; others unaffected; prior versions never flagged stale; `pipeline_run_id: null` versions never stale.
-6. Relative date labels read as "Today / Yesterday / Mon DD" with UTC time.
-7. VersionMenu lists prior versions newest-first; selecting a prior version swaps thumbnail + repoints Preview/Download.
-8. With `BRIEFS_RETENTION=5` (default), a sixth regenerate prunes the oldest version (pdf + png + json). With `BRIEFS_RETENTION=0`, no pruning occurs.
-9. `tools/briefs/storage.py` exposes the documented interface; the CLI (`build_pdf.py`) calls through it by default, with `--no-archive` as the opt-out.
-10. All deleted functions (`renderCisoView`, etc.) are fully removed from `static/app.js`; no dead CSS rules remain.
-11. All new server + storage tests pass. All existing `tests/briefs/` (63) still pass. Manual acceptance checklist passes.
+3. Download delivers the PDF with a human-readable filename (e.g., `ciso_2026-04-21_0412.pdf`), not the archive timestamp filename.
+4. Regenerate writes PDF + thumbnail + sidecar JSON to the archive, prunes per retention, and the card refreshes without a full page reload.
+5. Narrate is visible only on RSM cards, separate from Regenerate, produces a sidecar with `narrated: true`, and threads through to `load_rsm_data(..., narrate=True)`.
+6. Per-audience stale detection: pipeline run ID advance on MED marks MED's Latest stale; others unaffected; prior versions never flagged stale; `pipeline_run_id=null` versions never stale.
+7. Loaders return `(data, pipeline_run_id)`; run id is read from `last_run_log.json` (global) or `output/regional/{region}/meta.json` (RSM).
+8. Relative date labels read as "Today / Yesterday / Mon DD" with UTC time.
+9. VersionMenu lists prior versions newest-first; selecting a prior version swaps thumbnail + repoints Preview/Download.
+10. With `BRIEFS_RETENTION=5` (default), a sixth regenerate prunes the oldest version (pdf + png + json). With `BRIEFS_RETENTION=0`, no pruning occurs.
+11. Orphan files (pdf/png with no sidecar) are cleaned up on server startup and opportunistically on `record_version()`.
+12. `tools/briefs/storage.py` + `pipeline_state.py` expose the documented interfaces; the CLI (`build_pdf.py`) calls through storage by default, with `--no-archive` as the opt-out.
+13. All deleted functions (`renderCisoView`, etc.) are fully removed from `static/app.js`; no dead CSS rules remain.
+14. All new tests pass (storage, pipeline-state, loaders, API). All existing `tests/briefs/` (63) still pass. Manual acceptance checklist passes.
