@@ -32,25 +32,33 @@ def fail(msg: str) -> None:
 
 
 def main() -> int:
-    register_id = os.environ.get("SOURCE_LIBRARIAN_REGISTER")
-    if not register_id:
-        if not OUTPUT_DIR.exists():
-            fail("output/research/ does not exist — no snapshot written")
-        candidates = sorted(OUTPUT_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
-        if not candidates:
-            fail("no snapshots found in output/research/")
-        snap_path = candidates[0]
-        # filename: {register_id}_{YYYY-MM-DD-HHMM}_{hash8}.json — strip last 2 segments
+    # Accept a positional path argument for manual invocation
+    if len(sys.argv) > 1:
+        snap_path = Path(sys.argv[1])
+        if not snap_path.is_absolute():
+            snap_path = REPO_ROOT / snap_path
+        if not snap_path.exists():
+            fail(f"snapshot not found: {snap_path}")
         register_id = "_".join(snap_path.stem.split("_")[:-2])
     else:
-        candidates = sorted(
-            OUTPUT_DIR.glob(f"{register_id}_*.json"),
-            key=lambda p: p.stat().st_mtime,
-            reverse=True,
-        )
-        if not candidates:
-            fail(f"no snapshot for register {register_id}")
-        snap_path = candidates[0]
+        register_id = os.environ.get("SOURCE_LIBRARIAN_REGISTER")
+        if not register_id:
+            if not OUTPUT_DIR.exists():
+                fail("output/research/ does not exist — no snapshot written")
+            candidates = sorted(OUTPUT_DIR.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True)
+            if not candidates:
+                fail("no snapshots found in output/research/")
+            snap_path = candidates[0]
+            register_id = "_".join(snap_path.stem.split("_")[:-2])
+        else:
+            candidates = sorted(
+                OUTPUT_DIR.glob(f"{register_id}_*.json"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if not candidates:
+                fail(f"no snapshot for register {register_id}")
+            snap_path = candidates[0]
 
     try:
         from tools.source_librarian.snapshot import Snapshot, intent_hash

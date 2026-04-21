@@ -3,7 +3,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from .intents import Publishers
 
 logger = logging.getLogger(__name__)
 
@@ -47,19 +50,46 @@ def firecrawl_search(client: Any, queries: list[str]) -> list[dict]:
     results: list[dict] = []
     for q in queries:
         payload = client.search(query=q, limit=_FIRECRAWL_LIMIT)
-        for r in payload.get("data", []):
-            url = r.get("url")
+        # SDK ≥ v4 returns a SearchData pydantic model; earlier versions returned a dict.
+        items = (
+            (payload.web or []) + (payload.news or [])
+            if hasattr(payload, "web")
+            else payload.get("data", [])
+        )
+        for r in items:
+            if hasattr(r, "url"):
+                url, title, snippet = r.url, getattr(r, "title", "") or "", getattr(r, "description", "") or ""
+                published_date = getattr(r, "publishedDate", None) or getattr(r, "published_date", None)
+            else:
+                url = r.get("url")
+                meta = r.get("metadata") or {}
+                title = r.get("title", "") or meta.get("title", "")
+                snippet = r.get("description", "") or meta.get("description", "") or ""
+                published_date = meta.get("publishedDate") or meta.get("published_date")
             if not url:
                 continue
-            meta = r.get("metadata") or {}
             results.append({
                 "url": url,
-                "title": r.get("title", "") or meta.get("title", ""),
-                "snippet": r.get("description", "") or meta.get("description", "") or "",
-                "published_date": meta.get("publishedDate") or meta.get("published_date"),
+                "title": title,
+                "snippet": snippet,
+                "published_date": published_date,
                 "discovered_by": ["firecrawl"],
             })
     return results
+
+
+def seed_candidates(publishers: "Publishers") -> list[dict]:
+    """Return candidate dicts for all seeded URLs in the publishers allowlist."""
+    return [
+        {
+            "url": s.url,
+            "title": s.title,
+            "snippet": s.snippet,
+            "published_date": None,
+            "discovered_by": ["seed"],
+        }
+        for s in publishers.seeded
+    ]
 
 
 def _merge_unique(*lists: list[dict]) -> list[dict]:

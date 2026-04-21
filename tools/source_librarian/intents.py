@@ -39,11 +39,18 @@ class Intent(BaseModel):
     raw_yaml: str = ""  # populated by loader; not part of the source yaml shape
 
 
+class SeedEntry(BaseModel):
+    url: str
+    title: str
+    snippet: str = ""
+
+
 class Publishers(BaseModel):
     """Prefix-matched URL → tier resolver."""
     t1: list[str] = Field(default_factory=list)
     t2: list[str] = Field(default_factory=list)
     t3: list[str] = Field(default_factory=list)
+    seeded: list[SeedEntry] = Field(default_factory=list)
 
     def _normalized(self, url: str) -> str:
         parsed = urlparse(url)
@@ -88,10 +95,13 @@ def load_intent_file(path: Path) -> Intent:
 def load_publishers_file(path: Path) -> Publishers:
     data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     tiers = data.get("tiers", {})
+    raw_seeded = data.get("seeded", []) or []
+    seeded = [SeedEntry(**s) if isinstance(s, dict) else SeedEntry(url=s, title="") for s in raw_seeded]
     return Publishers(
         t1=list(tiers.get("T1") or []),
         t2=list(tiers.get("T2") or []),
         t3=list(tiers.get("T3") or []),
+        seeded=seeded,
     )
 
 
@@ -108,3 +118,11 @@ def load_intent(register_id: str) -> Intent:
 def load_publishers() -> Publishers:
     from . import intents as _mod
     return load_publishers_file(_mod.INTENTS_DIR / "publishers.yaml")
+
+
+def intent_hash_current(register_id: str) -> str:
+    """Return the 8-char sha256 hash of the intent yaml currently on disk."""
+    from . import intents as _mod
+    from .snapshot import intent_hash
+    path = _mod.INTENTS_DIR / f"{register_id}.yaml"
+    return intent_hash(path.read_text(encoding="utf-8"))

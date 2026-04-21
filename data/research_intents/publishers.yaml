@@ -22,10 +22,51 @@ tiers:
     - tenable.com
     - rapid7.com
     - crowdstrike.com
-  T3:  # general cyber press
+  T3:  # general cyber press + major news + energy press
     - bleepingcomputer.com
     - therecord.media
     - securityweek.com
     - darkreading.com
     - thehackernews.com
     - cyberscoop.com
+    - infosecurity-magazine.com
+    - utilitydive.com
+    - powermag.com
+    - bbc.com
+    - reuters.com
+    - wsj.com
+    - ft.com
+
+seeded:
+  # T1 sources — primary research & government
+  - url: https://www.dragos.com/year-in-review/
+    title: "Dragos Year in Review: ICS/OT Cybersecurity Threat Landscape"
+    snippet: "Annual analysis of SCADA OT ICS threats against energy sector wind power industrial control systems ransomware persistent access intrusion"
+  - url: https://www.cisa.gov/topics/critical-infrastructure-security-and-resilience/energy
+    title: "CISA Energy Sector Cybersecurity Resources"
+    snippet: "US government guidance on energy sector critical infrastructure protection ICS SCADA control systems cyber threats physical security ransomware DoS"
+  - url: https://www.enisa.europa.eu/topics/critical-information-infrastructures-and-services/energy
+    title: "ENISA Energy Sector Cybersecurity Threat Landscape"
+    snippet: "European threat landscape for energy operators wind power renewable energy cyber incidents OT SCADA ransomware physical sabotage"
+  - url: https://www.verizon.com/business/resources/reports/dbir/
+    title: "Verizon Data Breach Investigations Report (DBIR)"
+    snippet: "Annual breach statistics by industry including energy utilities insider threat ransomware accidental disclosure fraud social engineering defacement"
+  - url: https://www.ibm.com/security/data-breach
+    title: "IBM Cost of a Data Breach Report"
+    snippet: "Financial impact data breach cost energy sector utilities ransomware insider misuse accidental disclosure fraud"
+  - url: https://www.sans.org/white-papers/ics-security/
+    title: "SANS ICS Security White Papers"
+    snippet: "Industrial control systems ICS OT SCADA security wind farm energy sector persistent access intrusion ransomware DoS"
+  # T2 sources — sector vendors
+  - url: https://www.claroty.com/resources/
+    title: "Claroty OT/ICS Security Research and Reports"
+    snippet: "Operational technology OT ICS SCADA security energy sector wind turbine control system threats ransomware remote access vulnerability"
+  - url: https://www.nozominetworks.com/resources/research-reports
+    title: "Nozomi Networks OT Cyber Threat Intelligence Reports"
+    snippet: "OT ICS energy sector SCADA network security wind power industrial cyber threats vulnerability physical access ransomware"
+  - url: https://www.dragos.com/resource/ics-ot-cybersecurity-year-in-review/
+    title: "Dragos ICS/OT Cybersecurity Year in Review Report"
+    snippet: "Energy sector OT cyber attacks SCADA wind power ransomware persistent intrusion physical threat ICS vulnerability"
+  - url: https://www.crowdstrike.com/en-us/adversary-universe/
+    title: "CrowdStrike Adversary Universe: Threat Intelligence"
+    snippet: "Threat actor profiles ransomware groups energy sector insider misuse fraud social engineering defacement persistent access"

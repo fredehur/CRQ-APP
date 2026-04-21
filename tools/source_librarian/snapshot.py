@@ -21,7 +21,7 @@ class SourceEntry(BaseModel):
     publisher: str
     publisher_tier: PublisherTier
     published_date: Optional[str]
-    discovered_by: list[Literal["tavily", "firecrawl"]]
+    discovered_by: list[Literal["tavily", "firecrawl", "seed"]]
     score: float
     summary: Optional[str]
     figures: list[str] = Field(default_factory=list)

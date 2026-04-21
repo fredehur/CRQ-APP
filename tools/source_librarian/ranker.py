@@ -77,8 +77,14 @@ def rank_and_select(
     publishers: Publishers,
     query_terms: list[str],
     top_n: int = 10,
+    max_seeded: int = 3,
     today: Optional[date] = None,
 ) -> Selection:
+    """Rank and select top-N sources.
+
+    max_seeded caps how many pre-seeded (discovered_by=['seed']) entries appear in
+    the final list so that recent Tavily/Firecrawl results always have room.
+    """
     today = today or date.today()
     deduped = _dedupe(candidates)
 
@@ -128,5 +134,18 @@ def rank_and_select(
         )
 
     survivors.sort(key=lambda pair: pair[0], reverse=True)
-    selected = [entry for _, entry in survivors[: min(top_n, len(survivors))]]
+
+    # Apply seed cap: keep top max_seeded seeded entries, then fill with discovered
+    selected: list[SourceEntry] = []
+    seeded_count = 0
+    for _, entry in survivors:
+        if len(selected) >= top_n:
+            break
+        is_seed = entry.discovered_by == ["seed"]
+        if is_seed:
+            if seeded_count >= max_seeded:
+                continue
+            seeded_count += 1
+        selected.append(entry)
+
     return Selection(status="ok", sources=selected, diagnostics=None)

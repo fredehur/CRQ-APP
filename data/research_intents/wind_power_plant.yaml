@@ -185,11 +185,11 @@ scenarios:
       - brand assets
       - customer communication
     industry_terms:
-      - energy company reputation
-      - utility brand damage
-      - public infrastructure perception
-      - operator transparency
-      - stakeholder communication
+      - energy operator web attack
+      - utility sector website hack
+      - critical infrastructure web defacement
+      - energy company cyber vandalism
+      - wind farm operator reputational attack
     time_focus_years: 2
     notes: |
       Public-facing operator website defacement causing minor reputational impact. Search for defacement case studies in energy sector, impact on public perception, incident response costs, and recovery timelines. Include website security best practices from OWASP and energy sector website hardening guidance.

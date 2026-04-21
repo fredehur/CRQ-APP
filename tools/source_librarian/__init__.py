@@ -12,9 +12,12 @@ import os
 import uuid
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
-from .discovery import EngineStatus, discover_for_scenario
+from dotenv import load_dotenv
+load_dotenv()
+
+from .discovery import EngineStatus, discover_for_scenario, seed_candidates
 from .intents import Intent, load_intent, load_publishers
 from .queries import build_queries
 from .ranker import rank_and_select
@@ -83,6 +86,8 @@ def _query_terms_for(intent: Intent, sid: str) -> list[str]:
 def run_snapshot(
     register_id: str,
     *,
+    on_progress: Optional[Callable[[dict], None]] = None,
+    scenario_id: Optional[str] = None,
     debug: bool = False,
     tavily_client: Optional[Any] = None,
     firecrawl_client: Optional[Any] = None,
@@ -107,9 +112,28 @@ def run_snapshot(
 
     query_plan = build_queries(intent, today=today)
 
+    # Filter to one scenario when scenario_id is set
+    if scenario_id is not None:
+        if scenario_id not in query_plan:
+            raise KeyError(f"scenario_id '{scenario_id}' not in intent for '{register_id}'")
+        query_plan = {scenario_id: query_plan[scenario_id]}
+
+    scenario_ids = list(query_plan.keys())
+    total = len(scenario_ids)
+
+    def _emit(stage: str, sid: str, done_count: int) -> None:
+        if on_progress is None:
+            return
+        on_progress({
+            "stage": stage,
+            "scenario_id": sid,
+            "status": "done",
+            "counts": {stage: {"done": done_count, "total": total}},
+        })
+
     # Discovery per scenario (mutates `status` on failure)
     discovered: dict[str, list[dict]] = {}
-    for sid, queries in query_plan.items():
+    for i, (sid, queries) in enumerate(query_plan.items(), 1):
         discovered[sid] = discover_for_scenario(
             news_queries=queries["news_set"],
             doc_queries=queries["doc_set"],
@@ -117,16 +141,21 @@ def run_snapshot(
             firecrawl_client=firecrawl_client,
             status=status,
         )
+        _emit("discovery", sid, i)
 
     both_failed = (
         status.tavily in ("failed", "disabled")
         and status.firecrawl == "failed"
     )
 
+    # Pre-seeded T1/T2 candidates always injected — seeds act as fallback when engines fail
+    seeds = seed_candidates(publishers)
+
     scenarios_out: list[ScenarioResult] = []
 
-    if both_failed:
-        for sid, sc in intent.scenarios.items():
+    if both_failed and not seeds:
+        for sid in scenario_ids:
+            sc = intent.scenarios[sid]
             scenarios_out.append(
                 ScenarioResult(
                     scenario_id=sid,
@@ -137,29 +166,32 @@ def run_snapshot(
                 )
             )
     else:
+        # Merge seeds into each scenario's candidate pool
+
         # Rank per scenario
         selections = {
             sid: rank_and_select(
-                discovered[sid],
+                discovered[sid] + seeds,
                 publishers=publishers,
                 query_terms=_query_terms_for(intent, sid),
                 top_n=10,
                 today=today,
             )
-            for sid in intent.scenarios
+            for sid in scenario_ids
         }
 
-        # Scrape unique URLs once across all scenarios
+        # Scrape top N sources per scenario (not all) to stay within credit limits
+        _SCRAPE_TOP_N = 3
         scrape_cache = ScrapeCache(firecrawl_client) if firecrawl_client is not None else None
-        unique_urls = {src.url for sel in selections.values() for src in sel.sources}
+        unique_urls = {src.url for sel in selections.values() for src in sel.sources[:_SCRAPE_TOP_N]}
         if scrape_cache is not None:
             for url in unique_urls:
                 scrape_cache.get(url)
 
-        # Summarize per (scenario × source)
-        for sid, sel in selections.items():
-            for src in sel.sources:
-                if scrape_cache is None:
+        # Summarize per (scenario × source) — only top _SCRAPE_TOP_N get scraped
+        for i, (sid, sel) in enumerate(selections.items(), 1):
+            for j, src in enumerate(sel.sources):
+                if scrape_cache is None or j >= _SCRAPE_TOP_N:
                     src.scrape_status = "skipped"
                     continue
                 scrape = scrape_cache.get(src.url)
@@ -186,6 +218,7 @@ def run_snapshot(
                     diagnostics=sel.diagnostics,
                 )
             )
+            _emit("summarizing", sid, i)
 
     snap = Snapshot(
         register_id=register_id,
@@ -198,7 +231,10 @@ def run_snapshot(
         scenarios=scenarios_out,
         debug=None,
     )
-    write_snapshot(snap)
+    # Skip disk write for per-scenario reruns — caller owns merge + write
+    if scenario_id is None:
+        write_snapshot(snap)
+
     return snap
 
 

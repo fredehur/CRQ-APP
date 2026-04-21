@@ -3015,22 +3015,59 @@ async function renderRiskRegisterTab() {
   // Load run summary card (Task 16) + baseline known IDs (Task 18)
   refreshBaselineKnownIds();
   loadAndRenderRunSummary();
+
+  // Fetch latest snapshot + intent hash → update header rollup/stale badge,
+  // then re-render the scenario list so the SOURCES column reflects the snapshot.
+  _updateRegisterHeader(r.register_id).then(() => {
+    _renderScenarioList();
+  });
 }
 
 function _renderScenarioList() {
   const el = $('rr-scenario-list');
   if (!el) return;
   const scenarios = state.activeRegister?.scenarios || [];
+  const registerId = state.activeRegister?.register_id || '';
+  const snapWrapper = (window._readingListCache || {})[registerId] || null;
+  const snap = snapWrapper
+    ? (snapWrapper.scenarios ? snapWrapper : snapWrapper.snapshot)
+    : null;
 
-  const COL = 'grid-template-columns:28px 1fr 72px 50px';
+  const COL = 'grid-template-columns:22px 1fr 92px 60px 40px';
 
   // Sticky column header
-  const header = `<div style="display:grid;${COL};padding:5px 12px;background:#080c10;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:1">
+  const header = `<div style="display:grid;${COL};padding:5px 12px;background:#080c10;border-bottom:1px solid #21262d;position:sticky;top:0;z-index:1;gap:4px">
     <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">#</span>
     <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Scenario</span>
+    <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">Sources</span>
     <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;text-align:right">Impact</span>
     <span style="font-size:8px;font-weight:700;letter-spacing:0.1em;color:#484f58;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;text-align:right">Prob</span>
   </div>`;
+
+  const _tierBadge = (tier) => {
+    const color = tier === 'T1' ? '#3fb950' : tier === 'T2' ? '#58a6ff' : '#d29922';
+    const bg = tier === 'T1' ? '#0a1a0a' : tier === 'T2' ? '#0d1f3c' : '#2a1f05';
+    const border = tier === 'T1' ? '#23863655' : tier === 'T2' ? '#1f6feb55' : '#d2992255';
+    return `<span style="display:inline-block;background:${bg};border:1px solid ${border};color:${color};font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;margin-right:2px;font-family:'IBM Plex Mono',monospace">${esc(tier || 'T?')}</span>`;
+  };
+
+  const _sourcesCell = (scenarioId) => {
+    if (!snap) {
+      return `<span style="font-size:10px;color:#30363d;font-family:'IBM Plex Mono',monospace">—</span>`;
+    }
+    const sc = (snap.scenarios || []).find(x => x.scenario_id === scenarioId);
+    if (!sc) {
+      return `<span style="font-size:10px;color:#30363d;font-family:'IBM Plex Mono',monospace">—</span>`;
+    }
+    if (sc.status === 'engines_down') {
+      return `<span style="font-size:9px;color:#f85149;font-weight:700;font-family:'IBM Plex Mono',monospace">DOWN</span>`;
+    }
+    if (sc.status === 'no_authoritative_coverage') {
+      return `<span style="display:inline-block;background:#2a1f05;border:1px solid #d2992255;color:#e3b341;font-size:8px;font-weight:700;padding:1px 5px;border-radius:2px;font-family:'IBM Plex Mono',monospace">⚠ NO COV</span>`;
+    }
+    const badges = (sc.sources || []).slice(0, 3).map(s => _tierBadge(s.publisher_tier)).join('');
+    return badges || `<span style="font-size:10px;color:#30363d;font-family:'IBM Plex Mono',monospace">—</span>`;
+  };
 
   const rows = scenarios.map((s, i) => {
     const vacr = s.value_at_cyber_risk_usd != null
@@ -3040,12 +3077,13 @@ function _renderScenarioList() {
     const desc = s.description ? `<div style="font-size:9px;color:#484f58;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif">${esc(s.description)}</div>` : '';
     return `<div onclick="_selectScenario('${esc(s.scenario_id)}')"
       class="rr-scenario-row${isSelected ? ' is-selected' : ''}"
-      style="display:grid;${COL};align-items:start">
+      style="display:grid;${COL};align-items:start;gap:4px">
       <span style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace;padding-top:2px">${i + 1}</span>
       <div style="overflow:hidden;padding-right:6px">
         <div style="font-size:11px;color:${isSelected ? '#e6edf3' : '#c9d1d9'};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:'IBM Plex Sans',sans-serif">${esc(s.scenario_name)}</div>
         ${desc}
       </div>
+      <span style="overflow:hidden;white-space:nowrap;padding-top:2px">${_sourcesCell(s.scenario_id)}</span>
       <span style="font-size:10px;color:#3fb950;font-family:'IBM Plex Mono',monospace;text-align:right;padding-top:2px">${vacr}</span>
       <span style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace;text-align:right;padding-top:2px">${prob}</span>
     </div>`;
@@ -3153,14 +3191,18 @@ function _renderScenarioDetail(scenario, valScenario) {
   const scenarioIndex = (window._activeScenarioIndex != null) ? window._activeScenarioIndex : 0;
   const baselineHtml = renderBaselineEditor(scenario, valScenario, registerId, scenarioIndex);
 
-  const readingListZone = `<div id="rr-reading-list-${esc(scenario.scenario_id)}" style="margin:14px;border:1px solid #21262d;border-radius:3px;background:#060a0e">
-    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:8px">
-      <div style="font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#7a8590;font-family:'IBM Plex Mono',monospace">Reading List</div>
-      <div id="rr-reading-list-meta-${esc(scenario.scenario_id)}" style="font-size:9px;color:#484f58;margin-left:auto;font-family:'IBM Plex Mono',monospace"></div>
-      <button onclick="refreshReadingList('${esc(registerId)}')" id="rr-reading-refresh-btn"
-        style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:3px 9px;font-size:9px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace">↻ REFRESH</button>
+  const evidenceZone = `<div id="rr-evidence-${esc(scenario.scenario_id)}" style="margin:14px;border:1px solid #21262d;border-radius:3px;background:#060a0e">
+    <div style="padding:10px 14px;border-bottom:1px solid #21262d;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div style="font-size:13px;font-weight:600;color:#c9d1d9;font-family:'IBM Plex Sans',sans-serif;letter-spacing:-0.01em">Evidence &amp; Sources</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:9px;color:#6e7681;font-family:'IBM Plex Mono',monospace">
+        <span style="display:inline-block;width:8px;height:8px;background:#3fb950;border-radius:1px"></span><span>T1</span>
+        <span style="display:inline-block;width:8px;height:8px;background:#58a6ff;border-radius:1px;margin-left:4px"></span><span>T2</span>
+        <span style="display:inline-block;width:8px;height:8px;background:#d29922;border-radius:1px;margin-left:4px"></span><span>T3</span>
+      </div>
+      <div id="rr-evidence-meta-${esc(scenario.scenario_id)}" style="font-size:9px;color:#484f58;margin-left:auto;font-family:'IBM Plex Mono',monospace"></div>
+      <a id="rr-evidence-rerun-${esc(scenario.scenario_id)}" href="javascript:void(0)" onclick="rerunScenario('${esc(registerId)}','${esc(scenario.scenario_id)}')" style="display:none;font-size:9px;color:#58a6ff;text-decoration:none;font-family:'IBM Plex Mono',monospace;letter-spacing:0.06em">↻ Rerun this scenario</a>
     </div>
-    <div id="rr-reading-list-body-${esc(scenario.scenario_id)}" style="padding:8px 12px;font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace">Loading…</div>
+    <div id="rr-evidence-body-${esc(scenario.scenario_id)}" style="padding:10px 14px;font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace">Loading…</div>
   </div>`;
 
   el.innerHTML = `
@@ -3170,13 +3212,31 @@ function _renderScenarioDetail(scenario, valScenario) {
         <div style="font-size:9px;color:#30363d;margin-top:3px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em">${esc(scenario.scenario_id)}</div>
       </div>
     </div>
+    ${evidenceZone}
     ${descZone}
     ${numbersZone}
     ${recommendationZone}
     <div style="padding:0 14px">${baselineHtml}</div>
-    ${validationZone}
-    ${readingListZone}`;
-  loadReadingListForScenario(registerId, scenario.scenario_id);
+    ${validationZone}`;
+
+  // Render evidence section: prefer cached snapshot, otherwise fetch and re-render.
+  const cached = (window._readingListCache || {})[registerId] || null;
+  _renderEvidenceSection(cached, scenario.scenario_id, registerId);
+  if (!cached) {
+    (async () => {
+      try {
+        const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/latest`);
+        const data = await resp.json();
+        if (data && data.snapshot) {
+          window._readingListCache = window._readingListCache || {};
+          window._readingListCache[registerId] = data;
+        }
+        _renderEvidenceSection(data || null, scenario.scenario_id, registerId);
+      } catch (e) {
+        console.error('[evidence] fetch failed', e);
+      }
+    })();
+  }
 }
 
 function _renderEditZone(scenarioId) {
@@ -4957,39 +5017,36 @@ async function refreshBaselineKnownIds() {
 loadLatestData();
 startEventStream();
 
-// ── Source Librarian reading list ─────────────────────────────────────
-window._readingListCache = window._readingListCache || {}; // {register_id: snapshot}
+// ── Source Librarian — evidence section, register header, refresh ─────
+window._readingListCache = window._readingListCache || {}; // {register_id: {snapshot, current_intent_hash}}
 
-async function loadReadingListForScenario(registerId, scenarioId) {
-  if (!registerId || !scenarioId) return;
-  let snap = window._readingListCache[registerId];
-  if (!snap) {
-    try {
-      const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/latest`);
-      const data = await resp.json();
-      snap = (data && data.snapshot !== null) ? data : null;
-      if (snap) window._readingListCache[registerId] = snap;
-    } catch (e) {
-      snap = null;
-    }
-  }
-  _renderReadingList(snap, scenarioId);
-}
-
-function _renderReadingList(snap, scenarioId) {
-  const body = document.getElementById(`rr-reading-list-body-${scenarioId}`);
-  const meta = document.getElementById(`rr-reading-list-meta-${scenarioId}`);
+function _renderEvidenceSection(snap, scenarioId, registerId) {
+  const body = document.getElementById(`rr-evidence-body-${scenarioId}`);
+  const meta = document.getElementById(`rr-evidence-meta-${scenarioId}`);
+  const rerunLink = document.getElementById(`rr-evidence-rerun-${scenarioId}`);
   if (!body) return;
 
-  if (!snap) {
-    body.innerHTML = `<div style="color:#484f58;padding:6px 0">No reading list yet — click ↻ REFRESH to generate.</div>`;
+  // Branch 1: no snapshot → empty-state onboarding card
+  const snapData = snap ? (snap.scenarios ? snap : snap.snapshot) : null;
+  if (!snap || !snapData) {
     if (meta) meta.textContent = '';
-    return;
-  }
-
-  const snapData = snap.scenarios ? snap : snap.snapshot;
-  if (!snapData) {
-    body.innerHTML = `<div style="color:#484f58;padding:6px 0">No reading list yet — click ↻ REFRESH to generate.</div>`;
+    if (rerunLink) rerunLink.style.display = 'none';
+    body.innerHTML = `
+      <div style="border:1px dashed #30363d;border-radius:3px;padding:16px;background:#0a0f14">
+        <div style="font-size:12px;font-weight:600;color:#c9d1d9;font-family:'IBM Plex Sans',sans-serif;margin-bottom:8px">No evidence gathered yet</div>
+        <div style="font-size:10px;color:#8b949e;line-height:1.7;font-family:'IBM Plex Sans',sans-serif;margin-bottom:12px">
+          The Source Librarian will search authoritative publishers — <strong style="color:#c9d1d9">Dragos</strong>, <strong style="color:#c9d1d9">CISA</strong>, <strong style="color:#c9d1d9">ENISA</strong>, <strong style="color:#c9d1d9">IBM X-Force</strong> — for T1/T2 coverage of each scenario.
+        </div>
+        <div style="font-size:10px;color:#6e7681;line-height:1.8;font-family:'IBM Plex Mono',monospace;margin-bottom:12px">
+          <div>1. Tavily + Firecrawl search all ${(state.activeRegister?.scenarios||[]).length || 'N'} scenarios.</div>
+          <div>2. Ranker picks top 3 T1/T2 per scenario.</div>
+          <div>3. Haiku summarizes and extracts figures.</div>
+        </div>
+        <div style="font-size:9px;color:#484f58;font-family:'IBM Plex Mono',monospace;margin-bottom:12px">
+          Intent: <span style="color:#6e7681">data/research_intents/${esc(registerId)}.yaml</span>
+        </div>
+        <button onclick="refreshAllSources('${esc(registerId)}')" style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:6px 14px;font-size:10px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">↻ Refresh All Sources</button>
+      </div>`;
     return;
   }
 
@@ -4997,25 +5054,55 @@ function _renderReadingList(snap, scenarioId) {
 
   const sc = (snapData.scenarios || []).find(s => s.scenario_id === scenarioId);
   if (!sc) {
-    body.innerHTML = `<div style="color:#484f58">No coverage for this scenario in latest snapshot.</div>`;
+    if (rerunLink) rerunLink.style.display = 'none';
+    body.innerHTML = `<div style="color:#484f58;padding:6px 0">No coverage for this scenario in latest snapshot.</div>`;
     return;
   }
 
+  // Branch 2: engines_down — red degraded panel
   if (sc.status === 'engines_down') {
-    body.innerHTML = `<div style="color:#f85149">⚠ Engines down on last run — try refresh.</div>`;
+    if (rerunLink) rerunLink.style.display = 'none';
+    const tavilyStatus = snapData.tavily_status || 'unknown';
+    const firecrawlStatus = snapData.firecrawl_status || 'unknown';
+    body.innerHTML = `
+      <div style="border:1px solid #f8514955;border-radius:3px;padding:14px;background:#1a0a0a">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#f85149;margin-bottom:10px;font-family:'IBM Plex Mono',monospace">⚠ Discovery Engines Down</div>
+        <div style="display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-size:10px;color:#8b949e;font-family:'IBM Plex Mono',monospace;margin-bottom:12px">
+          <span style="color:#6e7681">TAVILY</span><span style="color:${tavilyStatus==='ok'?'#3fb950':'#f85149'}">${esc(tavilyStatus)}</span>
+          <span style="color:#6e7681">FIRECRAWL</span><span style="color:${firecrawlStatus==='ok'?'#3fb950':'#f85149'}">${esc(firecrawlStatus)}</span>
+        </div>
+        <button onclick="refreshAllSources('${esc(registerId)}')" style="background:#1a0a0a;border:1px solid #f8514955;color:#f85149;border-radius:2px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">↻ Retry Now</button>
+      </div>`;
     return;
   }
 
+  // Branch 3: no_authoritative_coverage — amber degraded panel
   if (sc.status === 'no_authoritative_coverage') {
+    if (rerunLink) rerunLink.style.display = 'none';
     const diag = sc.diagnostics || {};
-    const rejected = (diag.top_rejected || []).slice(0, 3).map(r =>
-      `<li style="color:#6e7681">${esc(r.title || r.url)} <span style="color:#484f58">(${esc(r.reason || '')})</span></li>`
+    const rejected = (diag.top_rejected || []).slice(0, 5).map(r =>
+      `<li style="color:#8b949e;margin-bottom:4px"><a href="${esc(r.url||'#')}" target="_blank" style="color:#8b949e;text-decoration:none">${esc(r.title || r.url || '?')}</a> <span style="color:#484f58;font-style:italic">— ${esc(r.reason || 'unranked')}</span></li>`
     ).join('');
-    body.innerHTML = `<div style="color:#d29922;padding-bottom:4px">⚠ No authoritative coverage (${diag.candidates_discovered || 0} candidates discovered, all T4)</div>
-      <ul style="margin:4px 0 0 16px;padding:0">${rejected}</ul>`;
+    const intentPath = `data/research_intents/${registerId}.yaml`;
+    body.innerHTML = `
+      <div style="border:1px solid #d2992255;border-radius:3px;padding:14px;background:#1a1405">
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#e3b341;margin-bottom:8px;font-family:'IBM Plex Mono',monospace">⚠ No Authoritative Coverage</div>
+        <div style="font-size:10px;color:#c9d1d9;line-height:1.6;margin-bottom:10px;font-family:'IBM Plex Sans',sans-serif">
+          ${diag.candidates_discovered || 0} candidates discovered — none cleared the T1/T2 publisher bar.
+        </div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#8b949e;margin-bottom:6px;font-family:'IBM Plex Mono',monospace">Rejected candidates</div>
+        <ul style="margin:0 0 14px 18px;padding:0;font-size:10px;font-family:'IBM Plex Sans',sans-serif">${rejected || '<li style="color:#484f58">None</li>'}</ul>
+        <div id="rr-autotune-slot-${esc(scenarioId)}" style="display:flex;gap:8px;flex-wrap:wrap">
+          <button id="rr-autotune-btn-${esc(scenarioId)}" onclick="typeof startAutoTune==='function' && startAutoTune('${esc(registerId)}','${esc(scenarioId)}')" style="background:#2a1f05;border:1px solid #d2992255;color:#e3b341;border-radius:2px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">⚙ Auto-Tune</button>
+          <button onclick="rerunScenario('${esc(registerId)}','${esc(scenarioId)}')" style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">↻ Rerun This Scenario</button>
+          <button onclick="navigator.clipboard.writeText('${esc(intentPath)}').then(()=>{this.textContent='✓ Copied';setTimeout(()=>{this.textContent='📋 Copy Intent Path';},1500);})" style="background:transparent;border:1px solid #30363d;color:#8b949e;border-radius:2px;padding:5px 12px;font-size:10px;font-weight:700;letter-spacing:0.06em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">📋 Copy Intent Path</button>
+        </div>
+      </div>`;
     return;
   }
 
+  // Branch 4: ok — reading list rows
+  if (rerunLink) rerunLink.style.display = '';
   const rows = (sc.sources || []).map((src, idx) => {
     const tierColor = src.publisher_tier === 'T1' ? '#3fb950' : src.publisher_tier === 'T2' ? '#58a6ff' : '#d29922';
     const summary = src.summary
@@ -5031,7 +5118,7 @@ function _renderReadingList(snap, scenarioId) {
         <span style="color:#484f58;font-size:9px">${idx+1}.</span>
         <a href="${esc(src.url)}" target="_blank" style="color:#58a6ff;text-decoration:none;font-size:10px;font-weight:600">${esc(src.publisher)}</a>
         <span style="color:#6e7681">— ${esc(src.title)}</span>
-        <span style="margin-left:auto;color:${tierColor};font-size:9px;font-weight:700">${esc(src.publisher_tier)}·${(src.score || 0).toFixed(2)}</span>
+        <span style="margin-left:auto;color:${tierColor};font-size:9px;font-weight:700">${esc(src.publisher_tier)} · ${(src.score || 0).toFixed(2)}</span>
       </div>
       ${summary}
       <div>${figs}</div>
@@ -5042,9 +5129,45 @@ function _renderReadingList(snap, scenarioId) {
   body.innerHTML = rows || `<div style="color:#484f58">No sources.</div>`;
 }
 
-async function refreshReadingList(registerId) {
+async function _updateRegisterHeader(registerId) {
   if (!registerId) return;
-  const btn = document.getElementById('rr-reading-refresh-btn');
+  try {
+    const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/latest`);
+    const data = await resp.json();
+    window._readingListCache = window._readingListCache || {};
+    if (data && data.snapshot) {
+      window._readingListCache[registerId] = data;
+    }
+    const rollup = document.getElementById('rr-header-rollup');
+    const staleBadge = document.getElementById('rr-header-stale-badge');
+    const snap = data && data.snapshot ? data.snapshot : null;
+    if (rollup) {
+      if (!snap) {
+        rollup.textContent = 'no snapshot';
+      } else {
+        const scs = snap.scenarios || [];
+        const okCount = scs.filter(s => s.status === 'ok').length;
+        const nocov = scs.filter(s => s.status === 'no_authoritative_coverage').length;
+        const down = scs.filter(s => s.status === 'engines_down').length;
+        const parts = [`${okCount} ok`];
+        if (nocov) parts.push(`${nocov} no-coverage`);
+        if (down) parts.push(`${down} down`);
+        rollup.textContent = parts.join(' · ');
+      }
+    }
+    if (staleBadge) {
+      const stale = snap && data.current_intent_hash && snap.intent_hash !== data.current_intent_hash;
+      staleBadge.style.display = stale ? 'inline-block' : 'none';
+    }
+  } catch (e) {
+    console.error('[register-header] update failed', e);
+  }
+}
+
+async function refreshAllSources(registerId) {
+  if (!registerId) return;
+  const btn = document.getElementById('rr-refresh-all-btn');
+  const origLabel = btn ? btn.textContent : '';
   if (btn) { btn.textContent = 'STARTING…'; btn.disabled = true; }
   let runId = null;
   try {
@@ -5052,35 +5175,155 @@ async function refreshReadingList(registerId) {
     const data = await resp.json();
     runId = data.run_id;
   } catch (e) {
-    if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
-    alert('Failed to start research run');
+    console.error('[refreshAllSources] failed to start run', e);
+    if (btn) { btn.textContent = origLabel || '↻ Refresh All Sources'; btn.disabled = false; }
     return;
   }
-  let tick = 0;
   const poll = async () => {
-    tick += 1;
     try {
       const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/status/${encodeURIComponent(runId)}`);
       const stateResp = await resp.json();
       if (stateResp.status === 'complete') {
-        if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
-        delete window._readingListCache[registerId];
-        if (stateResp.snapshot) window._readingListCache[registerId] = stateResp.snapshot;
-        if (window.state && window.state.selectedScenarioId) {
-          _renderReadingList(stateResp.snapshot, window.state.selectedScenarioId);
+        if (stateResp.snapshot) {
+          window._readingListCache = window._readingListCache || {};
+          window._readingListCache[registerId] = { snapshot: stateResp.snapshot };
         }
+        const selectedId = (window.state && window.state.selectedScenarioId) || null;
+        if (selectedId) {
+          _renderEvidenceSection({ snapshot: stateResp.snapshot }, selectedId, registerId);
+        }
+        _renderScenarioList();
+        _updateRegisterHeader(registerId);
+        if (btn) { btn.textContent = origLabel || '↻ Refresh All Sources'; btn.disabled = false; }
         return;
       }
       if (stateResp.status === 'failed') {
-        if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
-        alert('Research run failed: ' + (stateResp.error || 'unknown'));
+        console.error('[refreshAllSources] run failed:', stateResp.error);
+        if (btn) { btn.textContent = origLabel || '↻ Refresh All Sources'; btn.disabled = false; }
         return;
       }
-      if (btn) btn.textContent = `RUNNING ${tick}…`;
-      setTimeout(poll, 5000);
+      const p = stateResp.progress || {};
+      const stage = (p.stage || 'running').toUpperCase();
+      const counts = p.counts || {};
+      const stageCounts = counts[p.stage] || {};
+      const done = stageCounts.done;
+      const total = stageCounts.total;
+      if (btn) {
+        btn.textContent = (done != null && total != null)
+          ? `${stage} ${done}/${total}…`
+          : `${stage}…`;
+      }
+      setTimeout(poll, 2000);
     } catch (e) {
-      if (btn) { btn.textContent = '↻ REFRESH'; btn.disabled = false; }
+      console.error('[refreshAllSources] poll error', e);
+      if (btn) { btn.textContent = origLabel || '↻ Refresh All Sources'; btn.disabled = false; }
     }
   };
   setTimeout(poll, 2000);
+}
+
+async function rerunScenario(registerId, scenarioId) {
+  if (!registerId || !scenarioId) return;
+  const body = document.getElementById(`rr-evidence-body-${scenarioId}`);
+  if (body) {
+    body.innerHTML = `<div style="color:#58a6ff;padding:6px 0;font-family:'IBM Plex Mono',monospace">Starting rerun…</div>`;
+  }
+  let runId = null;
+  try {
+    const resp = await fetch(`/api/research/run?register=${encodeURIComponent(registerId)}&scenario=${encodeURIComponent(scenarioId)}`, { method: 'POST' });
+    const data = await resp.json();
+    runId = data.run_id;
+  } catch (e) {
+    console.error('[rerunScenario] failed to start run', e);
+    return;
+  }
+  const poll = async () => {
+    try {
+      const resp = await fetch(`/api/research/${encodeURIComponent(registerId)}/status/${encodeURIComponent(runId)}`);
+      const stateResp = await resp.json();
+      if (stateResp.status === 'complete') {
+        if (stateResp.snapshot) {
+          window._readingListCache = window._readingListCache || {};
+          window._readingListCache[registerId] = { snapshot: stateResp.snapshot };
+        }
+        _renderEvidenceSection({ snapshot: stateResp.snapshot }, scenarioId, registerId);
+        _renderScenarioList();
+        _updateRegisterHeader(registerId);
+        return;
+      }
+      if (stateResp.status === 'failed') {
+        console.error('[rerunScenario] run failed:', stateResp.error);
+        if (body) body.innerHTML = `<div style="color:#f85149;padding:6px 0;font-family:'IBM Plex Mono',monospace">Rerun failed: ${esc(stateResp.error || 'unknown')}</div>`;
+        return;
+      }
+      const p = stateResp.progress || {};
+      const stage = (p.stage || 'running').toUpperCase();
+      if (body) {
+        body.innerHTML = `<div style="color:#58a6ff;padding:6px 0;font-family:'IBM Plex Mono',monospace">${esc(stage)}…</div>`;
+      }
+      setTimeout(poll, 2000);
+    } catch (e) {
+      console.error('[rerunScenario] poll error', e);
+    }
+  };
+  setTimeout(poll, 2000);
+}
+
+async function startAutoTune(registerId, scenarioId) {
+  const btn = document.getElementById(`rr-autotune-btn-${scenarioId}`);
+  if (btn) { btn.textContent = '⚙ Auto-Tuning…'; btn.disabled = true; }
+  const body = document.getElementById(`rr-evidence-body-${scenarioId}`);
+
+  let resp;
+  try {
+    resp = await fetch(`/api/research/autotune?register=${encodeURIComponent(registerId)}&scenario=${encodeURIComponent(scenarioId)}`, { method: 'POST' });
+    if (!resp.ok) { throw new Error(`HTTP ${resp.status}`); }
+  } catch (e) {
+    console.error('[startAutoTune] failed to start', e);
+    if (btn) { btn.textContent = '⚙ Auto-Tune'; btn.disabled = false; }
+    return;
+  }
+  const { run_id } = await resp.json();
+  window._autotuneRunIds = window._autotuneRunIds || {};
+  window._autotuneRunIds[scenarioId] = run_id;
+
+  const poll = async () => {
+    if (!window._autotuneRunIds || window._autotuneRunIds[scenarioId] !== run_id) return;
+    try {
+      const r = await fetch(`/api/research/${encodeURIComponent(registerId)}/status/${encodeURIComponent(run_id)}`);
+      const st = await r.json();
+      if (st.status === 'complete') {
+        if (btn) { btn.textContent = st.outcome === 'found' ? '⚙ Found!' : '⚙ Auto-Tune'; btn.disabled = false; }
+        _updateRegisterHeader(registerId);
+        const latest = await fetch(`/api/research/${encodeURIComponent(registerId)}/latest`).then(r2 => r2.json());
+        if (latest && latest.snapshot) window._readingListCache = { ...(window._readingListCache || {}), [registerId]: latest.snapshot };
+        _renderEvidenceSection((window._readingListCache || {})[registerId] || null, scenarioId, registerId);
+        return;
+      }
+      if (st.status === 'failed') {
+        console.error('[startAutoTune] failed:', st.error);
+        if (btn) { btn.textContent = '⚙ Auto-Tune'; btn.disabled = false; }
+        return;
+      }
+      const p = st.progress || {};
+      if (btn && p.event) { btn.textContent = `⚙ ${(p.event || 'tuning').toUpperCase().replace('_', ' ')} ${p.iteration || ''}/${p.max || ''}…`; }
+      if (body && p.reasoning) {
+        body.innerHTML = `<div style="color:#8b949e;font-size:10px;font-family:'IBM Plex Mono',monospace;padding:4px 0">[iter ${p.iteration}] ${esc(p.reasoning || '')}</div>`;
+      }
+      setTimeout(poll, 2000);
+    } catch (e) {
+      console.error('[startAutoTune] poll error', e);
+    }
+  };
+  setTimeout(poll, 2000);
+}
+
+function cancelAutoTune(registerId, scenarioId) {
+  const runId = (window._autotuneRunIds || {})[scenarioId];
+  if (!runId) return;
+  delete window._autotuneRunIds[scenarioId];
+  fetch(`/api/research/cancel?run_id=${encodeURIComponent(runId)}`, { method: 'POST' })
+    .catch(e => console.error('[cancelAutoTune] error', e));
+  const btn = document.getElementById(`rr-autotune-btn-${scenarioId}`);
+  if (btn) { btn.textContent = '⚙ Auto-Tune'; btn.disabled = false; }
 }

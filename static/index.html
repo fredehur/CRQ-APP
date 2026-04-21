@@ -1277,8 +1277,12 @@
     <span id="rr-header-name" style="font-size:12px;font-weight:600;color:#c9d1d9;font-family:'IBM Plex Sans',sans-serif">—</span>
     <span style="color:#21262d;font-size:12px">·</span>
     <span id="rr-header-count" style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace"></span>
+    <span style="color:#21262d;font-size:12px">·</span>
+    <span id="rr-header-rollup" style="font-size:10px;color:#6e7681;font-family:'IBM Plex Mono',monospace"></span>
+    <span id="rr-header-stale-badge" style="display:none;font-size:9px;font-weight:700;letter-spacing:0.08em;background:#2a1f05;border:1px solid #d2992255;color:#e3b341;padding:2px 7px;border-radius:2px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">⚠ Intent Changed — Rerun</span>
     <span id="rr-header-ts" style="font-size:10px;color:#484f58;margin-left:auto;font-family:'IBM Plex Mono',monospace"></span>
     <button onclick="runRegisterValidation()" style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:0.08em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">▶ Run</button>
+    <button id="rr-refresh-all-btn" onclick="refreshAllSources((state.activeRegister&&state.activeRegister.register_id)||'')" style="background:#0d1f3c;border:1px solid #1f6feb55;color:#58a6ff;border-radius:2px;padding:4px 12px;font-size:9px;font-weight:700;letter-spacing:0.08em;cursor:pointer;font-family:'IBM Plex Mono',monospace;text-transform:uppercase">↻ Refresh All Sources</button>
   </div>
 
   <!-- Run summary card (last validation run) -->

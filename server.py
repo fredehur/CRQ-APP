@@ -1352,42 +1352,89 @@ async def run_register_validation():
 
 
 # ── API: Source Librarian ─────────────────────────────────────────────────
+import threading
 import uuid as _uuid
 from fastapi import BackgroundTasks
 
 _research_runs: dict[str, dict] = {}
+_cancel_events: dict[str, threading.Event] = {}
 
 
-def _execute_research(run_id: str, register: str) -> None:
+def _make_progress_writer(run_id: str):
+    def _write(progress_update: dict) -> None:
+        state = _research_runs.get(run_id)
+        if state is None:
+            return
+        lock = state.get("lock")
+        if lock:
+            with lock:
+                state["progress"] = progress_update
+        else:
+            state["progress"] = progress_update
+    return _write
+
+
+def _execute_research(run_id: str, register: str, scenario_id: str | None = None) -> None:
     """Run snapshot synchronously inside a BackgroundTask thread."""
     try:
         from tools.source_librarian import run_snapshot
-        snap = run_snapshot(register)
-        _research_runs[run_id] = {
-            "status": "complete",
-            "register": register,
-            "snapshot": snap.model_dump(mode="json"),
-        }
+        snap = run_snapshot(
+            register,
+            on_progress=_make_progress_writer(run_id),
+            scenario_id=scenario_id,
+        )
+        if scenario_id is not None:
+            from tools.source_librarian.snapshot_merge import merge_scenario_result
+            snap = merge_scenario_result(register, snap.scenarios[0])
+        state = _research_runs[run_id]
+        lock = state.get("lock")
+        update = {"status": "complete", "snapshot": snap.model_dump(mode="json")}
+        if lock:
+            with lock:
+                state.update(update)
+        else:
+            state.update(update)
     except Exception as exc:
         log.exception("[source_librarian] run failed")
-        _research_runs[run_id] = {
-            "status": "failed",
-            "register": register,
-            "error": str(exc),
-        }
+        state = _research_runs.get(run_id, {})
+        lock = state.get("lock")
+        update = {"status": "failed", "error": str(exc)}
+        if lock:
+            with lock:
+                state.update(update)
+        else:
+            state.update(update)
+    finally:
+        _cancel_events.pop(run_id, None)
 
 
 @app.post("/api/research/run")
-async def start_research(register: str, background: BackgroundTasks):
-    """Kick off a source_librarian snapshot for one register. Returns run_id."""
+async def start_research(register: str, background: BackgroundTasks,
+                         scenario: str | None = None):
+    """Kick off a source_librarian snapshot (full register or one scenario)."""
     run_id = str(_uuid.uuid4())
+    lock = threading.Lock()
     _research_runs[run_id] = {
         "status": "running",
         "register": register,
-        "phase": "starting",
+        "scenario_id": scenario,
+        "progress": {},
+        "lock": lock,
     }
-    background.add_task(_execute_research, run_id, register)
+    cancel_event = threading.Event()
+    _cancel_events[run_id] = cancel_event
+    background.add_task(_execute_research, run_id, register, scenario)
     return {"run_id": run_id, "status": "running"}
+
+
+@app.post("/api/research/cancel")
+async def cancel_research(run_id: str):
+    """Signal a running research run to stop cooperatively."""
+    event = _cancel_events.get(run_id)
+    if event:
+        event.set()
+        return {"cancelled": True}
+    return {"cancelled": False, "reason": "run_id not found or already complete"}
 
 
 @app.get("/api/research/{register}/status/{run_id}")
@@ -1397,16 +1444,91 @@ async def research_status(register: str, run_id: str):
         return {"status": "unknown", "run_id": run_id}
     if state.get("register") != register:
         return JSONResponse({"error": "run_id does not match register"}, status_code=404)
-    return state
+    lock = state.get("lock")
+    if lock:
+        with lock:
+            return {k: v for k, v in state.items() if k != "lock"}
+    return {k: v for k, v in state.items() if k != "lock"}
 
 
 @app.get("/api/research/{register}/latest")
 async def research_latest(register: str):
     from tools.source_librarian import get_latest_snapshot
+    from tools.source_librarian.intents import intent_hash_current
     snap = get_latest_snapshot(register)
-    if snap is None:
-        return {"snapshot": None}
-    return snap.model_dump(mode="json")
+    result: dict = {"snapshot": None, "current_intent_hash": None}
+    try:
+        result["current_intent_hash"] = intent_hash_current(register)
+    except FileNotFoundError:
+        pass
+    if snap is not None:
+        result["snapshot"] = snap.model_dump(mode="json")
+    return result
+
+
+@app.post("/api/research/autotune")
+async def start_autotune(register: str, scenario: str, background: BackgroundTasks):
+    """Kick off the auto-tune loop for a single no_authoritative_coverage scenario."""
+    run_id = f"autotune-{str(_uuid.uuid4())[:8]}-{register}-{scenario}"
+    lock = threading.Lock()
+    _research_runs[run_id] = {
+        "status": "running",
+        "register": register,
+        "scenario_id": scenario,
+        "progress": {},
+        "lock": lock,
+    }
+    cancel_event = threading.Event()
+    _cancel_events[run_id] = cancel_event
+
+    def _execute_autotune() -> None:
+        try:
+            from tools.source_librarian import get_latest_snapshot
+            from tools.source_librarian.tuner import run_autotune
+
+            snap = get_latest_snapshot(register)
+            if snap is None:
+                raise FileNotFoundError(f"No snapshot found for register '{register}'")
+
+            def _on_progress(evt: dict) -> None:
+                state = _research_runs.get(run_id)
+                if state is None:
+                    return
+                with state["lock"]:
+                    state["progress"] = evt
+
+            result = run_autotune(
+                register, scenario,
+                base_snapshot=snap,
+                cancel_event=cancel_event,
+                on_progress=_on_progress,
+            )
+            state = _research_runs[run_id]
+            with state["lock"]:
+                state.update({
+                    "status": "complete",
+                    "outcome": result.outcome,
+                    "iterations_used": result.iterations_used,
+                    "cost_usd": result.cost_usd,
+                    "winning_diff": result.winning_diff,
+                    "winning_sources": result.winning_sources,
+                    "log_entries": result.log_entries,
+                })
+        except Exception as exc:
+            log.exception("[autotune] run failed")
+            state = _research_runs.get(run_id, {})
+            lk = state.get("lock")
+            update = {"status": "failed", "error": str(exc)}
+            if lk:
+                with lk:
+                    state.update(update)
+            else:
+                state.update(update)
+        finally:
+            _cancel_events.pop(run_id, None)
+
+    background.add_task(_execute_autotune)
+    return {"run_id": run_id, "status": "running"}
 
 
 # ── API: Analyst Baseline ───────────────────────────────────────────────

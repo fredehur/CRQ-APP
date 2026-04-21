@@ -64,3 +64,21 @@ def test_publishers_publisher_label():
     pubs = load_publishers_file(FIX / "publishers_minimal.yaml")
     assert pubs.publisher_for("https://www.dragos.com/r") == "dragos.com"
     assert pubs.publisher_for("https://www.ibm.com/security/x") == "ibm.com/security"
+
+
+def test_intent_hash_current_matches_file(tmp_path, monkeypatch):
+    import shutil
+    from pathlib import Path
+    FIX = Path(__file__).parent / "fixtures"
+    d = tmp_path / "research_intents"
+    d.mkdir()
+    shutil.copy(FIX / "intent_wind_minimal.yaml", d / "wind_test.yaml")
+    monkeypatch.setattr("tools.source_librarian.intents.INTENTS_DIR", d)
+
+    from tools.source_librarian.intents import intent_hash_current
+    from tools.source_librarian.snapshot import intent_hash
+
+    h = intent_hash_current("wind_test")
+    expected = intent_hash((d / "wind_test.yaml").read_text(encoding="utf-8"))
+    assert h == expected
+    assert len(h) == 8
