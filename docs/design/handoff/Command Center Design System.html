@@ -1,0 +1,1875 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CRQ Command Center — Web Design System</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* === styles/tokens.css === */
+/* CRQ Design System · Tokens
+ * Locked design language extracted from CRQ Cycle Brief v1.0
+ * ------------------------------------------------------- */
+
+:root {
+  /* — Brand — */
+  --brand-navy: #1B2D6E;
+  --brand-bright: #2E5BFF;
+
+  /* — Severity — */
+  --sev-critical: #d1242f;
+  --sev-high:     #cf6f12;
+  --sev-medium:   #9a7300;
+  --sev-monitor:  #0969da;
+
+  /* — Neutrals (warm-cool neutral, print-report) — */
+  --ink-900: #0E1530;     /* primary text */
+  --ink-700: #1B2D6E;     /* navy — headings / strong */
+  --ink-500: #4A5275;     /* secondary text */
+  --ink-400: #6E7596;     /* tertiary text */
+  --ink-300: #A8ADC4;     /* disabled / placeholder */
+  --ink-200: #D6D9E5;     /* dividers */
+  --ink-150: #E4E6EF;     /* soft dividers */
+  --ink-100: #EEF0F6;     /* subtle fill */
+  --ink-50:  #F5F6FA;     /* page tint */
+  --paper:   #FBFBFD;     /* page background */
+  --white:   #FFFFFF;
+
+  /* — Severity tints (solid fill is default; tints for backgrounds) — */
+  --sev-critical-tint: #FBE9EB;
+  --sev-high-tint:     #FBEEDF;
+  --sev-medium-tint:   #F6EED6;
+  --sev-monitor-tint:  #E1EDFB;
+
+  /* — Type — */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* Weights used */
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+
+  /* Type scale (print-density; sized for A4 + screen use) */
+  --fs-display: 40px;   /* Cover number / hero */
+  --fs-h1: 28px;        /* Page title */
+  --fs-h2: 20px;        /* Section title */
+  --fs-h3: 15px;        /* Sub-section */
+  --fs-body: 13px;      /* Body */
+  --fs-small: 11.5px;   /* Caption / bullets in dense lists */
+  --fs-xs: 10.5px;      /* Meta / footer */
+  --fs-label: 10.5px;   /* All-caps pill label */
+  --fs-label-sm: 9.5px; /* All-caps tiny meta */
+
+  /* Tracking */
+  --tr-label: 0.12em;   /* All-caps labels */
+  --tr-meta: 0.08em;    /* Meta */
+  --tr-heading: -0.01em;
+
+  /* Line-heights */
+  --lh-tight: 1.15;
+  --lh-body: 1.45;
+  --lh-loose: 1.55;
+
+  /* — Space — */
+  --s-0: 0;
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;
+  --s-4: 8px;
+  --s-5: 12px;
+  --s-6: 16px;
+  --s-7: 20px;
+  --s-8: 24px;
+  --s-9: 32px;
+  --s-10: 40px;
+  --s-11: 56px;
+  --s-12: 72px;
+
+  /* — Radius — */
+  --r-pill: 999px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --r-card: 8px;
+
+  /* — Borders / shadow (minimal; print-like) — */
+  --bw-hair: 0.5px;
+  --bw-1: 1px;
+  --bw-2: 2px;
+  --shadow-card: 0 1px 0 rgba(14, 21, 48, 0.04), 0 0 0 1px var(--ink-150);
+  --shadow-raise: 0 4px 16px -6px rgba(14, 21, 48, 0.12), 0 0 0 1px var(--ink-150);
+
+  /* — Layout — */
+  --page-A4-w: 794px;      /* 210mm @ 96dpi */
+  --page-A4-h: 1123px;     /* 297mm */
+  --page-slide-w: 1280px;
+  --page-slide-h: 720px;
+  --page-pad: 48px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ink-50);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ——— Type utilities ——— */
+.t-display  { font-size: var(--fs-display); line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h1       { font-size: var(--fs-h1);      line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h2       { font-size: var(--fs-h2);      line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h3       { font-size: var(--fs-h3);      line-height: 1.3; font-weight: var(--w-semibold); color: var(--ink-900);}
+.t-body     { font-size: var(--fs-body);    line-height: var(--lh-body); color: var(--ink-900); }
+.t-sec      { font-size: var(--fs-body);    line-height: var(--lh-body); color: var(--ink-500); }
+.t-small    { font-size: var(--fs-small);   line-height: 1.5; color: var(--ink-500); }
+.t-xs       { font-size: var(--fs-xs);      line-height: 1.4; color: var(--ink-400); }
+.t-label    { font-size: var(--fs-label);   line-height: 1; font-weight: var(--w-semibold); letter-spacing: var(--tr-label); text-transform: uppercase; }
+.t-label-sm { font-size: var(--fs-label-sm);line-height: 1; font-weight: var(--w-semibold); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-500); }
+
+.c-navy   { color: var(--brand-navy); }
+.c-bright { color: var(--brand-bright); }
+.c-ink    { color: var(--ink-900); }
+.c-mute   { color: var(--ink-500); }
+.c-faint  { color: var(--ink-400); }
+
+.c-critical { color: var(--sev-critical); }
+.c-high     { color: var(--sev-high); }
+.c-medium   { color: var(--sev-medium); }
+.c-monitor  { color: var(--sev-monitor); }
+
+/* Tabular numerals for metadata */
+.t-num, .num { font-variant-numeric: tabular-nums; }
+
+/* Dividers */
+.hr { height: 1px; background: var(--ink-200); border: 0; margin: 0; }
+.hr-strong { height: 1px; background: var(--ink-700); border: 0; margin: 0; }
+
+/* ——— Pill band (severity label pills) ——— */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 20px; padding: 0 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label);
+  font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--white);
+  white-space: nowrap;
+  line-height: 1;
+}
+.pill--critical { background: var(--sev-critical); }
+.pill--high     { background: var(--sev-high); }
+.pill--medium   { background: var(--sev-medium); }
+.pill--monitor  { background: var(--sev-monitor); }
+.pill--navy     { background: var(--brand-navy); }
+.pill--bright   { background: var(--brand-bright); }
+.pill--neutral  { background: var(--ink-700); }
+.pill--ghost    { background: transparent; color: var(--ink-700); box-shadow: inset 0 0 0 1px var(--ink-200); }
+.pill--tag      { background: var(--ink-100); color: var(--ink-500); }
+
+/* Pill-band: CRITICAL · MED · NEW — a chain of small pills, ' · ' separators allowed inside one pill */
+.pillband {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pillband .sep {
+  color: rgba(255,255,255,0.65);
+  font-weight: var(--w-regular);
+  letter-spacing: var(--tr-label);
+}
+/* Single "combined" pill band variant: one pill with severity color, inline dots */
+.pill-combo {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--white); line-height: 1;
+  gap: 8px;
+}
+.pill-combo .sep { opacity: 0.6; }
+
+/* ——— Severity dot ——— */
+.sdot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  vertical-align: middle;
+}
+.sdot--lg { width: 12px; height: 12px; }
+.sdot--xl { width: 16px; height: 16px; }
+.sdot--critical { background: var(--sev-critical); }
+.sdot--high     { background: var(--sev-high); }
+.sdot--medium   { background: var(--sev-medium); }
+.sdot--monitor  { background: var(--sev-monitor); }
+
+/* Severity dot with ring (for scatter plots — visual weight without blowing out) */
+.sdot-ring {
+  display: inline-block; border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3px currentColor;
+}
+
+/* ——— Category icon circles ——— *
+ * M Maritime · W Weather · C Cyber · G Geopolitical · S Supply
+ * Filled navy circle, white letter. Sized to align inline with body text.
+ */
+.cat {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--brand-navy); color: var(--white);
+  font-size: 10px; font-weight: var(--w-bold);
+  letter-spacing: 0; line-height: 1;
+  flex: none;
+}
+.cat--lg  { width: 26px; height: 26px; font-size: 13px; }
+.cat--xl  { width: 40px; height: 40px; font-size: 18px; }
+.cat--ghost { background: var(--white); color: var(--brand-navy); box-shadow: inset 0 0 0 1px var(--brand-navy); }
+.cat--bright { background: var(--brand-bright); }
+.cat--M { background: var(--brand-navy); }
+.cat--W { background: var(--brand-navy); }
+.cat--C { background: var(--brand-navy); }
+.cat--G { background: var(--brand-navy); }
+.cat--S { background: var(--brand-navy); }
+
+/* ——— Card ——— */
+.card {
+  background: var(--white);
+  border: 1px solid var(--ink-150);
+  border-radius: var(--r-card);
+  padding: 20px;
+}
+.card--flat { border-radius: 0; border: 0; border-top: 1px solid var(--ink-200); padding: 16px 0; }
+.card--tight { padding: 14px 16px; }
+.card--severity-critical { border-top: 2px solid var(--sev-critical); }
+.card--severity-high     { border-top: 2px solid var(--sev-high); }
+.card--severity-medium   { border-top: 2px solid var(--sev-medium); }
+.card--severity-monitor  { border-top: 2px solid var(--sev-monitor); }
+
+/* Bullet style — brief uses ▸ at right */
+.bullets { margin: 0; padding: 0; list-style: none; }
+.bullets li {
+  position: relative;
+  padding-right: 14px;
+  padding-left: 0;
+  margin-bottom: 6px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--ink-900);
+}
+.bullets li::after {
+  content: "▸";
+  position: absolute; right: 0; top: 0.05em;
+  color: var(--ink-700);
+  font-size: 7px;
+  line-height: 1.5em;
+}
+.bullets--left li { padding-right: 0; padding-left: 14px; }
+.bullets--left li::after { right: auto; left: 0; top: 0.05em; }
+
+/* Driver list — M/W/C/G prefix */
+.drivers { margin: 0; padding: 0; list-style: none; }
+.drivers li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink-150);
+  align-items: start;
+}
+.drivers li:last-child { border-bottom: 0; }
+.drivers .cat { margin-top: 1px; }
+.drivers .d-main { font-size: var(--fs-small); font-weight: var(--w-semibold); color: var(--ink-900); line-height: 1.35; }
+.drivers .d-sub  { font-size: var(--fs-small); color: var(--ink-500); margin-top: 2px; }
+.drivers .d-sub::before { content: "— "; color: var(--ink-400); }
+
+/* Meta rail — e.g. "Admiralty B2 · 12 sources · refreshed 2026-04-17 06:00 UTC" */
+.meta-rail {
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+  letter-spacing: var(--tr-meta);
+  text-transform: uppercase;
+  font-weight: var(--w-medium);
+}
+.meta-rail .dot { opacity: 0.5; margin: 0 6px; }
+
+/* Pill row */
+.pill-row { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Print-report section header — a bold full-bleed band */
+.band {
+  background: var(--brand-navy); color: var(--white);
+  padding: 6px 12px;
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  line-height: 1.2;
+  display: inline-block;
+}
+.band--light { background: var(--ink-100); color: var(--ink-700); }
+.band--bright { background: var(--brand-bright); color: var(--white); }
+.band--critical { background: var(--sev-critical); }
+.band--high { background: var(--sev-high); }
+.band--medium { background: var(--sev-medium); }
+.band--monitor { background: var(--sev-monitor); }
+
+/* Rule for top/bottom of page (brief style) */
+.rule-top, .rule-bot { border-top: 1px solid var(--ink-700); }
+.rule-bot { border-top: 0; border-bottom: 1px solid var(--ink-700); }
+
+/* Grid helpers */
+.grid { display: grid; gap: 16px; }
+.grid--2 { grid-template-columns: 1fr 1fr; }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--4 { grid-template-columns: repeat(4, 1fr); }
+.row { display: flex; gap: 12px; align-items: center; }
+.row--between { justify-content: space-between; }
+.row--top { align-items: flex-start; }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.stack--sm { gap: 4px; }
+.stack--md { gap: 12px; }
+.stack--lg { gap: 20px; }
+
+/* Swatches for token page */
+.swatch {
+  display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--ink-150);
+}
+.swatch:last-child { border-bottom: 0; }
+.swatch .chip { height: 40px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04); }
+.swatch .name { font-size: var(--fs-small); font-weight: var(--w-semibold); color: var(--ink-900); }
+.swatch .hex  { font-size: var(--fs-xs); color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.swatch .var  { font-size: var(--fs-xs); color: var(--ink-400); }
+
+/* Type specimen row */
+.spec {
+  display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: baseline;
+  padding: 12px 0; border-bottom: 1px solid var(--ink-150);
+}
+.spec:last-child { border-bottom: 0; }
+.spec .meta { font-size: var(--fs-xs); color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+
+/* === styles/app.css === */
+/* AeroGrid CRQ Command Center — Web App Stylesheet
+ * Extends styles/tokens.css. Dark theme. Semantic class names.
+ * ----------------------------------------------------------------
+ * Rules (brief-locked):
+ *   - No hard-coded hex. All color refs go through tokens.
+ *   - No parallel severity scale. Only --sev-critical/high/medium/monitor.
+ *   - IBM Plex Sans throughout.
+ *   - Cyan (--brand-bright) is cyber + focus/accent only. Never on physical-pillar chrome.
+ *   - Severity appears only on pills, dots, chips, and thin accent borders on cards.
+ *
+ * DARK-SURFACE ALIASES
+ * tokens.css is a light-theme ink scale tuned for print. The brief requires
+ * "use the ink scale to establish dark surface hierarchy" but the ink scale is
+ * light — so we define dark-surface semantic aliases here that REUSE existing
+ * tokens where they work on dark (pill severity fills, ink-200/300 text on dark)
+ * and add dark-only values only where the vocabulary is silent. Every value
+ * is flagged below for review.
+ * ---------------------------------------------------------------- */
+
+:root {
+  /* Dark surface hierarchy (web-app only; not in tokens.css) */
+  --surface-0:        #0B1020;   /* page / app background (deeper than brand-navy) */
+  --surface-1:        #111836;   /* chrome fill (header, register bar, table body) */
+  --surface-2:        #172046;   /* elevated card / modal / drawer */
+  --surface-3:        #1E2958;   /* hover, selected row, tabbtn active */
+  --surface-inset:    #070B1A;   /* inputs, progress track, code */
+
+  /* Dark borders derived from --ink-200 at alpha (review: 3 derivations) */
+  --border-hairline:  rgba(214, 217, 229, 0.08);
+  --border-subtle:    rgba(214, 217, 229, 0.14);
+  --border-strong:    rgba(214, 217, 229, 0.24);
+
+  /* Dark text — reuses tokens that work on dark */
+  --text-primary:     var(--white);
+  --text-secondary:   var(--ink-200);
+  --text-tertiary:    var(--ink-300);
+  --text-muted:       var(--ink-400);
+  --text-disabled:    var(--ink-500);
+
+  /* Focus ring — brand-bright cyan (also generic focus; cyan is cyber+accent) */
+  --focus-ring:       rgba(46, 91, 255, 0.55);
+
+  /* Severity tints on dark (alpha fills for hover/selected only) */
+  --sev-critical-bg:  rgba(209, 36, 47, 0.14);
+  --sev-high-bg:      rgba(207, 111, 18, 0.14);
+  --sev-medium-bg:    rgba(154, 115, 0, 0.18);
+  --sev-monitor-bg:   rgba(9, 105, 218, 0.16);
+
+  /* Chrome heights */
+  --h-header:         36px;
+  --h-register-bar:   24px;
+  --h-progress:       24px;
+
+  --shadow-overlay:   0 8px 32px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border-subtle);
+}
+
+/* ---------- Base ---------- */
+
+html, body {
+  background: var(--surface-0);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  margin: 0;
+}
+body { min-height: 100vh; }
+
+code, kbd { font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); background: var(--surface-inset); padding: 1px 6px; border-radius: var(--r-md); border: 1px solid var(--border-hairline); }
+
+a { color: var(--brand-bright); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.num, [data-num] { font-variant-numeric: tabular-nums; }
+.hidden { display: none !important; }
+
+/* ---------- Header chrome ---------- */
+
+#app-header {
+  position: sticky; top: 0; z-index: 20;
+  height: var(--h-header);
+  display: flex; align-items: stretch; justify-content: space-between;
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 0 var(--s-6);
+}
+#app-header > div { display: flex; align-items: stretch; gap: 0; }
+
+.brand-mark {
+  display: inline-flex; align-items: center;
+  padding-right: var(--s-7);
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--brand-bright); white-space: nowrap;
+}
+
+#app-header nav { display: flex; align-items: stretch; height: var(--h-header); }
+
+.nav-tab {
+  display: inline-flex; align-items: center; height: 100%;
+  padding: 0 var(--s-5);
+  font-size: var(--fs-small); font-weight: var(--w-medium);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+  white-space: nowrap; user-select: none;
+}
+.nav-tab:hover { color: var(--text-primary); }
+.nav-tab.active { color: var(--text-primary); border-bottom-color: var(--brand-bright); }
+
+/* Dev tabs recede */
+.nav-tab-dev {
+  color: var(--text-disabled);
+  font-weight: var(--w-regular);
+  letter-spacing: 0.06em;
+}
+.nav-tab-dev:hover { color: var(--text-tertiary); }
+.nav-tab-dev.active { color: var(--text-secondary); border-bottom-color: var(--border-strong); }
+
+.nav-sep {
+  align-self: center;
+  width: 1px; height: 16px;
+  background: var(--border-subtle);
+  margin: 0 var(--s-4);
+}
+
+.header-actions { display: flex; align-items: center; gap: var(--s-5); height: 100%; }
+
+#nav-config {
+  background: none; border: none; cursor: pointer;
+  width: 24px; height: 24px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--r-md);
+  font-size: 14px; color: var(--text-disabled); line-height: 1;
+  transition: color 0.12s, background 0.12s;
+}
+#nav-config:hover { color: var(--text-primary); background: var(--surface-2); }
+#nav-config.active { color: var(--brand-bright); }
+
+/* ---------- Header-embedded select & primary button ---------- */
+
+#window-select {
+  appearance: none; -webkit-appearance: none;
+  background: var(--surface-2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: var(--s-2) var(--s-7) var(--s-2) var(--s-4);
+  font: inherit; font-size: var(--fs-small);
+  height: 24px; cursor: pointer;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%),
+    linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+}
+#window-select:hover { border-color: var(--border-strong); color: var(--text-primary); }
+#window-select:focus { outline: none; border-color: var(--brand-bright); box-shadow: 0 0 0 2px var(--focus-ring); }
+
+#btn-run-all {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  height: 24px; padding: 0 var(--s-5);
+  background: var(--brand-bright); color: var(--white);
+  border: 1px solid var(--brand-bright); border-radius: var(--r-md);
+  font: inherit; font-size: var(--fs-label);
+  font-weight: var(--w-semibold); letter-spacing: var(--tr-label); text-transform: uppercase;
+  cursor: pointer;
+  transition: filter 0.12s, box-shadow 0.12s;
+}
+#btn-run-all:hover { filter: brightness(1.1); }
+#btn-run-all:focus { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+#btn-run-all:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+
+/* ---------- Register bar ---------- */
+
+#register-bar {
+  position: relative;
+  height: var(--h-register-bar);
+  display: flex; align-items: center; gap: var(--s-4);
+  padding: 0 var(--s-6);
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: var(--fs-xs);
+  letter-spacing: var(--tr-meta); text-transform: uppercase;
+  color: var(--text-muted);
+  z-index: 15;
+}
+#register-bar .reg-icon  { color: var(--text-disabled); }
+#register-bar .reg-label { color: var(--text-muted); }
+#register-bar-name  { color: var(--text-secondary); font-weight: var(--w-semibold); letter-spacing: var(--tr-meta); }
+#register-bar-count { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+#register-bar .reg-sep { color: var(--border-strong); }
+
+#register-bar-toggle {
+  color: var(--text-tertiary); cursor: pointer;
+  letter-spacing: var(--tr-meta); transition: color 0.12s;
+  user-select: none;
+}
+#register-bar-toggle:hover { color: var(--text-primary); }
+
+/* ---------- Register drawer ---------- */
+
+#register-drawer {
+  position: absolute;
+  top: calc(var(--h-header) + var(--h-register-bar));
+  left: var(--s-6);
+  width: 320px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-overlay);
+  z-index: 30;
+  display: none; overflow: hidden;
+}
+#register-drawer.open { display: block; }
+
+.drawer-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.drawer-head .drawer-title {
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+#register-list { max-height: 240px; overflow-y: auto; }
+
+.reg-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--s-4) var(--s-5);
+  border-bottom: 1px solid var(--border-hairline);
+  cursor: pointer; transition: background 0.12s;
+}
+.reg-item:last-child { border-bottom: 0; }
+.reg-item:hover, .reg-item.active { background: var(--surface-3); }
+.reg-item-name { color: var(--text-primary); font-weight: var(--w-medium); font-size: var(--fs-body); }
+.reg-item-meta {
+  font-size: var(--fs-xs); color: var(--text-muted);
+  letter-spacing: var(--tr-meta); text-transform: uppercase;
+  font-variant-numeric: tabular-nums; margin-top: 2px;
+}
+.reg-item-badge {
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); color: var(--brand-bright); text-transform: uppercase;
+}
+
+#register-form-panel {
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--s-5);
+  background: var(--surface-1);
+  display: none;
+}
+#register-form-panel.open { display: block; }
+
+/* ---------- Progress bar ---------- */
+
+#progress-bar-container {
+  height: var(--h-progress);
+  padding: 0 var(--s-6);
+  background: var(--surface-0);
+  border-bottom: 1px solid var(--border-hairline);
+  display: flex; align-items: center;
+}
+#progress-bar-container > div {
+  display: flex; align-items: center; gap: var(--s-5); width: 100%;
+}
+#progress-label {
+  font-size: var(--fs-xs); letter-spacing: var(--tr-meta); text-transform: uppercase;
+  color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.progress-track {
+  flex: 1;
+  background: var(--surface-inset);
+  border-radius: var(--r-pill);
+  height: 3px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--border-hairline);
+}
+#progress-fill {
+  height: 100%;
+  background: var(--brand-bright);
+  border-radius: var(--r-pill);
+  transition: width 0.3s ease;
+}
+.progress-count {
+  font-size: var(--fs-xs); color: var(--text-muted);
+  letter-spacing: var(--tr-meta); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+
+/* ---------- Primitive: Button ---------- */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--s-3);
+  height: 28px; padding: 0 var(--s-5);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small); font-weight: var(--w-semibold);
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s, filter 0.12s;
+  white-space: nowrap; user-select: none;
+}
+.btn:focus { outline: none; box-shadow: 0 0 0 2px var(--focus-ring); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.btn-primary {
+  background: var(--brand-bright); color: var(--white);
+  border-color: var(--brand-bright);
+}
+.btn-primary:hover:not(:disabled) { filter: brightness(1.1); }
+
+.btn-secondary {
+  background: var(--surface-2); color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+.btn-secondary:hover:not(:disabled) { background: var(--surface-3); }
+
+.btn-ghost {
+  background: transparent; color: var(--text-secondary);
+  border-color: transparent;
+}
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text-primary); }
+
+.btn-destructive {
+  background: transparent; color: var(--sev-critical);
+  border-color: var(--sev-critical);
+}
+.btn-destructive:hover:not(:disabled) { background: var(--sev-critical-bg); }
+
+.btn-icon {
+  width: 28px; padding: 0;
+  background: transparent; color: var(--text-tertiary);
+  border-color: transparent;
+}
+.btn-icon:hover:not(:disabled) { background: var(--surface-2); color: var(--text-primary); }
+
+.btn-sm { height: 22px; padding: 0 var(--s-4); font-size: var(--fs-label); }
+.btn-sm.btn-icon { width: 22px; padding: 0; }
+.btn-lg { height: 34px; padding: 0 var(--s-6); font-size: var(--fs-body); }
+
+.btn-link {
+  background: transparent; border: 0; padding: 0;
+  color: var(--brand-bright);
+  font-size: var(--fs-small); font-weight: var(--w-medium);
+  height: auto; cursor: pointer;
+}
+.btn-link:hover { text-decoration: underline; }
+
+/* ---------- Primitive: Select / Input / Textarea ---------- */
+
+.select, .input, .textarea {
+  display: inline-flex; align-items: center;
+  height: 28px; padding: 0 var(--s-4);
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  font-family: var(--font-sans);
+  font-size: var(--fs-small); color: var(--text-primary);
+  transition: border-color 0.12s, box-shadow 0.12s;
+  width: 100%; max-width: 280px;
+}
+.textarea { height: auto; min-height: 72px; padding: var(--s-4); line-height: var(--lh-body); display: block; resize: vertical; }
+.select {
+  appearance: none; -webkit-appearance: none; padding-right: var(--s-8);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-tertiary) 50%),
+    linear-gradient(135deg, var(--text-tertiary) 50%, transparent 50%);
+  background-position: calc(100% - 12px) 50%, calc(100% - 8px) 50%;
+  background-size: 4px 4px, 4px 4px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+.input:hover, .select:hover, .textarea:hover { border-color: var(--border-strong); }
+.input:focus, .select:focus, .textarea:focus { outline: none; border-color: var(--brand-bright); box-shadow: 0 0 0 2px var(--focus-ring); }
+.input::placeholder, .textarea::placeholder { color: var(--text-disabled); }
+.input:disabled, .select:disabled, .textarea:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.input-error, .select-error { border-color: var(--sev-critical); }
+.input-error:focus, .select-error:focus { box-shadow: 0 0 0 2px var(--sev-critical-bg); }
+
+.input-wrap {
+  display: inline-flex; align-items: stretch;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  max-width: 280px; width: 100%;
+}
+.input-wrap:focus-within { border-color: var(--brand-bright); box-shadow: 0 0 0 2px var(--focus-ring); }
+.input-wrap .input-prefix {
+  display: inline-flex; align-items: center;
+  padding: 0 var(--s-4);
+  color: var(--text-muted); font-size: var(--fs-xs);
+  letter-spacing: var(--tr-meta); text-transform: uppercase;
+  border-right: 1px solid var(--border-hairline);
+}
+.input-wrap .input { border: 0; box-shadow: none; background: transparent; flex: 1; }
+
+.field-label {
+  display: block;
+  font-size: var(--fs-label-sm); letter-spacing: var(--tr-label); text-transform: uppercase;
+  font-weight: var(--w-semibold); color: var(--text-muted);
+  margin-bottom: var(--s-3);
+}
+.field-help { font-size: var(--fs-xs); color: var(--text-muted); margin-top: var(--s-2); }
+.field-error { font-size: var(--fs-xs); color: var(--sev-critical); margin-top: var(--s-2); }
+
+/* ---------- Primitive: Select (open popover demo) ---------- */
+
+.popover-select {
+  position: relative; display: inline-block; width: 100%; max-width: 280px;
+}
+.popover-select .select { pointer-events: none; }
+.popover-menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+  z-index: 5;
+}
+.popover-menu-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: var(--s-4) var(--s-5);
+  font-size: var(--fs-small); color: var(--text-secondary);
+  cursor: pointer;
+}
+.popover-menu-item:hover, .popover-menu-item.selected { background: var(--surface-3); color: var(--text-primary); }
+.popover-menu-item.selected::after { content: "✓"; color: var(--brand-bright); }
+
+/* ---------- Primitive: Table ---------- */
+
+.table {
+  width: 100%; border-collapse: collapse;
+  font-size: var(--fs-small);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+.table th, .table td {
+  padding: var(--s-5) var(--s-6);
+  text-align: left; vertical-align: middle;
+  border-bottom: 1px solid var(--border-hairline);
+}
+.table th {
+  background: var(--surface-2);
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover { background: var(--surface-2); }
+.table tbody tr.selected { background: var(--surface-3); }
+.table td { color: var(--text-secondary); }
+.table td.num { font-variant-numeric: tabular-nums; text-align: right; }
+.table-compact th, .table-compact td { padding: var(--s-3) var(--s-5); }
+.table-striped tbody tr:nth-child(even) { background: rgba(255,255,255,0.02); }
+
+.th-sort { cursor: pointer; user-select: none; }
+.th-sort::after { content: " ↕"; color: var(--text-disabled); font-size: 9px; }
+.th-sort[data-sort="asc"]::after  { content: " ↑"; color: var(--text-primary); }
+.th-sort[data-sort="desc"]::after { content: " ↓"; color: var(--text-primary); }
+
+/* ---------- Primitive: Card ---------- */
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  padding: var(--s-7);
+}
+.card-head {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--s-5);
+}
+.card-title {
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.card-body { font-size: var(--fs-small); color: var(--text-tertiary); line-height: var(--lh-body); }
+.card-foot {
+  display: flex; justify-content: flex-end; gap: var(--s-4);
+  margin-top: var(--s-6);
+  padding-top: var(--s-5);
+  border-top: 1px solid var(--border-hairline);
+}
+.card-sev-critical { border-left: 2px solid var(--sev-critical); }
+.card-sev-high     { border-left: 2px solid var(--sev-high); }
+.card-sev-medium   { border-left: 2px solid var(--sev-medium); }
+.card-sev-monitor  { border-left: 2px solid var(--sev-monitor); }
+
+/* ---------- Primitive: Pill / Dot ---------- */
+
+/* tokens.css already defines .pill + .pill--critical/high/medium/monitor.
+   Those solid severity fills with white text render fine on dark; reused as-is.
+   Add dark-theme variants below. */
+.pill-ghost-dark {
+  background: transparent; color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.pill-grade {
+  background: var(--surface-2); color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  font-variant-numeric: tabular-nums;
+}
+.pill-region {
+  background: transparent; color: var(--text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  letter-spacing: var(--tr-label);
+}
+.pill-ok {
+  background: transparent; color: var(--text-secondary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.pill-ok::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--sev-monitor);
+  display: inline-block; margin-right: 2px;
+}
+.pill-with-dot { gap: 6px; }
+.pill-with-dot .sdot { box-shadow: 0 0 0 2px var(--surface-1); }
+
+/* ---------- Primitive: Chip ---------- */
+
+.chip {
+  display: inline-flex; align-items: center; gap: var(--s-3);
+  height: 22px; padding: 0 var(--s-4);
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label); font-weight: var(--w-medium);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  background: transparent;
+  color: var(--text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s, box-shadow 0.12s;
+  user-select: none;
+}
+.chip:hover { color: var(--text-primary); background: var(--surface-2); }
+.chip.selected {
+  background: var(--surface-3); color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--brand-bright);
+}
+.chip-x { color: var(--text-muted); font-size: 10px; }
+.chip-count {
+  margin-left: var(--s-2);
+  padding: 1px 5px; border-radius: var(--r-pill);
+  background: var(--surface-3); color: var(--text-tertiary);
+  font-size: var(--fs-label-sm);
+}
+
+/* ---------- Primitive: Modal ---------- */
+
+.modal-scrim {
+  position: relative;
+  background: rgba(7, 11, 26, 0.6);
+  border-radius: var(--r-card);
+  padding: var(--s-9);
+  display: flex; justify-content: center;
+  min-height: 200px;
+}
+.modal {
+  width: 440px; max-width: 100%;
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-overlay);
+  overflow: hidden;
+}
+.modal-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: var(--s-5) var(--s-7);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.modal-title { font-size: var(--fs-h3); font-weight: var(--w-semibold); color: var(--text-primary); }
+.modal-body { padding: var(--s-7); color: var(--text-secondary); font-size: var(--fs-small); line-height: var(--lh-body); }
+.modal-foot {
+  display: flex; justify-content: flex-end; gap: var(--s-4);
+  padding: var(--s-5) var(--s-7);
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-0);
+}
+
+/* ---------- Primitive: Tooltip ---------- */
+
+.info-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--surface-3); color: var(--text-tertiary);
+  font-size: 9px; font-weight: var(--w-bold); cursor: help;
+}
+.tooltip { position: relative; display: inline-block; }
+.tooltip-bubble {
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface-3); color: var(--text-primary);
+  font-size: var(--fs-xs); letter-spacing: 0.02em;
+  padding: var(--s-3) var(--s-4);
+  border-radius: var(--r-md); white-space: nowrap;
+  box-shadow: var(--shadow-overlay);
+  pointer-events: none;
+}
+.tooltip-bubble::after {
+  content: ""; position: absolute; top: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent; border-top-color: var(--surface-3);
+}
+.tooltip-bubble.tooltip-right {
+  bottom: auto; top: 50%; left: calc(100% + 6px);
+  transform: translateY(-50%);
+}
+.tooltip-bubble.tooltip-right::after {
+  top: 50%; left: 0; transform: translate(-100%, -50%);
+  border-top-color: transparent; border-right-color: var(--surface-3);
+}
+
+/* ---------- Primitive: Divider / Section header ---------- */
+
+.section-header {
+  display: flex; align-items: center; gap: var(--s-5);
+  margin: var(--s-9) 0 var(--s-5);
+}
+.section-header-label {
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-muted); white-space: nowrap;
+}
+.section-header-rule { flex: 1; height: 1px; background: var(--border-subtle); }
+.divider { height: 1px; background: var(--border-subtle); border: 0; margin: var(--s-6) 0; }
+
+/* ---------- Primitive: Tab button (in-content) ---------- */
+
+.tabbtn-group {
+  display: inline-flex; align-items: stretch;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  padding: 2px; gap: 2px;
+}
+.tabbtn {
+  padding: var(--s-3) var(--s-5);
+  font-size: var(--fs-label); font-weight: var(--w-medium);
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--text-tertiary);
+  background: transparent; border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.tabbtn:hover { color: var(--text-primary); }
+.tabbtn.active {
+  background: var(--surface-2); color: var(--text-primary);
+  box-shadow: inset 0 0 0 1px var(--border-subtle);
+}
+
+/* ---------- Chrome support: toast / empty / loading ---------- */
+
+.toast-surface {
+  position: relative;
+  display: flex; flex-direction: column; gap: var(--s-4);
+  padding: var(--s-5);
+  background: var(--surface-inset);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--r-card);
+}
+.toast {
+  display: flex; align-items: flex-start; gap: var(--s-4);
+  padding: var(--s-5) var(--s-6);
+  background: var(--surface-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-overlay);
+  min-width: 320px;
+}
+.toast-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  margin-top: 5px; flex: none;
+  background: var(--text-muted);
+}
+.toast-success .toast-dot { background: var(--sev-monitor); }
+.toast-warning .toast-dot { background: var(--sev-medium); }
+.toast-error   .toast-dot { background: var(--sev-critical); }
+.toast-title { font-size: var(--fs-small); font-weight: var(--w-semibold); color: var(--text-primary); }
+.toast-msg   { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 2px; letter-spacing: 0.02em; }
+
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: var(--s-5);
+  padding: var(--s-11) var(--s-6);
+  text-align: center;
+  background: var(--surface-1);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--r-card);
+}
+.empty-state-title { font-size: var(--fs-h3); font-weight: var(--w-semibold); color: var(--text-primary); }
+.empty-state-msg   { font-size: var(--fs-small); color: var(--text-muted); max-width: 360px; }
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-1) 0%, var(--surface-2) 50%, var(--surface-1) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: var(--r-md);
+  height: 10px;
+}
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ---------- Design-system doc page layout (not shipped with retrofit) ---------- */
+
+.ds-page { padding: var(--s-9) var(--s-9) var(--s-12); max-width: 1280px; margin: 0 auto; }
+.ds-header {
+  margin-bottom: var(--s-10);
+  padding-bottom: var(--s-7);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.ds-eyebrow {
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--brand-bright);
+  margin-bottom: var(--s-4);
+}
+.ds-title {
+  margin: 0 0 var(--s-4);
+  font-size: 32px; font-weight: var(--w-semibold);
+  color: var(--text-primary); letter-spacing: -0.01em;
+}
+.ds-lede {
+  font-size: var(--fs-body); color: var(--text-tertiary); max-width: 720px; line-height: var(--lh-body);
+  margin: 0;
+}
+
+.ds-section-title {
+  display: flex; align-items: baseline; gap: var(--s-5);
+  margin: var(--s-11) 0 var(--s-7);
+}
+.ds-section-title h2 {
+  margin: 0;
+  font-size: 20px; font-weight: var(--w-semibold);
+  color: var(--text-primary); letter-spacing: -0.01em;
+}
+.ds-section-title .ds-section-tag {
+  font-size: var(--fs-label-sm); letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-muted); font-weight: var(--w-semibold);
+}
+
+.ds-group-title {
+  font-size: var(--fs-h3); font-weight: var(--w-semibold);
+  color: var(--text-primary);
+  margin: var(--s-9) 0 var(--s-5);
+  padding-bottom: var(--s-4);
+  border-bottom: 1px solid var(--border-hairline);
+}
+
+/* Grid of demo cells */
+.ds-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--s-6); }
+.ds-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+.ds-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+.ds-grid.cols-fullwide > * { grid-column: 1 / -1; }
+
+.ds-cell {
+  display: flex; flex-direction: column; gap: var(--s-5);
+  padding: var(--s-7);
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+}
+.ds-cell.fullwide { grid-column: 1 / -1; }
+.ds-cell-head {
+  display: flex; justify-content: space-between; align-items: baseline; gap: var(--s-4);
+}
+.ds-cell-label {
+  font-size: var(--fs-label-sm); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ds-cell-class {
+  font-family: var(--font-sans); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-xs); color: var(--text-disabled);
+  letter-spacing: 0.02em;
+}
+.ds-row { display: flex; flex-wrap: wrap; gap: var(--s-4); align-items: center; }
+.ds-stack { display: flex; flex-direction: column; gap: var(--s-4); }
+.ds-demo-note { font-size: var(--fs-xs); color: var(--text-muted); letter-spacing: 0.02em; }
+
+/* Token reference card */
+.ds-tokens {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s-6);
+}
+.ds-token-group {
+  background: var(--surface-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  padding: var(--s-6);
+}
+.ds-token-group h3 {
+  margin: 0 0 var(--s-5);
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.ds-token-row {
+  display: grid; grid-template-columns: 20px 1fr auto; gap: var(--s-4);
+  align-items: center;
+  padding: var(--s-3) 0;
+  border-bottom: 1px solid var(--border-hairline);
+  font-size: var(--fs-xs);
+}
+.ds-token-row:last-child { border-bottom: 0; }
+.ds-token-row .swatch-dot {
+  width: 14px; height: 14px; border-radius: 3px;
+  border: 1px solid var(--border-hairline);
+}
+.ds-token-row .token-name {
+  font-variant-numeric: tabular-nums; color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+.ds-token-row .token-val {
+  color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+
+/* Chrome-state frame for Section B */
+.ds-chrome-frame {
+  position: relative;
+  background: var(--surface-0);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.ds-chrome-frame .ds-chrome-body {
+  padding: var(--s-8) var(--s-6);
+  min-height: 160px;
+}
+#global-synthesis { padding: var(--s-8) var(--s-6); min-height: 160px; }
+
+</style>
+</head>
+<body>
+
+<main class="ds-page">
+
+  <header class="ds-header">
+    <div class="ds-eyebrow">// CRQ Analyst · Web design system · v1 draft</div>
+    <h1 class="ds-title">Command Center — Web Design System</h1>
+    <p class="ds-lede">The dark-theme visual vocabulary the CRQ Command Center speaks. Primitive component library (Section A), applied shared chrome (Section B), and a bookmark of consumed tokens (Section C). Extends <code>tokens.css</code>; no parallel severity scale, no hard-coded hex, IBM Plex Sans throughout. Severity is semantic-only (pills, dots, chips). Cyan is cyber/accent-only.</p>
+  </header>
+
+  <!-- ================================================================
+       SECTION A — PRIMITIVE COMPONENT LIBRARY
+       ================================================================ -->
+  <div class="ds-section-title">
+    <span class="ds-section-tag">Section A</span>
+    <h2>Primitive component library</h2>
+  </div>
+
+  <!-- BUTTON -->
+  <h3 class="ds-group-title">Button</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Variants — primary, secondary, ghost, destructive, icon, link</span>
+        <span class="ds-cell-class">.btn.btn-primary · .btn-secondary · .btn-ghost · .btn-destructive · .btn-icon · .btn-link</span>
+      </div>
+      <div class="ds-row">
+        <button class="btn btn-primary">▶ Run all</button>
+        <button class="btn btn-secondary">Refresh sources</button>
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-destructive">Delete register</button>
+        <button class="btn btn-icon" aria-label="Menu">⋯</button>
+        <button class="btn-link">Rerun this scenario</button>
+      </div>
+      <div class="ds-row">
+        <span class="ds-demo-note">Disabled:</span>
+        <button class="btn btn-primary" disabled>▶ Run all</button>
+        <button class="btn btn-secondary" disabled>Refresh</button>
+        <button class="btn btn-destructive" disabled>Delete</button>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Sizes — sm · md · lg</span>
+        <span class="ds-cell-class">.btn-sm · .btn-lg</span>
+      </div>
+      <div class="ds-row">
+        <button class="btn btn-primary btn-sm">+ New</button>
+        <button class="btn btn-primary">+ New</button>
+        <button class="btn btn-primary btn-lg">+ New</button>
+      </div>
+      <div class="ds-row">
+        <button class="btn btn-secondary btn-sm">Save</button>
+        <button class="btn btn-secondary">Save</button>
+        <button class="btn btn-secondary btn-lg">Save</button>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">With icons · leading, trailing</span>
+        <span class="ds-cell-class">&lt;span aria-hidden&gt; + label</span>
+      </div>
+      <div class="ds-row">
+        <button class="btn btn-primary"><span aria-hidden="true">▶</span> Run all</button>
+        <button class="btn btn-secondary">Export <span aria-hidden="true">↗</span></button>
+        <button class="btn btn-ghost"><span aria-hidden="true">↻</span> Retry</button>
+        <button class="btn btn-icon" aria-label="Expand">▸</button>
+        <button class="btn btn-icon btn-sm" aria-label="Edit">✎</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECT + INPUT -->
+  <h3 class="ds-group-title">Select, input, textarea</h3>
+  <div class="ds-grid cols-3">
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Select — closed</span>
+        <span class="ds-cell-class">.select</span>
+      </div>
+      <div class="ds-stack">
+        <select class="select">
+          <option>Last 7 days</option>
+          <option>Last 24h</option>
+          <option>Last 30 days</option>
+          <option>Last quarter</option>
+        </select>
+        <select class="select">
+          <option>All regions</option>
+          <option>APAC</option><option>AME</option><option>LATAM</option><option>MED</option><option>NCE</option>
+        </select>
+        <select class="select select-error">
+          <option>Pick a register…</option>
+        </select>
+        <select class="select" disabled>
+          <option>Disabled</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Select — open popover</span>
+        <span class="ds-cell-class">.popover-select</span>
+      </div>
+      <div class="popover-select" style="height: 220px">
+        <select class="select" aria-hidden="true"><option>Wind Power Plant</option></select>
+        <div class="popover-menu">
+          <div class="popover-menu-item">AeroGrid Enterprise</div>
+          <div class="popover-menu-item selected">Wind Power Plant</div>
+          <div class="popover-menu-item">Offshore Logistics Corridor</div>
+          <div class="popover-menu-item">Supply Chain · Tier-1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Register-drawer pattern</span>
+        <span class="ds-cell-class">specialized select</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;height:28px;padding:0 10px;background:var(--surface-inset);border:1px solid var(--border-subtle);border-radius:var(--r-md);color:var(--text-primary);font-size:var(--fs-small);cursor:pointer;max-width:280px">
+        <span style="color:var(--text-muted);font-size:var(--fs-xs);letter-spacing:var(--tr-meta);text-transform:uppercase">Active:</span>
+        <span style="flex:1">Wind Power Plant</span>
+        <span style="color:var(--text-muted);font-size:var(--fs-xs)">9 scenarios</span>
+        <span style="color:var(--text-muted)">▾</span>
+      </div>
+      <p class="ds-demo-note">Opens <code>#register-drawer</code> — see Section B.</p>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Input — text, number, prefix</span>
+        <span class="ds-cell-class">.input · .input-wrap</span>
+      </div>
+      <div class="ds-stack">
+        <div><label class="field-label">Register name</label><input class="input" value="Wind Power Plant"></div>
+        <div><label class="field-label">Probability</label>
+          <div class="input-wrap"><span class="input-prefix">%</span><input class="input" type="number" value="31"></div>
+        </div>
+        <div><label class="field-label">Scenario id</label>
+          <div class="input-wrap"><span class="input-prefix">sc-</span><input class="input" value="001"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Input — focus, error, disabled</span>
+        <span class="ds-cell-class">.input-error</span>
+      </div>
+      <div class="ds-stack">
+        <div><label class="field-label">Focus ring</label><input class="input" autofocus value="Focused field"></div>
+        <div><label class="field-label">Error state</label>
+          <input class="input input-error" value="sc-001">
+          <div class="field-error">Already exists in this register.</div>
+        </div>
+        <div><label class="field-label">Disabled</label><input class="input" value="Read-only" disabled></div>
+      </div>
+    </div>
+
+    <div class="ds-cell">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Textarea</span>
+        <span class="ds-cell-class">.textarea</span>
+      </div>
+      <label class="field-label">Scenario description</label>
+      <textarea class="textarea" style="max-width:100%">Adversary gains persistent access to wind farm OT/SCADA control systems. Could enable sabotage, data theft, or ransomware staging.</textarea>
+      <div class="field-help">Plain text · 500 char cap.</div>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <h3 class="ds-group-title">Table</h3>
+  <div class="ds-grid">
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Default — with sort, selected row, severity pills</span>
+        <span class="ds-cell-class">.table</span>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width:36px" class="num">#</th>
+            <th class="th-sort" data-sort="asc">Scenario</th>
+            <th>Region</th>
+            <th>Grade</th>
+            <th class="num th-sort">Impact</th>
+            <th class="num th-sort">Prob</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="selected"><td class="num">1</td><td>System intrusion</td><td><span class="pill pill-region">APAC</span></td><td><span class="pill pill-grade">B2</span></td><td class="num">$5.2M</td><td class="num">31%</td><td><span class="pill pill--high">High</span></td></tr>
+          <tr><td class="num">2</td><td>Ransomware</td><td><span class="pill pill-region">AME</span></td><td><span class="pill pill-grade">C2</span></td><td class="num">$4.2M</td><td class="num">12%</td><td><span class="pill pill--critical">Critical</span></td></tr>
+          <tr><td class="num">3</td><td>Accidental disclosure</td><td><span class="pill pill-region">LATAM</span></td><td><span class="pill pill-grade">D3</span></td><td class="num">$0.8M</td><td class="num">8%</td><td><span class="pill pill--monitor">Monitor</span></td></tr>
+          <tr><td class="num">4</td><td>Physical threat</td><td><span class="pill pill-region">MED</span></td><td><span class="pill pill-grade">B1</span></td><td class="num">$3.1M</td><td class="num">3.3%</td><td><span class="pill pill--medium">Medium</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head">
+        <span class="ds-cell-label">Compact density</span>
+        <span class="ds-cell-class">.table.table-compact</span>
+      </div>
+      <table class="table table-compact">
+        <thead><tr><th>Source</th><th>Tier</th><th>Type</th><th>Regions</th><th class="num">Runs</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>dragos.com</td><td><span class="pill pill-grade">A1</span></td><td>Vendor</td><td>APAC · AME</td><td class="num">13</td><td><span class="pill pill-ok">Active</span></td></tr>
+          <tr><td>enisa.europa.eu</td><td><span class="pill pill-grade">A1</span></td><td>Gov</td><td>MED · NCE</td><td class="num">10</td><td><span class="pill pill-ok">Active</span></td></tr>
+          <tr><td>sans.org</td><td><span class="pill pill-grade">B2</span></td><td>Vendor</td><td>All</td><td class="num">8</td><td><span class="pill pill-ghost-dark">Stale</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- CARD -->
+  <h3 class="ds-group-title">Card</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Default</span><span class="ds-cell-class">.card</span></div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">Global vars</span><span class="pill pill-ghost-dark">See register</span></div>
+        <div class="card-body">Cross-register constants: turbine count, annual revenue, regional exposure weights.</div>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">With footer actions</span><span class="ds-cell-class">.card + .card-foot</span></div>
+      <div class="card">
+        <div class="card-head"><span class="card-title">CISO Weekly Brief</span><span class="pill pill-ghost-dark">Live</span></div>
+        <div class="card-body">Cross-regional synthesis for the 7-day window. Pushes to leadership mailing list on publish.</div>
+        <div class="card-foot">
+          <button class="btn btn-ghost btn-sm">Hold</button>
+          <button class="btn btn-primary btn-sm">Push</button>
+        </div>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Severity accent — critical</span><span class="ds-cell-class">.card-sev-critical</span></div>
+      <div class="card card-sev-critical">
+        <div class="card-head"><span class="card-title">AME · Decision required</span><span class="pill pill--critical">Critical</span></div>
+        <div class="card-body">Ransomware targeting OT/SCADA systems controlling wind turbines — corroborated C2.</div>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Severity accent — high / medium / monitor</span><span class="ds-cell-class">.card-sev-high · -medium · -monitor</span></div>
+      <div class="ds-stack">
+        <div class="card card-sev-high"><div class="card-head"><span class="card-title">APAC · High</span><span class="pill pill--high">High</span></div><div class="card-body">State-sponsored economic competition, Seedworm corroborated B2.</div></div>
+        <div class="card card-sev-medium"><div class="card-head"><span class="card-title">MED · Medium</span><span class="pill pill--medium">Medium</span></div><div class="card-body">Structural leverage on Strait of Hormuz transit; no confirmed OT intrusion yet.</div></div>
+        <div class="card card-sev-monitor"><div class="card-head"><span class="card-title">NCE · Monitor</span><span class="pill pill--monitor">Monitor</span></div><div class="card-body">No corroborated activity this cycle.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PILL + DOT -->
+  <h3 class="ds-group-title">Pill · badge · dot</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Severity</span><span class="ds-cell-class">.pill.pill--critical · -high · -medium · -monitor · .pill-ok</span></div>
+      <div class="ds-row">
+        <span class="pill pill--critical">Critical</span>
+        <span class="pill pill--high">High</span>
+        <span class="pill pill--medium">Medium</span>
+        <span class="pill pill--monitor">Monitor</span>
+        <span class="pill pill-ok">Clear</span>
+      </div>
+      <div class="ds-row">
+        <span class="pill pill-with-dot pill-ghost-dark"><span class="sdot sdot--critical"></span> AME · Critical</span>
+        <span class="pill pill-with-dot pill-ghost-dark"><span class="sdot sdot--high"></span> APAC · High</span>
+        <span class="pill pill-with-dot pill-ghost-dark"><span class="sdot sdot--medium"></span> MED · Medium</span>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Admiralty grade · region code</span><span class="ds-cell-class">.pill-grade · .pill-region</span></div>
+      <div class="ds-row">
+        <span class="pill pill-grade">A1</span>
+        <span class="pill pill-grade">B2</span>
+        <span class="pill pill-grade">C2</span>
+        <span class="pill pill-grade">D3</span>
+        <span class="pill pill-grade">E4</span>
+        <span class="pill pill-grade">F6</span>
+      </div>
+      <div class="ds-row">
+        <span class="pill pill-region">APAC</span>
+        <span class="pill pill-region">AME</span>
+        <span class="pill pill-region">LATAM</span>
+        <span class="pill pill-region">MED</span>
+        <span class="pill pill-region">NCE</span>
+      </div>
+      <div class="ds-row">
+        <span class="pill pill-ghost-dark">Draft</span>
+        <span class="pill pill-ghost-dark">Live</span>
+        <span class="pill pill-ghost-dark">Stale ≥30d</span>
+      </div>
+    </div>
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head"><span class="ds-cell-label">Dots — three sizes</span><span class="ds-cell-class">.sdot · .sdot--lg · .sdot--xl</span></div>
+      <div class="ds-row">
+        <span class="sdot sdot--critical"></span>
+        <span class="sdot sdot--high"></span>
+        <span class="sdot sdot--medium"></span>
+        <span class="sdot sdot--monitor"></span>
+        <span style="display:inline-block;width:12px"></span>
+        <span class="sdot sdot--lg sdot--critical"></span>
+        <span class="sdot sdot--lg sdot--high"></span>
+        <span class="sdot sdot--lg sdot--medium"></span>
+        <span class="sdot sdot--lg sdot--monitor"></span>
+        <span style="display:inline-block;width:12px"></span>
+        <span class="sdot sdot--xl sdot--critical"></span>
+        <span class="sdot sdot--xl sdot--high"></span>
+        <span class="sdot sdot--xl sdot--medium"></span>
+        <span class="sdot sdot--xl sdot--monitor"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHIP -->
+  <h3 class="ds-group-title">Chip</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Unselected · selected · with count</span><span class="ds-cell-class">.chip · .chip.selected · .chip-count</span></div>
+      <div class="ds-row">
+        <span class="chip">Cyber</span>
+        <span class="chip">Physical</span>
+        <span class="chip">Supply</span>
+        <span class="chip">Geopolitical</span>
+        <span class="chip">Maritime</span>
+      </div>
+      <div class="ds-row">
+        <span class="chip selected">Cyber <span class="chip-x">✕</span></span>
+        <span class="chip selected">Escalated <span class="chip-x">✕</span></span>
+        <span class="chip">APAC <span class="chip-count">12</span></span>
+        <span class="chip selected">AME <span class="chip-count">6</span> <span class="chip-x">✕</span></span>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Filter bar pattern</span><span class="ds-cell-class">.chip group</span></div>
+      <div class="ds-row">
+        <span class="field-label" style="margin:0">Filter:</span>
+        <span class="chip selected">Cyber</span>
+        <span class="chip">Physical</span>
+        <span class="chip">Supply</span>
+      </div>
+      <div class="ds-row">
+        <span class="field-label" style="margin:0">Severity:</span>
+        <span class="chip selected">Critical <span class="chip-count">1</span></span>
+        <span class="chip">High <span class="chip-count">1</span></span>
+        <span class="chip">Medium <span class="chip-count">1</span></span>
+        <span class="chip">Monitor <span class="chip-count">2</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <h3 class="ds-group-title">Modal</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head"><span class="ds-cell-label">Destructive confirm — header · body · two-button footer</span><span class="ds-cell-class">.modal</span></div>
+      <div class="modal-scrim">
+        <div class="modal">
+          <div class="modal-head">
+            <div class="modal-title">Delete register</div>
+            <button class="btn btn-icon btn-sm" aria-label="Close">✕</button>
+          </div>
+          <div class="modal-body">
+            Removing <strong style="color:var(--text-primary)">Wind Power Plant</strong> will delete 9 scenarios and their validation runs. This cannot be undone.
+          </div>
+          <div class="modal-foot">
+            <button class="btn btn-ghost">Cancel</button>
+            <button class="btn btn-destructive">Delete register</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head"><span class="ds-cell-label">Form modal — inputs + primary action</span><span class="ds-cell-class">.modal</span></div>
+      <div class="modal-scrim">
+        <div class="modal">
+          <div class="modal-head"><div class="modal-title">New register</div><button class="btn btn-icon btn-sm" aria-label="Close">✕</button></div>
+          <div class="modal-body">
+            <div class="ds-stack">
+              <div><label class="field-label">Name</label><input class="input" placeholder="e.g. Offshore Logistics Corridor" style="max-width:100%"></div>
+              <div><label class="field-label">Description</label><textarea class="textarea" style="max-width:100%" placeholder="What this register scopes…"></textarea></div>
+              <div><label class="field-label">Scenarios — starter set</label>
+                <div class="ds-row" style="margin-top:4px">
+                  <span class="chip selected">System intrusion <span class="chip-x">✕</span></span>
+                  <span class="chip">Ransomware</span>
+                  <span class="chip">Physical threat</span>
+                  <span class="chip">Insider misuse</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-foot"><button class="btn btn-ghost">Cancel</button><button class="btn btn-primary">Create register</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOOLTIP -->
+  <h3 class="ds-group-title">Tooltip</h3>
+  <div class="ds-grid cols-3">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Over info icon</span><span class="ds-cell-class">.info-icon + .tooltip</span></div>
+      <div class="ds-row" style="padding:32px 0">
+        <span style="color:var(--text-secondary);font-size:var(--fs-small)">Admiralty grade</span>
+        <span class="tooltip">
+          <span class="info-icon" aria-label="What is this">i</span>
+          <span class="tooltip-bubble">Source reliability (A–F) · info credibility (1–6).</span>
+        </span>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Right-side</span><span class="ds-cell-class">.tooltip-right</span></div>
+      <div class="ds-row" style="padding:32px 0">
+        <span style="color:var(--text-secondary);font-size:var(--fs-small)">Cyber pillar</span>
+        <span class="tooltip">
+          <span class="info-icon">i</span>
+          <span class="tooltip-bubble tooltip-right">Cyan reserved for cyber + accent.</span>
+        </span>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">On truncation</span><span class="ds-cell-class">any element</span></div>
+      <div class="ds-row" style="padding:32px 0">
+        <span class="tooltip" style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-secondary);font-size:var(--fs-small)">
+          A very long scenario name that will be truncated
+          <span class="tooltip-bubble">A very long scenario name that will be truncated</span>
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIVIDER + SECTION HEADER + TAB BUTTON -->
+  <h3 class="ds-group-title">Divider · section header · tab button</h3>
+  <div class="ds-grid cols-2">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Labelled horizontal rule</span><span class="ds-cell-class">.section-header</span></div>
+      <div class="section-header" style="margin-top:0"><span class="section-header-label">Intelligence findings</span><span class="section-header-rule"></span></div>
+      <div class="section-header"><span class="section-header-label">Observed adversary activity</span><span class="section-header-rule"></span></div>
+      <div class="section-header"><span class="section-header-label">Recommended actions</span><span class="section-header-rule"></span></div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Plain divider</span><span class="ds-cell-class">.divider</span></div>
+      <div style="color:var(--text-tertiary);font-size:var(--fs-small)">Above the line</div>
+      <hr class="divider">
+      <div style="color:var(--text-tertiary);font-size:var(--fs-small)">Below the line</div>
+    </div>
+    <div class="ds-cell fullwide">
+      <div class="ds-cell-head"><span class="ds-cell-label">Tab button (in-content, not top nav)</span><span class="ds-cell-class">.tabbtn-group · .tabbtn.active</span></div>
+      <div class="ds-row">
+        <div class="tabbtn-group" role="tablist">
+          <button class="tabbtn active" role="tab">Evidence</button>
+          <button class="tabbtn" role="tab">Sources</button>
+          <button class="tabbtn" role="tab">History</button>
+        </div>
+        <div class="tabbtn-group" role="tablist">
+          <button class="tabbtn active" role="tab">Default</button>
+          <button class="tabbtn" role="tab">Compact</button>
+        </div>
+        <div class="tabbtn-group" role="tablist">
+          <button class="tabbtn" role="tab">OSINT</button>
+          <button class="tabbtn active" role="tab">Benchmarks</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================
+       SECTION B — SHARED CHROME APPLIED
+       ================================================================ -->
+  <div class="ds-section-title">
+    <span class="ds-section-tag">Section B</span>
+    <h2>Shared chrome applied</h2>
+  </div>
+
+  <!-- Chrome: Header + Register bar + Progress + Drawer -->
+  <h3 class="ds-group-title">Header · register bar · progress · drawer</h3>
+  <div class="ds-chrome-frame" style="position:relative">
+    <!-- All IDs preserved verbatim from current-chrome.html -->
+    <header id="app-header">
+      <div>
+        <span class="brand-mark">// CRQ Analyst</span>
+        <nav>
+          <div class="nav-tab active" id="nav-overview" onclick="switchTab('overview')">Overview</div>
+          <div class="nav-tab" id="nav-reports"  onclick="switchTab('reports')">Reports</div>
+          <div class="nav-tab" id="nav-trends"   onclick="switchTab('trends')">Trends</div>
+          <div class="nav-tab" id="nav-history"  onclick="switchTab('history')">History</div>
+          <div class="nav-tab" id="nav-validate" onclick="switchTab('validate')">Risk Register</div>
+          <div class="nav-tab" id="nav-sources"  onclick="switchTab('sources')">Source Library</div>
+          <span class="nav-sep" aria-hidden="true"></span>
+          <div class="nav-tab nav-tab-dev" id="nav-pipeline" onclick="switchTab('pipeline')">Pipeline</div>
+          <div class="nav-tab nav-tab-dev" id="nav-runlog" onclick="switchTab('runlog')">Run Log</div>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button id="nav-config" onclick="switchTab('config')" title="Config" aria-label="Config">⚙</button>
+        <select id="window-select" aria-label="Time window">
+          <option value="1d">Last 24h</option>
+          <option value="7d" selected>Last 7 days</option>
+          <option value="30d">Last 30 days</option>
+          <option value="90d">Last quarter</option>
+        </select>
+        <button id="btn-run-all" onclick="runAll()">▶ Run all</button>
+      </div>
+    </header>
+
+    <div id="register-bar">
+      <span class="reg-icon" aria-hidden="true">▣</span>
+      <span class="reg-label">Active:</span>
+      <span id="register-bar-name">Wind Power Plant</span>
+      <span class="reg-sep">·</span>
+      <span id="register-bar-count">9 scenarios</span>
+      <span class="reg-sep">·</span>
+      <span id="register-bar-toggle" onclick="toggleRegisterDrawer()">Switch ▴</span>
+    </div>
+
+    <div id="register-drawer" class="open">
+      <div class="drawer-head">
+        <span class="drawer-title">Risk registers</span>
+        <button class="btn btn-primary btn-sm" onclick="showRegisterForm()">+ New</button>
+      </div>
+      <div id="register-list">
+        <div class="reg-item"><div><div class="reg-item-name">AeroGrid Enterprise</div><div class="reg-item-meta">6 scenarios · 7d ago</div></div><button class="btn btn-ghost btn-sm">Set active</button></div>
+        <div class="reg-item active"><div><div class="reg-item-name">Wind Power Plant</div><div class="reg-item-meta">9 scenarios · 7d ago</div></div><span class="reg-item-badge">Active</span></div>
+        <div class="reg-item"><div><div class="reg-item-name">Offshore Logistics Corridor</div><div class="reg-item-meta">4 scenarios · 19d ago</div></div><button class="btn btn-ghost btn-sm">Set active</button></div>
+      </div>
+      <div id="register-form-panel"></div>
+    </div>
+
+    <div id="progress-bar-container">
+      <div>
+        <span id="progress-label">Running APAC · Regional analyst · step 3 of 5</span>
+        <div class="progress-track"><div id="progress-fill" style="width:62%"></div></div>
+        <span class="progress-count">3/5</span>
+      </div>
+    </div>
+
+    <div class="ds-chrome-body">
+      <p style="color:var(--text-tertiary);font-size:var(--fs-small);margin:0;max-width:760px">Tab content renders below the chrome. Per-tab layouts are a separate design session — this reference only establishes chrome, spacing, and the typographic voice tabs inherit.</p>
+    </div>
+  </div>
+  <p class="ds-demo-note" style="margin-top:8px">Every ID from <code>current-chrome.html</code> is preserved — <code>#app-header</code>, <code>#register-bar</code>, <code>#register-drawer</code>, <code>#progress-bar-container</code>, <code>#progress-fill</code>, and all <code>#nav-*</code>. Drawer shown in <code>.open</code> state.</p>
+
+  <!-- Chrome: tab strip demo highlighting the 9th-label slot -->
+  <h3 class="ds-group-title">Tab strip — 9th label (Context) fits without re-layout</h3>
+  <div class="ds-chrome-frame">
+    <header id="app-header" style="position:static">
+      <div>
+        <span class="brand-mark">// CRQ Analyst</span>
+        <nav>
+          <div class="nav-tab active">Overview</div>
+          <div class="nav-tab">Reports</div>
+          <div class="nav-tab">Context</div>
+          <div class="nav-tab">Trends</div>
+          <div class="nav-tab">History</div>
+          <div class="nav-tab">Risk Register</div>
+          <div class="nav-tab">Source Library</div>
+          <span class="nav-sep" aria-hidden="true"></span>
+          <div class="nav-tab nav-tab-dev">Pipeline</div>
+          <div class="nav-tab nav-tab-dev">Run Log</div>
+        </nav>
+      </div>
+      <div class="header-actions">
+        <button id="nav-config" title="Config" aria-label="Config">⚙</button>
+        <select id="window-select"><option>Last 7 days</option></select>
+        <button id="btn-run-all">▶ Run all</button>
+      </div>
+    </header>
+  </div>
+
+  <!-- Chrome: toast, empty, loading -->
+  <h3 class="ds-group-title">Toast · empty state · loading state</h3>
+  <div class="ds-grid cols-3">
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Toast — bottom-right surface</span><span class="ds-cell-class">.toast · .toast-success · -warning · -error</span></div>
+      <div class="toast-surface">
+        <div class="toast"><span class="toast-dot"></span><div><div class="toast-title">Pipeline queued</div><div class="toast-msg">Starting signal acquisition across 5 regions.</div></div></div>
+        <div class="toast toast-success"><span class="toast-dot"></span><div><div class="toast-title">Run complete</div><div class="toast-msg">6 scenarios scored · 22/22 probabilities resolved.</div></div></div>
+        <div class="toast toast-warning"><span class="toast-dot"></span><div><div class="toast-title">Low corroboration</div><div class="toast-msg">MED region — only 1 source for System intrusion.</div></div></div>
+        <div class="toast toast-error"><span class="toast-dot"></span><div><div class="toast-title">Run failed</div><div class="toast-msg">Gatekeeper triage returned an invalid verdict for APAC.</div></div></div>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Empty state</span><span class="ds-cell-class">.empty-state</span></div>
+      <div class="empty-state">
+        <div class="empty-state-title">No runs yet</div>
+        <div class="empty-state-msg">Trigger the pipeline to produce an intelligence brief across five regions.</div>
+        <button class="btn btn-primary">▶ Run all</button>
+      </div>
+    </div>
+    <div class="ds-cell">
+      <div class="ds-cell-head"><span class="ds-cell-label">Loading state (skeleton)</span><span class="ds-cell-class">.skeleton</span></div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="skeleton" style="width:38%;height:14px"></div>
+        <div class="skeleton" style="width:92%"></div>
+        <div class="skeleton" style="width:84%"></div>
+        <div class="skeleton" style="width:70%"></div>
+        <div class="skeleton" style="width:58%"></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ================================================================
+       SECTION C — TOKEN REFERENCE CARD
+       ================================================================ -->
+  <div class="ds-section-title">
+    <span class="ds-section-tag">Section C</span>
+    <h2>Tokens consumed</h2>
+  </div>
+  <p class="ds-lede" style="margin-bottom:var(--s-7)">A bookmark of what <code>app.css</code> pulls out of <code>tokens.css</code>. Anything not listed is untouched. Dark-surface aliases declared in <code>app.css</code> are flagged separately at the top of that file for review.</p>
+
+  <div class="ds-tokens">
+    <div class="ds-token-group">
+      <h3>Color — brand · severity</h3>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--brand-navy)"></span><span class="token-name">--brand-navy</span><span class="token-val">#1B2D6E</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--brand-bright)"></span><span class="token-name">--brand-bright</span><span class="token-val">cyber · accent · focus</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--sev-critical)"></span><span class="token-name">--sev-critical</span><span class="token-val">pills · dots · chips</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--sev-high)"></span><span class="token-name">--sev-high</span><span class="token-val">pills · dots · chips</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--sev-medium)"></span><span class="token-name">--sev-medium</span><span class="token-val">pills · dots · chips</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--sev-monitor)"></span><span class="token-name">--sev-monitor</span><span class="token-val">pills · dots · chips · ok</span></div>
+    </div>
+
+    <div class="ds-token-group">
+      <h3>Color — ink scale (text on dark)</h3>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--white)"></span><span class="token-name">--white</span><span class="token-val">--text-primary</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--ink-200)"></span><span class="token-name">--ink-200</span><span class="token-val">--text-secondary</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--ink-300)"></span><span class="token-name">--ink-300</span><span class="token-val">--text-tertiary</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--ink-400)"></span><span class="token-name">--ink-400</span><span class="token-val">--text-muted</span></div>
+      <div class="ds-token-row"><span class="swatch-dot" style="background:var(--ink-500)"></span><span class="token-name">--ink-500</span><span class="token-val">--text-disabled</span></div>
+    </div>
+
+    <div class="ds-token-group">
+      <h3>Type</h3>
+      <div class="ds-token-row"><span></span><span class="token-name">--font-sans</span><span class="token-val">IBM Plex Sans</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--fs-h2 / -h3</span><span class="token-val">20 / 15 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--fs-body</span><span class="token-val">13 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--fs-small / -xs</span><span class="token-val">11.5 / 10.5 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--fs-label / -label-sm</span><span class="token-val">10.5 / 9.5 px · uppercase</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--w-regular / -medium / -semibold / -bold</span><span class="token-val">400 / 500 / 600 / 700</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--tr-label / -meta / -heading</span><span class="token-val">0.12em / 0.08em / -0.01em</span></div>
+    </div>
+
+    <div class="ds-token-group">
+      <h3>Spacing · radius</h3>
+      <div class="ds-token-row"><span></span><span class="token-name">--s-1 / -2 / -3 / -4</span><span class="token-val">2 / 4 / 6 / 8 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--s-5 / -6 / -7</span><span class="token-val">12 / 16 / 20 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--s-8 / -9 / -10 / -11</span><span class="token-val">24 / 32 / 40 / 56 px</span></div>
+      <div class="ds-token-row"><span></span><span class="token-name">--r-md / -lg / -card / -pill</span><span class="token-val">4 / 6 / 8 / 999 px</span></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  /* Stubs so inline onclicks don't throw on this reference page.
+     The real app.js owns these — do not port. */
+  function switchTab(name){ document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+    var el = document.getElementById('nav-'+name); if(el) el.classList.add('active'); }
+  function toggleRegisterDrawer(){ var d=document.getElementById('register-drawer'); if(d) d.classList.toggle('open'); }
+  function showRegisterForm(){ var p=document.getElementById('register-form-panel'); if(p) p.classList.toggle('open'); }
+  function runAll(){}
+</script>
+
+</body>
+</html>
