@@ -1,173 +1,218 @@
 # Reports Tab Redesign — Design Spec
 
-**Date:** 2026-04-21
+**Date:** 2026-04-21 (v2 after self-critique)
 **Status:** Approved, ready for implementation plan
 **Context:** Brief PDF pipeline shipped v1.0 (Board, CISO, RSM) on 2026-04-21. The Reports tab is now misaligned with the deliverable — it renders its own in-browser versions of each brief in parallel with the PDFs, creating drift and ~800 lines of maintenance surface that will rot.
 
 ## Goal
 
-Rebuild the Reports tab as a **PDF-first preview-and-download surface** aligned with the v1.0 deliverable: the PDF is the brief, so the preview shows the PDF and the action is downloading it.
+Rebuild the Reports tab as a **card-grid launcher** for seven PDFs (CISO · Board · 5 RSM regions). Each card shows enough visual and temporal context for skim-QA at a glance; the full QA read happens in a new browser tab using the native PDF viewer.
 
 ## User & job-to-be-done
 
-**Primary user:** the analyst (internal) QA'ing briefs before they go to stakeholders.
+**Primary user:** the analyst QA'ing briefs before they go out.
 
-**Job-to-be-done:** skim-level QA — open each audience's brief, eyeball it ("looks right, numbers feel sane"), download the PDF, send it by external means (email, Slack, etc.).
+**Job-to-be-done:** skim-level QA — look at the cover thumbnail and freshness, open the PDF in a real viewer (native browser tab), skim top-to-bottom, download, send externally.
 
 **Not solving:**
-- Deep claim-level QA with inline source traceability (user QAs at skim depth).
+- Deep claim-level QA with inline source traceability.
 - In-browser distribution (send happens outside the tool).
-- Diff-against-prior-cycle views (not part of the skim workflow).
+- Diff-against-prior-cycle views.
 - Exec-consumes-briefs-in-browser (the earlier in-browser renders were a wrong bet).
 
 ## Architecture
 
-Three-zone layout in the existing `rpt-shell` grid (200px rail + flex content):
+The Reports tab becomes a flat card grid. The existing `rpt-shell` (200px rail + flex content) is deleted — it was useful when each audience had custom in-browser content; with one PDF per audience, it's navigation overhead for no gain.
 
 ```
-┌─────────────┬──────────────────────────────────────────┐
-│ RAIL        │ HEADER BAR                               │
-│             │  Title · run meta · [stale?]             │
-│ CISO  [●]   │                 [Regenerate][Download][▾]│
-│ Board       ├──────────────────────────────────────────┤
-│ RSM         │                                          │
-│  APAC  [●]  │                                          │
-│  AME        │         <iframe> PDF preview             │
-│  LATAM      │                                          │
-│  MED        │                                          │
-│  NCE        │                                          │
-└─────────────┴──────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────┐
+│ REPORTS                                                  │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  ┌────────────┐  ┌────────────┐  ┌────────────┐          │
+│  │ [thumb]    │  │ [thumb]    │  │ RSM        │          │
+│  │            │  │            │  │ (5 cards)  │          │
+│  │ CISO       │  │ BOARD      │  │            │          │
+│  │ Today 04:12│  │ Today 04:12│  │            │          │
+│  │ [P][R][↓]  │  │ [P][R][↓]  │  │            │          │
+│  └────────────┘  └────────────┘  └────────────┘          │
+│                                                          │
+│  RSM — 5 regions                                         │
+│  ┌────┐ ┌────┐ ┌────┐ ┌────┐ ┌────┐                      │
+│  │APAC│ │AME │ │LATA│ │MED │ │NCE │                      │
+│  │ …  │ │ …  │ │ …  │ │ …  │ │ …  │                      │
+│  └────┘ └────┘ └────┘ └────┘ └────┘                      │
+└──────────────────────────────────────────────────────────┘
 ```
 
-**Rail** — grouped list with expand-on-active. Three top-level audiences: CISO (no subviews), Board (no subviews — single PDF), RSM (subviews: APAC, AME, LATAM, MED, NCE — one PDF per region). One audience active at a time; sub-items show inline only when parent is active.
+**Top row** — CISO and Board (one card each).
 
-**Note on Board subviews:** the previous UI split Board into "Global" and "Regional Exec" as two in-browser render variants, but the backend produces a single board PDF. In a PDF-first world there's nothing to split. If a separate regional-exec brief is needed later, it gets its own backend generator and its own registry entry.
+**Bottom row** — five RSM region cards grouped under a subheader.
 
-**Header bar** — audience title, run meta (`Last generated HH:MM UTC`, with optional `⚠ Stale` badge if the pipeline has run since the PDF was rendered), and the action cluster on the right.
-
-**Body** — single `<iframe>` filling the remaining space. Native browser PDF rendering. No cards, no custom HTML render, no tabs.
+**Each card** — cover-page thumbnail, audience name, freshness label (relative date + UTC time), optional stale/error badge, and three buttons: **Preview** (opens PDF in new tab), **Regenerate**, **Download**. RSM cards additionally show a **Narrate** button (separate from Regenerate, because narration is an expensive AI call that produces new content).
 
 ## Components
 
-### 1. `ReportRail`
-Audience navigation. Driven by `AUDIENCE_REGISTRY`. On click fires `selectAudience(id)`. Expands sub-items inline when the parent is active.
+### 1. `AudienceCard`
+Self-contained card for one audience (or one RSM region).
 
-### 2. `ReportHeader`
-Title + run meta + action buttons. Fetches meta on audience change. No PUSH/HOLD buttons (deleted — they were cosmetic).
+Input props:
+- `id` — e.g. `ciso`, `board`, `rsm-med`
+- `title` — display name
+- `thumbnailUrl` — endpoint returning PNG of cover page
+- `meta` — `{generated_at, pipeline_run_id, stale}` from `/meta` endpoint
+- `canNarrate` — boolean, true only for RSM
 
-### 3. `RegenerateControl`
-Button that POSTs to the regenerate endpoint. For RSM, shows a "Use AI narration" checkbox inline (narration costs Anthropic credits — must be an explicit opt-in, not a default). Disables and shows a spinner in-flight. On success reloads the iframe and refreshes meta; on failure shows an inline error strip above the iframe, iframe keeps prior render.
+Renders:
+- Thumbnail image (lazy-loaded, falls back to a neutral placeholder when no PDF yet)
+- Title + relative freshness label ("Today · 04:12 UTC" / "Yesterday · 04:12 UTC" / "Apr 18 · 04:12 UTC")
+- Stale badge when `meta.stale === true`
+- Buttons: Preview, Regenerate, Download, (Narrate if `canNarrate`)
+- Inline error strip when regenerate/narrate fails
 
-### 4. `PdfPreview`
-`<iframe src="/api/briefs/{audience}/pdf?v={mtime}">`. Cache-busting token changes on regenerate so the browser reloads. No PDF.js — native Chromium rendering.
+Local state per card: in-flight (disables buttons + shows spinner on that card), error (shows strip). Card state never leaks to other cards.
 
-### 5. `OtherFormatsMenu`
-A `▾` icon-button at the end of the action row. On click shows a small menu with secondary format downloads for the current audience (currently: CISO DOCX). If an audience has no secondary formats, the button isn't rendered. Board PPTX is intentionally hidden (legacy pre-v1.0 export; backend endpoint preserved but not exposed from this tab).
+### 2. `ThumbnailGenerator` (server-side)
+A small addition to the PDF render path: after Playwright creates the PDF, take a screenshot of page 1 of the same HTML and save to `output/deliverables/{audience}_thumbnail.png`. Size ≈ 480px wide. One PNG per brief. No separate render path, no caching layer — it's produced inline with the PDF.
+
+### 3. `RelativeDate` helper
+Pure function `formatRelative(iso_utc) → string`. Examples:
+- Same UTC day as now → `"Today · HH:MM UTC"`
+- Previous UTC day → `"Yesterday · HH:MM UTC"`
+- Older → `"Mon DD · HH:MM UTC"`
+
+### 4. `OtherFormatsMenu` (per card)
+A `▾` icon-button rendered at the end of the action row when an audience has secondary formats. CISO has this (DOCX). Board and RSM currently don't.
 
 ## Data flow
 
-Three paths, all through existing or thin-new endpoints.
+Three paths.
 
-### Open an audience
-1. User clicks rail row → `selectAudience(id)` sets `state.selectedAudienceId`.
-2. Client GETs `/api/briefs/{audience}/meta`, renders header with `generated_at` + pipeline run ID.
-3. Client sets iframe `src` to `/api/briefs/{audience}/pdf?v={mtime}`.
+### Render initial view
+1. Reports tab mounts → GET `/api/briefs/` returns the full list of audiences the server knows about, each with `{id, title, canNarrate, meta}` where `meta` is the current `{generated_at, pipeline_run_id, stale}`.
+2. Client renders one `AudienceCard` per entry.
+3. Each card sets its thumbnail `<img src="/api/briefs/{id}/thumbnail?v={mtime}">`.
+
+This replaces the hardcoded client-side `AUDIENCE_REGISTRY` for the Reports tab's internal use. (The registry stays as a thin client cache but is populated from the server response.)
+
+### Preview
+`<a href="/api/briefs/{id}/pdf" target="_blank" rel="noopener">Preview</a>` — opens in a new browser tab, full native PDF viewer. Zero client code beyond the anchor.
 
 ### Regenerate
-1. User clicks Regenerate. For RSM, the "Use AI narration" checkbox state is captured.
-2. Button disables, spinner shows. Client POSTs to `/api/briefs/{audience}/regenerate` with `{narrate?: bool}` body.
-3. Server runs the same code path `build_pdf.py` CLI uses (via a shared internal function, not a shell-out).
-4. On 200: response includes new meta. Client updates iframe src with new cache-buster, clears any stale badge, updates "last generated" timestamp.
-5. On non-2xx: inline error strip above iframe shows the response body ("Anthropic API: credit balance too low", "template render error: …"). Iframe stays on the prior render. Strip is dismissible.
+1. Click → card's button disables, spinner shows.
+2. `POST /api/briefs/{id}/regenerate` with empty body.
+3. Server calls the same internal function `build_pdf.py` CLI uses; PDF and thumbnail are both regenerated.
+4. On 200: response contains updated `meta`. Card refreshes thumbnail src with new cache-buster, refreshes freshness label, clears stale badge.
+5. On non-2xx: inline error strip on that card with server's error body. Thumbnail stays on the prior image. Strip is dismissible; also auto-clears on next successful action.
+
+### Narrate (RSM only)
+Same as Regenerate but with `POST /api/briefs/rsm/{region}/regenerate` body `{narrate: true}`. Server threads `narrate=True` through to `load_rsm_data()`. Error handling identical.
 
 ### Download
-Plain `<a href="/api/briefs/{audience}/pdf" download>` — no JS needed.
+`<a href="/api/briefs/{id}/pdf" download>Download</a>` — plain anchor with `download` attribute.
 
 ### Stale detection
-`state.lastPipelineRun` (already tracked in the app) is compared to `meta.generated_at`. If pipeline ran after PDF was rendered, `⚠ Stale` badge appears in the header meta. Regenerate clears it.
+- For CISO and Board, `pipeline_run_id` is the global pipeline run. `stale = current_global_run_id > rendered_run_id`.
+- For RSM, `pipeline_run_id` is per-region. `GET /api/briefs/rsm/{region}/meta` returns the region-specific run; `stale = current_region_run_id > rendered_region_run_id`.
+- The server computes `stale` and returns it as a bool in the meta object. The client just renders the badge, no logic.
 
 ## States
 
-Four states the UI must handle.
+Three states per card.
 
 ### 1. No brief PDF yet
-Centred block in body: *"No brief generated yet."* + single Regenerate button. No 404 noise, no broken iframe.
+Thumbnail area shows a neutral placeholder ("No brief yet"). Freshness label is absent. Preview and Download buttons are disabled. Regenerate (and Narrate for RSM) is enabled only if pipeline data exists; otherwise disabled with tooltip "Run pipeline first."
 
-### 2. Pipeline data is missing (nothing to regenerate from)
-Centred block: *"Pipeline hasn't run for this region/period. Run `/run-crq` or `/crq-region` first."* Regenerate button is disabled. Run-meta strip shows no timestamp.
+### 2. Brief exists + stale
+All buttons enabled. Freshness label shows the rendered timestamp plus a `⚠ Stale` badge next to it.
 
-### 3. Regenerate fails mid-flight
-Inline error strip above iframe (red-left border, matches existing `.rpt-section` style). Body = server response message. Iframe keeps prior render. Strip has a `×` dismiss button.
-
-### 4. Iframe fails to render
-After 3s iframe `load` timeout: fallback link "Preview failed to load. [Download PDF directly]". Defensive against Electron PDF-plugin edge cases.
+### 3. Regenerate/Narrate failed
+Inline error strip below the card body (red-left border) with server error message. Thumbnail, freshness, and buttons all stay as they were before the failed action. Strip has a `×` dismiss button and auto-clears on next successful action.
 
 ## Scope of change
 
 ### Deleted from `static/app.js`
-- `renderCisoView` (~50 lines)
-- `renderBoardGlobalView` (~50 lines)
-- `renderBoardRegionalView` (~80 lines)
-- `renderRsmInReports` (~600 lines)
-- `_hubGenerate` (tied to deleted PUSH button)
-- Any private helpers of the above that become dead code
+- `renderCisoView`, `renderBoardGlobalView`, `renderBoardRegionalView`, `renderRsmInReports`, `_hubGenerate`
+- The `renderReports` / `renderReportsRail` / `renderAudienceContent` / `selectAudience` functions — replaced by a new `renderReports` that emits the card grid
+- Any private helpers of the deleted functions that become dead code
 
 ### Deleted from `static/index.html` CSS
-- `.rpt-section*`, `.rpt-cards`, `.rpt-card*`, `.rpt-decision*`, `.rpt-tp*`, `.rpt-watch*`, `.rpt-region-selector`, `.rpt-region-btn*`
+- Rail chrome: `.rpt-shell`, `.rpt-rail*`, `.rpt-rail-item*`, `.rpt-rail-subitem*`, `.rpt-rail-name`, `.rpt-rail-fmt`, `.rpt-live-badge`, `.rpt-plan-badge`, `.rpt-content`, `.rpt-action-bar*`
+- Custom render chrome: `.rpt-section*`, `.rpt-cards`, `.rpt-card*`, `.rpt-decision*`, `.rpt-tp*`, `.rpt-watch*`, `.rpt-region-selector`, `.rpt-region-btn*`
 
-### Kept in `static/index.html` CSS
-- `.rpt-shell`, `.rpt-rail*`, `.rpt-content`, `.rpt-action-bar*`, `.rpt-btn*`, `.rpt-live-badge`, `.rpt-plan-badge`
+### Added in `static/index.html` CSS
+- `.rpt-grid` — CSS grid for the cards
+- `.rpt-audience-card` — card shell with thumbnail slot, body, action row
+- `.rpt-thumb` — thumbnail image + placeholder styles
+- `.rpt-freshness` — relative date label
+- `.rpt-stale-badge`, `.rpt-error-strip` — status elements
+- `.rpt-card-btn` — unified card button style (Preview, Regenerate, Narrate, Download, ▾)
 
 ### Changes to `AUDIENCE_REGISTRY`
-- Drop `renderer` field (no dispatch to custom renderers).
-- Drop `sales` (future) entry entirely (YAGNI — bring back when there's content).
-- Drop the `generate` field (replaced by standardized regenerate endpoint).
-- `downloads` array becomes the source list for the "Other formats ▾" menu — the primary PDF is a dedicated button, not an entry in this list.
-- Board `subviews` removed — single PDF, no split.
-- RSM gains `subviews` for the 5 regions (APAC, AME, LATAM, MED, NCE).
+- The client-side hardcoded registry is reduced to a fallback; the canonical source is the server's `GET /api/briefs/` response.
+- Drop `renderer`, `generate`, `subviews`, and `sales` (future) entries.
+- Board no longer has subviews (there's one board PDF; the old Global/Regional Exec split was UI-only).
+- RSM's 5 regions are returned as 5 entries (`rsm-apac`, `rsm-ame`, `rsm-latam`, `rsm-med`, `rsm-nce`).
 
 ### New in `server.py`
-- `GET /api/briefs/{audience}/meta` → `{generated_at, pipeline_run_id}` (thin: reads PDF mtime + current pipeline state from `output/pipeline/last_run_log.json`).
-  - For RSM: `GET /api/briefs/rsm/{region}/meta`.
-- `POST /api/briefs/{audience}/regenerate` with body `{narrate?: bool}` → calls the same internal function that `build_pdf.py` CLI calls, returns updated meta. For RSM only, `narrate` threads through to `load_rsm_data(..., narrate=True)`.
+- `GET /api/briefs/` — returns the full audience list with per-item meta.
+- `GET /api/briefs/{id}/meta` — single audience meta (`{id}` encodes region for RSM: `rsm-med`, etc.).
+- `GET /api/briefs/{id}/thumbnail` — PNG of cover page.
+- `POST /api/briefs/{id}/regenerate` with optional `{narrate: bool}` body.
+
+All endpoints read from / write to `output/deliverables/`.
+
+### Modified in `tools/briefs/renderer.py`
+- After the Playwright `page.pdf(...)` call, take an element screenshot of the first `.page` (the cover) and save as PNG: `await page.locator('section.page').first.screenshot(path=thumbnail_path)`. Resize to ~480px wide before writing (keeps file small, ~40–80 KB). Thumbnail lands alongside the PDF in `output/deliverables/`. Two files per render, one Playwright session.
 
 ### Explicitly out of scope
-- PPTX board endpoint / backend — not touched, just hidden from the UI.
-- CISO DOCX endpoint — not touched, stays reachable via "Other formats ▾".
-- History tab (`#tab-history`) — not merged into Reports in this redesign.
-- Pipeline agents, brief data loaders, templates, `renderer.py` — v1.0, don't touch.
-- Cross-browser testing — target is Chromium/Electron.
+- PPTX board endpoint / backend (legacy, not exposed in UI).
+- CISO DOCX endpoint (stays reachable via "Other formats ▾" on the CISO card).
+- History tab (`#tab-history`) merge — separate concern.
+- Pipeline agents, brief data loaders, templates — v1.0, don't touch.
+- Non-Chromium browsers.
 
 ## Testing
 
-### New server tests (`tests/test_briefs_api.py` — create if absent, else append)
-1. `GET /api/briefs/ciso/meta` returns `{generated_at, pipeline_run_id}` when PDF exists; returns 404 when not.
-2. `GET /api/briefs/rsm/MED/meta` — same pattern, scoped by region.
-3. `POST /api/briefs/ciso/regenerate` — invokes the shared render function (mock Playwright call); returns fresh meta; `generated_at` has advanced.
-4. `POST /api/briefs/rsm/MED/regenerate` with `narrate=true` — verifies the flag reaches `load_rsm_data`. Mock Anthropic SDK.
-5. Error surfaces — bad region, pipeline data missing → 4xx with JSON error body.
+### New server tests (`tests/test_briefs_api.py`)
+1. `GET /api/briefs/` returns the full list with expected ids and per-item meta.
+2. `GET /api/briefs/ciso/meta` returns meta when PDF exists; 404 when not.
+3. `GET /api/briefs/rsm/med/meta` — per-region meta including per-region pipeline run id.
+4. `GET /api/briefs/ciso/thumbnail` returns PNG bytes; 404 when no PDF has been rendered.
+5. `POST /api/briefs/ciso/regenerate` — invokes the render function (mock Playwright); both PDF and thumbnail files appear (or have newer mtimes); response has updated meta.
+6. `POST /api/briefs/rsm/med/regenerate` with `{narrate: true}` — threads narrate flag to `load_rsm_data` (mock Anthropic).
+7. Stale computation — when pipeline run id advances after render, `meta.stale === true`.
+8. Error paths — unknown region → 404; pipeline data missing for CISO → 4xx with descriptive body.
 
-### Manual Playwright acceptance (one-off, not automated)
-- Every rail item opens a PDF in iframe.
-- Regenerate reloads iframe with fresh render.
-- Forced error (stop pipeline, click Regenerate) shows error strip.
-- Download button delivers the correct file with correct filename.
+### New client tests (`tests/test_reports_tab.py` via Playwright automation)
+1. Reports tab mounts, fetches `/api/briefs/`, renders one card per audience.
+2. Preview button has `target="_blank"` and the correct href.
+3. Regenerate button click triggers POST to the correct endpoint with empty body; card's thumbnail src updates on response.
+4. Narrate button visible only on RSM cards; click triggers POST with `{narrate: true}`.
+5. Stale badge renders when the server returns `stale: true`.
+6. Error strip appears on regenerate failure and dismisses on `×`.
+
+### Manual acceptance
+- Eyeball the grid on a fresh pipeline run. Confirm thumbnails look right and freshness labels match. Click Preview on each card, confirm new-tab PDFs render.
 
 ### Not tested in this redesign
-- PDF content itself (covered by `tests/briefs/`, 63 tests, unchanged).
+- PDF content (covered by `tests/briefs/`, 63 tests, unchanged).
 - Deleted in-browser render paths (no code to test).
-- Non-Chromium browsers (not supported target).
 
-## Migration note
+## Migration notes
 
-The `AUDIENCE_REGISTRY` shape changes. Any code reading `renderer`, `generate`, or `sales` entries must be audited and updated. The only known consumer is the Reports tab itself (`renderAudienceContent` et al), which is being rewritten. If the audit finds other consumers, they get updated in the same PR.
+1. The old Board subviews (Global, Regional Exec) disappear. If a separate regional-exec brief is needed later, it gets its own backend generator and its own entry in `/api/briefs/`.
+2. The CSS deletions are aggressive but safe — every class removed is verified unused outside the deleted JS functions.
+3. The thumbnail feature means each render writes an extra file; `output/deliverables/` should be excluded from git (likely already is — verify).
+4. The client-side `AUDIENCE_REGISTRY` stays as a fallback/schema definition, but its `renderer`/`generate`/`subviews`/`sales` fields go.
 
 ## Success criteria
 
-1. Clicking any rail item opens the corresponding PDF in the preview pane within 1s on cached content.
-2. Clicking Regenerate on an audience with available pipeline data rebuilds the PDF and refreshes the preview without a full page reload.
-3. The RSM narration checkbox is visible only for RSM audiences, unchecked by default, and threads through to the narration call.
-4. All four UI states (no-brief / no-pipeline / regenerate-error / iframe-load-error) render cleanly.
-5. `renderCisoView`, `renderBoardGlobalView`, `renderBoardRegionalView`, `renderRsmInReports`, and `_hubGenerate` are fully removed from `static/app.js`.
-6. All 5 new server tests pass. All existing `tests/briefs/` (63) still pass.
-7. The CSS block in `static/index.html` shrinks by the removed in-browser-render rules.
+1. Reports tab loads a card grid with 7 cards (CISO, Board, 5 RSM regions), each showing a thumbnail and a relative freshness label.
+2. Preview button opens the PDF in a new browser tab; the native PDF viewer loads with full controls (search, zoom, print).
+3. Regenerate rebuilds both PDF and thumbnail; the card refreshes without a full page reload.
+4. Narrate is visible only on RSM cards, separate from Regenerate, and threads through to `load_rsm_data(..., narrate=True)`.
+5. Per-region stale detection works: running pipeline for MED marks only the MED card stale, not others.
+6. Relative date labels read as "Today / Yesterday / Mon DD" with UTC time.
+7. All deleted functions (`renderCisoView`, etc.) are fully removed from `static/app.js`; no dead CSS rules remain.
+8. All new server tests pass. All existing `tests/briefs/` (63) still pass. Playwright client tests pass.
