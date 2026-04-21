@@ -685,6 +685,50 @@ async def get_outputs_status():
     return result
 
 
+# ── API: Brief rendering pipeline ────────────────────────────────────
+
+def _run_build_pdf(brief: str, out: Path, extra_args: list[str] | None = None) -> tuple[bool, str]:
+    import subprocess
+    cmd = ["uv", "run", "python", "-m", "tools.build_pdf",
+           "--brief", brief, "--out", str(out)] + (extra_args or [])
+    r = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", cwd=str(BASE))
+    return (r.returncode == 0 and out.exists()), r.stderr
+
+
+@app.get("/api/briefs/board/pdf")
+async def get_brief_board_pdf():
+    """Render Board brief via template pipeline and return as PDF download."""
+    out = DELIVERABLES / "board_brief.pdf"
+    ok, err = _run_build_pdf("board", out)
+    if not ok:
+        return JSONResponse({"error": err or "Render failed"}, status_code=500)
+    return FileResponse(str(out), media_type="application/pdf", filename="board_brief.pdf")
+
+
+@app.get("/api/briefs/ciso/pdf")
+async def get_brief_ciso_pdf():
+    """Render CISO brief via template pipeline and return as PDF download."""
+    out = DELIVERABLES / "ciso_brief.pdf"
+    ok, err = _run_build_pdf("ciso", out)
+    if not ok:
+        return JSONResponse({"error": err or "Render failed"}, status_code=500)
+    return FileResponse(str(out), media_type="application/pdf", filename="ciso_brief.pdf")
+
+
+@app.get("/api/briefs/rsm/{region}/pdf")
+async def get_brief_rsm_pdf(region: str):
+    """Render RSM weekly INTSUM for the given region and return as PDF download."""
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {r}"}, status_code=400)
+    out = DELIVERABLES / f"rsm_brief_{r.lower()}.pdf"
+    ok, err = _run_build_pdf("rsm", out, ["--region", r])
+    if not ok:
+        return JSONResponse({"error": err or "Render failed"}, status_code=500)
+    return FileResponse(str(out), media_type="application/pdf",
+                        filename=f"rsm_brief_{r.lower()}.pdf")
+
+
 # ── API: Config ───────────────────────────────────────────────────────
 def _write_json_atomic(path: Path, data) -> None:
     """Write JSON atomically via tmp file + os.replace."""

@@ -706,11 +706,14 @@ const AUDIENCE_REGISTRY = [
   {
     id: 'ciso',
     name: 'CISO Weekly Brief',
-    format: 'Word (.docx)',
+    format: 'Word (.docx) · PDF',
     phase: 'live',
     color: '#ff7b72',
     generate: '/api/outputs/ciso-docx',
-    downloads: [{ label: '&#8595; DOCX', endpoint: '/api/outputs/ciso-docx' }],
+    downloads: [
+      { label: '&#8595; DOCX', endpoint: '/api/outputs/ciso-docx' },
+      { label: '&#8595; PDF',  endpoint: '/api/briefs/ciso/pdf' },
+    ],
     renderer: 'ciso',
   },
   {
@@ -721,8 +724,8 @@ const AUDIENCE_REGISTRY = [
     color: '#e3b341',
     generate: null,
     downloads: [
-      { label: '&#8595; PDF',  endpoint: '/api/outputs/pdf' },
-      { label: '&#8595; PPTX', endpoint: '/api/outputs/pptx' },
+      { label: '&#8595; Brief PDF', endpoint: '/api/briefs/board/pdf' },
+      { label: '&#8595; PPTX',     endpoint: '/api/outputs/pptx' },
     ],
     renderer: 'board',
     subviews: [
@@ -733,7 +736,7 @@ const AUDIENCE_REGISTRY = [
   {
     id: 'rsm',
     name: 'RSM Briefs',
-    format: 'Markdown + PDF · 5 regions',
+    format: 'PDF · 5 regions',
     phase: 'live',
     color: '#79c0ff',
     generate: null,
@@ -2333,10 +2336,16 @@ async function renderRsmContent(region) {
       ${_tabBtn('flash', '⚡ Flash Alert')}
       ${_tabBtn('daily', 'Daily')}
       ${_tabBtn('intsum', 'INTSUM')}
-      <a href="/api/rsm/${r}/pdf?type=${activeTab}" download
-         style="margin-left:auto;font-size:9px;padding:2px 8px;border-radius:3px;
-                background:transparent;border:1px solid #30363d;color:#6e7681;text-decoration:none">
-         &#8659; PDF</a>
+      <div style="margin-left:auto;display:flex;gap:4px;align-items:center">
+        <a href="/api/rsm/${r}/pdf?type=${activeTab}" download
+           style="font-size:9px;padding:2px 8px;border-radius:3px;
+                  background:transparent;border:1px solid #30363d;color:#6e7681;text-decoration:none">
+           &#8659; MD&nbsp;PDF</a>
+        <a href="/api/briefs/rsm/${region}/pdf" download
+           style="font-size:9px;padding:2px 8px;border-radius:3px;
+                  background:transparent;border:1px solid #1f6feb;color:#79c0ff;text-decoration:none">
+           &#8659; Brief&nbsp;PDF</a>
+      </div>
     </div>`;
 
   function _tabContent(type) {
