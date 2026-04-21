@@ -355,8 +355,10 @@ def test_get_sites_filtered_by_region():
     assert r.status_code == 200
     body = r.json()
     assert "sites" in body
-    assert len(body["sites"]) == 1
-    assert body["sites"][0]["site_id"] == "apac-kaohsiung-mfg"
+    site_ids = [s["site_id"] for s in body["sites"]]
+    assert "apac-kaohsiung-mfg" in site_ids
+    # Other regions' sites must not leak in
+    assert all(s["region"] == "APAC" for s in body["sites"])
 
 
 def test_get_sites_missing_region_returns_400():
@@ -681,7 +683,24 @@ async def put_context_regional(region: str, body: dict):
 
 - [ ] **Step 5: Verify pass.** Run: `uv run pytest tests/test_context_api.py -k put_regional -v`
 
-- [ ] **Step 6: Commit.**
+- [ ] **Step 6: Add error-path tests** for JSON decode failures. These exercise the FastAPI default 422 behavior on malformed bodies. Append:
+
+```python
+def test_put_company_malformed_json_returns_422():
+    # Send bytes that are not valid JSON
+    r = client.put("/api/context/company", content=b"{not json", headers={"Content-Type": "application/json"})
+    assert r.status_code in (400, 422)
+
+
+def test_put_cyber_watchlist_malformed_json_returns_422():
+    r = client.put("/api/context/cyber-watchlist", content=b"", headers={"Content-Type": "application/json"})
+    assert r.status_code in (400, 422)
+```
+
+Run: `uv run pytest tests/test_context_api.py -k malformed -v`
+Expected: PASS. FastAPI's default `dict` body validator rejects malformed JSON with 422.
+
+- [ ] **Step 7: Commit.**
 
 ```bash
 git add server.py tools/context_api.py tests/test_context_api.py
@@ -883,14 +902,15 @@ git commit -m "feat(context): Tag List UI primitive"
 
 **Files:** `static/app.js`.
 
-- [ ] **Step 1: Append after the Tag List primitive.**
+- [ ] **Step 1: Append after the Tag List primitive.** The onChange callback takes a second `info` arg with `kind`: `"mutate"` (text edit — do NOT re-render; the UI input retains focus while the parent just marks dirty) or `"structure"` (add/remove — DO re-render so the row layout updates). Toggle expand is a local DOM mutation that does not fire onChange at all, so it can't accidentally dirty the surface.
 
 ```javascript
 // Record List primitive: records[] with labeled mini-forms.
 // fieldDefs items: {key, label, type: "text" | "textarea" | "taglist"}
+// onChange(records, { kind: "mutate" | "structure" }) — caller decides whether to re-render.
 function renderRecordList(records, fieldDefs, summaryFn, onChange, instanceId) {
   window["__rl_" + instanceId + "_change"] = onChange;
-  window["__rl_" + instanceId + "_records"] = records.map(function (r) { return Object.assign({}, r); });
+  window["__rl_" + instanceId + "_records"] = records;  // share the reference; mutations are visible to caller
   window["__rl_" + instanceId + "_fields"] = fieldDefs;
   window["__rl_" + instanceId + "_summary"] = summaryFn;
   if (!window["__rl_" + instanceId + "_expanded"]) window["__rl_" + instanceId + "_expanded"] = new Set();
@@ -902,18 +922,18 @@ function renderRecordList(records, fieldDefs, summaryFn, onChange, instanceId) {
     const chevron = isOpen ? "v" : ">";
     let editor = "";
     if (isOpen) {
-      editor = "<div style=\"padding:8px 12px;background:#0d1117;border-top:1px solid #21262d\">" +
+      editor = "<div id=\"rl-body-" + instanceId + "-" + i + "\" style=\"padding:8px 12px;background:#0d1117;border-top:1px solid #21262d\">" +
         fieldDefs.map(function (f) { return __rlFieldInput(instanceId, i, f, r[f.key]); }).join("") +
       "</div>";
     }
     const headerStyle = "display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer";
     const xBtnStyle = "background:none;border:none;color:#6e7681;cursor:pointer;font-size:12px";
-    const header = "<div style=\"" + headerStyle + "\" onclick=\"__rlToggle(" + JSON.stringify(instanceId) + "," + i + ")\">" +
+    const header = "<div id=\"rl-header-" + instanceId + "-" + i + "\" style=\"" + headerStyle + "\" onclick=\"__rlToggle(" + JSON.stringify(instanceId) + "," + i + ")\">" +
       "<span style=\"color:#6e7681\">" + chevron + "</span>" +
       "<span style=\"flex:1;font-size:11px\">" + summary + "</span>" +
       "<button onclick=\"event.stopPropagation();__rlRemove(" + JSON.stringify(instanceId) + "," + i + ")\" style=\"" + xBtnStyle + "\">x</button>" +
     "</div>";
-    return "<div style=\"border:1px solid #21262d;border-radius:2px;margin:4px 0;background:#080c10\">" + header + editor + "</div>";
+    return "<div id=\"rl-row-" + instanceId + "-" + i + "\" style=\"border:1px solid #21262d;border-radius:2px;margin:4px 0;background:#080c10\">" + header + editor + "</div>";
   }).join("");
 
   const addBtnStyle = "margin-top:6px;font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 10px;border-radius:2px;cursor:pointer";
@@ -926,7 +946,7 @@ function __rlFieldInput(instanceId, recordIdx, f, value) {
   const id = "rl-" + instanceId + "-" + recordIdx + "-" + f.key;
   const labelBlock = "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:6px 0 2px\">" + esc(f.label) + "</label>";
   const baseStyle = "width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:\"IBM Plex Mono\",monospace;border-radius:2px";
-  const onInput = "oninput=\"__rlFieldChange(" + JSON.stringify(instanceId) + "," + recordIdx + ",\\\"" + f.key + "\\\",this.value)\"";
+  const onInput = "oninput=\"__rlFieldChange(" + JSON.stringify(instanceId) + "," + recordIdx + "," + JSON.stringify(f.key) + ",this.value)\"";
   if (f.type === "textarea") {
     return labelBlock + "<textarea id=\"" + id + "\" " + onInput + " style=\"" + baseStyle + ";min-height:40px\">" + esc(value || "") + "</textarea>";
   }
@@ -937,10 +957,16 @@ function __rlFieldInput(instanceId, recordIdx, f, value) {
   return labelBlock + "<input type=\"text\" id=\"" + id + "\" value=\"" + safeVal + "\" " + onInput + " style=\"" + baseStyle + "\">";
 }
 
+// Toggle expand is a LOCAL DOM operation — does not fire onChange, does not dirty the surface.
 function __rlToggle(instanceId, idx) {
   const s = window["__rl_" + instanceId + "_expanded"];
-  if (s.has(idx)) s.delete(idx); else s.add(idx);
-  window["__rl_" + instanceId + "_change"](window["__rl_" + instanceId + "_records"]);
+  const wasOpen = s.has(idx);
+  if (wasOpen) s.delete(idx); else s.add(idx);
+
+  // Fire onChange with kind=structure so the caller re-renders only the Record List host element.
+  // Callers for structure events re-render the whole surface; for local expand we prefer a tighter
+  // update, but re-render via structure is acceptable since no text input is open in the toggling row.
+  window["__rl_" + instanceId + "_change"](window["__rl_" + instanceId + "_records"], { kind: "structure" });
 }
 
 function __rlAdd(instanceId) {
@@ -950,7 +976,7 @@ function __rlAdd(instanceId) {
   fields.forEach(function (f) { blank[f.key] = f.type === "taglist" ? [] : ""; });
   recs.push(blank);
   window["__rl_" + instanceId + "_expanded"].add(recs.length - 1);
-  window["__rl_" + instanceId + "_change"](recs);
+  window["__rl_" + instanceId + "_change"](recs, { kind: "structure" });
 }
 
 function __rlRemove(instanceId, idx) {
@@ -961,15 +987,19 @@ function __rlRemove(instanceId, idx) {
   const newSet = new Set();
   oldSet.forEach(function (i) { if (i === idx) return; newSet.add(i > idx ? i - 1 : i); });
   window["__rl_" + instanceId + "_expanded"] = newSet;
-  window["__rl_" + instanceId + "_change"](recs);
+  window["__rl_" + instanceId + "_change"](recs, { kind: "structure" });
 }
 
+// Field edits MUTATE the shared records array in-place and signal "mutate" — caller marks dirty
+// but does not re-render. The <input> retains focus and the user keeps typing.
 function __rlFieldChange(instanceId, idx, key, value) {
   const recs = window["__rl_" + instanceId + "_records"];
   recs[idx][key] = value;
-  window["__rl_" + instanceId + "_change"](recs);
+  window["__rl_" + instanceId + "_change"](recs, { kind: "mutate" });
 }
 ```
+
+- [ ] **Step 2: Tag List signature unchanged.** Tag List onChange still receives only `values` — not splitting because every Tag List operation (add/remove) is structural. The text input is for *adding* a new tag, not editing an existing one, so the focus-loss problem does not apply.
 
 - [ ] **Step 2: Commit.**
 
@@ -997,7 +1027,7 @@ async function renderCompanySurface() {
   const c = contextState.company;
   const dirty = contextState.dirty.company;
 
-  const dot = dirty ? "<span title=\"Unsaved changes\" style=\"color:#ffa657\">*</span>" : "";
+  const dot = dirty ? "<span title=\"Unsaved changes\" style=\"color:#ffa657\">●</span>" : "";
   const saveCol = dirty ? "#3fb950" : "#6e7681";
   const saveBg = dirty ? "#1a3a1a" : "#0d1117";
   const saveBd = dirty ? "#238636" : "#21262d";
@@ -1054,13 +1084,7 @@ function __ctxFieldEdit(id, surface, value, type) {
   if (key && surface === "company") {
     c[key] = type === "number" ? parseInt(value || "0", 10) : value;
     __ctxMarkDirty("company");
-    // Toggle Save without re-render (preserves input focus)
-    const btn = $("company-save-btn");
-    if (btn) {
-      btn.disabled = false;
-      btn.style.color = "#3fb950"; btn.style.background = "#1a3a1a";
-      btn.style.borderColor = "#238636"; btn.style.cursor = "pointer";
-    }
+    __setSaveButtonEnabled("saveCompany()");
   }
 }
 
@@ -1069,6 +1093,36 @@ function __ctxMarkDirty(surface, extra) {
   if (surface === "cyberWatchlist") contextState.dirty.cyberWatchlist = true;
   if (surface === "regional") contextState.dirty.regional[contextState.currentRegion] = true;
   if (surface === "sites") contextState.dirty.sites[extra] = true;
+}
+
+// Shared helpers used by every Context surface.
+// __setSaveButtonEnabled: flip a Save button to enabled without re-rendering (preserves input focus).
+// __showSurfaceError: render an inline error banner inside the named surface container.
+function __setSaveButtonEnabled(onclickPrefix) {
+  const btns = document.querySelectorAll("button[onclick]");
+  btns.forEach(function (b) {
+    const oc = b.getAttribute("onclick") || "";
+    if (oc.indexOf(onclickPrefix) !== 0) return;
+    b.disabled = false;
+    b.style.color = "#3fb950"; b.style.background = "#1a3a1a";
+    b.style.borderColor = "#238636"; b.style.cursor = "pointer";
+  });
+}
+
+function __showSurfaceError(containerId, message) {
+  const host = document.getElementById(containerId);
+  if (!host) return;
+  const existing = host.querySelector(".ctx-error-banner");
+  if (existing) existing.remove();
+  const banner = document.createElement("div");
+  banner.className = "ctx-error-banner";
+  banner.setAttribute("role", "alert");
+  banner.style.cssText = "margin:8px 0;padding:8px 12px;background:#2d0000;border:1px solid #da3633;color:#ff7b72;font-size:11px;border-radius:2px";
+  banner.textContent = message;
+  // Banner sits above the save control. Simplest placement: prepend to surface so it's always visible.
+  host.insertBefore(banner, host.firstChild);
+  // Auto-clear after 8 seconds so stale errors do not linger.
+  setTimeout(function () { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 8000);
 }
 
 async function saveCompany() {
@@ -1082,7 +1136,7 @@ async function saveCompany() {
     contextState.company = null;
     renderCompanySurface();
   } else {
-    alert("Save failed: " + r.status);
+    __showSurfaceError("ctx-company", "Save failed (HTTP " + r.status + "). Stored file is unchanged.");
   }
 }
 ```
@@ -1117,7 +1171,7 @@ async function renderGlobalCyberWatchlistSurface() {
   }
   const w = contextState.cyberWatchlist;
   const dirty = contextState.dirty.cyberWatchlist;
-  const dot = dirty ? "<span style=\"color:#ffa657\">*</span>" : "";
+  const dot = dirty ? "<span style=\"color:#ffa657\">●</span>" : "";
 
   const saveCol = dirty ? "#3fb950" : "#6e7681";
   const saveBg = dirty ? "#1a3a1a" : "#0d1117";
@@ -1139,7 +1193,25 @@ async function renderGlobalCyberWatchlistSurface() {
       "<div style=\"text-align:right;margin-top:14px\">" + saveBtn + "</div>" +
     "</div>";
 
-  const rerender = function () { __ctxMarkDirty("cyberWatchlist"); renderGlobalCyberWatchlistSurface(); };
+  // Record List onChange comes with kind: structure = re-render surface; mutate = only mark dirty.
+  const rlOnChange = function (assign) {
+    return function (next, info) {
+      assign(next);
+      __ctxMarkDirty("cyberWatchlist");
+      if (info && info.kind === "structure") {
+        renderGlobalCyberWatchlistSurface();
+      } else {
+        __setSaveButtonEnabled("saveCyberWatchlist()");
+      }
+    };
+  };
+  const tlOnChange = function (assign) {
+    return function (next) {
+      assign(next);
+      __ctxMarkDirty("cyberWatchlist");
+      renderGlobalCyberWatchlistSurface();  // Tag List changes are always structural
+    };
+  };
 
   $("cyber-actors").innerHTML = renderRecordList(
     w.threat_actor_groups, [
@@ -1150,7 +1222,7 @@ async function renderGlobalCyberWatchlistSurface() {
       { key: "target_geographies", label: "Target geographies", type: "taglist" },
     ],
     function (r) { return (r.name || "(unnamed)") + (r.motivation ? " - " + r.motivation : ""); },
-    function (next) { w.threat_actor_groups = next; rerender(); },
+    rlOnChange(function (next) { w.threat_actor_groups = next; }),
     "cyber-actors"
   );
   $("cyber-campaigns").innerHTML = renderRecordList(
@@ -1162,18 +1234,19 @@ async function renderGlobalCyberWatchlistSurface() {
       { key: "status", label: "Status", type: "text" },
     ],
     function (r) { return (r.campaign_name || "(unnamed)") + (r.actor ? " / " + r.actor : ""); },
-    function (next) { w.sector_targeting_campaigns = next; rerender(); },
+    rlOnChange(function (next) { w.sector_targeting_campaigns = next; }),
     "cyber-campaigns"
   );
   $("cyber-cves").innerHTML = renderTagList(
-    w.cve_watch_categories, function (next) { w.cve_watch_categories = next; rerender(); }, "cyber-cves"
+    w.cve_watch_categories, tlOnChange(function (next) { w.cve_watch_categories = next; }), "cyber-cves"
   );
   $("cyber-geos").innerHTML = renderTagList(
-    w.global_cyber_geographies_of_concern, function (next) { w.global_cyber_geographies_of_concern = next; rerender(); }, "cyber-geos"
+    w.global_cyber_geographies_of_concern, tlOnChange(function (next) { w.global_cyber_geographies_of_concern = next; }), "cyber-geos"
   );
 }
 
 async function saveCyberWatchlist() {
+  const btn = document.querySelector("button[onclick=\"saveCyberWatchlist()\"]");
   const r = await fetch("/api/context/cyber-watchlist", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
@@ -1184,7 +1257,7 @@ async function saveCyberWatchlist() {
     contextState.cyberWatchlist = null;
     renderGlobalCyberWatchlistSurface();
   } else {
-    alert("Save failed: " + r.status);
+    __showSurfaceError("ctx-global-cyber", "Save failed (HTTP " + r.status + "). Stored file is unchanged.");
   }
 }
 ```
@@ -1226,7 +1299,7 @@ async function renderSitesSurface() {
     const active = s.site_id === contextState.selectedSiteId;
     const sdirty = contextState.dirty.sites[s.site_id];
     const rowBg = active ? "#1a2532" : "transparent";
-    const dot = sdirty ? "<span style=\"color:#ffa657\">*</span>" : "";
+    const dot = sdirty ? "<span style=\"color:#ffa657\">●</span>" : "";
     const rowStyle = "padding:8px 12px;border-bottom:1px solid #21262d;cursor:pointer;background:" + rowBg + ";display:flex;align-items:center;gap:6px";
     return "<div onclick=\"selectContextSite(" + JSON.stringify(s.site_id) + ")\" style=\"" + rowStyle + "\">" +
       "<span style=\"font-size:11px;color:#c9d1d9;flex:1\">" + esc(s.name) + "</span>" +
@@ -1307,7 +1380,7 @@ function renderSiteDetail(site) {
     ]},
   ];
 
-  const dirtyBadge = dirty ? "<span style=\"color:#ffa657\">* unsaved</span>" : "";
+  const dirtyBadge = dirty ? "<span style=\"color:#ffa657\">● unsaved</span>" : "";
   const saveCol = dirty ? "#3fb950" : "#6e7681";
   const saveBg = dirty ? "#1a3a1a" : "#0d1117";
   const saveBd = dirty ? "#238636" : "#21262d";
@@ -1388,15 +1461,7 @@ function __siteFieldEdit(siteId, key, type, value) {
   if (!site) return;
   site[key] = type === "number" ? Number(value) : value;
   __ctxMarkDirty("sites", siteId);
-  const btns = document.querySelectorAll("button[onclick]");
-  btns.forEach(function (b) {
-    const oc = b.getAttribute("onclick") || "";
-    if (oc.indexOf("saveSite(") === 0) {
-      b.disabled = false;
-      b.style.color = "#3fb950"; b.style.background = "#1a3a1a";
-      b.style.borderColor = "#238636"; b.style.cursor = "pointer";
-    }
-  });
+  __setSaveButtonEnabled("saveSite(");
 }
 ```
 
@@ -1416,7 +1481,7 @@ async function saveSite(siteId) {
     delete contextState.sitesByRegion[contextState.currentRegion];
     renderSitesSurface();
   } else {
-    alert("Save failed: " + r.status);
+    __showSurfaceError("ctx-site-detail", "Save failed (HTTP " + r.status + "). Stored record is unchanged.");
   }
 }
 ```
@@ -1448,7 +1513,7 @@ async function renderRegionalSurface() {
   }
   const r = contextState.regionalByRegion[region];
   const dirty = !!contextState.dirty.regional[region];
-  const dot = dirty ? "<span style=\"color:#ffa657\">*</span>" : "";
+  const dot = dirty ? "<span style=\"color:#ffa657\">●</span>" : "";
 
   const saveCol = dirty ? "#3fb950" : "#6e7681";
   const saveBg = dirty ? "#1a3a1a" : "#0d1117";
@@ -1488,7 +1553,24 @@ async function renderRegionalSurface() {
       "<div style=\"text-align:right;margin-top:14px\">" + saveBtn + "</div>" +
     "</div>";
 
-  const bumpDirty = function () { __ctxMarkDirty("regional"); renderRegionalSurface(); };
+  const rlOnChange = function (assign) {
+    return function (next, info) {
+      assign(next);
+      __ctxMarkDirty("regional");
+      if (info && info.kind === "structure") {
+        renderRegionalSurface();
+      } else {
+        __setSaveButtonEnabled("saveRegional()");
+      }
+    };
+  };
+  const tlOnChange = function (assign) {
+    return function (next) {
+      assign(next);
+      __ctxMarkDirty("regional");
+      renderRegionalSurface();  // Tag List changes are always structural
+    };
+  };
 
   $("reg-actors").innerHTML = renderRecordList(
     r.regional_threat_actor_groups || [], [
@@ -1499,7 +1581,7 @@ async function renderRegionalSurface() {
       { key: "target_geographies", label: "Target geographies", type: "taglist" },
     ],
     function (rec) { return (rec.name || "(unnamed)") + (rec.motivation ? " - " + rec.motivation : ""); },
-    function (next) { r.regional_threat_actor_groups = next; bumpDirty(); },
+    rlOnChange(function (next) { r.regional_threat_actor_groups = next; }),
     "reg-actors-" + region
   );
   $("reg-campaigns").innerHTML = renderRecordList(
@@ -1511,12 +1593,12 @@ async function renderRegionalSurface() {
       { key: "status", label: "Status", type: "text" },
     ],
     function (rec) { return (rec.campaign_name || "(unnamed)") + (rec.actor ? " / " + rec.actor : ""); },
-    function (next) { r.regional_sector_targeting_campaigns = next; bumpDirty(); },
+    rlOnChange(function (next) { r.regional_sector_targeting_campaigns = next; }),
     "reg-campaigns-" + region
   );
   $("reg-geos").innerHTML = renderTagList(
     r.regional_cyber_geographies_of_concern || [],
-    function (next) { r.regional_cyber_geographies_of_concern = next; bumpDirty(); },
+    tlOnChange(function (next) { r.regional_cyber_geographies_of_concern = next; }),
     "reg-geos-" + region
   );
 }
@@ -1527,12 +1609,7 @@ function __regionalFieldEdit(key, value) {
   if (!r) return;
   r[key] = value;
   __ctxMarkDirty("regional");
-  const btns = document.querySelectorAll("button[onclick=\"saveRegional()\"]");
-  btns.forEach(function (b) {
-    b.disabled = false;
-    b.style.color = "#3fb950"; b.style.background = "#1a3a1a";
-    b.style.borderColor = "#238636"; b.style.cursor = "pointer";
-  });
+  __setSaveButtonEnabled("saveRegional()");
 }
 
 async function saveRegional() {
@@ -1548,7 +1625,7 @@ async function saveRegional() {
     delete contextState.regionalByRegion[region];
     renderRegionalSurface();
   } else {
-    alert("Save failed: " + resp.status);
+    __showSurfaceError("ctx-regional", "Save failed (HTTP " + resp.status + "). Stored file is unchanged.");
   }
 }
 ```
@@ -1632,15 +1709,15 @@ git commit -m "feat(context): cross-tab + reload dirty guards"
 Run: `curl http://localhost:8001/api/context/regional/APAC`
 Expected: 200 with `regional_summary`, `standing_notes`, `headcount`, `contractors` keys.
 
-- [ ] **Step 2: Remove the sub-tab nav + panel in `static/index.html`.**
+- [ ] **Step 2: Remove the sub-tab nav + panel in `static/index.html`.** Use symbolic anchors — line numbers from the spec may be stale after Tasks 9-16.
 
-Delete line 1118:
+Delete the nav entry. Search for and delete:
 
 ```html
-    <div class="nav-tab" id="cfg-nav-footprint" onclick="switchCfgTab('footprint')">Footprint</div>
+<div class="nav-tab" id="cfg-nav-footprint" onclick="switchCfgTab('footprint')">Footprint</div>
 ```
 
-Delete lines 1190-1192:
+Delete the sub-panel. Search for the three-line block and delete it:
 
 ```html
   <!-- Footprint sub-tab -->
@@ -1649,23 +1726,36 @@ Delete lines 1190-1192:
   </div>
 ```
 
-- [ ] **Step 3: Remove JS functions in `static/app.js`.** Locate and delete:
+- [ ] **Step 3: Remove JS code in `static/app.js` by name.** Locate and delete:
 
-- The `if (tab === 'footprint') loadFootprint();` branch in `switchCfgTab` (line 2474).
-- The functions `loadFootprint`, `renderFootprint`, `toggleFpRegion`, `markFpDirty`, `saveFpRegion` (roughly lines 2494-2575).
-- Any remaining references to `cfgState.footprintLoaded`, `cfgState.footprintData`, `cfgState.footprintDirty`, or the `.fp-*` CSS class names if no longer used.
+- The `if (tab === 'footprint') loadFootprint();` line inside `switchCfgTab` (search exact string).
+- Function declarations: `loadFootprint`, `renderFootprint`, `toggleFpRegion`, `markFpDirty`, `saveFpRegion` — delete each function definition and body.
+- References to `cfgState.footprintLoaded`, `cfgState.footprintData`, `cfgState.footprintDirty` (delete the references; keep the rest of `cfgState`).
+- Any `.fp-*` CSS class definitions that have no remaining live usages.
 
-After deletions, run the Find/Replace check:
+After deletions, verify:
 
 ```bash
 grep -n "footprint\|fp-\|loadFootprint\|renderFootprint" static/app.js static/index.html
 ```
 
-Only matches should be comments or unrelated strings. No live code paths should remain.
+Expected: zero matches in live code paths. Comments mentioning the historical name are acceptable.
 
-- [ ] **Step 4: Remove server endpoints in `server.py`.**
+- [ ] **Step 4: Remove server endpoints in `server.py` by symbol.** Delete both handlers:
 
-Delete lines 390-432 (both `@app.get("/api/footprint")` and `@app.put("/api/footprint/{region}")`).
+```python
+@app.get("/api/footprint")
+async def get_footprint():
+    ...
+```
+
+```python
+@app.put("/api/footprint/{region}")
+async def update_footprint(region: str, body: dict):
+    ...
+```
+
+Find each by decorator string, delete the decorator line plus the entire function body through the blank line before the next `@app.` handler.
 
 - [ ] **Step 5: Clean up any tests that referenced the removed endpoints.**
 
@@ -1688,79 +1778,88 @@ git commit -m "feat(context): retire Config -> Footprint sub-tab"
 
 ---
 
-### Task 18: Context-flow matrix
+### Task 18: Context-flow matrix — stub + deferred audit
 
-**Files:** `docs/context-flow-matrix.md` (new).
+**Files:** `docs/context-flow-matrix.md` (new, stub-only).
 
-Per the spec, the matrix schema is fixed; the cells are populated by reading the code. The plan specifies the schema AND the procedure.
+The full matrix requires reading ~8 reader modules + 4 agent definitions and recording every field-access with `file:line`. That audit is an independent research workstream — doing it well takes a dedicated session and its own spec review. Shipping a half-populated matrix alongside the UI feature would commit the wrong thing.
 
-- [ ] **Step 1: Read each agent definition** to find which context fields its system prompt names. Open:
-  - `.claude/agents/gatekeeper-agent.md`
-  - `.claude/agents/regional-analyst-agent.md`
-  - `.claude/agents/global-builder-agent.md`
-  - `.claude/agents/rsm-formatter-agent.md`
+This task ships a **stub** that declares the schema and commits an empty table with a clear TODO pointing to the dedicated workstream. The audit becomes its own follow-up task (tracked in memory, not in this plan).
 
-  For each, record every context field explicitly named (e.g. `tier`, `criticality`, `relevant_seerist_categories`, `company.sectors`).
-
-- [ ] **Step 2: Read reader modules** to find which fields each actually loads from context JSON files:
-  - `tools/build_context.py` — regional context string assembly
-  - `tools/rsm_input_builder.py` — RSM input assembly
-  - `tools/poi_proximity.py` — site proximity joins
-  - `tools/seerist_collector.py` — Seerist query parameter extraction
-  - `tools/threshold_evaluator.py` — signal ranking
-  - `.claude/hooks/validators/rsm-brief-context-checks.py` — site discipline + personnel enforcement
-  - `tools/source_librarian/intents.py` and `tools/source_librarian/discovery.py`
-
-  For each reader, record `path/to/file.py:line` per field-access. Helpful grep:
-
-```bash
-grep -n 'site\[\|site\.get\|regional_footprint\|company_profile\|cyber_watchlist' tools/ .claude/hooks/validators/ -r
-```
-
-- [ ] **Step 3: Create `docs/context-flow-matrix.md`** using this template. Replace the dots with real findings from steps 1-2. Do NOT commit with dots — the matrix either ships populated or doesn't ship.
+- [ ] **Step 1: Create `docs/context-flow-matrix.md`** with the schema and a deferral note:
 
 ````markdown
 # Context Flow Matrix
 
-For every agent in the pipeline, what context fields it reads, what it produces, and where its output lands.
+**Status:** Schema committed; audit deferred to a dedicated workstream.
 
-Columns:
-- agent — agent identifier
-- context_fields_read — file.field pairs read at runtime
-- produces — names of outputs the agent writes
-- downstream_consumers — deliverables that include this output
-- source_ref — path/to/file.py:line where the read or write happens
+## Purpose
 
-## Agents
+For every agent in the pipeline, document which context fields it reads at runtime, what outputs it produces, and which deliverables those outputs land in. This is the input-side companion to the output-side spec at `docs/superpowers/specs/2026-04-20-context-tab-design.md`.
 
-| agent | context_fields_read | produces | downstream_consumers | source_ref |
-|---|---|---|---|---|
-| gatekeeper-agent | ... | scenario_match, admiralty_rating | regional data.json | ... |
-| regional-analyst-agent | ... | three-pillar brief | sections.json | ... |
-| global-builder-agent | ... | global report | global_report.json | ... |
-| rsm-formatter-agent | ... | weekly / daily / flash | output/deliverables/ | ... |
-| source-librarian intents | ... | intent yaml | data/research_intents/ | ... |
-| source-librarian discovery | ... | reading list | Risk Register tab | ... |
+## Schema
+
+| Column | Meaning |
+|---|---|
+| `agent` | Agent identifier (from `.claude/agents/*.md` or `tools/source_librarian/*`) |
+| `context_fields_read` | `file.field` pairs read at runtime — one entry per distinct field-access |
+| `produces` | Names of outputs the agent writes |
+| `downstream_consumers` | Deliverables that include this output (CISO brief, Board report, RSM brief, Risk Register, etc.) |
+| `source_ref` | `path/to/file.py:line` where the read or write happens |
+
+## Agents to cover (audit pending)
+
+- `gatekeeper-agent` — `.claude/agents/gatekeeper-agent.md`
+- `regional-analyst-agent` — `.claude/agents/regional-analyst-agent.md`
+- `global-builder-agent` — `.claude/agents/global-builder-agent.md`
+- `rsm-formatter-agent` — `.claude/agents/rsm-formatter-agent.md`
+- Source librarian — `tools/source_librarian/intents.py`, `discovery.py`
+
+## Reader modules to audit
+
+- `tools/build_context.py`
+- `tools/rsm_input_builder.py`
+- `tools/poi_proximity.py`
+- `tools/seerist_collector.py`
+- `tools/threshold_evaluator.py`
+- `.claude/hooks/validators/rsm-brief-context-checks.py`
+
+## Audit procedure (for the follow-up workstream)
+
+1. For each agent file, list every context field its system prompt explicitly names (grep the markdown file).
+2. For each reader module, grep for `site[`, `site.get(`, `regional_footprint`, `company_profile`, `cyber_watchlist` and record every field-access with line number.
+3. Join (agent × field) via the agent's prompt reference → the actual reader code invoked for that agent.
+4. Record one row per (agent, field) pair.
+
+## Derived fields (already known)
+
+- `headcount` — `tools/context_api.derive_headcount` (called from `GET/PUT /api/context/regional/{region}`). Input: `aerowind_sites.json`. Output: integer sum.
+- `contractors` — same function, second return value.
 
 ## Capture-surface fields (not yet read by any agent)
 
-Fields present in context schema that no agent currently reads. These are forward-looking.
+Fields present in the Context schema that no agent currently reads. These are forward-looking:
 
-- cyber_watchlist.threat_actor_groups[] — forward-looking; will drive per-site cyber callouts in RSM briefs once the formatter is extended.
-- regional_footprint.regional_threat_actor_groups[] — forward-looking; not yet consumed.
+- `cyber_watchlist.threat_actor_groups[]` — will drive per-site cyber callouts in RSM briefs once the formatter is extended.
+- `regional_footprint.regional_threat_actor_groups[]` — not yet consumed.
+- `regional_footprint.regional_sector_targeting_campaigns[]` — not yet consumed.
+- `regional_footprint.regional_cyber_geographies_of_concern[]` — not yet consumed.
+- `regional_footprint.regional_standing_notes` — not yet consumed.
 
-## Derived fields
-
-Fields computed at read time rather than stored:
-- headcount — tools/context_api.derive_headcount (called from GET /api/context/regional/{region} and PUT /api/context/regional/{region}). Input: aerowind_sites.json. Output: integer sum.
-- contractors — same function, second return value.
+When the RSM weekly/daily/flash formatter is extended to read these, move them out of this list and into the agent rows above.
 ````
 
-- [ ] **Step 4: Commit.**
+- [ ] **Step 2: Add a project-memory note** for the follow-up audit so it doesn't get lost. Append to `C:\Users\frede\.claude\projects\c--Users-frede-crq-agent-workspace\memory\MEMORY.md` under "Upcoming Work":
+
+```markdown
+- **Context-flow matrix audit** — populate `docs/context-flow-matrix.md` with per-field `file:line` entries for all pipeline agents. Stub schema committed as part of Context tab v1; audit is its own session.
+```
+
+- [ ] **Step 3: Commit.**
 
 ```bash
-git add docs/context-flow-matrix.md
-git commit -m "docs(context): context-flow matrix covering all pipeline agents"
+git add docs/context-flow-matrix.md C:/Users/frede/.claude/projects/c--Users-frede-crq-agent-workspace/memory/MEMORY.md
+git commit -m "docs(context): context-flow matrix stub + schema (audit deferred)"
 ```
 
 ---
@@ -1779,25 +1878,24 @@ Expected: every test passes.
 Run: `uv run pytest -x --tb=short 2>&1 | tail -40`
 Expected: all tests pass.
 
-- [ ] **Step 3: Verify legacy alias double-write still feeds `tools/build_context.py`.**
+- [ ] **Step 3: Verify legacy alias double-write still feeds `tools/build_context.py`.** The module entry point is `build_context(region: str) -> None` (verified at `tools/build_context.py:35`) — it has side effects (writes files) rather than returning a string, so this step runs it and then checks the output.
 
-Inspect `tools/build_context.py` to find its entry function. Then run for one region:
+Before running: `git diff --stat output/` to record existing state.
 
 ```bash
-uv run python -c "from tools.build_context import build_region_context; print(build_region_context('APAC'))"
+uv run python -c "from tools.build_context import build_context; build_context('APAC')"
 ```
 
-If that exact function name doesn't exist, read the module to find the right one. Expected: prints a multi-line context string that includes a headcount figure matching the sum of APAC site personnel_count + expat_count.
+Then inspect the produced context file (path depends on the module's write target — read `tools/build_context.py` lines 35-67 to confirm). Expected: the written output contains the APAC headcount, and the number matches `sum(personnel_count + expat_count)` across APAC sites in `data/aerowind_sites.json`.
 
-- [ ] **Step 4: End-to-end functional verification — spec success criterion 7.**
+- [ ] **Step 4: End-to-end functional verification — spec success criterion 7.** The CRQ regional pipeline is invoked as a Claude Code slash command, not a Python CLI. Exact invocation:
 
   (a) Start server: `uv run uvicorn server:app --port 8001` (background).
   (b) Open the UI. Context -> APAC. Select Kaohsiung. Change `tier` from `crown_jewel` to `primary`. Save site.
-  (c) Stop the dev server.
-  (d) Run: `uv run python tools/run_region.py APAC --mock`
-    If that command does not exist, consult `.claude/commands/crq-region.md` for the canonical invocation.
-  (e) Inspect `output/regional/apac/sections.json` for Kaohsiung references. Verify gatekeeper / regional-analyst output reflects `primary`, not `crown_jewel`.
-  (f) Revert the tier change through the UI so committed data is untouched.
+  (c) In Claude Code, run: `/crq-region APAC`
+    The slash command is defined at `.claude/commands/crq-region.md` — it dispatches the gatekeeper + regional-analyst pipeline for the named region. No `--mock` flag is needed if the mock fixtures are already in place; confirm by reading the command's `## INPUT` and early-step sections.
+  (d) Inspect `output/regional/apac/sections.json` — search for Kaohsiung references. The gatekeeper's scenario match and the regional-analyst's criticality framing should reflect `primary`, not `crown_jewel`.
+  (e) Revert the tier change through the UI. Save. Confirm `data/aerowind_sites.json` is back to its committed state (`git diff data/aerowind_sites.json` returns empty).
 
 - [ ] **Step 5: Record verification with an empty commit.**
 
@@ -1823,12 +1921,22 @@ git commit --allow-empty -m "test(context): e2e verified — tier edit reflected
 - Spec Test Plan (11 items) -> 10 covered by unit tests in Tasks 1-8; item 11 (Footprint-gone smoke) is Task 17 step 7
 - Success criterion 7 (end-to-end tier edit) -> Task 19 step 4
 
-**Placeholder scan:** Task 18's matrix template uses dots in the cells and includes an explicit procedure (steps 1-2) for populating them during implementation. Not "TBD" — a documented populate-during-implementation step.
+**Placeholder scan:** Task 18 is a schema + deferral stub (not a half-populated matrix). Explicitly marked as "audit deferred to a dedicated workstream"; the stub commits the schema and moves the audit to memory as follow-up work. No cell reads `...` in the committed artifact.
 
 **Type consistency:**
-- Helpers: atomic_write_json, empty_cyber_watchlist, replace_site_in_registry, derive_headcount, load_regional_record, write_regional_record — referenced identically across tasks.
-- JS functions: renderContextTab, renderContextRegionStrip, switchContextRegion, anyContextSurfaceDirty, renderCompanySurface, renderGlobalCyberWatchlistSurface, renderSitesSurface, renderSiteDetail, renderRegionalSurface, saveCompany, saveCyberWatchlist, saveSite, saveRegional, __ctxField, __ctxFieldEdit, __ctxMarkDirty, __ctxSiteField, __ctxGroupBlock, __siteFieldEdit, __tlAdd, __tlRemove, __rlAdd, __rlRemove, __rlToggle, __rlFieldChange, __rlFieldInput — consistent across tasks.
-- State: contextState.dirty.company, contextState.dirty.cyberWatchlist, contextState.dirty.regional[region], contextState.dirty.sites[site_id] — consistent.
-- API paths: /api/context/company, /api/context/cyber-watchlist, /api/context/sites, /api/context/regional/{region} — identical in server, tests, and client code.
+- Helpers: `atomic_write_json`, `empty_cyber_watchlist`, `replace_site_in_registry`, `derive_headcount`, `load_regional_record`, `write_regional_record` — referenced identically across tasks.
+- JS functions: `renderContextTab`, `renderContextRegionStrip`, `switchContextRegion`, `anyContextSurfaceDirty`, `renderCompanySurface`, `renderGlobalCyberWatchlistSurface`, `renderSitesSurface`, `renderSiteDetail`, `renderRegionalSurface`, `saveCompany`, `saveCyberWatchlist`, `saveSite`, `saveRegional`, `__ctxField`, `__ctxFieldEdit`, `__ctxMarkDirty`, `__ctxSiteField`, `__ctxGroupBlock`, `__siteFieldEdit`, `__setSaveButtonEnabled`, `__showSurfaceError`, `__tlAdd`, `__tlRemove`, `__rlAdd`, `__rlRemove`, `__rlToggle`, `__rlFieldChange`, `__rlFieldInput` — consistent across tasks.
+- State: `contextState.dirty.company`, `contextState.dirty.cyberWatchlist`, `contextState.dirty.regional[region]`, `contextState.dirty.sites[site_id]` — consistent.
+- API paths: `/api/context/company`, `/api/context/cyber-watchlist`, `/api/context/sites`, `/api/context/regional/{region}` — identical in server, tests, and client code.
+
+**Rev v2 fixes applied:**
+- Record List `onChange(records, info)` signature — `kind: "mutate"` on field edits (no re-render, preserves focus) vs `kind: "structure"` on add/remove (full re-render). Tasks 13 and 15 updated to check `info.kind`.
+- Shared helpers `__setSaveButtonEnabled` and `__showSurfaceError` replace scattered `alert()` and inline DOM toggling; error banners land inline inside the surface per spec.
+- Task 17 line-number anchors replaced with symbolic anchors (function names, exact search strings) since Tasks 9-16 shift line counts.
+- Task 19 step 3: correct entry point is `tools.build_context.build_context(region)` (returns None, writes files) — not the invented `build_region_context`.
+- Task 19 step 4: CRQ regional pipeline is the `/crq-region APAC` slash command, not `tools/run_region.py`.
+- Task 5 fixture-count assertion replaced with region-membership assertion (`site_id in site_ids`) so future seed additions don't break the test.
+- Dirty-state indicator changed from `*` (asterisk) to `●` (U+25CF bullet) per spec wording.
+- Task 8 step 6: added malformed-JSON tests for PUT endpoints.
 
 **Open issues:** None.
