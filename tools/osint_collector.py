@@ -116,7 +116,7 @@ def _call_llm(prompt: str, model: str = "claude-haiku-4-5-20251001", max_tokens:
         raise ValueError(f"LLM returned non-JSON (model={model}): {text[:200]!r}") from exc
 
 
-def form_working_theory(region: str, crq_data: dict, topics: list, company_profile: dict) -> dict:
+def form_working_theory(region: str, crq_data: dict, topics: list, company_profile: dict, cyber_watchlist: dict | None = None) -> dict:
     """LLM Call 1: Form a CRQ-grounded working theory for the region.
 
     Returns dict with: scenario_name, vacr_usd, hypothesis, active_topics, geo_queries, cyber_queries
@@ -131,6 +131,21 @@ def form_working_theory(region: str, crq_data: dict, topics: list, company_profi
         if t.get("active") and region in t.get("regions", [])
     ]
 
+    watchlist_section = ""
+    if cyber_watchlist:
+        actors = [a.get("name", "") for a in cyber_watchlist.get("threat_actor_groups", []) if a.get("name")]
+        campaigns = [c.get("campaign_name", "") for c in cyber_watchlist.get("sector_targeting_campaigns", []) if c.get("campaign_name")]
+        cves = cyber_watchlist.get("cve_watch_categories", [])
+        parts = []
+        if actors:
+            parts.append(f"Actors: {', '.join(actors)}")
+        if campaigns:
+            parts.append(f"Campaigns: {', '.join(campaigns)}")
+        if cves:
+            parts.append(f"CVE Categories: {', '.join(cves)}")
+        if parts:
+            watchlist_section = "\nTHREAT ACTOR WATCHLIST (prioritize signals from these actors):\n" + "\n".join(parts)
+
     prompt = f"""You are forming a target-centric intelligence collection hypothesis.
 
 REGION: {region}
@@ -138,7 +153,7 @@ CRQ SCENARIO: {scenario_name}
 VALUE AT CYBER RISK: ${vacr:,}
 COMPANY: {company_profile.get("industry", "Wind Energy")} operator
 CROWN JEWELS: {json.dumps(company_profile.get("crown_jewels", []))}
-ACTIVE TOPICS FOR THIS REGION: {json.dumps(active_topics)}
+ACTIVE TOPICS FOR THIS REGION: {json.dumps(active_topics)}{watchlist_section}
 
 Form a working theory: is there evidence that the {scenario_name} scenario is materializing in {region}?
 
@@ -345,6 +360,17 @@ def _load_json(path: str | Path) -> dict | list:
         return json.load(f)
 
 
+def _load_cyber_watchlist() -> dict:
+    """Load cyber_watchlist.json from data/. Returns empty dict if absent or malformed."""
+    path = REPO_ROOT / "data" / "cyber_watchlist.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
 def get_output_dir(region: str) -> Path:
     p = REPO_ROOT / "output" / "regional" / region.lower()
     p.mkdir(parents=True, exist_ok=True)
@@ -377,7 +403,8 @@ def run_live_mode(region: str, window: str | None = None) -> None:
     out_dir = get_output_dir(region)
 
     # --- LLM Call 1: Form working theory ---
-    working_theory = form_working_theory(region, crq_data, topics, company_profile)
+    cyber_watchlist = _load_cyber_watchlist()
+    working_theory = form_working_theory(region, crq_data, topics, company_profile, cyber_watchlist)
 
     # --- Pass 1: Initial geo + cyber collection ---
     pass_1_geo = run_search_pass(region, working_theory["geo_queries"], "geo", window)

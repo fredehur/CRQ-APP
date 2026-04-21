@@ -25,6 +25,7 @@ VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_ROOT = REPO_ROOT / "output"
 FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
+WATCHLIST_FILE = REPO_ROOT / "data" / "cyber_watchlist.json"
 
 
 def build_enrichment_plan(osint_signals: dict, scenario_map: dict, region: str) -> dict:
@@ -63,12 +64,33 @@ def build_enrichment_plan(osint_signals: dict, scenario_map: dict, region: str) 
     return plan
 
 
+def _load_watchlist_actors() -> set[str]:
+    """Return set of actor names + aliases from cyber_watchlist.json, or empty set."""
+    if not WATCHLIST_FILE.exists():
+        return set()
+    try:
+        data = json.loads(WATCHLIST_FILE.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    names: set[str] = set()
+    for group in data.get("threat_actor_groups", []):
+        if isinstance(group, dict):
+            name = group.get("name")
+            if name:
+                names.add(name)
+            for alias in group.get("aliases", []) or []:
+                if alias:
+                    names.add(alias)
+    return names
+
+
 def _extract_actor_if_clean(osint_signals: dict) -> str | None:
     """Extract threat actor name if it appears cleanly in indicators."""
-    known_actors = {
+    hardcoded = {
         "Volt Typhoon", "APT41", "Sandworm", "Lazarus Group",
         "APT28", "APT29", "Kimsuky", "Charming Kitten",
     }
+    known_actors = hardcoded | _load_watchlist_actors()
     for ind in osint_signals.get("lead_indicators", []):
         text = ind.get("text", "") if isinstance(ind, dict) else str(ind)
         for actor in known_actors:

@@ -113,3 +113,43 @@ def test_notes_field_appended_verbatim(monkeypatch, tmp_path):
     bc.build_context("APAC")
     text = (output_dir / "regional" / "apac" / "context_block.txt").read_text(encoding="utf-8")
     assert "Major turbine order Q2 — supply chain under pressure." in text
+
+
+MINIMAL_WATCHLIST = {
+    "threat_actor_groups": [
+        {"name": "APT40", "motivation": "espionage", "aliases": ["BRONZE MOHAWK"]}
+    ],
+    "sector_targeting_campaigns": [
+        {"campaign_name": "VOLT TYPHOON ICS", "actor": "Volt Typhoon", "sectors": ["energy"]}
+    ],
+    "cve_watch_categories": ["ICS/SCADA", "VPN appliances"],
+    "global_cyber_geographies_of_concern": ["China", "Russia"],
+}
+
+
+def _patch_with_watchlist(monkeypatch, tmp_path, footprint_data, watchlist_data):
+    fp, output_dir = _patch(monkeypatch, tmp_path, footprint_data)
+    wl_path = tmp_path / "cyber_watchlist.json"
+    wl_path.write_text(json.dumps(watchlist_data), encoding="utf-8")
+    monkeypatch.setattr(bc, "WATCHLIST_FILE", wl_path)
+    return fp, output_dir
+
+
+def test_watchlist_appended_when_present(monkeypatch, tmp_path):
+    """Watchlist threat actors appear in context block when file exists."""
+    _, output_dir = _patch_with_watchlist(monkeypatch, tmp_path, MINIMAL_FOOTPRINT, MINIMAL_WATCHLIST)
+    bc.build_context("APAC")
+    text = (output_dir / "regional" / "apac" / "context_block.txt").read_text(encoding="utf-8")
+    assert "GLOBAL CYBER WATCHLIST" in text
+    assert "APT40" in text
+    assert "VOLT TYPHOON ICS" in text
+    assert "ICS/SCADA" in text
+
+
+def test_watchlist_absent_when_file_missing(monkeypatch, tmp_path):
+    """Missing cyber_watchlist.json → context block contains no watchlist section."""
+    _, output_dir = _patch(monkeypatch, tmp_path, MINIMAL_FOOTPRINT)
+    monkeypatch.setattr(bc, "WATCHLIST_FILE", tmp_path / "cyber_watchlist.json")  # does not exist
+    bc.build_context("APAC")
+    text = (output_dir / "regional" / "apac" / "context_block.txt").read_text(encoding="utf-8")
+    assert "GLOBAL CYBER WATCHLIST" not in text

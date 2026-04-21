@@ -120,6 +120,22 @@ def _live_collect(region: str, window_days: int) -> dict:
             "source_provenance": "seerist",
         }
 
+    # Stamp watchlist context for downstream agents — non-fatal if absent
+    watchlist_path = REPO_ROOT / "data" / "cyber_watchlist.json"
+    threat_actor_context: list[str] = []
+    if watchlist_path.exists():
+        try:
+            wl = json.loads(watchlist_path.read_text(encoding="utf-8"))
+            for actor in wl.get("threat_actor_groups", []):
+                name = actor.get("name", "")
+                aliases = actor.get("aliases", [])
+                if name:
+                    threat_actor_context.append(name)
+                threat_actor_context.extend(a for a in aliases if a)
+        except Exception:
+            pass
+    result["analytical"]["threat_actor_context"] = threat_actor_context
+
     return result
 
 

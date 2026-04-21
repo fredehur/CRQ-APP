@@ -16,6 +16,7 @@ from pathlib import Path
 
 VALID_CADENCES = {"daily", "weekly", "flash"}
 NOTABLE_DATE_HORIZON_DAYS = 7
+WATCHLIST_FILE = Path(__file__).parent.parent / "data" / "cyber_watchlist.json"
 
 
 def _load_json(path: Path):
@@ -163,6 +164,9 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
     # ── poi_proximity inline (if present) ────────────────────────────────────
     poi_proximity = _load_json(poi_proximity_path) if poi_proximity_path.exists() else None
 
+    # ── cyber watchlist (global, non-region-specific) ────────────────────────
+    cyber_watchlist = _load_json(WATCHLIST_FILE)
+
     # ── brief_headlines from sections.json ───────────────────────────────────
     sections_path = base / "sections.json"
     brief_headlines: dict = {}
@@ -197,6 +201,7 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
         "notable_dates": notable_dates,
         "previous_incidents": previous_incidents,
         "poi_proximity": poi_proximity,
+        "cyber_watchlist": cyber_watchlist,
     }
 
 
@@ -259,6 +264,24 @@ def manifest_summary(manifest: dict) -> str:
     cw = manifest.get("cross_regional_watch", [])
     if cw:
         lines.append(f"\nCross-regional watch: {len(cw)} pattern(s)")
+
+    wl = manifest.get("cyber_watchlist")
+    if isinstance(wl, dict):
+        actors = wl.get("threat_actor_groups", []) or []
+        campaigns = wl.get("sector_targeting_campaigns", []) or []
+        cves = wl.get("cve_watch_categories", []) or []
+        if actors or campaigns or cves:
+            lines.append("\nGlobal cyber watchlist:")
+            if actors:
+                names = ", ".join(a.get("name", "") for a in actors if a.get("name"))
+                lines.append(f"  priority actors ({len(actors)}): {names}")
+            if campaigns:
+                camp_names = ", ".join(
+                    c.get("campaign_name", "") for c in campaigns if c.get("campaign_name")
+                )
+                lines.append(f"  active campaigns ({len(campaigns)}): {camp_names}")
+            if cves:
+                lines.append(f"  CVE watch categories: {' | '.join(cves)}")
 
     return "\n".join(lines)
 

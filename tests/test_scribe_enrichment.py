@@ -1,4 +1,6 @@
 """Tests for scribe_enrichment.py — query construction logic."""
+import json
+
 import pytest
 
 
@@ -44,3 +46,34 @@ def test_build_enrichment_plan_no_scenario():
 
     plan = build_enrichment_plan(osint, scenario_map, "AME")
     assert len(plan["wod_searches"]) >= 1  # At least pillar-based search
+
+
+def test_watchlist_actor_picked_up(monkeypatch, tmp_path):
+    """Actor listed in cyber_watchlist.json (but not hardcoded) is detected."""
+    import tools.scribe_enrichment as se
+
+    watchlist_path = tmp_path / "cyber_watchlist.json"
+    watchlist_path.write_text(json.dumps({
+        "threat_actor_groups": [
+            {"name": "APT40", "aliases": ["BRONZE MOHAWK"], "motivation": "espionage"}
+        ]
+    }), encoding="utf-8")
+    monkeypatch.setattr(se, "WATCHLIST_FILE", watchlist_path)
+
+    osint = {"dominant_pillar": "Cyber", "lead_indicators": [
+        {"text": "Reports of APT40 reconnaissance against regional grid operators"}
+    ]}
+    actor = se._extract_actor_if_clean(osint)
+    assert actor == "APT40"
+
+
+def test_watchlist_missing_does_not_crash(monkeypatch, tmp_path):
+    """Absent watchlist file falls back to hardcoded set without error."""
+    import tools.scribe_enrichment as se
+    monkeypatch.setattr(se, "WATCHLIST_FILE", tmp_path / "does_not_exist.json")
+
+    osint = {"dominant_pillar": "Cyber", "lead_indicators": [
+        {"text": "Volt Typhoon activity observed"}
+    ]}
+    actor = se._extract_actor_if_clean(osint)
+    assert actor == "Volt Typhoon"  # hardcoded fallback still works
