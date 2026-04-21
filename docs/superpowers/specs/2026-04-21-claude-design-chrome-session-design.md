@@ -134,3 +134,18 @@ Once Claude Design output lands in the repo, implementation is gated behind its 
 ## Open questions
 
 None blocking this spec. All open questions are deferred to either the bundle (brief wording) or the implementation plan (Tailwind CDN fate, diff tool choice).
+
+## Shipped
+
+Implementation landed 2026-04-21 via plan `docs/superpowers/plans/2026-04-21-chrome-retrofit.md`. Commits:
+
+- `72b11dd` — lift `app.css` into `static/design/styles/`
+- `58ec7ba` — link web design system stylesheets
+- `76ba451` — remove universal Mono + body baseline overrides
+- `ca936c1` — remove Tailwind parallel severity scale
+- `3baa199` — class-swap header, register bar, drawer, progress bar
+
+**Deferred to follow-up specs:**
+- Per-tab content class-swaps (scope of the Session 2+ per-tab redesign program).
+- Playwright screenshot fidelity regression test.
+- Removal of the Tailwind CDN entirely — still needed for tab-content `.hidden` and a handful of utilities.
