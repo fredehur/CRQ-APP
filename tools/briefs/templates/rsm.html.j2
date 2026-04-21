@@ -1,0 +1,688 @@
+{% from '_partials.html.j2' import sev, pulse, ref, tier %}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ data.cover.title }}</title>
+<meta name="viewport" content="width=820">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/design/styles/tokens.css">
+<link rel="stylesheet" href="/static/design/styles/rsm.css">
+</head>
+<body>
+
+<!-- ================ COVER ================ -->
+<section class="page cover">
+  <div class="cover-grid">
+    <div class="cover-band">
+      <span>{{ data.cover.classification }}</span>
+      <span>CLASSIFICATION · HANDLE WITH CARE</span>
+    </div>
+
+    <div class="cover-body">
+      <div>
+        <div class="meta-label" style="font-size: 10px;">AEROGRID WIND SOLUTIONS · INTELLIGENCE</div>
+        <div class="cover-title" style="margin-top: 10px;">
+          AEROGRID<span class="slash">//</span>{% if data.sites %}{{ data.sites[0].context.region }}{% endif %}<br/>
+          <span style="color: var(--ink-500); font-weight: 500;">Weekly INTSUM</span>
+        </div>
+        <div class="cover-sub" style="margin-top: 18px;">
+          Regional Security Manager briefing pack. Compressed correlation of site-joined physical and cyber intelligence
+          for the Mediterranean region — the intelligence an RSM would have gathered themselves with four hours of Seerist,
+          delivered in ten minutes of reading.
+        </div>
+      </div>
+
+      <div class="cover-meta-grid">
+        <div>
+          <div class="meta-label">REGION</div>
+          <div class="meta-val">{% if data.sites %}{{ data.sites[0].context.region }}{% endif %}</div>
+        </div>
+        <div>
+          <div class="meta-label">ISSUED</div>
+          <div class="meta-val">{{ data.cover.issued_at.strftime('%Y-%m-%d') }} · 06:00 UTC</div>
+        </div>
+        <div>
+          <div class="meta-label">PREPARED BY</div>
+          <div class="meta-val">{{ data.cover.prepared_by }}</div>
+        </div>
+        <div>
+          <div class="meta-label">ADDRESSED TO</div>
+          <div class="meta-val">{{ data.cover.reviewed_by }}</div>
+        </div>
+        <div>
+          <div class="meta-label">REGIONAL ADMIRALTY</div>
+          <div class="meta-val">{{ data.admiralty_physical }} · Physical<br/><span style="color: var(--ink-500); font-size: 10px;">{{ data.admiralty_cyber }} · Cyber</span></div>
+        </div>
+        <div>
+          <div class="meta-label">VERSION</div>
+          <div class="meta-val">{{ data.cover.version }}</div>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--ink-200); padding-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+        <div>
+          <div class="meta-label">READING GUIDE</div>
+          <div style="font-size: 10.5px; color: var(--ink-900); line-height: 1.55; margin-top: 6px;">
+            Start at <b>p1 — Intelligence Summary</b>. Crown-jewel and primary sites follow in criticality order;
+            Regional Cyber mirrors the site anatomy. Secondary and minor sites roll up at the back; evidence
+            appendix supports every <span style="color: var(--brand-bright); font-weight: 600;">[E#]</span> / <span style="color: var(--brand-bright); font-weight: 600;">[C#]</span> reference.
+          </div>
+        </div>
+        <div>
+          <div class="meta-label">REPLY CALLBACK</div>
+          <div style="font-size: 10.5px; color: var(--ink-900); line-height: 1.55; margin-top: 6px;">
+            Each page footer carries <b>ACCURATE / OVERSTATED / FALSE POSITIVE</b>.
+            Tick once per scan; RSM feedback tunes context weights for the next cycle.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cover-foot">
+      <span>AEROGRID INTELLIGENCE · CRQ DESIGN SYSTEM v1.0</span>
+      <span>Doc · {{ data.cover.version }}</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================ p1 INTELLIGENCE SUMMARY ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Issued {{ data.cover.issued_at.strftime('%Y-%m-%d') }} 06:00Z</span>
+  </div>
+
+  <div>
+    <div class="meta-label">p1 · INTELLIGENCE SUMMARY</div>
+    <div class="intsum-headline">
+      {{ data.headline }}
+    </div>
+
+    <!-- Baseline strip -->
+    <div class="page-section" style="margin-top: 10px;">
+      <span>BASELINE STRIP</span>
+      <span class="sub">Country pulse · forecast · admiralty {{ data.admiralty_physical }} (physical) · {{ data.admiralty_cyber }} (cyber)</span>
+    </div>
+    <div class="baseline-strip">
+      {% for cp in data.baseline_strip %}
+      <div class="cell">
+        <span class="ctry">{{ cp.country }}</span>
+        <span class="pulseline">{{ pulse(cp.pulse_label, cp.pulse_severity, cp.forecast_arrow) }}</span>
+        <span style="font-size: 8.5px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">{{ cp.note }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Top events -->
+    <div class="page-section">
+      <span>TOP EVENTS THIS WEEK</span>
+      <span class="sub">Ranked by site relevance · {{ data.top_events | length }} items</span>
+    </div>
+    <table class="events">
+      <thead>
+        <tr>
+          <th style="width: 48%;">What / Where</th>
+          <th style="width: 14%;">When</th>
+          <th style="width: 16%;">Nearest site · dist</th>
+          <th style="width: 12%;">Severity</th>
+          <th style="width: 10%;">Ref</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ev in data.top_events %}
+        <tr>
+          <td>
+            <div class="e-head">{{ ev.what }}</div>
+            <div class="e-loc">{{ ev.where }}</div>
+          </td>
+          <td class="col-when">{{ ev.when }}</td>
+          <td class="col-dist">{{ ev.nearest_site }}</td>
+          <td class="col-sev">{{ sev(ev.severity_short, ev.severity) }}</td>
+          <td><span class="ref">[{{ ev.ref }}]</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- Cyber strip -->
+    <div class="cyber-strip">
+      <div class="cyber-label">
+        CYBER STRIP · {{ data.cyber_strip | length }} ITEMS
+        <span class="tag" style="margin-left: auto;">Regional admiralty {{ data.admiralty_cyber }}</span>
+      </div>
+      <ul class="cyber-list">
+        {% for item in data.cyber_strip %}
+        <li>
+          <span class="kind">{{ item.kind }}</span>
+          <span>{{ item.text }}</span>
+          <span class="ref">[{{ item.ref }}]</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- Baselines moved + reading guide -->
+    <div class="two-col">
+      <div>
+        <div class="page-section" style="margin-top: 4px;">
+          <span>BASELINES MOVED</span>
+          <span class="sub">vs. prior cycle</span>
+        </div>
+        <div class="moved" style="margin-top: 6px;">
+          {% for bd in data.baselines_moved %}
+          <div class="m-row"><span class="c">{{ bd.country_or_label }}</span><span>{{ bd.note }}</span></div>
+          {% endfor %}
+        </div>
+      </div>
+      <div>
+        <div class="page-section" style="margin-top: 4px;">
+          <span>READING GUIDE</span>
+          <span class="sub">This pack</span>
+        </div>
+        <div class="toc" style="margin-top: 6px;">
+          {% set ns = namespace(current_group='') %}
+          {% for e in data.reading_guide %}
+          {% if e.group != ns.current_group %}
+          <div class="grp">{{ e.group }}</div>
+          {% set ns.current_group = e.group %}
+          {% endif %}
+          <div class="row"><span class="ttl">{{ e.title }}</span><span class="dots"></span><span class="pg">{{ e.page_ref }}</span></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>{{ data.cover.classification }}</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE</span>
+  </div>
+</section>
+
+<!-- ================ SITE PAGES — CROWN JEWEL & PRIMARY ================ -->
+{# Build crown-jewel and primary lists without selectattr on nested computed fields #}
+{% set crown_jewels = [] %}
+{% set primary_sites = [] %}
+{% for s in data.sites %}
+  {% if s.context.resolved_tier == 'crown_jewel' %}
+    {% set _ = crown_jewels.append(s) %}
+  {% elif s.context.resolved_tier == 'primary' %}
+    {% set _ = primary_sites.append(s) %}
+  {% endif %}
+{% endfor %}
+
+{% for site in crown_jewels %}
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Issued {{ data.cover.issued_at.strftime('%Y-%m-%d') }} 06:00Z</span>
+  </div>
+
+  <div class="meta-label">SITE BLOCK · CROWN JEWEL · {{ '%02d' % loop.index }} OF {{ '%02d' % (crown_jewels | length) }}{% if site.computed.proximity_hits | length == 0 and site.computed.pattern_hits | length == 0 and site.computed.actor_hits | length == 0 %} · QUIET WEEK{% endif %}</div>
+
+  <div class="site-head">
+    <div class="left">
+      <div class="name-row">
+        <span class="site-name">{{ site.context.name }}</span>
+        <span class="tier tier--crown">Crown Jewel</span>
+        <span class="country">{{ site.context.country }} · {{ site.context.seerist_country_code }}</span>
+      </div>
+      <div class="facts">
+        <div class="cell"><span class="meta-label">COORDS</span><span class="meta-val num">{{ site.context.lat }}°N · {{ site.context.lon | abs }}°{% if site.context.lon < 0 %}W{% else %}E{% endif %}</span></div>
+        <div class="cell"><span class="meta-label">PERSONNEL</span><span class="meta-val num">{{ site.context.personnel.total }} total · {{ site.context.personnel.expat }} expat · {{ site.context.personnel.contractors }} contractors</span></div>
+        <div class="cell"><span class="meta-label">COUNTRY LEAD</span><span class="meta-val">{{ site.context.resolved_country_lead.name }}</span></div>
+        {% if site.context.produces %}
+        <div class="cell"><span class="meta-label">NAMEPLATE</span><span class="meta-val num">{{ site.context.produces }}</span></div>
+        {% else %}
+        <div class="cell"><span class="meta-label">ASSET</span><span class="meta-val">{{ site.context.type }}{% if site.context.subtype %} · {{ site.context.subtype }}{% endif %}</span></div>
+        {% endif %}
+      </div>
+    </div>
+    <div class="map-thumb">
+      <div class="pin" style="top: 48%; left: 50%;"></div>
+      <div class="label">{{ site.context.lat }}°N · {{ site.context.lon | abs }}°{% if site.context.lon < 0 %}W{% else %}E{% endif %}</div>
+    </div>
+  </div>
+
+  <div class="site-body">
+    <div class="baseline">
+      <div class="b-row"><span class="lbl">Pulse</span><span class="val">{{ pulse(site.computed.baseline.pulse_label, site.computed.baseline.pulse_severity, site.computed.baseline.forecast_arrow) }}</span></div>
+      <div class="b-row"><span class="lbl">Host baseline</span><span class="val">{{ site.computed.baseline.host_baseline }}</span></div>
+      <div class="b-row"><span class="lbl">Days since<br/>last incident</span><span class="val num">{{ site.computed.baseline.days_since_incident }}</span></div>
+      <div class="b-row"><span class="lbl">Admiralty</span><span class="val">{{ site.computed.baseline.admiralty }} · site-level</span></div>
+      {% if site.context.criticality_drivers %}
+      <div class="standing">
+        <span class="lbl">Criticality drivers</span>
+        {{ site.context.criticality_drivers }}
+      </div>
+      {% endif %}
+      {% if site.context.standing_notes %}
+      <div class="standing">
+        <span class="lbl">Standing notes · RSM</span>
+        {{ site.context.standing_notes }}
+      </div>
+      {% endif %}
+      {% if site.narrative.standing_notes_synthesis %}
+      <div class="standing">
+        <span class="lbl">Standing notes · synthesis</span>
+        {{ site.narrative.standing_notes_synthesis }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="feed">
+      {% if site.computed.proximity_hits %}
+      <div class="group-title">PROXIMITY HITS <span class="hint">within {{ site.context.poi_radius_km }} km POI</span></div>
+      {% for hit in site.computed.proximity_hits %}
+      <div class="item">
+        <div class="what">{{ hit.headline }}<br/><span class="loc">{{ hit.where }}</span></div>
+        <div class="col-meta">{% if hit.distance_km is not none %}{{ hit.distance_km | int }} KM · {% endif %}{{ hit.when }}</div>
+        <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if site.computed.pattern_hits %}
+      <div class="group-title">PATTERN HITS <span class="hint">relevant attack types · {{ site.context.seerist_country_code }} / 30d</span></div>
+      {% for hit in site.computed.pattern_hits %}
+      <div class="item">
+        <div class="what">{{ hit.headline }}</div>
+        <div class="col-meta">{{ hit.when }} · {{ hit.where }}</div>
+        <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if site.computed.actor_hits %}
+      <div class="group-title">ACTOR HITS <span class="hint">threat actors of interest</span></div>
+      {% for hit in site.computed.actor_hits %}
+      <div class="item">
+        <div class="what">{{ hit.headline }}</div>
+        <div class="col-meta">{{ hit.when }}{% if hit.where %} · {{ hit.where }}{% endif %}</div>
+        <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if site.computed.proximity_hits | length == 0 and site.computed.pattern_hits | length == 0 and site.computed.actor_hits | length == 0 %}
+      <div class="group-title">PROXIMITY HITS <span class="hint">within {{ site.context.poi_radius_km }} km POI</span></div>
+      <div class="item">
+        <div class="what" style="color: var(--ink-400); font-style: italic;">No proximity hits this week. Baseline quiet.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+      <div class="group-title">PATTERN · ACTOR <span class="hint">threat actors of interest</span></div>
+      <div class="item">
+        <div class="what" style="color: var(--ink-400); font-style: italic;">No pattern or actor hits this week. Baseline quiet.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+      {% endif %}
+
+      {% if site.computed.calendar_ahead %}
+      <div class="group-title">CALENDAR AHEAD <span class="hint">next 14 days</span></div>
+      {% for cal in site.computed.calendar_ahead %}
+      <div class="item">
+        <div class="what">{{ cal.label }}</div>
+        <div class="col-meta">D+{{ cal.horizon_days }} · {{ cal.date_str }}</div>
+        <div>{{ sev('MON', 'monitor') }}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if site.narrative.cyber_callout_text %}
+      <div class="cyber-callout">
+        <span class="tag">CYBER</span>
+        <span>{{ site.narrative.cyber_callout_text }}</span>
+        {% if site.computed.cyber_callout_computed %}
+        <span class="ref">[C1]</span>
+        {% endif %}
+      </div>
+      {% elif site.computed.cyber_callout_computed is none %}
+      <div class="group-title">CYBER CALLOUT</div>
+      <div class="item">
+        <div class="what" style="color: var(--ink-400); font-style: italic;">No cyber events joined to this site this week.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if loop.last and primary_sites %}
+  <!-- Primary sites stepped down on the same page as last crown jewel -->
+  {% for psite in primary_sites %}
+  <div style="margin-top: 14px;">
+    <div class="meta-label">SITE BLOCK · PRIMARY · STEPPED-DOWN ANATOMY</div>
+
+    <div class="site-head" style="border-top-color: var(--ink-700); border-top-width: 1px;">
+      <div class="left">
+        <div class="name-row">
+          <span class="site-name" style="font-size: 17px;">{{ psite.context.name }}</span>
+          <span class="tier tier--primary">Primary</span>
+          <span class="country">{{ psite.context.country }} · {{ psite.context.seerist_country_code }}</span>
+        </div>
+        <div class="facts">
+          <div class="cell"><span class="meta-label">COORDS</span><span class="meta-val num">{{ psite.context.lat }}°N · {{ psite.context.lon | abs }}°{% if psite.context.lon < 0 %}W{% else %}E{% endif %}</span></div>
+          <div class="cell"><span class="meta-label">PERSONNEL</span><span class="meta-val num">{{ psite.context.personnel.total }} total · {{ psite.context.personnel.expat }} expat · {{ psite.context.personnel.contractors }} contractors</span></div>
+          <div class="cell"><span class="meta-label">COUNTRY LEAD</span><span class="meta-val">{{ psite.context.resolved_country_lead.name }}</span></div>
+        </div>
+      </div>
+      <div class="map-thumb" style="width: 90px; height: 60px;">
+        <div class="pin" style="top: 55%; left: 70%;"></div>
+        <div class="label">{{ psite.context.lat }}°N</div>
+      </div>
+    </div>
+
+    <div class="site-body" style="border-bottom: 0;">
+      <div class="baseline">
+        <div class="b-row"><span class="lbl">Pulse</span><span class="val">{{ pulse(psite.computed.baseline.pulse_label, psite.computed.baseline.pulse_severity, psite.computed.baseline.forecast_arrow) }}</span></div>
+        <div class="b-row"><span class="lbl">Host baseline</span><span class="val">{{ psite.computed.baseline.host_baseline }}</span></div>
+        {% if psite.context.criticality_drivers %}
+        <div class="standing">
+          <span class="lbl">Criticality drivers</span>
+          {{ psite.context.criticality_drivers }}
+        </div>
+        {% endif %}
+        {% if psite.context.standing_notes %}
+        <div class="standing">
+          <span class="lbl">Standing notes · RSM</span>
+          {{ psite.context.standing_notes }}
+        </div>
+        {% endif %}
+        {% if psite.narrative.standing_notes_synthesis %}
+        <div class="standing">
+          <span class="lbl">Standing notes · synthesis</span>
+          {{ psite.narrative.standing_notes_synthesis }}
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="feed">
+        {% if psite.computed.proximity_hits %}
+        <div class="group-title">PROXIMITY HITS</div>
+        {% for hit in psite.computed.proximity_hits %}
+        <div class="item">
+          <div class="what">{{ hit.headline }}<br/><span class="loc">{{ hit.where }}</span></div>
+          <div class="col-meta">{% if hit.distance_km is not none %}{{ hit.distance_km | int }} KM · {% endif %}{{ hit.when }}</div>
+          <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if psite.computed.pattern_hits %}
+        <div class="group-title">PATTERN HITS</div>
+        {% for hit in psite.computed.pattern_hits %}
+        <div class="item">
+          <div class="what">{{ hit.headline }}</div>
+          <div class="col-meta">{{ hit.when }} · {{ hit.where }}</div>
+          <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if psite.computed.actor_hits %}
+        <div class="group-title">ACTOR HITS</div>
+        {% for hit in psite.computed.actor_hits %}
+        <div class="item">
+          <div class="what">{{ hit.headline }}</div>
+          <div class="col-meta">{{ hit.when }}{% if hit.where %} · {{ hit.where }}{% endif %}</div>
+          <div>{{ sev(hit.severity | upper, hit.severity) }} <span class="ref">[{{ hit.ref }}]</span></div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if psite.narrative.cyber_callout_text %}
+        <div class="cyber-callout">
+          <span class="tag">CYBER</span>
+          <span>{{ psite.narrative.cyber_callout_text }}</span>
+          {% if psite.computed.cyber_callout_computed %}
+          <span class="ref">[C1]</span>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="ph-bot">
+    <span>{{ data.cover.classification }} · {{ site.context.name | upper }}{% if loop.last and primary_sites %} / {{ primary_sites | map(attribute='context.name') | join(' / ') | upper }}{% endif %}</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE</span>
+  </div>
+</section>
+{% endfor %}
+
+<!-- ================ REGIONAL CYBER PAGE ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Issued {{ data.cover.issued_at.strftime('%Y-%m-%d') }} 06:00Z</span>
+  </div>
+
+  <div class="meta-label">REGIONAL CYBER · MIRRORS SITE ANATOMY</div>
+
+  <div class="site-head" style="border-top: 2px solid #06b6d4;">
+    <div class="left">
+      <div class="name-row">
+        <span class="site-name">Cyber — {% if data.sites %}{{ data.sites[0].context.region }}{% endif %}</span>
+        <span class="tier tier--crown" style="background: #0a7a8b;">Regional</span>
+        <span class="country" style="color: #0a7a8b;">{% if data.sites %}{{ data.sites[0].context.region }}{% endif %} · Sector focus: Energy / Renewables</span>
+      </div>
+      <div class="facts">
+        <div class="cell"><span class="meta-label">ADMIRALTY</span><span class="meta-val">{{ data.regional_cyber.admiralty }} · cyber</span></div>
+        <div class="cell"><span class="meta-label">WATCHLIST</span><span class="meta-val num">{{ data.regional_cyber.actors_count }} actors · {{ data.regional_cyber.cves_on_watch }} CVEs on watch</span></div>
+        <div class="cell"><span class="meta-label">ACTIVE CAMPAIGNS</span><span class="meta-val num">{{ data.regional_cyber.active_campaigns }} regional</span></div>
+      </div>
+    </div>
+    <div class="map-thumb">
+      <div class="coast" style="left: 6px; right: 6px; top: 18px; bottom: 18px; border: 1px dashed var(--ink-300); border-radius: 50%;"></div>
+      <div class="label">Regional coverage</div>
+    </div>
+  </div>
+
+  <div class="site-body">
+    <div class="baseline">
+      <div class="b-row"><span class="lbl">Admiralty</span><span class="val">{{ data.regional_cyber.admiralty }} · regional</span></div>
+      {% if data.regional_cyber.standing_notes %}
+      <div class="standing">
+        <span class="lbl">Regional standing notes</span>
+        {{ data.regional_cyber.standing_notes }}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="feed">
+      {% if data.regional_cyber.sector_signal %}
+      <div class="group-title" style="color: #0a7a8b;">SECTOR SIGNAL <span class="hint">energy / wind / utilities · last 7d</span></div>
+      {% for item in data.regional_cyber.sector_signal %}
+      <div class="item">
+        <div class="what">{{ item.headline }}</div>
+        <div class="col-meta">{{ item.where }} · {{ item.when }}</div>
+        <div>{{ sev(item.severity | upper, item.severity) }} <span class="ref">[{{ item.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if data.regional_cyber.actor_activity %}
+      <div class="group-title" style="color: #0a7a8b;">ACTOR ACTIVITY <span class="hint">global + regional watchlist</span></div>
+      {% for item in data.regional_cyber.actor_activity %}
+      <div class="item">
+        <div class="what">{{ item.headline }}</div>
+        <div class="col-meta">{{ item.where }} · {{ item.when }}</div>
+        <div>{{ sev(item.severity | upper, item.severity) }} <span class="ref">[{{ item.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if data.regional_cyber.geography_overlay %}
+      <div class="group-title" style="color: #0a7a8b;">GEOGRAPHY OVERLAY <span class="hint">host-country cyber activity</span></div>
+      {% for item in data.regional_cyber.geography_overlay %}
+      <div class="item">
+        <div class="what">{{ item.headline }}</div>
+        <div class="col-meta">{{ item.where }} · {{ item.when }}</div>
+        <div>{{ sev(item.severity | upper, item.severity) }} {% if item.ref != '-' %}<span class="ref">[{{ item.ref }}]</span>{% endif %}</div>
+      </div>
+      {% endfor %}
+      {% endif %}
+
+      {% if data.regional_cyber.vulnerability_signal %}
+      <div class="group-title" style="color: #0a7a8b;">VULNERABILITY SIGNAL <span class="hint">touching ot_stack · cve_watch_categories</span></div>
+      {% for item in data.regional_cyber.vulnerability_signal %}
+      <div class="item">
+        <div class="what">{{ item.headline }}</div>
+        <div class="col-meta">{{ item.where }} · {{ item.when }}</div>
+        <div>{{ sev(item.severity | upper, item.severity) }} <span class="ref">[{{ item.ref }}]</span></div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="ph-bot">
+    <span>{{ data.cover.classification }} · CYBER</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE</span>
+  </div>
+</section>
+
+<!-- ================ SECONDARY SITES + MINOR TABLE ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Issued {{ data.cover.issued_at.strftime('%Y-%m-%d') }} 06:00Z</span>
+  </div>
+
+  <div class="meta-label">SECONDARY SITES · INLINE</div>
+  <div class="page-section" style="margin-top: 8px;">
+    <span>SECONDARY · {{ data.secondary_sites | length }} OF {{ data.secondary_sites | length }} SHOWN</span>
+    <span class="sub">Site header + joined events · quiet rolls up to minor table</span>
+  </div>
+
+  {% for s in data.secondary_sites %}
+  <div class="sec-site">
+    <div class="head">
+      <span class="tier tier--secondary">Secondary</span>
+      <span class="name">{{ s.name }}</span>
+      <span class="meta">{{ s.country }} · {{ s.country_lead }}</span>
+      <span style="margin-left: auto;">{{ pulse(s.pulse_label, s.pulse_severity, s.forecast_arrow) }}</span>
+    </div>
+    <div class="events-inline">
+      {% for ev in s.events %}
+      <div class="e">
+        <div>{{ ev.headline }}
+          <span class="loc" style="color: var(--ink-500); font-size: 9.5px; display: block; margin-top: 2px;">{{ ev.where }}</span>
+        </div>
+        <div class="col-meta" style="font-size: 9px; color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase;">{% if ev.distance_km is not none %}{{ ev.distance_km | int }} KM · {% endif %}{{ ev.when }}</div>
+        <div>{{ sev(ev.severity | upper, ev.severity) }} <span class="ref">[{{ ev.ref }}]</span></div>
+      </div>
+      {% else %}
+      <div class="e">
+        <div style="color: var(--ink-400); font-style: italic;">No joined events this week.</div>
+        <div class="col-meta"></div>
+        <div></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Minor sites table -->
+  <div style="margin-top: 28px;">
+    <div class="meta-label">MINOR SITES · TABLE</div>
+    <div class="page-section" style="margin-top: 8px;">
+      <span>MINOR · {{ data.minor_sites | length }} SITES</span>
+      <span class="sub">One row per site · hot weeks promote to secondary inline</span>
+    </div>
+    <table class="minor">
+      <thead>
+        <tr>
+          <th style="width: 22%;">Site</th>
+          <th style="width: 10%;">Country</th>
+          <th style="width: 14%;">Pulse</th>
+          <th style="width: 10%; text-align: right;">&Delta; count</th>
+          <th style="width: 44%;">Top-1 event · note</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in data.minor_sites %}
+        <tr>
+          <td class="head">{{ row.name }}</td>
+          <td>{{ row.country_code }}</td>
+          <td>{{ pulse(row.pulse_label, row.pulse_severity, row.forecast_arrow) }}</td>
+          <td class="num">{{ row.delta_count }}</td>
+          <td class="note">{{ row.note }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="ph-bot">
+    <span>{{ data.cover.classification }} · SECONDARY + MINOR</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE</span>
+  </div>
+</section>
+
+<!-- ================ EVIDENCE APPENDIX ================ -->
+<section class="page">
+  <div class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Issued {{ data.cover.issued_at.strftime('%Y-%m-%d') }} 06:00Z</span>
+  </div>
+
+  <div class="meta-label">EVIDENCE APPENDIX · PHYSICAL &amp; CYBER</div>
+
+  <div class="app-section">
+    <div class="app-head">
+      <span>PHYSICAL EVIDENCE · {{ data.evidence_physical | length }} ITEMS</span>
+      <span style="color: var(--ink-400); font-weight: 500;">Admiralty range A1 — C3 · all timestamps UTC</span>
+    </div>
+    <ul class="app-list">
+      {% for ev in data.evidence_physical %}
+      <li>
+        <div class="ref">{{ ev.ref }}</div>
+        <div class="body">
+          <div class="headline">{{ ev.headline }}</div>
+          <div class="src">{{ ev.source }}</div>
+          <div class="why">{{ ev.why }}</div>
+        </div>
+        <div class="adm"><span class="grade">{{ ev.admiralty }}</span><span class="ts">{{ ev.timestamp }}</span></div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="app-section" style="margin-top: 24px;">
+    <div class="app-head cyber">
+      <span>CYBER EVIDENCE · {{ data.evidence_cyber | length }} ITEMS</span>
+      <span style="color: var(--ink-400); font-weight: 500;">Regional cyber admiralty {{ data.admiralty_cyber }}</span>
+    </div>
+    <ul class="app-list">
+      {% for ev in data.evidence_cyber %}
+      <li>
+        <div class="ref">{{ ev.ref }}</div>
+        <div class="body">
+          <div class="headline">{{ ev.headline }}</div>
+          <div class="src">{{ ev.source }}</div>
+          <div class="why">{{ ev.why }}</div>
+        </div>
+        <div class="adm"><span class="grade">{{ ev.admiralty }}</span><span class="ts">{{ ev.timestamp }}</span></div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div style="margin-top: 20px; padding-top: 10px; border-top: 1px solid var(--ink-200); font-size: 9px; color: var(--ink-400); letter-spacing: var(--tr-meta); text-transform: uppercase;">
+    All evidence retained in AeroGrid Intelligence archive · 30-day retention minimum · contact intel@aerogrid.internal for source URLs.
+  </div>
+
+  <div class="ph-bot">
+    <span>{{ data.cover.classification }} · APPENDIX</span>
+    <span class="reply"><b>REPLY:</b> <span class="tick"></span>ACCURATE <span class="tick"></span>OVERSTATED <span class="tick"></span>FALSE POSITIVE</span>
+  </div>
+</section>
+
+</body>
+</html>

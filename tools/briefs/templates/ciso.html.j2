@@ -1,0 +1,523 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ data.cover.title }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/design/styles/tokens.css">
+<link rel="stylesheet" href="/static/design/styles/ciso.css">
+</head>
+<body>
+
+<div class="print-hint">
+  <span>{{ data.cover.title }} · 7pp A4 · digital-first</span>
+  <a class="btn" href="#" onclick="window.print();return false;">Print / Save as PDF</a>
+</div>
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 1 · COVER                              -->
+<!-- —————————————————————————————————————————— -->
+<section class="page cover" data-screen-label="01 Cover">
+  <div class="cover-grid">
+
+    <div class="cover-hairline">
+      <span>AeroGrid Wind Solutions · CISO Office</span>
+      <span>Internal — AeroGrid Security Leadership</span>
+    </div>
+
+    <div class="cover-num">
+      <div class="m">{{ data.cover.month_short[:2] }}<span class="slash">·</span>{{ data.cover.month_short[3:] }}</div>
+      <div class="side">
+        <div class="eyebrow">Monthly Risk Brief · CISO · {{ data.cover.month }}</div>
+        <div class="sub">Geopolitical and cyber risk, cross-regional.</div>
+      </div>
+    </div>
+
+    <div class="cover-body">
+      <h1 class="cover-thesis">{{ data.cover_thesis_primary | safe }}<br><em>{{ data.cover_thesis_secondary }}</em></h1>
+
+      <div class="cover-state">
+        <span class="lbl">State of risk · {{ data.cover.month }}</span>
+        <span class="line">{{ data.state_of_risk_line }}</span>
+      </div>
+    </div>
+
+    <div class="cover-meta">
+      <div>
+        <div class="lbl">Month</div>
+        <div class="val"><span class="tight">{{ data.cover.month }}</span></div>
+      </div>
+      <div>
+        <div class="lbl">Issue date</div>
+        <div class="val tight">{{ data.cover.issued_at.strftime('%d %B %Y') }}</div>
+      </div>
+      <div>
+        <div class="lbl">Posture</div>
+        <div class="val">{{ data.posture.posture }} · <span class="tight">{{ data.posture.admiralty }}</span><span class="shift">{{ data.posture.admiralty_shift }}</span></div>
+      </div>
+      <div>
+        <div class="lbl">Version</div>
+        <div class="val tight">{{ data.cover.version }}</div>
+      </div>
+    </div>
+
+    <div class="cover-foot">
+      <span>Prep. {{ data.cover.prepared_by }} · Rev. {{ data.cover.reviewed_by }}</span>
+      <span>{{ data.cover.audience }}</span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 2 · OPENING + REGIONS GRID             -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="02 Opening">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Opening · p. 2 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 1 · State of risk · regions at a glance</span>
+    <span class="meta">{{ data.cover.issued_at.strftime('%d %b %Y') }} · Admiralty {{ data.posture.admiralty }} · Confidence HIGH</span>
+  </div>
+
+  <div class="pull-sor">
+    <div class="lbl">The month in one line</div>
+    <div class="line">{{ data.state_of_risk_line }}; the cross-cutting theme is <span class="coupling">rising geopolitical–cyber coupling</span> — state-actor cyber scanning tracking state-actor-of-interest physical activity.</div>
+  </div>
+
+  <div class="posture">
+    <div class="cell">
+      <div class="lbl">Posture</div>
+      <div class="val">{{ data.posture.posture }} <span class="shift">{{ data.posture.posture_shift }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Admiralty</div>
+      <div class="val"><span class="num">{{ data.posture.admiralty }}</span> <span class="shift">{{ data.posture.admiralty_shift }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Regions moved</div>
+      <div class="val"><span class="num">{{ data.posture.regions_moved }}</span> of 5 <span class="shift">{{ data.posture.regions_movement_summary }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Scenarios watched</div>
+      <div class="val"><span class="num">{{ data.posture.scenarios_watched }}</span> <span class="shift">{{ data.posture.scenarios_delta_note }}</span></div>
+    </div>
+  </div>
+
+  <div class="page-mark" style="margin-bottom:0;">
+    <span class="kicker">§ 2 · CISO takeaways · {{ data.cover.month }}</span>
+    <span class="meta">{{ data.ciso_takeaways | length }} items · ordered by urgency</span>
+  </div>
+
+  <div class="takeaways">
+    {% for tk in data.ciso_takeaways %}
+    <div class="takeaway">
+      <div class="n">{{ '%02d' % tk.n }}</div>
+      <div class="dot dot--{{ tk.severity }}"></div>
+      <div class="body">{{ tk.body_markdown | safe }}</div>
+      <div class="anchor">{{ tk.anchor }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top: 22px;">
+    <div class="page-mark" style="margin-bottom: 0;">
+      <span class="kicker">§ 3 · Regions at a glance</span>
+      <span class="meta">Five regions · movement + why clear</span>
+    </div>
+    <div class="regions">
+      {% for r in data.regions_grid %}
+      <div class="r {% if r.classification != 'baseline' %}{{ r.classification }}{% endif %}">
+        <div class="reg">{{ r.region }}</div>
+        <div class="status"><span class="arrow arrow--{{ r.direction }}">{% if r.direction == 'up' %}↑{% elif r.direction == 'down' %}↓{% elif r.direction == 'cyber' %}⇌{% else %}→{% endif %}</span>{{ r.status_label }}</div>
+        <div class="adm">{{ r.admiralty }} · {{ r.admiralty_shift }}</div>
+        <div class="note">{{ r.note }}</div>
+        <div class="whyclear">
+          <span class="l">{{ r.why_clear_label }}</span>
+          {{ r.why_clear_body }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 2 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 3 · CROSS-REGIONAL PICTURE             -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="03 Cross-regional">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Cross-regional · p. 3 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 4 · Cross-regional intelligence picture</span>
+    <span class="meta">What patterns appeared across regions</span>
+  </div>
+
+  <h1 class="page-title">Patterns the RSMs can't see from a single region.</h1>
+  <p class="page-lede">Four movements, one coupling. The coupling strip below is the CISO-specific lens — what the brief exists to surface.</p>
+
+  <div class="cross-items">
+    {% for it in data.cross_regional_items %}
+    <div class="it">
+      <div class="tag {% if it.tag_cyber %}cyber{% endif %}">{{ it.tag }}</div>
+      <div class="body">
+        <span class="head">{{ it.head }}</span>
+        {{ it.body }}
+      </div>
+      <div class="rail">
+        <span class="delta {{ it.delta }}">{{ it.delta_label }}</span><br>
+        {{ it.rail_note }}<br>
+        {{ it.anchors | join(' · ') }}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Coupling strip — the month's thesis -->
+  <div class="coupling-strip">
+    <div class="lbl"><span>{{ data.coupling_strip.label }}</span><span style="color:var(--ink-400); font-weight:500;">·</span><span class="phys">Physical</span><span style="color:var(--ink-400); font-weight:500;">+</span><span style="color:var(--cyber-ink);">Cyber</span></div>
+    <div class="body">
+      <div class="col">
+        <div class="h">Physical track</div>
+        <div class="txt">{{ data.coupling_strip.physical_track | safe }}</div>
+      </div>
+      <div class="sep"></div>
+      <div class="col">
+        <div class="h">Cyber track</div>
+        <div class="txt">{{ data.coupling_strip.cyber_track | safe }}</div>
+      </div>
+    </div>
+    <div class="summary">
+      <span class="lbl">Read</span>
+      {{ data.coupling_strip.summary | safe }}
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 3 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 4 · CYBER SURFACE                      -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="04 Cyber surface">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Cyber surface · p. 4 / 7</span>
+  </header>
+
+  <div class="page-mark cyber">
+    <span class="kicker">§ 5 · Cyber surface · AeroGrid footprint</span>
+    <span class="meta">Sector · actor · vulnerability</span>
+  </div>
+
+  <h1 class="page-title">Three layers of cyber exposure, stacked.</h1>
+  <p class="page-lede">Sector campaigns that reach our peer group. Actor activity that touches our geography. Vulnerability signal that lives in our stack. Each layer is graded and anchored.</p>
+
+  <div class="cyber-surface">
+
+    <!-- SECTOR -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Sector-targeting campaigns</span>
+        <span class="sub">AeroGrid footprint: 7 NCE sites · 2 MED sites on Vendor X</span>
+      </div>
+      {% for e in data.cyber_surface.sector_campaigns %}
+      <div class="entry">
+        <div class="k">{{ e.k }} <span class="ctx">{{ e.ctx }}</span></div>
+        <div class="body">
+          {{ e.body }}
+          <span class="impact">{{ e.impact }}</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--{{ e.severity }}">{{ e.severity | capitalize }}</span><br>
+          {{ e.region_or_scope }}<br>
+          {{ e.admiralty }}<br>
+          <span class="anchor">{{ e.anchors | join(' ') }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ACTOR -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Actor activity · watchlist</span>
+        <span class="sub">What moved this month</span>
+      </div>
+      {% for e in data.cyber_surface.actor_activity %}
+      <div class="entry">
+        <div class="k">{{ e.k }} <span class="ctx">{{ e.ctx }}</span></div>
+        <div class="body">
+          {{ e.body }}
+          <span class="impact">{{ e.impact }}</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--{{ e.severity }}">{{ e.severity | capitalize }}</span><br>
+          {{ e.region_or_scope }}<br>
+          {{ e.admiralty }}<br>
+          <span class="anchor">{{ e.anchors | join(' ') }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- VULNERABILITY -->
+    <div class="bundle">
+      <div class="bhead">
+        <span class="t">Vulnerability signal · stack</span>
+        <span class="sub">OT / ICS · SCADA · turbine · grid · identity · perimeter</span>
+      </div>
+      {% for e in data.cyber_surface.vulnerability_signal %}
+      <div class="entry">
+        <div class="k">{{ e.k }} <span class="ctx">{{ e.ctx }}</span></div>
+        <div class="body">
+          {{ e.body }}
+          <span class="impact">{{ e.impact }}</span>
+        </div>
+        <div class="rail">
+          <span class="sev-chip sev-chip--{{ e.severity }}">{{ e.severity | capitalize }}</span><br>
+          {{ e.region_or_scope }}<br>
+          {{ e.admiralty }}<br>
+          <span class="anchor">{{ e.anchors | join(' ') }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 4 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 5 · CYBER-PHYSICAL JOIN                -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="05 Cyber-physical join">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Coupling · p. 5 / 7</span>
+  </header>
+
+  <div class="page-mark cyber">
+    <span class="kicker">§ 6 · Cyber-physical join · {{ data.cyber_physical_join.region }}</span>
+    <span class="meta">One signal, two streams</span>
+  </div>
+
+  <h1 class="page-title">{{ data.cyber_physical_join.title_markdown | safe }}</h1>
+  <p class="page-lede">{{ data.cyber_physical_join.lede }}</p>
+
+  <div class="join-wrap">
+
+    <div class="col">
+      <div class="pane-label"><span class="tag">PHYS</span><span>Physical track · Morocco</span></div>
+      <h3>{{ data.cyber_physical_join.physical.title }}</h3>
+      {% for p in data.cyber_physical_join.physical.narrative_paragraphs %}
+      <p>{{ p }}</p>
+      {% endfor %}
+      <div class="facts">
+        {% for k, v in data.cyber_physical_join.physical.facts.items() %}
+        <div class="fact"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="pane-label cyber"><span class="tag">CYB</span><span>Cyber track · Morocco + Spain</span></div>
+      <h3>{{ data.cyber_physical_join.cyber.title }}</h3>
+      {% for p in data.cyber_physical_join.cyber.narrative_paragraphs %}
+      <p>{{ p }}</p>
+      {% endfor %}
+      <div class="facts">
+        {% for k, v in data.cyber_physical_join.cyber.facts.items() %}
+        <div class="fact"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Timeline -->
+  <div class="timeline">
+    <div class="tl-head">
+      <span class="t">{{ data.cyber_physical_join.timeline.range_label }}</span>
+      <span class="sub">Join marks show where streams overlap in time</span>
+    </div>
+    <div class="tl" style="height: 120px; padding-left: 58px;">
+      <div class="lane-label phys">PHYS</div>
+      <div class="lane-label cyb">CYB</div>
+      <div class="axis" style="left: 58px; right: 8px;"></div>
+      {% for t in data.cyber_physical_join.timeline.ticks %}
+      {% if loop.first %}
+      <div class="tick" style="left: 58px;"><span class="lbl">{{ t.label }}</span></div>
+      {% elif loop.last %}
+      <div class="tick" style="right: 8px;"><span class="lbl">{{ t.label }}</span></div>
+      {% else %}
+      <div class="tick" style="left: {{ t.pct_pos }}%;"><span class="lbl">{{ t.label }}</span></div>
+      {% endif %}
+      {% endfor %}
+
+      <!-- Physical events -->
+      {% for e in data.cyber_physical_join.timeline.physical_events %}
+      {% if loop.first %}
+      <div class="evt phys{% if e.is_ghost %} ghost{% endif %}" style="left: 58px; width: calc({{ e.width_pct }}% - 58px);">{{ e.label }}</div>
+      {% else %}
+      <div class="evt phys{% if e.is_ghost %} ghost{% endif %}" style="left: {{ e.start_pct }}%; width: {{ e.width_pct }}%;">{{ e.label }}</div>
+      {% endif %}
+      {% endfor %}
+
+      <!-- Cyber events -->
+      {% for e in data.cyber_physical_join.timeline.cyber_events %}
+      {% if loop.first %}
+      <div class="evt cyb{% if e.is_ghost %} ghost{% endif %}" style="left: 58px; width: calc({{ e.width_pct }}% - 58px);">{{ e.label }}</div>
+      {% else %}
+      <div class="evt cyb{% if e.is_ghost %} ghost{% endif %}" style="left: {{ e.start_pct }}%; width: {{ e.width_pct }}%;">{{ e.label }}</div>
+      {% endif %}
+      {% endfor %}
+
+      <!-- Join marks at polling window -->
+      {% for m in data.cyber_physical_join.timeline.join_marks %}
+      <div class="join-mark" style="left: {{ m }}%;"></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="join-tail">
+    <span class="lbl">CISO read</span>
+    {{ data.cyber_physical_join.read_summary | safe }}
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 5 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 6 · SCENARIO WATCH                     -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="06 Scenario watch">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Scenario watch · p. 6 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 7 · Scenario watch</span>
+    <span class="meta">Delta ribbons mark what moved since March</span>
+  </div>
+
+  <h1 class="page-title">Four scenarios. Two moved.</h1>
+  <p class="page-lede">Where a scenario moved, the ribbon is the point — the delta, not the body. Continuity scenarios carry a neutral ribbon to make that visible too.</p>
+
+  <div class="scenarios">
+
+    {% for s in data.scenarios %}
+    <div class="s-row">
+      <div class="s-id-row">
+        <div><span class="s-id">{{ s.id }}</span><span class="s-reg">{{ s.region }}</span></div>
+        <h2 class="s-title">{{ s.title }}</h2>
+        <div class="s-posture">
+          <span class="pill pill--{{ s.posture.pill_severity }}">{{ s.posture.pill_label }}</span><br>
+          {{ s.posture.admiralty }}
+        </div>
+      </div>
+      <div class="delta-ribbon {{ s.delta_ribbon.kind }}">
+        <div class="dr-tag">{{ s.delta_ribbon.tag }}</div>
+        <div class="dr-body">{{ s.delta_ribbon.body_markdown | safe }}</div>
+      </div>
+      <div class="s-bod">
+        <div class="narrative">
+          {{ s.narrative }}
+          <span class="drivers">{{ s.drivers_line }}</span>
+        </div>
+        <div class="side">
+          {% for k, v in s.side.items() %}
+          <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+          {% endfor %}
+          <div class="anchors">
+            {% for a in s.anchors %}<span class="anchor">{{ a }}</span>{% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 6 / 7</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 7 · EVIDENCE APPENDIX                  -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="07 Evidence appendix">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Evidence · p. 7 / 7</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 8 · Evidence appendix</span>
+    <span class="meta">Admiralty-graded · every assertion traces here</span>
+  </div>
+
+  <div class="app-section">
+    <div class="app-head"><span>Physical · E-prefix</span><span class="sub">{{ data.evidence_physical | length }} entries</span></div>
+    <ol class="app-list">
+      {% for e in data.evidence_physical %}
+      <li><div class="ref">{{ e.ref }}</div><div class="body"><div class="headline">{{ e.headline }}</div><div class="src">{{ e.source }}</div><div class="why">{{ e.why }}</div></div><div class="adm"><span class="grade">{{ e.admiralty }}</span><span class="ts">{{ e.timestamp }}</span></div></li>
+      {% endfor %}
+    </ol>
+  </div>
+
+  <div class="app-section">
+    <div class="app-head cyber"><span>Cyber · C-prefix</span><span class="sub">{{ data.evidence_cyber | length }} entries · NCE + MED + global</span></div>
+    <ol class="app-list">
+      {% for e in data.evidence_cyber %}
+      <li><div class="ref">{{ e.ref }}</div><div class="body"><div class="headline">{{ e.headline }}</div><div class="src">{{ e.source }}</div><div class="why">{{ e.why }}</div></div><div class="adm"><span class="grade">{{ e.admiralty }}</span><span class="ts">{{ e.timestamp }}</span></div></li>
+      {% endfor %}
+    </ol>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · CISO Office</span>
+    <span class="preparer">Prep. D. Huang · Rev. A. Mendes</span>
+    <span>Internal — Security Leadership · p. 7 / 7</span>
+  </footer>
+</section>
+
+</body>
+</html>

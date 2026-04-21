@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ data.cover.title }}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/design/styles/tokens.css">
+<link rel="stylesheet" href="/static/design/styles/board.css">
+</head>
+<body>
+
+<div class="print-hint">
+  <span>{{ data.cover.title }} · 9pp A4 · pre-read</span>
+  <a class="btn" href="#" onclick="window.print();return false;">Print / Save as PDF</a>
+</div>
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 1 · COVER                              -->
+<!-- —————————————————————————————————————————— -->
+<section class="page cover" data-screen-label="01 Cover">
+  <div class="cover-grid">
+
+    <div class="cover-hairline">
+      <span class="mark">{{ data.cover.distribution_note }}</span>
+      <span>{{ data.cover.classification | title }}</span>
+    </div>
+
+    <div class="cover-num">
+      <div class="q">{{ data.cover.quarter_short[:2] }}<span class="slash">·</span>{{ data.cover.quarter_short[3:] }}</div>
+      <div class="side">
+        <div class="eyebrow">Quarterly Risk Briefing · Board pre-read</div>
+        <div class="sub">Geopolitical and cyber risk across the AeroGrid portfolio.</div>
+      </div>
+    </div>
+
+    <div class="cover-body">
+      <h1 class="cover-title">{{ data.cover_thesis_title }}<br><em>{{ data.cover_thesis_subtitle }}</em></h1>
+
+      <div class="cover-state">
+        <span class="lbl">State of risk · {{ data.cover.quarter }}</span>
+        <span class="line">Elevated North African unrest, sustained EU renewables cyber pressure, and a material stabilisation of APAC transit corridors. The portfolio remains materially exposed to Moroccan political volatility and a widening EU ransomware campaign.</span>
+      </div>
+    </div>
+
+    <div class="cover-meta">
+      <div>
+        <div class="lbl">Quarter</div>
+        <div class="val"><span class="tight">{{ data.cover.quarter }}</span> · Apr–Jun</div>
+      </div>
+      <div>
+        <div class="lbl">Issue date</div>
+        <div class="val tight">{{ data.cover.issued_at.strftime('%d %B %Y') }}</div>
+      </div>
+      <div>
+        <div class="lbl">Posture</div>
+        <div class="val">{{ data.posture.overall_posture }} · <span class="tight">{{ data.posture.admiralty }}</span></div>
+      </div>
+      <div>
+        <div class="lbl">Version</div>
+        <div class="val tight">{{ data.cover.version }}</div>
+      </div>
+    </div>
+
+    <div class="cover-foot">
+      <span>Prepared by Global Security &amp; Intelligence · Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Review {{ data.cover.reviewed_by.split(' · ')[0] }} (VP Risk)</span>
+      <span>Board meeting · {{ data.cover.board_meeting }}</span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 2 · EXECUTIVE FRAMING                  -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="02 Executive framing">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Executive framing · p. 2 / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 1 · State of risk</span>
+    <span class="meta">{{ data.cover.issued_at.strftime('%d %B %Y') }} · Admiralty {{ data.posture.admiralty }} · Confidence HIGH</span>
+  </div>
+
+  <div class="pull-sor">
+    <div class="lbl">The quarter in one line</div>
+    <div class="line">{{ data.state_of_risk_line }}</div>
+  </div>
+
+  <div class="posture">
+    <div class="cell">
+      <div class="lbl">Overall posture</div>
+      <div class="val">{{ data.posture.overall_posture }} <span class="shift">{{ data.posture.posture_shift }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Admiralty</div>
+      <div class="val"><span class="num">{{ data.posture.admiralty }}</span> <span class="shift">{{ data.posture.admiralty_shift }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Scenarios on watch</div>
+      <div class="val"><span class="num">{{ data.posture.scenarios_on_watch }}</span> <span class="shift">{{ data.posture.scenarios_split }}</span></div>
+    </div>
+    <div class="cell">
+      <div class="lbl">Next review</div>
+      <div class="val">Q3 board <span class="shift">{{ data.posture.next_review.split(' · ')[-1] }}</span></div>
+    </div>
+  </div>
+
+  <div class="page-mark" style="margin-bottom:0;">
+    <span class="kicker">§ 2 · Board-level takeaways · {{ data.cover.quarter }}</span>
+    <span class="meta">{{ data.board_takeaways | length }} items · ordered by governance weight</span>
+  </div>
+
+  <div class="takeaways">
+    {% for tk in data.board_takeaways %}
+    <div class="takeaway">
+      <div class="n">{{ '%02d' % tk.n }}</div>
+      <div class="dot dot--{{ tk.severity }}"></div>
+      <div class="body">{{ tk.body_markdown | safe }}</div>
+      <div class="anchor">{{ tk.anchor }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. 2 / 9</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 3 · INTELLIGENCE PICTURE — KEY DEVELOPMENTS -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="03 Intelligence picture">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Intelligence picture · p. 3 / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 3 · Intelligence picture</span>
+    <span class="meta">Key developments · also tracking · watch next</span>
+  </div>
+
+  <h1 class="page-title">What moved this quarter.</h1>
+  <p class="page-lede">Five developments with material AeroGrid implications. The regional delta bar below summarises how each region moved relative to the Q1 baseline.</p>
+
+  <!-- Quarterly delta bar -->
+  <div class="delta-bar">
+    {% for r in data.delta_bar %}
+    <div class="r">
+      <div class="reg">{{ r.region }}</div>
+      <div class="move"><span class="arrow arrow--{{ r.direction }}">{% if r.direction == 'up' %}↑{% elif r.direction == 'down' %}↓{% else %}→{% endif %}</span> {{ r.label }}</div>
+      <div class="cause">{{ r.cause }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Key developments -->
+  <div class="keydev">
+    {% for kd in data.key_developments %}
+    <div class="kd">
+      <div class="n">{{ '%02d' % kd.n }}</div>
+      <div class="cat cat--{{ kd.category }}">{{ kd.category }}</div>
+      <div class="content">
+        <span class="head">{{ kd.headline }}</span>
+        {{ kd.body }}
+        <span class="mean">{{ kd.meaning }}</span>
+      </div>
+      <div class="rail">
+        <span class="sev-chip sev-chip--{{ kd.severity }}">{{ kd.severity | capitalize }}</span>
+        {{ kd.region }}<br>
+        <span class="anchor">{% for a in kd.anchors %}{{ a }}{% if not loop.last %} {% endif %}{% endfor %}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Also tracking / Watch next -->
+  <div class="parallel">
+    <div class="col">
+      <div class="h"><span>§ Also tracking</span><span class="hint">Context · not decision-grade</span></div>
+      {% for it in data.also_tracking %}
+      <div class="item">
+        <div class="head">{{ it.head }}</div>
+        <div class="tail">{{ it.tail }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="col">
+      <div class="h"><span>§ Watch next quarter</span><span class="hint">May reach the board Q3</span></div>
+      {% for it in data.watch_next %}
+      <div class="item">
+        <span class="horizon">{{ it.horizon }}</span>
+        <div class="head">{{ it.head }}</div>
+        <div class="tail">{{ it.tail }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. 3 / 9</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 4 · RISK MATRIX                        -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="04 Risk matrix">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Risk matrix · p. 4 / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 4 · Risk matrix — {{ data.matrix.dots | length }} scenarios on likelihood × impact</span>
+    <span class="meta">Register view · replaces the register dump</span>
+  </div>
+
+  <h1 class="page-title">Concentration in MED political and NCE cyber.</h1>
+  <p class="page-lede">Supply-chain exposure stable but strategically watched. Upper-right quadrant is the board action space; below-diagonal is management authority.</p>
+
+  <div class="matrix-wrap">
+    <div style="padding: 10px 36px 50px 60px;">
+      <div class="matrix" aria-label="Risk matrix">
+        <!-- axis labels -->
+        <div class="axis-title y">Impact →</div>
+        <div class="axis-title x">Likelihood →</div>
+        <div class="axis-x"><span>LOW</span><span>MED</span><span>HIGH</span></div>
+        <div class="axis-y"><span>HIGH</span><span>MED</span><span>LOW</span></div>
+
+        <!-- quadrant label: board-action zone (top right) -->
+        <div class="zone" style="right:0; top:0; width:40%; height:40%;">Board action</div>
+
+        {% for d in data.matrix.dots %}
+        <div class="dot-s {{ d.severity }}" style="left:{{ d.likelihood }}%; bottom:{{ d.impact }}%;">
+          <div class="lbl {{ d.label_position }}"><span class="reg">{{ d.scenario_id }}</span>{{ d.label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <aside class="matrix-side">
+      <div class="headline">{{ data.matrix.headline }}</div>
+      <div class="bl">
+        <span class="lbl">Bottom line</span>
+        {{ data.matrix.bottom_line }}
+      </div>
+      <div class="legend">
+        <div class="row"><span class="d critical"></span><span>CRITICAL — immediate board action</span></div>
+        <div class="row"><span class="d high"></span><span>HIGH — board awareness, management action</span></div>
+        <div class="row"><span class="d medium"></span><span>MEDIUM — management authority</span></div>
+        <div class="row"><span class="d monitor"></span><span>MONITOR — watch only</span></div>
+      </div>
+      <div class="reading">
+        <span class="lbl">How to read this</span>
+        A move toward the upper-right is more urgent. A severity change (dot colour) is a governance signal — MEDIUM → HIGH warrants conversation. An Admiralty move from B2 → A1 on a specific scenario means treat as near-certain.
+      </div>
+    </aside>
+  </div>
+
+  <!-- Register tail — one row, so the matrix doubles as a register -->
+  <div class="matrix-tail">
+    {% for row in data.matrix.register_tail %}
+    <div class="c"><div class="id">{{ row.id }}</div><div class="reg">{{ row.region }}</div><div class="hd">{{ row.headline }}</div><div class="sev sev--{{ row.severity }}">{% if row.severity == 'monitor' %}Mon{% elif row.severity == 'medium' %}Med{% elif row.severity == 'high' %}High{% elif row.severity == 'critical' %}Crit{% endif %}</div></div>
+    {% endfor %}
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. 4 / 9</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGES 5/6/7 · SCENARIOS                     -->
+<!-- —————————————————————————————————————————— -->
+{% for s in data.scenarios %}
+{% set page_no = loop.index + 4 %}
+{% set section_no = loop.index + 4 %}
+<section class="page" data-screen-label="0{{ page_no }} Scenario {{ s.id }}">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Scenario {{ loop.index }} of {{ data.scenarios | length }} · p. {{ page_no }} / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ {{ section_no }} · {% if loop.index < data.scenarios | length %}Board-action scenario{% else %}Watched scenario · supply-chain{% endif %}</span>
+    <span class="meta">Standalone · evidence-anchored</span>
+  </div>
+
+  <div class="scenario-head">
+    <div>
+      <div><span class="s-id">{{ s.id }}</span><span class="s-region">{{ s.region }}</span></div>
+      <h1 class="s-title">{{ s.title }}</h1>
+      <div class="s-type">{% for t in s.type_tags %}{{ t }}{% if not loop.last %}<span class="div">·</span>{% endif %}{% endfor %}</div>
+    </div>
+    <div class="s-posture">
+      <span class="pill pill--{{ s.posture.pill_severity }}">{{ s.posture.pill_label }}</span>
+      <div class="pstack">
+        <span>Severity</span><span class="v">{{ s.posture.severity }}</span>
+        <span>Likelihood</span><span class="v">{{ s.posture.likelihood }}</span>
+        <span>Admiralty</span><span class="v">{{ s.posture.admiralty }}</span>
+        <span>Δ vs Q1</span><span class="v">{{ s.posture.delta_vs_prior }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-body">
+    <div class="narrative">
+      <p class="lede">{{ s.narrative.lede }}</p>
+      {% for p in s.narrative.paragraphs %}
+      <p>{{ p }}</p>
+      {% endfor %}
+    </div>
+
+    <div class="side">
+      <div class="sblock">
+        <div class="lbl">Organisational implications</div>
+        <ul>
+          {% for imp in s.implications %}
+          <li>{{ imp }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="sblock">
+        <div class="lbl">Baselines moved</div>
+        <ul>
+          {% for bm in s.baselines_moved %}
+          <li>{{ bm | safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-rails">
+    <div class="rail">
+      <div class="lbl">Drivers</div>
+      <ol>
+        {% for dr in s.drivers %}
+        <li>{{ dr }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+    <div class="rail">
+      <div class="lbl">Actions &amp; governance asks</div>
+      <ol>
+        {% for ac in s.actions %}
+        <li>{{ ac | safe }}</li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+
+  <div class="scenario-foot">
+    <span class="lbl">Evidence anchors</span>
+    <div class="anchors">
+      {% for e in s.evidence_anchors %}
+      <span class="anchor"><span class="ref">{{ e.ref }}</span> {{ e.headline }} <span class="adm">· {{ e.admiralty }}</span></span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. {{ page_no }} / 9</span>
+  </footer>
+</section>
+{% endfor %}
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 8 · METHODOLOGY                        -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="08 Methodology">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>Methodology · p. 8 / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 8 · Methodology</span>
+    <span class="meta">Sources · ratings · reading guide</span>
+  </div>
+
+  <h1 class="page-title">How to read this brief.</h1>
+  <p class="page-lede">One page. No illustrations. A board member should be able to tell, at a glance, what has changed since last quarter and what a change in rating means.</p>
+
+  <div class="method">
+
+    <div class="block">
+      <div class="lbl">Sources</div>
+      <p>This brief draws on a combination of commercial intelligence feeds, open-source discovery, and internal Regional Security Manager (RSM) reporting. Every assertion on pages 2–7 traces to a numbered evidence anchor appended to the scenario it supports.</p>
+      {% for k, v in data.methodology.sources.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+
+    <div class="block">
+      <div class="lbl">Rating system</div>
+      <p>Severity and confidence are rated independently. <strong>Severity</strong> captures the potential consequence to AeroGrid; <strong>likelihood</strong> captures the probability within the stated horizon; <strong>Admiralty</strong> captures source and information grading.</p>
+      {% for k, v in data.methodology.rating_system.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+
+    <div class="block">
+      <div class="lbl">What the board should read into</div>
+      <div class="reading-rules">
+        {% for rr in data.methodology.reading_rules %}
+        <div class="rr">
+          <div class="cond">{{ rr.cond }}</div>
+          <div class="then">{{ rr.then_markdown | safe }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="lbl">Against the last quarter</div>
+      <p>{{ data.methodology.against_last_quarter_prose }}</p>
+      {% for k, v in data.methodology.against_last_quarter_kv.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. 8 / 9</span>
+  </footer>
+</section>
+
+
+<!-- —————————————————————————————————————————— -->
+<!-- PAGE 9 · END MATTER                         -->
+<!-- —————————————————————————————————————————— -->
+<section class="page" data-screen-label="09 End matter">
+  <header class="ph-top">
+    <span class="brand">{{ data.cover.title }}</span>
+    <span>End matter · p. 9 / 9</span>
+  </header>
+
+  <div class="page-mark">
+    <span class="kicker">§ 9 · Distribution, provenance &amp; handling</span>
+    <span class="meta">Board of Directors · {{ data.cover.board_meeting.split(' · ')[0] }}</span>
+  </div>
+
+  <h1 class="page-title">Distribution &amp; provenance.</h1>
+  <p class="page-lede">Handling instructions for this document. Copies are numbered and tracked.</p>
+
+  <div class="method">
+    <div class="block">
+      <div class="lbl">Distribution</div>
+      {% for k, v in data.end_matter.distribution.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+    <div class="block">
+      <div class="lbl">Provenance</div>
+      {% for k, v in data.end_matter.provenance.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+    <div class="block">
+      <div class="lbl">Handling</div>
+      {% for p in data.end_matter.handling_paragraphs %}
+      <p>{{ p | safe }}</p>
+      {% endfor %}
+    </div>
+    <div class="block">
+      <div class="lbl">Linked products</div>
+      {% for k, v in data.end_matter.linked_products.items() %}
+      <div class="kv"><div class="k">{{ k }}</div><div class="v">{{ v }}</div></div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <footer class="ph-bot">
+    <span>AeroGrid Wind Solutions · Global Security &amp; Intelligence</span>
+    <span class="preparer">Prep. {{ data.cover.prepared_by.split(' · ')[0] }} · Rev. {{ data.cover.reviewed_by.split(' · ')[0] }}</span>
+    <span>Internal — Board Distribution · p. 9 / 9</span>
+  </footer>
+</section>
+
+</body>
+</html>
