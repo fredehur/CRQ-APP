@@ -1,6 +1,7 @@
 from __future__ import annotations
 from datetime import date
 
+from tools.briefs.pipeline_state import global_run_id
 from tools.briefs.models import (
     CisoBriefData,
     CisoCover,
@@ -23,7 +24,7 @@ from tools.briefs.models import (
 )
 
 
-def load_ciso_data(month: str) -> CisoBriefData:
+def load_ciso_data(month: str) -> tuple[CisoBriefData, str | None]:
     if month != "2026-04":
         raise NotImplementedError(
             f"only 2026-04 mock is available; got {month}"
@@ -945,7 +946,7 @@ def load_ciso_data(month: str) -> CisoBriefData:
         ),
     ]
 
-    return CisoBriefData(
+    brief = CisoBriefData(
         cover=cover,
         cover_thesis_primary=cover_thesis_primary,
         cover_thesis_secondary=cover_thesis_secondary,
@@ -961,3 +962,4 @@ def load_ciso_data(month: str) -> CisoBriefData:
         evidence_physical=evidence_physical,
         evidence_cyber=evidence_cyber,
     )
+    return brief, global_run_id()

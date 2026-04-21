@@ -701,544 +701,17 @@ async function _patchFeedbackNote(region, note) {
   } catch (_) {}
 }
 
-// ── Section 7: Render — Reports (Audience Hub) + History ──────────────
+// ── Section 7: Render — Reports (card grid) + History ─────────────────
+// Minimal client-side schema hint. Actual card data flows from GET /api/briefs/.
 const AUDIENCE_REGISTRY = [
-  {
-    id: 'ciso',
-    name: 'CISO Weekly Brief',
-    format: 'Word (.docx) · PDF',
-    phase: 'live',
-    color: '#ff7b72',
-    generate: '/api/outputs/ciso-docx',
-    downloads: [
-      { label: '&#8595; DOCX', endpoint: '/api/outputs/ciso-docx' },
-      { label: '&#8595; PDF',  endpoint: '/api/briefs/ciso/pdf' },
-    ],
-    renderer: 'ciso',
-  },
-  {
-    id: 'board',
-    name: 'Board Report',
-    format: 'PDF + PPTX',
-    phase: 'live',
-    color: '#e3b341',
-    generate: null,
-    downloads: [
-      { label: '&#8595; Brief PDF', endpoint: '/api/briefs/board/pdf' },
-      { label: '&#8595; PPTX',     endpoint: '/api/outputs/pptx' },
-    ],
-    renderer: 'board',
-    subviews: [
-      { id: 'board-global',   label: 'Global Board' },
-      { id: 'board-regional', label: 'Regional Exec' },
-    ],
-  },
-  {
-    id: 'rsm',
-    name: 'RSM Briefs',
-    format: 'PDF · 5 regions',
-    phase: 'live',
-    color: '#79c0ff',
-    generate: null,
-    downloads: [],
-    renderer: 'rsm',
-  },
-  {
-    id: 'sales',
-    name: 'Regional Sales',
-    format: 'TBD',
-    phase: 'future',
-    color: '#6e7681',
-    generate: null,
-    downloads: [],
-    renderer: 'future',
-    phaseLabel: 'Planned for a future release.',
-  },
+  { id: 'ciso',     title: 'CISO Weekly Brief', canNarrate: false },
+  { id: 'board',    title: 'Board Report',      canNarrate: false },
+  { id: 'rsm-apac', title: 'RSM — APAC',        canNarrate: true  },
+  { id: 'rsm-ame',  title: 'RSM — AME',         canNarrate: true  },
+  { id: 'rsm-latam',title: 'RSM — LATAM',       canNarrate: true  },
+  { id: 'rsm-med',  title: 'RSM — MED',         canNarrate: true  },
+  { id: 'rsm-nce',  title: 'RSM — NCE',         canNarrate: true  },
 ];
-
-async function renderReports() {
-  const tab = $('tab-reports');
-  if (!tab) return;
-  if (!$('rpt-rail')) {
-    tab.innerHTML = `
-      <div class="rpt-shell">
-        <div id="rpt-rail" class="rpt-rail"></div>
-        <div id="rpt-content" class="rpt-content"></div>
-      </div>`;
-  }
-  renderReportsRail();
-  renderAudienceContent(state.selectedAudienceId);
-}
-
-function renderReportsRail() {
-  const rail = $('rpt-rail');
-  if (!rail) return;
-
-  rail.innerHTML = AUDIENCE_REGISTRY.map(a => {
-    const isActive = state.selectedAudienceId === a.id
-      || (a.subviews && a.subviews.some(s => s.id === state.selectedAudienceId));
-    const isFuture = a.phase === 'future';
-    const badge    = a.phase === 'live'
-      ? `<span class="rpt-live-badge">Live</span>`
-      : `<span class="rpt-plan-badge">Planned</span>`;
-    const opacity  = isFuture ? 'opacity:0.45;' : '';
-
-    let subHtml = '';
-    if (a.subviews && isActive) {
-      subHtml = a.subviews.map(sv => {
-        const svActive = state.selectedAudienceId === sv.id;
-        return `<div class="rpt-rail-subitem${svActive ? ' active' : ''}"
-                     onclick="selectAudience('${sv.id}')">${sv.label}</div>`;
-      }).join('');
-    }
-
-    return `
-<div onclick="selectAudience('${a.subviews ? a.subviews[0].id : a.id}')"
-     class="rpt-rail-item${isActive ? ' active' : ''}"
-     style="${opacity}">
-  <div style="display:flex;align-items:center;flex-wrap:wrap">
-    <span class="rpt-rail-name">${a.name}</span>${badge}
-  </div>
-  <div class="rpt-rail-fmt">${a.format}</div>
-</div>
-${subHtml}`;
-  }).join('');
-}
-
-async function _hubGenerate(audienceId) {
-  if (audienceId === 'ciso') await generateCisoDocx();
-}
-
-function selectAudience(id) {
-  state.selectedAudienceId = id;
-  renderReportsRail();
-  renderAudienceContent(id);
-}
-
-function renderAudienceContent(id) {
-  const content = $('rpt-content');
-  if (!content) return;
-
-  const audience = AUDIENCE_REGISTRY.find(a =>
-    a.id === id || (a.subviews && a.subviews.some(s => s.id === id))
-  );
-  if (!audience) return;
-
-  if (audience.phase === 'future') {
-    content.innerHTML = `
-      <div class="rpt-action-bar">
-        <span class="rpt-action-title">${audience.name}</span>
-      </div>
-      <div class="rpt-body" style="color:#6e7681;font-size:11px;padding:20px 16px">${audience.phaseLabel}</div>`;
-    return;
-  }
-
-  // Build action bar (shared chrome — identical for all live tabs)
-  const dlHtml = audience.downloads.map(d =>
-    `<a href="${d.endpoint}" target="_blank" class="rpt-btn-dl">${d.label}</a>`
-  ).join('');
-  const genHtml = audience.generate
-    ? `<button onclick="_hubGenerate('${audience.id}')" class="rpt-btn rpt-btn-push">&#8635; Generate</button>`
-    : '';
-
-  const runMeta = `WK15-2026 · Last generated 04:12 UTC`;
-  const displayName = audience.subviews
-    ? (id === 'board-regional' ? 'Board Report — Regional Exec' : 'Board Report — Global')
-    : audience.name;
-
-  content.innerHTML = `
-    <div class="rpt-action-bar">
-      <span class="rpt-action-title">${displayName}</span>
-      <span class="rpt-action-meta">${runMeta}</span>
-      <div class="rpt-action-btns">
-        <button class="rpt-btn rpt-btn-push" onclick="_hubGenerate('${audience.id}')">PUSH</button>
-        <button class="rpt-btn rpt-btn-hold">HOLD</button>
-        ${genHtml}${dlHtml}
-      </div>
-    </div>
-    <div id="rpt-body" class="rpt-body"></div>`;
-
-  if (audience.renderer === 'ciso') renderCisoView();
-  else if (id === 'board-global')   renderBoardGlobalView();
-  else if (id === 'board-regional') renderBoardRegionalView();
-  else if (audience.renderer === 'rsm') renderRsmInReports();
-}
-
-async function renderCisoView() {
-  const body = $('rpt-body');
-  if (!body) return;
-  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
-
-  const report = await fetchJSON('/api/global-report');
-  if (!report) {
-    body.innerHTML = '<p style="color:#6e7681;font-size:11px;padding:8px 0">No pipeline data — run the pipeline first.</p>';
-    return;
-  }
-
-  const escalated = (report.regional_threats || []).filter(r =>
-    r.severity === 'Critical' || r.severity === 'High'
-  );
-  const monitor   = report.monitor_regions || [];
-  const patterns  = report.cross_regional_patterns || [];
-
-  // Section 1: Intelligence Snapshot (leads — ammunition kit framing)
-  const snapshotHtml = `
-<div class="rpt-section" style="border-left-color:#f59e0b">
-  <div class="rpt-section-lbl" style="color:#f59e0b">Intelligence Snapshot</div>
-  <div class="rpt-section-prose">${esc(report.executive_summary || 'No summary available.')}</div>
-</div>`;
-
-  // Section 2: Decisions Required
-  const decisionsHtml = escalated.length ? escalated.map(r => {
-    const sevCol = r.severity === 'Critical' ? '#ff7b72' : '#ffa657';
-    return `<div class="rpt-decision">
-      <div class="rpt-decision-title" style="color:${sevCol}">${esc(r.region)} — ${esc(r.severity)}</div>
-      <div class="rpt-decision-body">${esc(r.strategic_assessment || '')}</div>
-    </div>`;
-  }).join('') : '<div style="font-size:10px;color:#484f58;font-style:italic">No escalations this period.</div>';
-
-  const decisionsSection = `
-<div class="rpt-section" style="border-left-color:#ff7b72">
-  <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-    <span class="rpt-section-lbl" style="color:#ff7b72;margin:0">Decisions Required</span>
-    ${escalated.length ? `<span style="font-size:8px;padding:1px 6px;background:#2d0000;border:1px solid #da3633;color:#ff7b72;border-radius:2px">${escalated.length} OPEN</span>` : ''}
-  </div>
-  ${decisionsHtml}
-</div>`;
-
-  // Section 3: Talking Points
-  const talkingRegions = [...escalated, ...monitor.slice(0, 2)];
-  const tpHtml = talkingRegions.length ? talkingRegions.map(r => {
-    const text = r.strategic_assessment || r.rationale || '';
-    const sentences = text.split(/\.\s+/);
-    return `<div class="rpt-tp">
-      <div class="rpt-tp-text"><strong>${esc(r.region)}:</strong> ${esc(sentences[0] || text)}.</div>
-    </div>`;
-  }).join('') : '<div style="font-size:10px;color:#484f58;font-style:italic">No talking points this period.</div>';
-
-  const talkingSection = `
-<div class="rpt-section" style="border-left-color:#4a9eff">
-  <div class="rpt-section-lbl" style="color:#4a9eff">Talking Points — Board &amp; Org</div>
-  ${tpHtml}
-</div>`;
-
-  // Section 4: Financial Exposure (VaCR)
-  const vacr = report.global_vacr_summary || {};
-  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : 'See Risk Register';
-  const vacrDelta = vacr.delta_pct != null
-    ? (vacr.delta_pct > 0
-        ? `<span class="rpt-delta-up">↑ ${vacr.delta_pct.toFixed(1)}% vs last cycle</span>`
-        : `<span class="rpt-delta-dn">↓ ${Math.abs(vacr.delta_pct).toFixed(1)}% vs last cycle</span>`)
-    : '';
-
-  const financialSection = `
-<div class="rpt-cards">
-  <div class="rpt-card" style="border-top-color:#3fb950">
-    <div class="rpt-card-lbl" style="color:#3fb950">Global VaCR</div>
-    <div class="rpt-card-value">${vacrValue}</div>
-    <div class="rpt-card-delta">${vacrDelta}</div>
-  </div>
-  <div class="rpt-card" style="border-top-color:#f59e0b">
-    <div class="rpt-card-lbl" style="color:#f59e0b">Escalated Regions</div>
-    <div class="rpt-card-value">${escalated.length}</div>
-    <div class="rpt-card-delta" style="color:#6e7681">${escalated.map(r => r.region).join(' · ') || '—'}</div>
-  </div>
-  <div class="rpt-card" style="border-top-color:#79c0ff">
-    <div class="rpt-card-lbl" style="color:#79c0ff">At Monitor</div>
-    <div class="rpt-card-value">${monitor.length}</div>
-    <div class="rpt-card-delta" style="color:#6e7681">${monitor.map(m => m.region).join(' · ') || '—'}</div>
-  </div>
-</div>`;
-
-  // Section 5: Watch List
-  const watchHtml = patterns.length
-    ? patterns.slice(0, 5).map(p => {
-        const txt = typeof p === 'string' ? p : (p.summary || p.description || JSON.stringify(p));
-        return `<div class="rpt-watch">${esc(txt)}</div>`;
-      }).join('')
-    : '<div style="font-size:10px;color:#484f58;font-style:italic">No cross-regional patterns flagged.</div>';
-
-  const watchSection = `
-<div class="rpt-section" style="border-left-color:#6e40c9">
-  <div class="rpt-section-lbl" style="color:#d2a8ff">Watch List — WK16</div>
-  ${watchHtml}
-</div>`;
-
-  // Critique fix: snapshot leads (ammunition kit framing)
-  body.innerHTML = snapshotHtml + decisionsSection + talkingSection + financialSection + watchSection;
-}
-
-async function renderBoardGlobalView() {
-  const body = $('rpt-body');
-  if (!body) return;
-  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
-
-  const report = await fetchJSON('/api/global-report');
-  if (!report) {
-    body.innerHTML = '<p style="color:#6e7681;font-size:11px;padding:8px 0">No pipeline data — run the pipeline first.</p>';
-    return;
-  }
-
-  const escalated = (report.regional_threats || []);
-  const vacr = report.global_vacr_summary || {};
-  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : '—';
-  const vacrDelta = vacr.delta_pct != null
-    ? (vacr.delta_pct > 0
-        ? `<span class="rpt-delta-up">↑ ${vacr.delta_pct.toFixed(1)}%</span>`
-        : `<span class="rpt-delta-dn">↓ ${Math.abs(vacr.delta_pct).toFixed(1)}%</span>`)
-    : '';
-
-  // Financial first for board
-  const financialSection = `
-<div class="rpt-cards">
-  <div class="rpt-card" style="border-top-color:#3fb950">
-    <div class="rpt-card-lbl" style="color:#3fb950">Total Risk Exposure</div>
-    <div class="rpt-card-value">${vacrValue}</div>
-    <div class="rpt-card-delta">${vacrDelta}</div>
-  </div>
-  <div class="rpt-card" style="border-top-color:#ff7b72">
-    <div class="rpt-card-lbl" style="color:#ff7b72">Elevated Risk Regions</div>
-    <div class="rpt-card-value">${escalated.filter(r => r.severity === 'Critical' || r.severity === 'High').length}</div>
-  </div>
-  <div class="rpt-card" style="border-top-color:#f59e0b">
-    <div class="rpt-card-lbl" style="color:#f59e0b">Active Scenarios</div>
-    <div class="rpt-card-value">${escalated.length + (report.monitor_regions || []).length}</div>
-  </div>
-</div>`;
-
-  const summarySection = `
-<div class="rpt-section" style="border-left-color:#f59e0b">
-  <div class="rpt-section-lbl" style="color:#f59e0b">Executive Summary</div>
-  <div class="rpt-section-prose">${esc(report.executive_summary || '')}</div>
-</div>`;
-
-  const risksHtml = escalated.slice(0, 3).map(r => {
-    const sevCol = r.severity === 'Critical' ? '#ff7b72' : r.severity === 'High' ? '#ffa657' : '#e3b341';
-    return `<div class="rpt-decision">
-      <div class="rpt-decision-title" style="color:${sevCol}">${esc(r.region)} — ${esc(r.primary_scenario || r.severity)}</div>
-      <div class="rpt-decision-body">${esc(r.strategic_assessment || '')}</div>
-    </div>`;
-  }).join('') || '<div style="font-size:10px;color:#484f58;font-style:italic">No elevated risks this period.</div>';
-
-  const risksSection = `
-<div class="rpt-section" style="border-left-color:#ff7b72">
-  <div class="rpt-section-lbl" style="color:#ff7b72">Key Risks This Period</div>
-  ${risksHtml}
-</div>`;
-
-  // Critique fix: pull from report.management_summary, not hardcoded prose
-  const responseProse = esc(
-    report.management_summary ||
-    'Continuous monitoring active across all five regions. CISO-level review completed. Escalated regions under enhanced intelligence collection. No advisory changes required at this time.'
-  );
-  const responseSection = `
-<div class="rpt-section" style="border-left-color:#3fb950">
-  <div class="rpt-section-lbl" style="color:#3fb950">Management Response</div>
-  <div class="rpt-section-prose">${responseProse}</div>
-</div>`;
-
-  body.innerHTML = financialSection + summarySection + risksSection + responseSection;
-}
-
-async function renderBoardRegionalView() {
-  const body = $('rpt-body');
-  if (!body) return;
-
-  // Critique fix: fetch global_report for VaCR card (regional brief has no VaCR field)
-  const globalReport = await fetchJSON('/api/global-report');
-
-  // Inject region selector above body
-  const content = $('rpt-content');
-  const existingSelector = content.querySelector('.rpt-region-selector');
-  if (!existingSelector) {
-    const selectorDiv = document.createElement('div');
-    selectorDiv.className = 'rpt-region-selector';
-    selectorDiv.innerHTML = ['APAC','AME','LATAM','MED','NCE'].map(r =>
-      `<button class="rpt-region-btn${state.selectedBoardRegion === r ? ' active' : ''}"
-               onclick="selectBoardRegion('${r}')">${r}</button>`
-    ).join('');
-    const actionBar = content.querySelector('.rpt-action-bar');
-    if (actionBar) actionBar.after(selectorDiv);
-  } else {
-    existingSelector.querySelectorAll('.rpt-region-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent === state.selectedBoardRegion);
-    });
-  }
-
-  body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading...</p>';
-
-  const region  = state.selectedBoardRegion;
-  const lower   = region.toLowerCase();
-  const sections = await fetchJSON(`/api/region/${lower}/brief`);
-
-  if (!sections) {
-    body.innerHTML = `<p style="color:#6e7681;font-size:11px">No data for ${region} — run the pipeline first.</p>`;
-    return;
-  }
-
-  const headlines = sections.brief_headlines || {};
-  const why = esc(headlines.why || '');
-  const how = esc(headlines.how || '');
-  const sow = esc(headlines.so_what || '');
-
-  // Critique fix: Board Regional needs VaCR card (global context — note in label)
-  const vacr = (globalReport || {}).global_vacr_summary || {};
-  const vacrValue = vacr.total ? `$${(vacr.total / 1e6).toFixed(1)}M` : '—';
-  const vacrCard = `
-<div class="rpt-cards">
-  <div class="rpt-card" style="border-top-color:#3fb950">
-    <div class="rpt-card-lbl" style="color:#3fb950">Global VaCR <span style="color:#484f58;font-weight:400">(global)</span></div>
-    <div class="rpt-card-value">${vacrValue}</div>
-    <div class="rpt-card-delta" style="color:#484f58">Regional allocation: see risk register</div>
-  </div>
-</div>`;
-
-  const summarySection = why ? `
-<div class="rpt-section" style="border-left-color:#f59e0b">
-  <div class="rpt-section-lbl" style="color:#f59e0b">Executive Summary — ${esc(region)}</div>
-  <div class="rpt-section-prose">${why}</div>
-</div>` : '';
-
-  const basisSection = how ? `
-<div class="rpt-section" style="border-left-color:#ff7b72">
-  <div class="rpt-section-lbl" style="color:#ff7b72">Risk Basis</div>
-  <div class="rpt-section-prose">${how}</div>
-</div>` : '';
-
-  const implicSection = sow ? `
-<div class="rpt-section" style="border-left-color:#3fb950">
-  <div class="rpt-section-lbl" style="color:#3fb950">Business Implication</div>
-  <div class="rpt-section-prose">${sow}</div>
-</div>` : '';
-
-  const fallback = (!why && !how && !sow)
-    ? '<p style="color:#6e7681;font-size:11px">No regional summary available — run the pipeline first.</p>' : '';
-
-  body.innerHTML = vacrCard + summarySection + basisSection + implicSection + fallback;
-}
-
-window.selectBoardRegion = function(region) {
-  state.selectedBoardRegion = region;
-  renderBoardRegionalView();
-};
-
-function renderRsmInReports() {
-  const body = $('rpt-body');
-  if (!body) return;
-
-  body.style.padding = '0';  // RSM uses its own internal padding
-  body.innerHTML = `
-<div style="display:grid;grid-template-columns:160px 1fr;height:100%;overflow:hidden">
-  <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
-    <div style="padding:6px 12px;border-bottom:1px solid #21262d;font-size:8px;letter-spacing:.1em;text-transform:uppercase;color:#484f58">Regions</div>
-    <div id="rsm-region-list"></div>
-  </div>
-  <div style="display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:8px 16px;border-bottom:1px solid #21262d;flex-shrink:0">
-      <span id="rsm-region-label" style="font-size:12px;font-weight:600;color:#e6edf3"></span>
-    </div>
-    <div id="rsm-panel-body" style="flex:1;overflow:hidden;display:flex"></div>
-  </div>
-</div>`;
-
-  renderRsmSidebar();
-  renderRsmContent(state.selectedRsmRegion || REGIONS[0]);
-}
-
-async function renderSingleDocView(audience) {
-  const body = $('audience-detail-body');
-  if (!body) return;
-
-  if (audience.id === 'ciso') {
-    body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading CISO brief preview...</p>';
-    const report = await fetchJSON('/api/global-report');
-    if (!report) { body.innerHTML = '<p style="color:#6e7681;font-size:11px">No pipeline data — run the pipeline first.</p>'; return; }
-
-    const regions = report.regional_threats || [];
-    const monitor = report.monitor_regions || [];
-
-    let html = `<div style="margin-bottom:12px">
-      <div style="font-size:10px;color:#6e7681;margin-bottom:10px;line-height:1.6">${report.executive_summary || ''}</div>
-    </div>`;
-    regions.forEach(r => {
-      const sev = r.severity || '';
-      const sevCol = sev === 'Critical' ? '#dc2626' : sev === 'High' ? '#d97706' : '#6e7681';
-      html += `<div style="border-top:1px solid #21262d;padding:8px 0">
-        <div style="display:flex;gap:10px;align-items:baseline;margin-bottom:3px">
-          <span style="font-size:10px;font-weight:600;color:#e6edf3">${r.region}</span>
-          <span style="font-size:9px;color:${sevCol}">${sev}</span>
-          <span style="font-size:9px;color:#6e7681">${r.primary_scenario || ''}</span>
-          <span style="font-size:9px;color:#6e7681">${r.dominant_pillar || ''}</span>
-        </div>
-        <div style="font-size:9px;color:#8b949e;line-height:1.5">${r.strategic_assessment || ''}</div>
-      </div>`;
-    });
-    if (monitor.length) {
-      html += `<div style="border-top:1px solid #21262d;padding-top:8px;margin-top:4px">
-        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681;margin-bottom:6px">At Monitor</div>`;
-      monitor.forEach(m => {
-        html += `<div style="font-size:9px;color:#8b949e;margin-bottom:4px">
-          <span style="color:#d97706;font-weight:600">${m.region}:</span> ${m.rationale || ''}</div>`;
-      });
-      html += '</div>';
-    }
-    body.innerHTML = html;
-
-  } else if (audience.id === 'board') {
-    body.innerHTML = '<p style="color:#6e7681;font-size:11px">Loading board report preview...</p>';
-    const md = await fetchJSON('/api/outputs/global-md');
-    if (md?.markdown) {
-      body.innerHTML = `<div style="font-size:11px;line-height:1.6">${marked.parse(md.markdown)}</div>`;
-    } else {
-      body.innerHTML = '<p style="color:#6e7681;font-size:11px">No board report available — run the pipeline first.</p>';
-    }
-  } else {
-    body.innerHTML = `<p style="color:#6e7681;font-size:11px">${audience.phaseLabel || 'Coming soon.'}</p>`;
-  }
-}
-
-function renderRegionListView(audience) {
-  const body = $('audience-detail-body');
-  if (!body) return;
-  // RSM region-list view — reuses existing RSM tab DOM and functions
-  body.innerHTML = `
-<div style="display:grid;grid-template-columns:200px 1fr;height:100%;overflow:hidden;border:1px solid #21262d;border-radius:2px">
-  <div style="border-right:1px solid #21262d;display:flex;flex-direction:column;overflow-y:auto;background:#080c10">
-    <div style="padding:8px 12px;border-bottom:1px solid #21262d;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:#6e7681">REGIONS</div>
-    <div id="rsm-region-list"></div>
-  </div>
-  <div style="display:flex;flex-direction:column;overflow:hidden">
-    <div style="padding:8px 16px;border-bottom:1px solid #21262d;flex-shrink:0">
-      <span id="rsm-region-label" style="font-size:12px;color:#e6edf3"></span>
-    </div>
-    <div id="rsm-panel-body" style="flex:1;overflow:hidden;display:flex"></div>
-  </div>
-</div>`;
-  renderRsmSidebar();
-  renderRsmContent(state.selectedRsmRegion || REGIONS[0]);
-}
-
-async function generateCisoDocx() {
-  showToast('Generating CISO brief...');
-  try {
-    const resp = await fetch('/api/outputs/ciso-docx');
-    if (resp.ok) {
-      const blob = await resp.blob();
-      const url  = URL.createObjectURL(blob);
-      const a    = document.createElement('a');
-      a.href     = url;
-      a.download = 'ciso_brief.docx';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast('Downloaded: ciso_brief.docx');
-    } else {
-      const err = await resp.json().catch(() => ({}));
-      showToast(`Error: ${err.error || resp.statusText}`);
-    }
-  } catch (e) {
-    showToast(`Error: ${e.message}`);
-  }
-}
 
 // ── History Matrix Helpers ────────────────────────────────────────────
 const MATRIX_COLORS = {
@@ -1746,15 +1219,20 @@ const cfgState = {
   dirty: { topics: false, sources: false, prompt: false },
   pendingNavAction: null,
   loaded: false,
-  footprintLoaded: false,
-  footprintData: {},
-  footprintDirty: {},
 };
 
 function switchTab(tab) {
   if (cfgState.dirty.topics || cfgState.dirty.sources) {
     showUnsavedModal(() => _doSwitchTab(tab));
     return;
+  }
+  if (typeof anyContextSurfaceDirty === "function" && anyContextSurfaceDirty()) {
+    if (!confirm("You have unsaved changes in the Context tab. Discard?")) return;
+    contextState.dirty = { company: false, cyberWatchlist: false, regional: {}, sites: {} };
+    contextState.company = null;
+    contextState.cyberWatchlist = null;
+    contextState.sitesByRegion = {};
+    contextState.regionalByRegion = {};
   }
   _doSwitchTab(tab);
 }
@@ -1765,11 +1243,11 @@ function _doSwitchTab(tab) {
   const onRegister = tab === 'validate';
   if (registerBar) registerBar.style.display = onRegister ? 'flex' : 'none';
   document.body.style.paddingTop = onRegister ? '60px' : '36px';
-  ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'pipeline', 'runlog'].forEach(t => {
+  ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'context', 'pipeline', 'runlog'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
     el.classList.toggle('hidden', t !== tab);
-    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' || t === 'validate' ? 'flex' : 'block') : 'none';
+    el.style.display = t === tab ? (t === 'config' || t === 'overview' || t === 'pipeline' || t === 'runlog' || t === 'validate' || t === 'context' ? 'flex' : 'block') : 'none';
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
@@ -1781,6 +1259,7 @@ function _doSwitchTab(tab) {
   if (tab === 'sources')  switchSourceLibrarySubtab(_slActiveSubtab);
   if (tab === 'pipeline') renderPipelineTab();
   if (tab === 'runlog') renderRunLog();
+  if (tab === 'context') renderContextTab();
 }
 
 // ── Pipeline Tab Data ─────────────────────────────────────────────────
@@ -2463,9 +1942,7 @@ function closePanel() {
 // ── Config Tab ────────────────────────────────────────────────────────
 function switchCfgTab(tab) {
   const leavingSources = $('cfg-tab-sources') && $('cfg-tab-sources').style.display !== 'none';
-  const leavingFootprint = $('cfg-tab-footprint') && $('cfg-tab-footprint').style.display !== 'none';
-  const isDirty = (leavingSources && (cfgState.dirty.topics || cfgState.dirty.sources)) ||
-                  (leavingFootprint && Object.values(cfgState.footprintDirty).some(Boolean));
+  const isDirty = leavingSources && (cfgState.dirty.topics || cfgState.dirty.sources);
   if (isDirty) {
     showUnsavedModal(() => _doSwitchCfgTab(tab));
     return;
@@ -2474,13 +1951,12 @@ function switchCfgTab(tab) {
 }
 
 function _doSwitchCfgTab(tab) {
-  ['sources','footprint'].forEach(t => {
+  ['sources'].forEach(t => {
     const el = $(`cfg-tab-${t}`);
     if (!el) return;
-    el.style.display = t === tab ? (t === 'sources' ? 'grid' : 'block') : 'none';
+    el.style.display = t === tab ? 'grid' : 'none';
     $(`cfg-nav-${t}`).classList.toggle('active', t === tab);
   });
-  if (tab === 'footprint') loadFootprint();
 }
 
 async function loadConfigTab() {
@@ -2500,88 +1976,6 @@ async function loadConfigTab() {
   loadSuggestions(); // async, non-blocking
 }
 
-// ── Footprint panel ────────────────────────────────────────────────────
-
-async function loadFootprint() {
-  if (cfgState.footprintLoaded) { renderFootprint(); return; }
-  const data = await fetch('/api/footprint').then(r => r.ok ? r.json() : {}).catch(() => ({}));
-  cfgState.footprintData = data;
-  cfgState.footprintDirty = {};
-  cfgState.footprintLoaded = true;
-  renderFootprint();
-}
-
-function renderFootprint() {
-  const container = $('footprint-panels');
-  if (!container) return;
-  const regions = ['APAC', 'AME', 'LATAM', 'MED', 'NCE'];
-  container.innerHTML = regions.map(region => {
-    const d = cfgState.footprintData[region] || {};
-    const rsm = (d.stakeholders || []).find(s => s.role === `${region} RSM`) || {};
-    const isDirty = cfgState.footprintDirty[region];
-    return `
-<div class="fp-region${isDirty ? ' fp-dirty' : ''}" id="fp-card-${region}">
-  <div class="fp-region-header" onclick="toggleFpRegion('${region}')">
-    <span>${region}</span>
-    <span style="font-size:9px;text-transform:none;letter-spacing:0;color:#6e7681;max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(d.summary || 'No data')}</span>
-    <span>▾</span>
-  </div>
-  <div class="fp-region-body" id="fp-body-${region}">
-    <div class="fp-field">
-      <label>Summary</label>
-      <input type="text" id="fp-summary-${region}" value="${esc(d.summary || '')}" oninput="markFpDirty('${region}')">
-    </div>
-    <div class="fp-field">
-      <label>Headcount</label>
-      <input type="number" id="fp-headcount-${region}" value="${d.headcount || ''}" oninput="markFpDirty('${region}')">
-    </div>
-    <div class="fp-field">
-      <label>RSM Email</label>
-      <input type="text" id="fp-rsm-${region}" value="${esc(rsm.email || '')}" oninput="markFpDirty('${region}')">
-    </div>
-    <div class="fp-field">
-      <label>Notes (sites, contracts, crown jewels — freetext)</label>
-      <textarea id="fp-notes-${region}" oninput="markFpDirty('${region}')">${esc(d.notes || '')}</textarea>
-    </div>
-    <div style="text-align:right;margin-top:8px">
-      <button class="fp-save-btn" onclick="saveFpRegion('${region}')">Save</button>
-    </div>
-  </div>
-</div>`;
-  }).join('');
-}
-
-function toggleFpRegion(region) {
-  const body = $(`fp-body-${region}`);
-  if (body) body.classList.toggle('open');
-}
-
-function markFpDirty(region) {
-  cfgState.footprintDirty[region] = true;
-  const card = $(`fp-card-${region}`);
-  if (card) card.classList.add('fp-dirty');
-}
-
-async function saveFpRegion(region) {
-  const payload = {
-    summary:   $(`fp-summary-${region}`)?.value || '',
-    headcount: parseInt($(`fp-headcount-${region}`)?.value || '0', 10),
-    rsm_email: $(`fp-rsm-${region}`)?.value || '',
-    notes:     $(`fp-notes-${region}`)?.value || '',
-  };
-  const r = await fetch(`/api/footprint/${region}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-  if (r.ok) {
-    cfgState.footprintDirty[region] = false;
-    cfgState.footprintLoaded = false;
-    await loadFootprint();
-  } else {
-    alert(`Save failed for ${region}: ${r.status}`);
-  }
-}
 
 function markDirty(panel) {
   cfgState.dirty[panel] = true;
@@ -5335,4 +4729,1109 @@ function cancelAutoTune(registerId, scenarioId) {
     .catch(e => console.error('[cancelAutoTune] error', e));
   const btn = document.getElementById(`rr-autotune-btn-${scenarioId}`);
   if (btn) { btn.textContent = '⚙ Auto-Tune'; btn.disabled = false; }
+}
+
+// =====================================================================
+// Context Tab
+// =====================================================================
+const contextState = {
+  currentRegion: 'Global',
+  company: null,
+  cyberWatchlist: null,
+  sitesByRegion: {},
+  regionalByRegion: {},
+  dirty: { company: false, cyberWatchlist: false, regional: {}, sites: {} },
+  selectedSiteId: null,
+  selectedSiteByRegion: {},
+  openSections: {},
+  siteFilter: '',
+};
+
+function renderContextTab() {
+  renderContextRegionStrip();
+  renderContextBody();
+}
+
+function renderContextRegionStrip() {
+  const strip = $('context-region-strip');
+  if (!strip) return;
+  const regions = ['Global', 'APAC', 'AME', 'LATAM', 'MED', 'NCE'];
+  strip['innerHTML'] = regions.map(function (r) {
+    const active = contextState.currentRegion === r;
+    return '<div class="nav-tab' + (active ? ' active' : '') + '" onclick="switchContextRegion(\'' + r + '\')">' + r + '</div>';
+  }).join('');
+}
+
+function switchContextRegion(region) {
+  if (anyContextSurfaceDirty()) {
+    if (!confirm('You have unsaved changes in ' + contextState.currentRegion + '. Discard?')) return;
+  }
+  contextState.currentRegion = region;
+  contextState.dirty = { company: false, cyberWatchlist: false, regional: {}, sites: {} };
+  contextState.selectedSiteId = contextState.selectedSiteByRegion[region] || null;
+  renderContextTab();
+}
+
+function anyContextSurfaceDirty() {
+  const d = contextState.dirty;
+  if (d.company || d.cyberWatchlist) return true;
+  if (Object.values(d.regional || {}).some(Boolean)) return true;
+  if (Object.values(d.sites || {}).some(Boolean)) return true;
+  return false;
+}
+
+function renderContextBody() {
+  const body = $('context-body');
+  if (!body) return;
+  if (contextState.currentRegion === 'Global') {
+    body['innerHTML'] = '<div id="ctx-company"></div><div id="ctx-global-cyber" style="margin-top:24px"></div>';
+    renderCompanySurface();
+    renderGlobalCyberWatchlistSurface();
+  } else {
+    body['innerHTML'] = '<div id="ctx-sites"></div><div id="ctx-regional" style="margin-top:24px"></div>';
+    renderSitesSurface();
+    renderRegionalSurface();
+  }
+}
+
+// Surface stubs — replaced in tasks 12-15
+async function renderCompanySurface() {
+  const el = $("ctx-company");
+  if (!el) return;
+  el['innerHTML'] = "<span style=\"color:#6e7681\">Loading company profile...</span>";
+  if (!contextState.company) {
+    contextState.company = await fetch("/api/context/company").then(function (r) { return r.ok ? r.json() : {}; }).catch(function () { return {}; });
+  }
+  const c = contextState.company;
+  const dirty = contextState.dirty.company;
+
+  const dot = dirty ? "<span title=\"Unsaved changes\" style=\"color:#ffa657\">&#9679;</span>" : "";
+  const saveCol = dirty ? "#3fb950" : "#484f58";
+  const saveBg = dirty ? "#1a3a1a" : "#161b22";
+  const saveBd = dirty ? "#238636" : "#30363d";
+  const saveCursor = dirty ? "pointer" : "not-allowed";
+  const saveDisabled = dirty ? "" : "disabled";
+  const saveBtn = "<button id=\"company-save-btn\" onclick=\"saveCompany()\" " + saveDisabled +
+    " style=\"font-size:11px;color:" + saveCol + ";background:" + saveBg + ";border:1px solid " + saveBd + ";padding:4px 14px;border-radius:2px;cursor:" + saveCursor + "\">Save</button>";
+
+  el['innerHTML'] =
+    "<div style=\"background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 18px\">" +
+      "<div style=\"margin-bottom:10px\">" +
+        "<div style=\"display:flex;align-items:center;gap:8px\">" +
+          "<span style=\"font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681\">Company</span>" + dot +
+        "</div>" +
+        "<div style=\"font-size:10px;color:#484f58;margin-top:2px\">Intelligence context driving all pipeline outputs — edit here, re-run pipeline to apply.</div>" +
+      "</div>" +
+      "<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:12px\">" +
+        __ctxField("company-name",      "Name",           "text",   c.name,           "company") +
+        __ctxField("company-employees", "Employee count", "number", c.employee_count, "company") +
+      "</div>" +
+      "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:10px 0 4px\">Sectors</label>" +
+      "<div id=\"company-sectors\"></div>" +
+      "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:10px 0 4px\">Countries of operation</label>" +
+      "<div id=\"company-countries\"></div>" +
+      __ctxField("company-appetite",   "Risk appetite",        "textarea", c.risk_appetite,        "company") +
+      __ctxField("company-priorities", "Strategic priorities", "textarea", c.strategic_priorities, "company") +
+      "<div style=\"text-align:right;margin-top:12px\">" + saveBtn + "</div>" +
+    "</div>";
+
+  $("company-sectors")['innerHTML'] = renderTagList(c.sectors || [], function (next) {
+    c.sectors = next; __ctxMarkDirty("company"); renderCompanySurface();
+  }, "company-sectors");
+  $("company-countries")['innerHTML'] = renderTagList(c.countries_of_operation || [], function (next) {
+    c.countries_of_operation = next; __ctxMarkDirty("company"); renderCompanySurface();
+  }, "company-countries");
+}
+
+function __ctxField(id, label, type, value, surface) {
+  const labelHtml = "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:0 0 4px\">" + esc(label) + "</label>";
+  const baseStyle = "width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:6px 8px;font-size:11px;font-family:\"IBM Plex Mono\",monospace;border-radius:2px";
+  const onInput = "oninput=\"__ctxFieldEdit('" + id + "','" + surface + "',this.value,'" + type + "')\"";
+  if (type === "textarea") {
+    return "<div style=\"margin-top:10px\">" + labelHtml + "<textarea id=\"" + id + "\" " + onInput + " style=\"" + baseStyle + ";min-height:50px\">" + esc(value || "") + "</textarea></div>";
+  }
+  return "<div>" + labelHtml + "<input type=\"" + type + "\" id=\"" + id + "\" value=\"" + esc(value == null ? "" : String(value)) + "\" " + onInput + " style=\"" + baseStyle + "\"></div>";
+}
+
+function __ctxFieldEdit(id, surface, value, type) {
+  const c = contextState.company;
+  const mapping = {
+    "company-name": "name",
+    "company-employees": "employee_count",
+    "company-appetite": "risk_appetite",
+    "company-priorities": "strategic_priorities",
+  };
+  const key = mapping[id];
+  if (key && surface === "company") {
+    c[key] = type === "number" ? parseInt(value || "0", 10) : value;
+    __ctxMarkDirty("company");
+    __setSaveButtonEnabled("saveCompany()");
+  }
+}
+
+function __ctxMarkDirty(surface, extra) {
+  if (surface === "company") contextState.dirty.company = true;
+  if (surface === "cyberWatchlist") contextState.dirty.cyberWatchlist = true;
+  if (surface === "regional") contextState.dirty.regional[contextState.currentRegion] = true;
+  if (surface === "sites") contextState.dirty.sites[extra] = true;
+}
+
+// Shared helpers used by every Context surface.
+// __setSaveButtonEnabled: flip a Save button to enabled without re-rendering (preserves input focus).
+// __showSurfaceError: render an inline error banner inside the named surface container.
+function __setSaveButtonEnabled(onclickPrefix) {
+  const btns = document.querySelectorAll("button[onclick]");
+  btns.forEach(function (b) {
+    const oc = b.getAttribute("onclick") || "";
+    if (oc.indexOf(onclickPrefix) !== 0) return;
+    b.disabled = false;
+    b.style.color = "#3fb950"; b.style.background = "#1a3a1a";
+    b.style.borderColor = "#238636"; b.style.cursor = "pointer";
+  });
+}
+
+function __showSurfaceError(containerId, message) {
+  const host = document.getElementById(containerId);
+  if (!host) return;
+  const existing = host.querySelector(".ctx-error-banner");
+  if (existing) existing.remove();
+  const banner = document.createElement("div");
+  banner.className = "ctx-error-banner";
+  banner.setAttribute("role", "alert");
+  banner.style.cssText = "margin:8px 0;padding:8px 12px;background:#2d0000;border:1px solid #da3633;color:#ff7b72;font-size:11px;border-radius:2px";
+  banner.textContent = message;
+  // Banner sits above the save control. Simplest placement: prepend to surface so it's always visible.
+  host.insertBefore(banner, host.firstChild);
+  // Auto-clear after 8 seconds so stale errors do not linger.
+  setTimeout(function () { if (banner.parentNode) banner.parentNode.removeChild(banner); }, 8000);
+}
+
+function __showSaveToast(label) {
+  var toast = document.getElementById('ctx-save-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'ctx-save-toast';
+    toast.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#1a3a1a;border:1px solid #238636;color:#3fb950;font-size:11px;font-family:"IBM Plex Mono",monospace;padding:8px 16px;border-radius:4px;z-index:9999;opacity:0;transition:opacity 0.25s;pointer-events:none';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '✓ ' + label + ' saved';
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(function() { toast.style.opacity = '0'; }, 2200);
+}
+
+async function saveCompany() {
+  const r = await fetch("/api/context/company", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(contextState.company),
+  });
+  if (r.ok) {
+    contextState.dirty.company = false;
+    contextState.company = null;
+    renderCompanySurface();
+    __showSaveToast('Company');
+  } else {
+    __showSurfaceError("ctx-company", "Save failed (HTTP " + r.status + "). Stored file is unchanged.");
+  }
+}
+async function renderGlobalCyberWatchlistSurface() {
+  const el = $("ctx-global-cyber");
+  if (!el) return;
+  if (!contextState.cyberWatchlist) {
+    const empty = {
+      threat_actor_groups: [], sector_targeting_campaigns: [],
+      cve_watch_categories: [], global_cyber_geographies_of_concern: [],
+    };
+    contextState.cyberWatchlist = await fetch("/api/context/cyber-watchlist").then(function (r) { return r.ok ? r.json() : empty; });
+  }
+  const w = contextState.cyberWatchlist;
+  const dirty = contextState.dirty.cyberWatchlist;
+  const dot = dirty ? "<span style=\"color:#ffa657\">&#9679;</span>" : "";
+
+  const saveCol = dirty ? "#3fb950" : "#484f58";
+  const saveBg = dirty ? "#1a3a1a" : "#161b22";
+  const saveBd = dirty ? "#238636" : "#30363d";
+  const saveCursor = dirty ? "pointer" : "not-allowed";
+  const saveDisabled = dirty ? "" : "disabled";
+  const saveBtn = "<button onclick=\"saveCyberWatchlist()\" " + saveDisabled + " style=\"font-size:11px;color:" + saveCol + ";background:" + saveBg + ";border:1px solid " + saveBd + ";padding:4px 14px;border-radius:2px;cursor:" + saveCursor + "\">Save</button>";
+
+  const sectionHdr = "font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin-bottom:4px";
+  el['innerHTML'] =
+    "<div style=\"background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 18px\">" +
+      "<div style=\"margin-bottom:10px\">" +
+        "<div style=\"display:flex;align-items:center;gap:8px\">" +
+          "<span style=\"font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681\">Global Cyber Watchlist</span>" + dot +
+        "</div>" +
+        "<div style=\"font-size:10px;color:#484f58;margin-top:2px\">Org-wide threat monitoring inherited by every region. Regional overlays extend, not replace, this list.</div>" +
+      "</div>" +
+      "<div style=\"margin-top:12px\"><div style=\"" + sectionHdr + "\">Threat actor groups</div><div id=\"cyber-actors\"></div></div>" +
+      "<div style=\"margin-top:16px\"><div style=\"" + sectionHdr + "\">Sector-targeting campaigns</div><div id=\"cyber-campaigns\"></div></div>" +
+      "<div style=\"margin-top:16px\"><div style=\"" + sectionHdr + "\">CVE watch categories</div><div id=\"cyber-cves\"></div></div>" +
+      "<div style=\"margin-top:16px\"><div style=\"" + sectionHdr + "\">Geographies of concern</div><div id=\"cyber-geos\"></div></div>" +
+      "<div style=\"text-align:right;margin-top:14px\">" + saveBtn + "</div>" +
+    "</div>";
+
+  // Record List onChange comes with kind: structure = re-render surface; mutate = only mark dirty.
+  const rlOnChange = function (assign) {
+    return function (next, info) {
+      assign(next);
+      __ctxMarkDirty("cyberWatchlist");
+      if (info && info.kind === "structure") {
+        renderGlobalCyberWatchlistSurface();
+      } else {
+        __setSaveButtonEnabled("saveCyberWatchlist()");
+      }
+    };
+  };
+  const tlOnChange = function (assign) {
+    return function (next) {
+      assign(next);
+      __ctxMarkDirty("cyberWatchlist");
+      renderGlobalCyberWatchlistSurface();  // Tag List changes are always structural
+    };
+  };
+
+  $("cyber-actors")['innerHTML'] = renderRecordList(
+    w.threat_actor_groups, [
+      { key: "name", label: "Name", type: "text" },
+      { key: "aliases", label: "Aliases", type: "taglist" },
+      { key: "motivation", label: "Motivation", type: "text" },
+      { key: "target_sectors", label: "Target sectors", type: "taglist" },
+      { key: "target_geographies", label: "Target geographies", type: "taglist" },
+    ],
+    function (r) { return (r.name || "(unnamed)") + (r.motivation ? " - " + r.motivation : ""); },
+    rlOnChange(function (next) { w.threat_actor_groups = next; }),
+    "cyber-actors"
+  );
+  $("cyber-campaigns")['innerHTML'] = renderRecordList(
+    w.sector_targeting_campaigns, [
+      { key: "campaign_name", label: "Campaign name", type: "text" },
+      { key: "actor", label: "Actor", type: "text" },
+      { key: "sectors", label: "Sectors", type: "taglist" },
+      { key: "first_observed", label: "First observed", type: "text" },
+      { key: "status", label: "Status", type: "text" },
+    ],
+    function (r) { return (r.campaign_name || "(unnamed)") + (r.actor ? " / " + r.actor : ""); },
+    rlOnChange(function (next) { w.sector_targeting_campaigns = next; }),
+    "cyber-campaigns"
+  );
+  $("cyber-cves")['innerHTML'] = renderTagList(
+    w.cve_watch_categories, tlOnChange(function (next) { w.cve_watch_categories = next; }), "cyber-cves"
+  );
+  $("cyber-geos")['innerHTML'] = renderTagList(
+    w.global_cyber_geographies_of_concern, tlOnChange(function (next) { w.global_cyber_geographies_of_concern = next; }), "cyber-geos"
+  );
+}
+
+async function saveCyberWatchlist() {
+  const r = await fetch("/api/context/cyber-watchlist", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(contextState.cyberWatchlist),
+  });
+  if (r.ok) {
+    contextState.dirty.cyberWatchlist = false;
+    contextState.cyberWatchlist = null;
+    renderGlobalCyberWatchlistSurface();
+    __showSaveToast('Cyber watchlist');
+  } else {
+    __showSurfaceError("ctx-global-cyber", "Save failed (HTTP " + r.status + "). Stored file is unchanged.");
+  }
+}
+function __ctxFilterSites(value) {
+  contextState.siteFilter = value;
+  var rows = document.querySelectorAll('.ctx-site-row');
+  var q = value.toLowerCase();
+  rows.forEach(function(row) {
+    var matches = !q || (row.getAttribute('data-name') || '').toLowerCase().indexOf(q) !== -1;
+    row.style.display = matches ? '' : 'none';
+  });
+}
+
+async function renderSitesSurface() {
+  const el = $("ctx-sites");
+  if (!el) return;
+  const region = contextState.currentRegion;
+  if (!contextState.sitesByRegion[region]) {
+    const resp = await fetch("/api/context/sites?region=" + region).then(function (r) { return r.ok ? r.json() : { sites: [] }; });
+    contextState.sitesByRegion[region] = resp.sites || [];
+  }
+  const sites = contextState.sitesByRegion[region];
+  if (!contextState.selectedSiteId && sites.length) {
+    contextState.selectedSiteId = sites[0].site_id;
+    contextState.selectedSiteByRegion[region] = sites[0].site_id;
+  }
+  const selected = sites.find(function (s) { return s.site_id === contextState.selectedSiteId; });
+
+  const listHdr = "padding:8px 12px;border-bottom:1px solid #21262d;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681";
+  const rows = sites.map(function (s) {
+    const active = s.site_id === contextState.selectedSiteId;
+    const sdirty = contextState.dirty.sites[s.site_id];
+    const rowBg = active ? "#1a2532" : "transparent";
+    const dot = sdirty ? "<span style=\"color:#ffa657\">&#9679;</span>" : "";
+    const rowStyle = "padding:8px 12px;border-bottom:1px solid #21262d;cursor:pointer;background:" + rowBg + ";align-items:center;gap:6px";
+    const hidden = (contextState.siteFilter && s.name.toLowerCase().indexOf(contextState.siteFilter.toLowerCase()) === -1) ? "display:none;" : "display:flex;";
+    return "<div class=\"ctx-site-row\" data-name=\"" + esc(s.name) + "\" onclick=\"selectContextSite('" + s.site_id + "')\" style=\"" + hidden + rowStyle + "\">" +
+      "<span style=\"font-size:11px;color:#c9d1d9;flex:1\">" + esc(s.name) + "</span>" +
+      __tierBadge(s.tier) +
+      dot + "</div>";
+  }).join("");
+  const emptyList = "<div style=\"padding:12px;color:#6e7681;font-size:11px\">No sites in this region</div>";
+
+  el['innerHTML'] =
+    "<div style=\"display:grid;grid-template-columns:240px 1fr;gap:16px\">" +
+      "<div style=\"background:#0d1117;border:1px solid #21262d;border-radius:4px;overflow:hidden\">" +
+        "<div style=\"" + listHdr + "\">Sites - " + region + "</div>" +
+        "<div style=\"padding:6px 8px;border-bottom:1px solid #21262d\">" +
+          "<input type=\"text\" placeholder=\"Filter sites...\" value=\"" + esc(contextState.siteFilter) + "\" " +
+          "oninput=\"__ctxFilterSites(this.value)\" " +
+          "style=\"width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 6px;font-size:10px;font-family:'IBM Plex Mono',monospace;border-radius:2px;box-sizing:border-box\">" +
+        "</div>" +
+        (rows || emptyList) +
+      "</div>" +
+      "<div id=\"ctx-site-detail\" style=\"background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 18px\"></div>" +
+    "</div>";
+
+  if (selected) renderSiteDetail(selected);
+}
+
+function __tierBadge(tier) {
+  const labels = { crown_jewel: "CJ", primary: "PR", secondary: "SC", minor: "MN" };
+  const lbl = labels[tier] || (tier ? tier.slice(0, 2).toUpperCase() : "?");
+  const styles = {
+    crown_jewel: "color:#f85149;background:#2d0f0f;border:1px solid #6e1c1c",
+    primary:     "color:#ffa657;background:#2a1500;border:1px solid #bd561d",
+    secondary:   "color:#e3b341;background:#2d2200;border:1px solid #d29922",
+    minor:       "color:#6e7681;background:#161b22;border:1px solid #30363d",
+  };
+  const style = styles[tier] || "color:#6e7681;background:#161b22;border:1px solid #30363d";
+  return "<span style=\"font-size:8px;font-weight:700;font-family:'IBM Plex Mono',monospace;padding:1px 4px;border-radius:2px;" + style + "\">" + lbl + "</span>";
+}
+
+function selectContextSite(siteId) {
+  const prevId = contextState.selectedSiteId;
+  if (prevId && contextState.dirty.sites[prevId]) {
+    const prev = (contextState.sitesByRegion[contextState.currentRegion] || []).find(function (s) { return s.site_id === prevId; });
+    const name = prev ? prev.name : prevId;
+    if (!confirm("Discard unsaved changes to " + name + "?")) return;
+    contextState.dirty.sites[prevId] = false;
+    delete contextState.sitesByRegion[contextState.currentRegion];
+  }
+  contextState.selectedSiteId = siteId;
+  contextState.selectedSiteByRegion[contextState.currentRegion] = siteId;
+  renderSitesSurface();
+}
+
+function renderSiteDetail(site) {
+  const el = $("ctx-site-detail");
+  const dirty = contextState.dirty.sites[site.site_id];
+  const groups = [
+    { title: "Identity", open: false, fields: [
+      ["name","Name","text"],["country","Country","text"],["type","Type","text"],
+      ["subtype","Subtype","text"],["asset_type","Asset type","text"],
+      ["status","Status","text"],["seerist_country_code","Seerist country code","iso2"],
+    ]},
+    { title: "Location", open: false, fields: [
+      ["lat","Latitude","number"],["lon","Longitude","number"],
+      ["poi_radius_km","POI radius km","number"],
+      ["capital_distance_km","Capital distance km (read-only)","readonly"],
+    ]},
+    { title: "Criticality", open: false, fields: [
+      ["tier","Tier","select:crown_jewel|primary|secondary|minor"],
+      ["criticality","Criticality","select:crown_jewel|major|standard"],
+      ["criticality_drivers","Criticality drivers","textarea"],
+      ["downstream_dependency","Downstream dependency","text"],
+    ]},
+    { title: "People", open: false, fields: [
+      ["personnel_count","Personnel count","number"],["expat_count","Expat count","number"],
+      ["contractors_count","Contractors count","number"],["shift_pattern","Shift pattern","text"],
+    ]},
+    { title: "Environment", open: false, fields: [
+      ["host_country_risk_baseline","Host country baseline","select:low|elevated|high"],
+      ["standing_notes","Standing notes","textarea"],
+    ]},
+    { title: "Seerist Joins", open: false, fields: [
+      ["relevant_seerist_categories","Categories","taglist"],
+      ["threat_actors_of_interest","Actors of interest","taglist"],
+      ["relevant_attack_types","Attack types","taglist"],
+    ]},
+    { title: "Cyber", open: false, fields: [
+      ["site_cyber_actors_of_interest","Cyber actors of interest","taglist"],
+    ]},
+  ];
+
+  const dirtyBadge = dirty ? "<span style=\"color:#ffa657\">&#9679; unsaved</span>" : "";
+  const saveCol = dirty ? "#3fb950" : "#484f58";
+  const saveBg = dirty ? "#1a3a1a" : "#161b22";
+  const saveBd = dirty ? "#238636" : "#30363d";
+  const saveCursor = dirty ? "pointer" : "not-allowed";
+  const saveDisabled = dirty ? "" : "disabled";
+  const saveBtn = "<button onclick=\"saveSite('" + site.site_id + "')\" " + saveDisabled +
+    " style=\"font-size:11px;color:" + saveCol + ";background:" + saveBg + ";border:1px solid " + saveBd + ";padding:4px 14px;border-radius:2px;cursor:" + saveCursor + "\">Save site</button>";
+
+  el['innerHTML'] =
+    "<div style=\"display:flex;align-items:center;gap:10px;margin-bottom:12px\">" +
+      "<h2 style=\"font-size:13px;color:#e6edf3;margin:0;flex:1\">" + esc(site.name) +
+        " <span style=\"color:#6e7681;font-size:10px\">" + esc(site.site_id) + "</span></h2>" +
+      dirtyBadge +
+    "</div>" +
+    groups.map(function (g) { return __ctxGroupBlock(site, g); }).join("") +
+    "<div style=\"margin-top:14px\">" +
+      "<div style=\"font-size:9px;color:#484f58;margin-bottom:6px;text-align:right\">Regional summary and standing notes save separately via the Regional card below.</div>" +
+      "<div style=\"text-align:right\">" + saveBtn + "</div>" +
+    "</div>";
+
+  groups.forEach(function (g) {
+    g.fields.forEach(function (tup) {
+      const key = tup[0], type = tup[2];
+      if (type === "taglist") {
+        const cid = "site-" + site.site_id + "-" + key;
+        const host = document.getElementById(cid);
+        if (host) host['innerHTML'] = renderTagList(
+          site[key] || [],
+          function (next) { site[key] = next; __ctxMarkDirty("sites", site.site_id); renderSiteDetail(site); },
+          cid
+        );
+      }
+    });
+  });
+}
+
+function __ctxAccordionToggle(siteId, title, isOpen) {
+  contextState.openSections[siteId + '-' + title] = isOpen;
+}
+
+function __ctxGroupBlock(site, group) {
+  const fieldsHtml = group.fields.map(function (tup) { return __ctxSiteField(site, tup[0], tup[1], tup[2]); }).join("");
+  const stateKey = site.site_id + '-' + group.title;
+  const isOpen = contextState.openSections[stateKey] !== undefined
+    ? contextState.openSections[stateKey]
+    : group.open;
+  const openAttr = isOpen ? " open" : "";
+  const toggleAttr = "ontoggle=\"__ctxAccordionToggle('" + site.site_id + "','" + group.title + "',this.open)\"";
+  const summaryStyle = "padding:6px 12px;cursor:pointer;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#79c0ff";
+  return "<details" + openAttr + " " + toggleAttr + " style=\"margin:6px 0;border:1px solid #21262d;border-radius:2px;background:#080c10\">" +
+    "<summary style=\"" + summaryStyle + "\">" + esc(group.title) + "</summary>" +
+    "<div style=\"padding:8px 12px\">" + fieldsHtml + "</div>" +
+  "</details>";
+}
+
+function __tierDerived(criticality) {
+  if (criticality === 'crown_jewel') return 'crown_jewel';
+  if (criticality === 'major') return 'primary';
+  if (criticality === 'standard') return 'secondary';
+  return null;
+}
+
+function __ctxSiteField(site, key, label, type) {
+  const value = site[key];
+  const id = "site-" + site.site_id + "-" + key;
+  const labelHtml = "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:6px 0 2px\">" + esc(label) + "</label>";
+  const baseStyle = "width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px";
+
+  if (type === "readonly") {
+    return labelHtml + "<div style=\"" + baseStyle + ";color:#6e7681\">" + esc(value == null ? "-" : String(value)) + "</div>";
+  }
+  const argsInput  = "'" + site.site_id + "','" + key + "','" + type + "',this.value";
+  const argsSelect = "'" + site.site_id + "','" + key + "','text',this.value";
+  const onInput  = "oninput=\"__siteFieldEdit("  + argsInput  + ")\"";
+  const onChange = "onchange=\"__siteFieldEdit(" + argsSelect + ")\"";
+  if (type === "textarea") {
+    return labelHtml + "<textarea id=\"" + id + "\" " + onInput + " style=\"" + baseStyle + ";min-height:40px\">" + esc(value || "") + "</textarea>";
+  }
+  if (type === "taglist") {
+    return labelHtml + "<div id=\"" + id + "\"></div>";
+  }
+  if (type.indexOf("select:") === 0) {
+    const opts = type.split(":")[1].split("|");
+    const optsHtml = opts.map(function (o) { return "<option value=\"" + o + "\"" + (value === o ? " selected" : "") + ">" + o + "</option>"; }).join("");
+    const selectHtml = "<select id=\"" + id + "\" " + onChange + " style=\"" + baseStyle + "\">" + optsHtml + "</select>";
+    if (key === "tier") {
+      const derived = __tierDerived(site.criticality);
+      const hint = (derived && value && derived !== value)
+        ? "<div style=\"font-size:9px;color:#ffa657;margin-top:3px\">&#9651; Manually overridden — criticality derives: " + derived + "</div>"
+        : "";
+      return labelHtml + selectHtml + hint;
+    }
+    return labelHtml + selectHtml;
+  }
+  if (type === "iso2") {
+    const safeVal = esc(value == null ? "" : String(value).toUpperCase().replace(/[^A-Z]/g, ""));
+    const iso2Input = "oninput=\"this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'');__siteFieldEdit('" +
+      site.site_id + "','" + key + "','text',this.value)\"";
+    return labelHtml + "<input type=\"text\" id=\"" + id + "\" value=\"" + safeVal + "\" maxlength=\"2\" " +
+      iso2Input + " style=\"" + baseStyle + ";width:64px\">";
+  }
+  const safeVal = esc(value == null ? "" : String(value));
+  return labelHtml + "<input type=\"" + type + "\" id=\"" + id + "\" value=\"" + safeVal + "\" " + onInput + " style=\"" + baseStyle + "\">";
+}
+
+function __siteFieldEdit(siteId, key, type, value) {
+  const site = (contextState.sitesByRegion[contextState.currentRegion] || []).find(function (s) { return s.site_id === siteId; });
+  if (!site) return;
+  site[key] = type === "number" ? Number(value) : value;
+  __ctxMarkDirty("sites", siteId);
+  __setSaveButtonEnabled("saveSite(");
+}
+
+async function saveSite(siteId) {
+  const site = (contextState.sitesByRegion[contextState.currentRegion] || []).find(function (s) { return s.site_id === siteId; });
+  if (!site) return;
+  const r = await fetch("/api/context/sites/" + encodeURIComponent(siteId), {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(site),
+  });
+  if (r.ok) {
+    contextState.dirty.sites[siteId] = false;
+    delete contextState.sitesByRegion[contextState.currentRegion];
+    renderSitesSurface();
+    __showSaveToast('Site');
+  } else {
+    __showSurfaceError("ctx-site-detail", "Save failed (HTTP " + r.status + "). Stored record is unchanged.");
+  }
+}
+async function renderRegionalSurface() {
+  const el = $("ctx-regional");
+  if (!el) return;
+  const region = contextState.currentRegion;
+  if (!contextState.regionalByRegion[region]) {
+    contextState.regionalByRegion[region] = await fetch("/api/context/regional/" + region).then(function (r) { return r.ok ? r.json() : {}; });
+  }
+  const r = contextState.regionalByRegion[region];
+  const dirty = !!contextState.dirty.regional[region];
+  const dot = dirty ? "<span style=\"color:#ffa657\">&#9679;</span>" : "";
+
+  const saveCol = dirty ? "#3fb950" : "#484f58";
+  const saveBg = dirty ? "#1a3a1a" : "#161b22";
+  const saveBd = dirty ? "#238636" : "#30363d";
+  const saveCursor = dirty ? "pointer" : "not-allowed";
+  const saveDisabled = dirty ? "" : "disabled";
+  const saveBtn = "<button onclick=\"saveRegional()\" " + saveDisabled +
+    " style=\"font-size:11px;color:" + saveCol + ";background:" + saveBg + ";border:1px solid " + saveBd + ";padding:4px 14px;border-radius:2px;cursor:" + saveCursor + "\">Save region</button>";
+
+  const taStyle = "width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:6px 8px;font-size:11px;font-family:'IBM Plex Mono',monospace;border-radius:2px;min-height:50px";
+  const sectionHdr = "font-size:9px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:6px 0 4px";
+
+  const gw = contextState.cyberWatchlist;
+  const gwActorCount = gw ? (gw.threat_actor_groups || []).length : null;
+  const gwCampaignCount = gw ? (gw.sector_targeting_campaigns || []).length : null;
+  const gwBadge = gwActorCount !== null
+    ? "<span style=\"font-size:9px;color:#484f58;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px\">" +
+        "Inherits: " + gwActorCount + " actor group" + (gwActorCount !== 1 ? "s" : "") +
+        ", " + gwCampaignCount + " campaign" + (gwCampaignCount !== 1 ? "s" : "") + " from Global Cyber</span>"
+    : "<span style=\"font-size:9px;color:#484f58;font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px\">Global Cyber not loaded — visit Global tab first</span>";
+
+  el['innerHTML'] =
+    "<div style=\"background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:14px 18px\">" +
+      "<div style=\"display:flex;align-items:center;gap:8px;margin-bottom:10px\">" +
+        "<span style=\"font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:#6e7681\">Regional - " + region + "</span>" + dot +
+        "<span style=\"margin-left:auto;font-size:10px;color:#8b949e\">headcount: " + (r.headcount || 0) + " - contractors: " + (r.contractors || 0) + "</span>" +
+      "</div>" +
+
+      "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:6px 0 2px\">Regional summary</label>" +
+      "<textarea id=\"reg-summary\" oninput=\"__regionalFieldEdit('regional_summary', this.value)\" style=\"" + taStyle + "\">" + esc(r.regional_summary || "") + "</textarea>" +
+
+      "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:10px 0 2px\">Standing notes</label>" +
+      "<textarea id=\"reg-standing\" oninput=\"__regionalFieldEdit('standing_notes', this.value)\" style=\"" + taStyle + "\">" + esc(r.standing_notes || "") + "</textarea>" +
+
+      "<details style=\"margin-top:14px;border:1px solid #21262d;border-radius:2px;background:#080c10\">" +
+        "<summary style=\"padding:6px 12px;cursor:pointer;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#79c0ff\">Regional cyber overlay" + gwBadge + "</summary>" +
+        "<div style=\"padding:8px 12px\">" +
+          "<div style=\"" + sectionHdr + "\">Regional threat actor groups</div><div id=\"reg-actors\"></div>" +
+          "<div style=\"" + sectionHdr + "\">Regional sector targeting campaigns</div><div id=\"reg-campaigns\"></div>" +
+          "<div style=\"" + sectionHdr + "\">Regional geographies of concern</div><div id=\"reg-geos\"></div>" +
+          "<div style=\"" + sectionHdr + "\">Regional standing notes (cyber tempo)</div>" +
+          "<textarea id=\"reg-cyber-notes\" oninput=\"__regionalFieldEdit('regional_standing_notes', this.value)\" style=\"" + taStyle + ";min-height:40px\">" + esc(r.regional_standing_notes || "") + "</textarea>" +
+        "</div>" +
+      "</details>" +
+
+      "<div style=\"text-align:right;margin-top:14px\">" + saveBtn + "</div>" +
+    "</div>";
+
+  const rlOnChange = function (assign) {
+    return function (next, info) {
+      assign(next);
+      __ctxMarkDirty("regional");
+      if (info && info.kind === "structure") {
+        renderRegionalSurface();
+      } else {
+        __setSaveButtonEnabled("saveRegional()");
+      }
+    };
+  };
+  const tlOnChange = function (assign) {
+    return function (next) {
+      assign(next);
+      __ctxMarkDirty("regional");
+      renderRegionalSurface();  // Tag List changes are always structural
+    };
+  };
+
+  $("reg-actors")['innerHTML'] = renderRecordList(
+    r.regional_threat_actor_groups || [], [
+      { key: "name", label: "Name", type: "text" },
+      { key: "aliases", label: "Aliases", type: "taglist" },
+      { key: "motivation", label: "Motivation", type: "text" },
+      { key: "target_sectors", label: "Target sectors", type: "taglist" },
+      { key: "target_geographies", label: "Target geographies", type: "taglist" },
+    ],
+    function (rec) { return (rec.name || "(unnamed)") + (rec.motivation ? " - " + rec.motivation : ""); },
+    rlOnChange(function (next) { r.regional_threat_actor_groups = next; }),
+    "reg-actors-" + region
+  );
+  $("reg-campaigns")['innerHTML'] = renderRecordList(
+    r.regional_sector_targeting_campaigns || [], [
+      { key: "campaign_name", label: "Campaign", type: "text" },
+      { key: "actor", label: "Actor", type: "text" },
+      { key: "sectors", label: "Sectors", type: "taglist" },
+      { key: "first_observed", label: "First observed", type: "text" },
+      { key: "status", label: "Status", type: "text" },
+    ],
+    function (rec) { return (rec.campaign_name || "(unnamed)") + (rec.actor ? " / " + rec.actor : ""); },
+    rlOnChange(function (next) { r.regional_sector_targeting_campaigns = next; }),
+    "reg-campaigns-" + region
+  );
+  $("reg-geos")['innerHTML'] = renderTagList(
+    r.regional_cyber_geographies_of_concern || [],
+    tlOnChange(function (next) { r.regional_cyber_geographies_of_concern = next; }),
+    "reg-geos-" + region
+  );
+}
+
+function __regionalFieldEdit(key, value) {
+  const region = contextState.currentRegion;
+  const r = contextState.regionalByRegion[region];
+  if (!r) return;
+  r[key] = value;
+  __ctxMarkDirty("regional");
+  __setSaveButtonEnabled("saveRegional()");
+}
+
+async function saveRegional() {
+  const region = contextState.currentRegion;
+  const body = contextState.regionalByRegion[region];
+  const resp = await fetch("/api/context/regional/" + region, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (resp.ok) {
+    contextState.dirty.regional[region] = false;
+    delete contextState.regionalByRegion[region];
+    renderRegionalSurface();
+    __showSaveToast('Regional profile');
+  } else {
+    __showSurfaceError("ctx-regional", "Save failed (HTTP " + resp.status + "). Stored file is unchanged.");
+  }
+}
+
+// Tag List primitive: flat-string array -> removable pills + add input.
+function renderTagList(values, onChange, instanceId) {
+  const inputId = "tl-input-" + instanceId;
+  window["__tl_" + instanceId + "_change"] = onChange;
+  window["__tl_" + instanceId + "_values"] = values.slice();
+
+  const pillStyle = "display:inline-flex;align-items:center;gap:6px;background:#1f2936;border:1px solid #30363d;border-radius:12px;padding:2px 10px;margin:2px 4px 2px 0;font-size:11px;color:#c9d1d9";
+  const xBtnStyle = "background:none;border:none;color:#6e7681;cursor:pointer;font-size:12px;padding:0";
+  const pills = values.map(function (v, i) {
+    const xBtn = "<button onclick=\"__tlRemove('" + instanceId + "'," + i + ")\" style=\"" + xBtnStyle + "\">x</button>";
+    return "<span style=\"" + pillStyle + "\">" + esc(v) + xBtn + "</span>";
+  }).join("");
+
+  const inputStyle = "flex:1;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:\"IBM Plex Mono\",monospace;border-radius:2px";
+  const addBtnStyle = "font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:2px 10px;border-radius:2px;cursor:pointer";
+  const inputHtml = "<input type=\"text\" id=\"" + inputId + "\" placeholder=\"Add...\" onkeydown=\"if(event.key==='Enter'){__tlAdd('" + instanceId + "');event.preventDefault();}\" style=\"" + inputStyle + "\">";
+  const addBtn = "<button onclick=\"__tlAdd('" + instanceId + "')\" style=\"" + addBtnStyle + "\">+</button>";
+  const inputRow = "<div style=\"display:flex;gap:6px;margin-top:6px\">" + inputHtml + addBtn + "</div>";
+  const emptyMsg = "<span style=\"color:#6e7681;font-size:11px\">(none)</span>";
+  return "<div>" + "<div>" + (pills || emptyMsg) + "</div>" + inputRow + "</div>";
+}
+
+function __tlAdd(instanceId) {
+  const input = $("tl-input-" + instanceId);
+  const v = (input.value || "").trim();
+  if (!v) return;
+  const values = window["__tl_" + instanceId + "_values"];
+  if (values.indexOf(v) !== -1) { input.value = ""; return; }
+  values.push(v);
+  window["__tl_" + instanceId + "_change"](values);
+}
+
+function __tlRemove(instanceId, index) {
+  const values = window["__tl_" + instanceId + "_values"];
+  values.splice(index, 1);
+  window["__tl_" + instanceId + "_change"](values);
+}
+
+// Record List primitive: records[] with labeled mini-forms.
+// fieldDefs items: {key, label, type: "text" | "textarea" | "taglist"}
+// onChange(records, { kind: "mutate" | "structure" }) — caller decides whether to re-render.
+function renderRecordList(records, fieldDefs, summaryFn, onChange, instanceId) {
+  window["__rl_" + instanceId + "_change"] = onChange;
+  window["__rl_" + instanceId + "_records"] = records;  // share the reference; mutations are visible to caller
+  window["__rl_" + instanceId + "_fields"] = fieldDefs;
+  window["__rl_" + instanceId + "_summary"] = summaryFn;
+  if (!window["__rl_" + instanceId + "_expanded"]) window["__rl_" + instanceId + "_expanded"] = new Set();
+  const expanded = window["__rl_" + instanceId + "_expanded"];
+
+  const rows = records.map(function (r, i) {
+    const isOpen = expanded.has(i);
+    const summary = esc(summaryFn(r) || "(empty)");
+    const chevron = isOpen ? "v" : ">";
+    let editor = "";
+    if (isOpen) {
+      editor = "<div id=\"rl-body-" + instanceId + "-" + i + "\" style=\"padding:8px 12px;background:#0d1117;border-top:1px solid #21262d\">" +
+        fieldDefs.map(function (f) { return __rlFieldInput(instanceId, i, f, r[f.key]); }).join("") +
+      "</div>";
+    }
+    const headerStyle = "display:flex;align-items:center;gap:8px;padding:6px 12px;cursor:pointer";
+    const xBtnStyle = "background:none;border:none;color:#6e7681;cursor:pointer;font-size:12px";
+    const header = "<div id=\"rl-header-" + instanceId + "-" + i + "\" style=\"" + headerStyle + "\" onclick=\"__rlToggle('" + instanceId + "'," + i + ")\">" +
+      "<span style=\"color:#6e7681\">" + chevron + "</span>" +
+      "<span style=\"flex:1;font-size:11px\">" + summary + "</span>" +
+      "<button onclick=\"event.stopPropagation();__rlRemove('" + instanceId + "'," + i + ")\" style=\"" + xBtnStyle + "\">x</button>" +
+    "</div>";
+    return "<div id=\"rl-row-" + instanceId + "-" + i + "\" style=\"border:1px solid #21262d;border-radius:2px;margin:4px 0;background:#080c10\">" + header + editor + "</div>";
+  }).join("");
+
+  const addBtnStyle = "margin-top:6px;font-size:10px;color:#3fb950;background:#1a3a1a;border:1px solid #238636;padding:4px 10px;border-radius:2px;cursor:pointer";
+  const addBtn = "<button onclick=\"__rlAdd('" + instanceId + "')\" style=\"" + addBtnStyle + "\">+ Add row</button>";
+  const emptyMsg = "<div style=\"color:#6e7681;font-size:11px;padding:4px 0\">(no entries)</div>";
+  return "<div>" + (rows || emptyMsg) + addBtn + "</div>";
+}
+
+function __rlFieldInput(instanceId, recordIdx, f, value) {
+  const id = "rl-" + instanceId + "-" + recordIdx + "-" + f.key;
+  const labelBlock = "<label style=\"display:block;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:#6e7681;margin:6px 0 2px\">" + esc(f.label) + "</label>";
+  const baseStyle = "width:100%;background:#080c10;border:1px solid #21262d;color:#c9d1d9;padding:4px 8px;font-size:11px;font-family:\"IBM Plex Mono\",monospace;border-radius:2px";
+  const onInput = "oninput=\"__rlFieldChange('" + instanceId + "'," + recordIdx + ",'" + f.key + "',this.value)\"";
+  if (f.type === "textarea") {
+    return labelBlock + "<textarea id=\"" + id + "\" " + onInput + " style=\"" + baseStyle + ";min-height:40px\">" + esc(value || "") + "</textarea>";
+  }
+  if (f.type === "taglist") {
+    return labelBlock + "<div id=\"" + id + "\"></div>";
+  }
+  const safeVal = esc(value == null ? "" : String(value));
+  return labelBlock + "<input type=\"text\" id=\"" + id + "\" value=\"" + safeVal + "\" " + onInput + " style=\"" + baseStyle + "\">";
+}
+
+// Toggle expand is a LOCAL DOM operation — does not fire onChange, does not dirty the surface.
+function __rlToggle(instanceId, idx) {
+  const s = window["__rl_" + instanceId + "_expanded"];
+  const wasOpen = s.has(idx);
+  if (wasOpen) s.delete(idx); else s.add(idx);
+
+  // Fire onChange with kind=structure so the caller re-renders only the Record List host element.
+  // Callers for structure events re-render the whole surface; for local expand we prefer a tighter
+  // update, but re-render via structure is acceptable since no text input is open in the toggling row.
+  window["__rl_" + instanceId + "_change"](window["__rl_" + instanceId + "_records"], { kind: "structure" });
+}
+
+function __rlAdd(instanceId) {
+  const recs = window["__rl_" + instanceId + "_records"];
+  const fields = window["__rl_" + instanceId + "_fields"];
+  const blank = {};
+  fields.forEach(function (f) { blank[f.key] = f.type === "taglist" ? [] : ""; });
+  recs.push(blank);
+  window["__rl_" + instanceId + "_expanded"].add(recs.length - 1);
+  window["__rl_" + instanceId + "_change"](recs, { kind: "structure" });
+}
+
+function __rlRemove(instanceId, idx) {
+  if (!confirm("Remove this entry?")) return;
+  const recs = window["__rl_" + instanceId + "_records"];
+  recs.splice(idx, 1);
+  const oldSet = window["__rl_" + instanceId + "_expanded"];
+  const newSet = new Set();
+  oldSet.forEach(function (i) { if (i === idx) return; newSet.add(i > idx ? i - 1 : i); });
+  window["__rl_" + instanceId + "_expanded"] = newSet;
+  window["__rl_" + instanceId + "_change"](recs, { kind: "structure" });
+}
+
+// Field edits MUTATE the shared records array in-place and signal "mutate" — caller marks dirty
+// but does not re-render. The <input> retains focus and the user keeps typing.
+function __rlFieldChange(instanceId, idx, key, value) {
+  const recs = window["__rl_" + instanceId + "_records"];
+  recs[idx][key] = value;
+  window["__rl_" + instanceId + "_change"](recs, { kind: "mutate" });
+}
+
+window.addEventListener("beforeunload", function (e) {
+  if (typeof anyContextSurfaceDirty === "function" && anyContextSurfaceDirty()) {
+    e.preventDefault();
+    e.returnValue = "";
+    return "";
+  }
+});
+
+// --- Reports tab: card grid renderer ---
+
+const RSM_AUDIENCE_IDS = ["rsm-apac", "rsm-ame", "rsm-latam", "rsm-med", "rsm-nce"];
+
+function formatRelative(isoUtc) {
+  if (!isoUtc) return "";
+  const then = new Date(isoUtc);
+  const now = new Date();
+  const hh = String(then.getUTCHours()).padStart(2, "0");
+  const mm = String(then.getUTCMinutes()).padStart(2, "0");
+  const timeStr = hh + ":" + mm + " UTC";
+  const thenDay = then.toISOString().slice(0, 10);
+  const nowDay = now.toISOString().slice(0, 10);
+  if (thenDay === nowDay) return "Today · " + timeStr;
+  const yest = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
+  if (thenDay === yest) return "Yesterday · " + timeStr;
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const label = months[then.getUTCMonth()] + " " + String(then.getUTCDate()).padStart(2, "0");
+  return label + " · " + timeStr;
+}
+
+function isoToCompact(iso) {
+  return iso.replace(/[-:]/g, "");
+}
+
+function el(tag, opts) {
+  const e = document.createElement(tag);
+  if (!opts) return e;
+  if (opts.text !== undefined) e.textContent = opts.text;
+  if (opts.cls) {
+    (Array.isArray(opts.cls) ? opts.cls : [opts.cls]).forEach(c => e.classList.add(c));
+  }
+  if (opts.attrs) {
+    for (const k of Object.keys(opts.attrs)) e.setAttribute(k, opts.attrs[k]);
+  }
+  return e;
+}
+
+function buildThumbnail(audienceId, viewingTs) {
+  if (!viewingTs) {
+    return el("div", { cls: ["rpt-thumb", "rpt-thumb-placeholder"], text: "No brief yet" });
+  }
+  const compact = isoToCompact(viewingTs);
+  const img = el("img", {
+    cls: "rpt-thumb",
+    attrs: {
+      src: "/api/briefs/" + audienceId + "/thumbnail?version=" + compact,
+      alt: audienceId + " cover thumbnail",
+      loading: "lazy",
+    },
+  });
+  return img;
+}
+
+function buildFreshnessLabel(latestMeta, viewingIsLatest, onToggle) {
+  const label = el("span", { cls: "rpt-freshness" });
+  if (!latestMeta) {
+    label.textContent = "";
+    return label;
+  }
+  const prefix = viewingIsLatest ? "Latest · " : "";
+  label.textContent = prefix + formatRelative(latestMeta.version_ts) + " ▾";
+  label.addEventListener("click", onToggle);
+  return label;
+}
+
+function buildStaleBadge() {
+  return el("span", { cls: "rpt-stale-badge", text: "⚠ Stale" });
+}
+
+function buildActionBar(audienceId, viewingTs, canNarrate, canActions, handlers) {
+  const bar = el("div", { cls: "rpt-actions" });
+  const compact = viewingTs ? isoToCompact(viewingTs) : "";
+
+  const preview = el("a", {
+    cls: "rpt-card-btn",
+    text: "Preview",
+    attrs: {
+      href: viewingTs ? "/api/briefs/" + audienceId + "/pdf?version=" + compact : "#",
+      target: "_blank",
+      rel: "noopener",
+    },
+  });
+  if (!viewingTs) preview.setAttribute("aria-disabled", "true");
+  bar.appendChild(preview);
+
+  const regen = el("button", { cls: "rpt-card-btn", text: "Regenerate" });
+  regen.disabled = !canActions;
+  regen.addEventListener("click", handlers.onRegenerate);
+  bar.appendChild(regen);
+
+  if (canNarrate) {
+    const narrate = el("button", { cls: "rpt-card-btn", text: "Narrate" });
+    narrate.disabled = !canActions;
+    narrate.addEventListener("click", handlers.onNarrate);
+    bar.appendChild(narrate);
+  }
+
+  const download = el("a", {
+    cls: "rpt-card-btn",
+    text: "Download",
+    attrs: {
+      href: viewingTs ? "/api/briefs/" + audienceId + "/pdf?version=" + compact + "&download=1" : "#",
+      download: "",
+    },
+  });
+  if (!viewingTs) download.setAttribute("aria-disabled", "true");
+  bar.appendChild(download);
+
+  return bar;
+}
+
+function buildVersionMenu(audience, onSelect) {
+  const menu = el("div", { cls: "rpt-version-menu" });
+  audience.versions.forEach((v, idx) => {
+    const row = el("div", { cls: "rpt-version-row" });
+    const labelText = (idx === 0 ? "Latest · " : "") + formatRelative(v.version_ts)
+      + (v.narrated ? " · narrated" : "");
+    row.textContent = labelText;
+    row.addEventListener("click", () => onSelect(v.version_ts));
+    menu.appendChild(row);
+  });
+  return menu;
+}
+
+function buildErrorStrip(message, onDismiss) {
+  const strip = el("div", { cls: "rpt-error-strip" });
+  const msg = el("span", { text: message });
+  strip.appendChild(msg);
+  const close = el("button", { cls: "rpt-card-btn", text: "×" });
+  close.addEventListener("click", onDismiss);
+  strip.appendChild(close);
+  return strip;
+}
+
+// Per-card state: { audienceId -> { viewingTs, menuOpen, error, inFlight } }
+const reportCardState = new Map();
+
+function buildAudienceCard(audience) {
+  const state = reportCardState.get(audience.id) || {
+    viewingTs: audience.latest_meta ? audience.latest_meta.version_ts : null,
+    menuOpen: false,
+    error: null,
+    inFlight: false,
+  };
+  reportCardState.set(audience.id, state);
+
+  const card = el("div", { cls: "rpt-audience-card" });
+  card.setAttribute("data-audience-id", audience.id);
+
+  // Thumbnail
+  card.appendChild(buildThumbnail(audience.id, state.viewingTs));
+
+  // Body (title + freshness)
+  const body = el("div", { cls: "rpt-card-body" });
+  body.appendChild(el("div", { cls: "rpt-card-title", text: audience.title }));
+
+  const viewingIsLatest = audience.latest_meta &&
+    state.viewingTs === audience.latest_meta.version_ts;
+
+  const freshnessWrap = el("div");
+  const viewingMeta = audience.versions.find(v => v.version_ts === state.viewingTs) || audience.latest_meta;
+  freshnessWrap.appendChild(buildFreshnessLabel(viewingMeta, viewingIsLatest, () => {
+    state.menuOpen = !state.menuOpen;
+    rerenderCard(audience);
+  }));
+  if (viewingIsLatest && audience.latest_meta && audience.latest_meta.stale) {
+    freshnessWrap.appendChild(buildStaleBadge());
+  }
+  body.appendChild(freshnessWrap);
+
+  if (state.menuOpen && audience.versions.length > 0) {
+    body.appendChild(buildVersionMenu(audience, (ts) => {
+      state.viewingTs = ts;
+      state.menuOpen = false;
+      rerenderCard(audience);
+    }));
+  }
+
+  card.appendChild(body);
+
+  // Actions
+  const canActions = !state.inFlight && audience.versions.length >= 0;
+  card.appendChild(buildActionBar(
+    audience.id,
+    state.viewingTs,
+    audience.canNarrate,
+    !state.inFlight,
+    {
+      onRegenerate: () => triggerRegenerate(audience, false),
+      onNarrate: () => triggerRegenerate(audience, true),
+    },
+  ));
+
+  if (state.error) {
+    card.appendChild(buildErrorStrip(state.error, () => {
+      state.error = null;
+      rerenderCard(audience);
+    }));
+  }
+
+  return card;
+}
+
+function rerenderCard(audience) {
+  const existing = document.querySelector('[data-audience-id="' + audience.id + '"]');
+  if (!existing) return;
+  const fresh = buildAudienceCard(audience);
+  existing.replaceWith(fresh);
+}
+
+async function triggerRegenerate(audience, narrate) {
+  const state = reportCardState.get(audience.id);
+  state.inFlight = true;
+  state.error = null;
+  rerenderCard(audience);
+
+  try {
+    const resp = await fetch("/api/briefs/" + audience.id + "/regenerate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ narrate: !!narrate }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(resp.status + ": " + text.slice(0, 200));
+    }
+    const body = await resp.json();
+    audience.versions = body.versions;
+    audience.latest_meta = body.new_version;
+    state.viewingTs = body.new_version.version_ts;
+  } catch (err) {
+    state.error = err.message;
+  } finally {
+    state.inFlight = false;
+    rerenderCard(audience);
+  }
+}
+
+async function renderReports() {
+  const container = document.getElementById("tab-reports");
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  const grid = el("div", { cls: "rpt-grid" });
+
+  let audiences;
+  try {
+    const resp = await fetch("/api/briefs/");
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    audiences = await resp.json();
+  } catch (err) {
+    grid.appendChild(el("div", { text: "Failed to load briefs: " + err.message }));
+    container.appendChild(grid);
+    return;
+  }
+
+  // Top row: CISO + Board
+  for (const a of audiences.filter(x => !x.id.startsWith("rsm-"))) {
+    grid.appendChild(buildAudienceCard(a));
+  }
+  // Subheader
+  grid.appendChild(el("div", { cls: "rpt-subheader", text: "RSM — 5 regions" }));
+  // RSM row
+  for (const a of audiences.filter(x => RSM_AUDIENCE_IDS.includes(x.id))) {
+    grid.appendChild(buildAudienceCard(a));
+  }
+
+  container.appendChild(grid);
 }

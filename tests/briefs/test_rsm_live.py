@@ -5,7 +5,7 @@ from tools.briefs.models import RsmBriefData
 
 
 def test_load_rsm_data_med_returns_valid_model():
-    data = load_rsm_data("MED")
+    data, _ = load_rsm_data("MED")
     assert isinstance(data, RsmBriefData)
     assert data.cover.title.startswith("AeroGrid")
     assert "MED" in data.cover.title
@@ -14,19 +14,19 @@ def test_load_rsm_data_med_returns_valid_model():
 
 
 def test_load_rsm_data_med_has_cover_meta():
-    data = load_rsm_data("MED")
+    data, _ = load_rsm_data("MED")
     from datetime import date
     assert data.cover.issued_at == date.today()
 
 
 def test_load_rsm_data_med_sites_have_computed():
-    data = load_rsm_data("MED")
+    data, _ = load_rsm_data("MED")
     for block in data.sites:
         assert block.computed is not None
         assert block.narrative.standing_notes_synthesis is None
 
 
 def test_load_rsm_data_apac_returns_valid_model():
-    data = load_rsm_data("APAC")
+    data, _ = load_rsm_data("APAC")
     assert isinstance(data, RsmBriefData)
     assert "APAC" in data.cover.title

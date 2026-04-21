@@ -10,6 +10,9 @@ from tools.briefs.loaders import (
     load_cyber_indicators,
     load_calendar,
 )
+from tools.briefs.data.ciso import load_ciso_data
+from tools.briefs.data.board import load_board_data
+from tools.briefs.data.rsm import load_rsm_data
 from tools.briefs.models import SiteContext
 
 
@@ -131,3 +134,21 @@ def test_load_calendar_returns_calendar_items_from_notable_dates():
     assert all(hasattr(i, "label") for i in items)
     assert all(hasattr(i, "date_str") for i in items)
     assert all(hasattr(i, "country") for i in items)
+
+
+def test_load_ciso_data_returns_tuple():
+    data, run_id = load_ciso_data("2026-04")
+    assert data is not None
+    assert run_id is None or isinstance(run_id, str)
+
+
+def test_load_board_data_returns_tuple():
+    data, run_id = load_board_data("2026Q2")
+    assert data is not None
+    assert run_id is None or isinstance(run_id, str)
+
+
+def test_load_rsm_data_returns_tuple():
+    data, run_id = load_rsm_data("med", week_of="2026-W17", narrate=False)
+    assert data is not None
+    assert run_id is None or isinstance(run_id, str)

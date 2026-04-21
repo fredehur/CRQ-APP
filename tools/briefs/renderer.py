@@ -19,14 +19,32 @@ def build_jinja_env() -> jinja2.Environment:
     )
 
 
+def _inline_css(html: str) -> str:
+    """Replace /static/design/styles/*.css link tags with inlined <style> blocks.
+    Also strips screen-only .print-hint elements — never wanted in PDF output."""
+    import re
+    def replacer(m: re.Match) -> str:
+        href = m.group(1)
+        if not href.startswith("/static/"):
+            return m.group(0)
+        css_path = REPO_ROOT / href.lstrip("/")
+        if not css_path.exists():
+            return ""
+        return f"<style>\n{css_path.read_text(encoding='utf-8')}\n</style>"
+    html = re.sub(r'<link[^>]+rel=["\']stylesheet["\'][^>]+href=["\']([^"\']+)["\'][^>]*>', replacer, html)
+    html = re.sub(r'<div[^>]+class=["\'][^"\']*print-hint[^"\']*["\'][^>]*>.*?</div>', '', html, flags=re.DOTALL)
+    return html
+
+
 def render_html(template: jinja2.Template, data: Any) -> str:
-    return template.render(data=data)
+    return _inline_css(template.render(data=data))
 
 
 async def render_pdf(
     brief: str,
     data: Any,
     out_path: Path,
+    thumbnail_path: Path | None = None,
 ) -> None:
     from playwright.async_api import async_playwright
 
@@ -57,6 +75,11 @@ async def render_pdf(
                 prefer_css_page_size=True,
                 margin={"top": "0", "right": "0", "bottom": "0", "left": "0"},
             )
+            if thumbnail_path is not None:
+                await page.locator("section.page").first.screenshot(
+                    path=str(thumbnail_path),
+                    scale="device",
+                )
             await browser.close()
     finally:
         html_path.unlink(missing_ok=True)

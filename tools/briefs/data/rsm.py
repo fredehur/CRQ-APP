@@ -10,6 +10,7 @@ from tools.briefs.loaders import (
     load_cyber_indicators,
     load_calendar,
 )
+from tools.briefs.pipeline_state import region_run_id
 from tools.briefs.joins import proximity_hits, pattern_hits, actor_hits, calendar_ahead
 from tools.briefs.models import (
     SiteContext,
@@ -41,7 +42,9 @@ _BASELINE_SEVERITY = {"low": "green", "elevated": "amber", "high": "red"}
 _BASELINE_LABEL = {"low": "Stable", "elevated": "Watch", "high": "Raised"}
 
 
-def load_rsm_data(region: str, week_of: str | None = None, narrate: bool = False) -> RsmBriefData:
+def load_rsm_data(
+    region: str, week_of: str | None = None, narrate: bool = False
+) -> tuple[RsmBriefData, str | None]:
     reg = region.upper()
     sites = load_sites_for_region(reg)
     phys = load_physical_signals(reg)
@@ -88,7 +91,7 @@ def load_rsm_data(region: str, week_of: str | None = None, narrate: bool = False
         iso = _date.today().isocalendar()
         resolved_week = week_of or f"{iso[0]}-W{iso[1]:02d}"
         brief = _narrate(brief, reg, resolved_week)
-    return brief
+    return brief, region_run_id(region.lower())
 
 
 def _build_cover(region: str, week_of: str | None) -> CoverMeta:

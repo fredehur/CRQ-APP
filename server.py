@@ -387,48 +387,95 @@ async def get_history():
     return {"regions": {r: [] for r in REGIONS}, "drift": {}, "generated_at": None}
 
 
-@app.get("/api/footprint")
-async def get_footprint():
-    """Return full regional_footprint.json."""
-    path = Path("data/regional_footprint.json")
-    if path.exists():
-        return json.loads(path.read_text(encoding="utf-8"))
-    return {}
+@app.get("/api/context/company")
+async def get_context_company():
+    path = BASE / "data" / "company_profile.json"
+    if not path.exists():
+        return JSONResponse({"error": "company_profile.json not found"}, status_code=500)
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
-@app.put("/api/footprint/{region}")
-async def update_footprint(region: str, body: dict):
-    """Update four editable fields for one region. Atomic write."""
+@app.put("/api/context/company")
+async def put_context_company(body: dict):
+    from tools.context_api import atomic_write_json
+    path = BASE / "data" / "company_profile.json"
+    atomic_write_json(path, body)
+    return {"ok": True}
+
+
+@app.get("/api/context/cyber-watchlist")
+async def get_context_cyber_watchlist():
+    from tools.context_api import empty_cyber_watchlist
+    path = BASE / "data" / "cyber_watchlist.json"
+    if not path.exists():
+        return empty_cyber_watchlist()
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+@app.put("/api/context/cyber-watchlist")
+async def put_context_cyber_watchlist(body: dict):
+    from tools.context_api import atomic_write_json
+    path = BASE / "data" / "cyber_watchlist.json"
+    atomic_write_json(path, body)
+    return {"ok": True}
+
+
+@app.get("/api/context/sites")
+async def get_context_sites(region: str = Query(None)):
+    if not region:
+        return JSONResponse({"error": "region query param required"}, status_code=400)
     r = region.upper()
     if r not in REGIONS:
         return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
-
-    path = Path("data/regional_footprint.json")
+    path = BASE / "data" / "aerowind_sites.json"
     if not path.exists():
+        return {"sites": []}
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    sites = [s for s in doc.get("sites", []) if s.get("region") == r]
+    return {"sites": sites}
+
+
+@app.put("/api/context/sites/{site_id}")
+async def put_context_site(site_id: str, body: dict):
+    from tools.context_api import replace_site_in_registry
+    path = BASE / "data" / "aerowind_sites.json"
+    if not path.exists():
+        return JSONResponse({"error": "aerowind_sites.json not found"}, status_code=500)
+    ok, err = replace_site_in_registry(path, site_id, body)
+    if ok:
+        return {"ok": True}
+    if err == "not_found":
+        return JSONResponse({"error": f"Unknown site_id: {site_id}"}, status_code=404)
+    if err in ("id_change", "region_change"):
+        field = err.replace("_change", "")
+        return JSONResponse({"error": f"Cannot change {field} via PUT"}, status_code=400)
+    return JSONResponse({"error": "unknown error"}, status_code=500)
+
+
+@app.get("/api/context/regional/{region}")
+async def get_context_regional(region: str):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+    from tools.context_api import load_regional_record
+    footprint_path = BASE / "data" / "regional_footprint.json"
+    sites_path = BASE / "data" / "aerowind_sites.json"
+    if not footprint_path.exists():
         return JSONResponse({"error": "regional_footprint.json not found"}, status_code=500)
+    return load_regional_record(footprint_path, sites_path, r)
 
-    footprint = json.loads(path.read_text(encoding="utf-8"))
 
-    if r not in footprint:
-        return JSONResponse({"error": f"Region {r} not in footprint file"}, status_code=404)
-
-    entry = footprint[r]
-    if "summary" in body:
-        entry["summary"] = body["summary"]
-    if "headcount" in body:
-        entry["headcount"] = int(body["headcount"])
-    if "notes" in body:
-        entry["notes"] = body["notes"]
-    if "rsm_email" in body:
-        rsm_role = f"{r} RSM"
-        for stakeholder in entry.get("stakeholders", []):
-            if stakeholder.get("role") == rsm_role:
-                stakeholder["email"] = body["rsm_email"]
-                break
-
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(footprint, indent=2, ensure_ascii=False), encoding="utf-8")
-    tmp.replace(path)
+@app.put("/api/context/regional/{region}")
+async def put_context_regional(region: str, body: dict):
+    r = region.upper()
+    if r not in REGIONS:
+        return JSONResponse({"error": f"Unknown region: {region}"}, status_code=400)
+    from tools.context_api import write_regional_record
+    footprint_path = BASE / "data" / "regional_footprint.json"
+    sites_path = BASE / "data" / "aerowind_sites.json"
+    if not footprint_path.exists():
+        return JSONResponse({"error": "regional_footprint.json not found"}, status_code=500)
+    write_regional_record(footprint_path, sites_path, r, body)
     return {"ok": True}
 
 
@@ -685,48 +732,199 @@ async def get_outputs_status():
     return result
 
 
-# ── API: Brief rendering pipeline ────────────────────────────────────
+# ── API: Briefs archive + versioned rendering ───────────────────────
+# (Legacy single-endpoint `_run_build_pdf`, `/api/briefs/{board,ciso}/pdf`, and
+#  `/api/briefs/rsm/{region}/pdf` removed; replaced by the versioned archive
+#  endpoints below in the Phase 3+4 Reports tab redesign.)
 
-def _run_build_pdf(brief: str, out: Path, extra_args: list[str] | None = None) -> tuple[bool, str]:
-    import subprocess
-    cmd = ["uv", "run", "python", "-m", "tools.build_pdf",
-           "--brief", brief, "--out", str(out)] + (extra_args or [])
-    r = subprocess.run(cmd, capture_output=True, encoding="utf-8", errors="replace", cwd=str(BASE))
-    return (r.returncode == 0 and out.exists()), r.stderr
+from fastapi import HTTPException
+from tools.briefs import storage as briefs_storage
+from tools.briefs import pipeline_state as briefs_pipeline_state
+from tools.briefs import renderer as briefs_renderer
 
-
-@app.get("/api/briefs/board/pdf")
-async def get_brief_board_pdf():
-    """Render Board brief via template pipeline and return as PDF download."""
-    out = DELIVERABLES / "board_brief.pdf"
-    ok, err = _run_build_pdf("board", out)
-    if not ok:
-        return JSONResponse({"error": err or "Render failed"}, status_code=500)
-    return FileResponse(str(out), media_type="application/pdf", filename="board_brief.pdf")
-
-
-@app.get("/api/briefs/ciso/pdf")
-async def get_brief_ciso_pdf():
-    """Render CISO brief via template pipeline and return as PDF download."""
-    out = DELIVERABLES / "ciso_brief.pdf"
-    ok, err = _run_build_pdf("ciso", out)
-    if not ok:
-        return JSONResponse({"error": err or "Render failed"}, status_code=500)
-    return FileResponse(str(out), media_type="application/pdf", filename="ciso_brief.pdf")
+AUDIENCE_IDS = ["ciso", "board", "rsm-apac", "rsm-ame", "rsm-latam", "rsm-med", "rsm-nce"]
+AUDIENCE_TITLES = {
+    "ciso": "CISO",
+    "board": "Board",
+    "rsm-apac": "RSM · APAC",
+    "rsm-ame": "RSM · AME",
+    "rsm-latam": "RSM · LATAM",
+    "rsm-med": "RSM · MED",
+    "rsm-nce": "RSM · NCE",
+}
 
 
-@app.get("/api/briefs/rsm/{region}/pdf")
-async def get_brief_rsm_pdf(region: str):
-    """Render RSM weekly INTSUM for the given region and return as PDF download."""
-    r = region.upper()
-    if r not in REGIONS:
-        return JSONResponse({"error": f"Unknown region: {r}"}, status_code=400)
-    out = DELIVERABLES / f"rsm_brief_{r.lower()}.pdf"
-    ok, err = _run_build_pdf("rsm", out, ["--region", r])
-    if not ok:
-        return JSONResponse({"error": err or "Render failed"}, status_code=500)
-    return FileResponse(str(out), media_type="application/pdf",
-                        filename=f"rsm_brief_{r.lower()}.pdf")
+def _can_narrate(audience_id: str) -> bool:
+    return audience_id.startswith("rsm-")
+
+
+def _version_to_meta(rec: "briefs_storage.VersionRecord", audience_id: str) -> dict:
+    try:
+        current = briefs_pipeline_state.current_run_id(audience_id)
+    except ValueError:
+        current = None
+    stale = (
+        rec.pipeline_run_id is not None
+        and current is not None
+        and rec.pipeline_run_id != current
+    )
+    return {
+        "version_ts": rec.version_ts,
+        "pipeline_run_id": rec.pipeline_run_id,
+        "narrated": rec.narrated,
+        "generated_by": rec.generated_by,
+        "stale": stale,
+    }
+
+
+def _versions_meta_for(audience_id: str) -> list[dict]:
+    versions = briefs_storage.list_versions(audience_id)
+    metas = [_version_to_meta(v, audience_id) for v in versions]
+    for i, m in enumerate(metas):
+        if i > 0:
+            m["stale"] = False
+    return metas
+
+
+@app.get("/api/briefs/")
+def list_briefs():
+    out = []
+    for aid in AUDIENCE_IDS:
+        versions_meta = _versions_meta_for(aid)
+        latest = versions_meta[0] if versions_meta else None
+        out.append({
+            "id": aid,
+            "title": AUDIENCE_TITLES[aid],
+            "canNarrate": _can_narrate(aid),
+            "latest_meta": latest,
+            "versions": versions_meta,
+        })
+    return out
+
+
+@app.get("/api/briefs/{audience_id}/meta")
+def get_brief_meta(audience_id: str, version: str | None = None):
+    if audience_id not in AUDIENCE_IDS:
+        raise HTTPException(404, "unknown audience")
+    if version is None:
+        rec = briefs_storage.get_latest(audience_id)
+    else:
+        try:
+            iso = briefs_storage.compact_to_iso(version)
+        except (IndexError, ValueError):
+            raise HTTPException(404, "no version")
+        rec = briefs_storage.get_specific(audience_id, iso)
+    if rec is None:
+        raise HTTPException(404, "no version")
+    return _version_to_meta(rec, audience_id)
+
+
+@app.get("/api/briefs/{audience_id}/versions")
+def get_brief_versions(audience_id: str):
+    if audience_id not in AUDIENCE_IDS:
+        raise HTTPException(404, "unknown audience")
+    return _versions_meta_for(audience_id)
+
+
+def _resolve_version(audience_id: str, version: str | None) -> "briefs_storage.VersionRecord":
+    if audience_id not in AUDIENCE_IDS:
+        raise HTTPException(404, "unknown audience")
+    if version is None:
+        rec = briefs_storage.get_latest(audience_id)
+    else:
+        try:
+            iso = briefs_storage.compact_to_iso(version)
+        except (IndexError, ValueError):
+            raise HTTPException(404, "no version")
+        rec = briefs_storage.get_specific(audience_id, iso)
+    if rec is None:
+        raise HTTPException(404, "no version")
+    return rec
+
+
+def _human_filename(audience_id: str, version_ts: str, ext: str) -> str:
+    # "2026-04-21T04:12:00Z" → "{audience_id}_2026-04-21_0412.{ext}"
+    date_part = version_ts[:10]
+    time_part = version_ts[11:13] + version_ts[14:16]
+    return f"{audience_id}_{date_part}_{time_part}.{ext}"
+
+
+@app.get("/api/briefs/{audience_id}/pdf")
+def get_brief_pdf(audience_id: str, version: str | None = None, download: int = 0):
+    rec = _resolve_version(audience_id, version)
+    headers = {}
+    if download:
+        fname = _human_filename(audience_id, rec.version_ts, "pdf")
+        headers["Content-Disposition"] = f'attachment; filename="{fname}"'
+    return FileResponse(str(rec.pdf_path), media_type="application/pdf", headers=headers)
+
+
+@app.get("/api/briefs/{audience_id}/thumbnail")
+def get_brief_thumbnail(audience_id: str, version: str | None = None):
+    rec = _resolve_version(audience_id, version)
+    return FileResponse(str(rec.thumbnail_path), media_type="image/png")
+
+
+def _default_period_for(audience_id: str) -> dict:
+    """Return today-based default period args for a given audience."""
+    from datetime import date
+    today = date.today()
+    if audience_id == "ciso":
+        return {"month": today.strftime("%Y-%m")}
+    if audience_id == "board":
+        q = (today.month - 1) // 3 + 1
+        return {"quarter": f"{today.year}Q{q}"}
+    return {"region": audience_id.removeprefix("rsm-").upper(), "week_of": None}
+
+
+@app.post("/api/briefs/{audience_id}/regenerate")
+async def regenerate_brief(audience_id: str, body: dict | None = None):
+    if audience_id not in AUDIENCE_IDS:
+        raise HTTPException(404, "unknown audience")
+    body = body or {}
+    narrate = bool(body.get("narrate", False))
+    period = _default_period_for(audience_id)
+
+    if audience_id == "ciso":
+        from tools.briefs.data.ciso import load_ciso_data
+        data, run_id = load_ciso_data(period["month"])
+        brief_kind = "ciso"
+        metadata = {"month": period["month"]}
+    elif audience_id == "board":
+        from tools.briefs.data.board import load_board_data
+        data, run_id = load_board_data(period["quarter"])
+        brief_kind = "board"
+        metadata = {"quarter": period["quarter"]}
+    else:
+        from tools.briefs.data.rsm import load_rsm_data
+        data, run_id = load_rsm_data(period["region"], period["week_of"], narrate=narrate)
+        brief_kind = "rsm"
+        metadata = {"region": period["region"], "week_of": period["week_of"]}
+
+    import tempfile as _tempfile
+
+    with _tempfile.TemporaryDirectory() as td:
+        tmp_pdf = Path(td) / "out.pdf"
+        tmp_png = Path(td) / "out.png"
+        try:
+            await briefs_renderer.render_pdf(brief_kind, data, tmp_pdf, thumbnail_path=tmp_png)
+        except Exception as exc:
+            raise HTTPException(500, f"render failed: {exc}")
+
+        new_rec = briefs_storage.record_version(
+            audience_id=audience_id,
+            pdf_tmp_path=tmp_pdf,
+            thumbnail_tmp_path=tmp_png,
+            pipeline_run_id=run_id,
+            narrated=narrate,
+            generated_by="api",
+            metadata=metadata,
+        )
+
+    return {
+        "new_version": _version_to_meta(new_rec, audience_id),
+        "versions": _versions_meta_for(audience_id),
+    }
 
 
 # ── API: Config ───────────────────────────────────────────────────────
@@ -2360,6 +2558,11 @@ async def _startup():
     if log_path.exists():
         try:
             _run_log = json.loads(log_path.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    for aid in AUDIENCE_IDS:
+        try:
+            briefs_storage.sweep_orphans(aid)
         except Exception:
             pass
 
