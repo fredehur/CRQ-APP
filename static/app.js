@@ -163,7 +163,6 @@ async function loadLatestData() {
   // Register bar is only relevant on the Risk Register tab — hide on all others
   const registerBar = document.getElementById('register-bar');
   if (registerBar) registerBar.style.display = 'none';
-  document.body.style.paddingTop = '36px';
   renderAll();
 }
 
@@ -1242,7 +1241,6 @@ function _doSwitchTab(tab) {
   const registerBar = document.getElementById('register-bar');
   const onRegister = tab === 'validate';
   if (registerBar) registerBar.style.display = onRegister ? 'flex' : 'none';
-  document.body.style.paddingTop = onRegister ? '60px' : '36px';
   ['overview', 'reports', 'history', 'trends', 'config', 'validate', 'sources', 'context', 'pipeline', 'runlog'].forEach(t => {
     const el = $(`tab-${t}`);
     if (!el) return;
@@ -1251,7 +1249,7 @@ function _doSwitchTab(tab) {
     const nav = $(`nav-${t}`);
     if (nav) nav.classList.toggle('active', t === tab);
   });
-  if (tab === 'reports') renderReports();
+  if (tab === 'reports') renderReportsLedger(document.getElementById("tab-reports"));
   if (tab === 'history') renderHistory();
   if (tab === 'trends')  renderTrends();
   if (tab === 'config')  loadConfigTab();
@@ -5566,272 +5564,363 @@ window.addEventListener("beforeunload", function (e) {
   }
 });
 
-// --- Reports tab: card grid renderer ---
+// ── Section: Reports V2 Ledger ─────────────────────────────────────────
 
-const RSM_AUDIENCE_IDS = ["rsm-apac", "rsm-ame", "rsm-latam", "rsm-med", "rsm-nce"];
+// Task 7: Status + freshness utilities
 
-function formatRelative(isoUtc) {
-  if (!isoUtc) return "";
-  const then = new Date(isoUtc);
+function computeRowStatus(audience) {
+  if (!audience.latest_meta) return "empty";
+  if (audience.latest_meta.pipeline_run_id !== audience.current_run_id) return "stale";
+  return "ready";
+}
+
+function formatFreshness(latestMeta) {
+  if (!latestMeta || !latestMeta.created_at) return "—";
+  const ts = new Date(latestMeta.created_at);
   const now = new Date();
-  const hh = String(then.getUTCHours()).padStart(2, "0");
-  const mm = String(then.getUTCMinutes()).padStart(2, "0");
-  const timeStr = hh + ":" + mm + " UTC";
-  const thenDay = then.toISOString().slice(0, 10);
-  const nowDay = now.toISOString().slice(0, 10);
-  if (thenDay === nowDay) return "Today · " + timeStr;
-  const yest = new Date(now.getTime() - 86400000).toISOString().slice(0, 10);
-  if (thenDay === yest) return "Yesterday · " + timeStr;
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const label = months[then.getUTCMonth()] + " " + String(then.getUTCDate()).padStart(2, "0");
-  return label + " · " + timeStr;
+  const diffMs = now - ts;
+  const diffH = diffMs / 3600000;
+  const timeStr = ts.toISOString().slice(11, 16) + " UTC";
+  const dateStr = ts.toISOString().slice(0, 10);
+  if (diffH < 24) return `Today ${ts.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit"})}`;
+  if (diffH < 48) return `Yesterday ${timeStr}`;
+  const days = Math.floor(diffH / 24);
+  return `${days}d ago · ${dateStr} ${timeStr}`;
 }
 
-function isoToCompact(iso) {
-  return iso.replace(/[-:]/g, "");
+// Task 8: Row renderer + ledger renderer + action helpers
+
+function mkActionBtn(label, handler) {
+  const b = document.createElement("button");
+  b.className = "btn btn-ghost";
+  b.textContent = label;
+  b.onclick = () => handler(b);
+  return b;
 }
 
-function el(tag, opts) {
-  const e = document.createElement(tag);
-  if (!opts) return e;
-  if (opts.text !== undefined) e.textContent = opts.text;
-  if (opts.cls) {
-    (Array.isArray(opts.cls) ? opts.cls : [opts.cls]).forEach(c => e.classList.add(c));
-  }
-  if (opts.attrs) {
-    for (const k of Object.keys(opts.attrs)) e.setAttribute(k, opts.attrs[k]);
-  }
-  return e;
+function openPreview(audience) {
+  window.open(`/api/briefs/${audience.id}/pdf`, "_blank");
 }
 
-function buildThumbnail(audienceId, viewingTs) {
-  if (!viewingTs) {
-    return el("div", { cls: ["rpt-thumb", "rpt-thumb-placeholder"], text: "No brief yet" });
-  }
-  const compact = isoToCompact(viewingTs);
-  const img = el("img", {
-    cls: "rpt-thumb",
-    attrs: {
-      src: "/api/briefs/" + audienceId + "/thumbnail?version=" + compact,
-      alt: audienceId + " cover thumbnail",
-      loading: "lazy",
-    },
-  });
-  return img;
+function openDownload(audience) {
+  window.open(`/api/briefs/${audience.id}/pdf?download=1`, "_blank");
 }
 
-function buildFreshnessLabel(latestMeta, viewingIsLatest, onToggle) {
-  const label = el("span", { cls: "rpt-freshness" });
-  if (!latestMeta) {
-    label.textContent = "";
-    return label;
-  }
-  const prefix = viewingIsLatest ? "Latest · " : "";
-  label.textContent = prefix + formatRelative(latestMeta.version_ts) + " ▾";
-  label.addEventListener("click", onToggle);
-  return label;
-}
-
-function buildStaleBadge() {
-  return el("span", { cls: "rpt-stale-badge", text: "⚠ Stale" });
-}
-
-function buildActionBar(audienceId, viewingTs, canNarrate, canActions, handlers) {
-  const bar = el("div", { cls: "rpt-actions" });
-  const compact = viewingTs ? isoToCompact(viewingTs) : "";
-
-  const preview = el("a", {
-    cls: "rpt-card-btn",
-    text: "Preview",
-    attrs: {
-      href: viewingTs ? "/api/briefs/" + audienceId + "/pdf?version=" + compact : "#",
-      target: "_blank",
-      rel: "noopener",
-    },
-  });
-  if (!viewingTs) preview.setAttribute("aria-disabled", "true");
-  bar.appendChild(preview);
-
-  const regen = el("button", { cls: "rpt-card-btn", text: "Regenerate" });
-  regen.disabled = !canActions;
-  regen.addEventListener("click", handlers.onRegenerate);
-  bar.appendChild(regen);
-
-  if (canNarrate) {
-    const narrate = el("button", { cls: "rpt-card-btn", text: "Narrate" });
-    narrate.disabled = !canActions;
-    narrate.addEventListener("click", handlers.onNarrate);
-    bar.appendChild(narrate);
-  }
-
-  const download = el("a", {
-    cls: "rpt-card-btn",
-    text: "Download",
-    attrs: {
-      href: viewingTs ? "/api/briefs/" + audienceId + "/pdf?version=" + compact + "&download=1" : "#",
-      download: "",
-    },
-  });
-  if (!viewingTs) download.setAttribute("aria-disabled", "true");
-  bar.appendChild(download);
-
-  return bar;
-}
-
-function buildVersionMenu(audience, onSelect) {
-  const menu = el("div", { cls: "rpt-version-menu" });
-  audience.versions.forEach((v, idx) => {
-    const row = el("div", { cls: "rpt-version-row" });
-    const labelText = (idx === 0 ? "Latest · " : "") + formatRelative(v.version_ts)
-      + (v.narrated ? " · narrated" : "");
-    row.textContent = labelText;
-    row.addEventListener("click", () => onSelect(v.version_ts));
-    menu.appendChild(row);
-  });
-  return menu;
-}
-
-function buildErrorStrip(message, onDismiss) {
-  const strip = el("div", { cls: "rpt-error-strip" });
-  const msg = el("span", { text: message });
-  strip.appendChild(msg);
-  const close = el("button", { cls: "rpt-card-btn", text: "×" });
-  close.addEventListener("click", onDismiss);
-  strip.appendChild(close);
-  return strip;
-}
-
-// Per-card state: { audienceId -> { viewingTs, menuOpen, error, inFlight } }
-const reportCardState = new Map();
-
-function buildAudienceCard(audience) {
-  const state = reportCardState.get(audience.id) || {
-    viewingTs: audience.latest_meta ? audience.latest_meta.version_ts : null,
-    menuOpen: false,
-    error: null,
-    inFlight: false,
-  };
-  reportCardState.set(audience.id, state);
-
-  const card = el("div", { cls: "rpt-audience-card" });
-  card.setAttribute("data-audience-id", audience.id);
-
-  // Thumbnail
-  card.appendChild(buildThumbnail(audience.id, state.viewingTs));
-
-  // Body (title + freshness)
-  const body = el("div", { cls: "rpt-card-body" });
-  body.appendChild(el("div", { cls: "rpt-card-title", text: audience.title }));
-
-  const viewingIsLatest = audience.latest_meta &&
-    state.viewingTs === audience.latest_meta.version_ts;
-
-  const freshnessWrap = el("div");
-  const viewingMeta = audience.versions.find(v => v.version_ts === state.viewingTs) || audience.latest_meta;
-  freshnessWrap.appendChild(buildFreshnessLabel(viewingMeta, viewingIsLatest, () => {
-    state.menuOpen = !state.menuOpen;
-    rerenderCard(audience);
-  }));
-  if (viewingIsLatest && audience.latest_meta && audience.latest_meta.stale) {
-    freshnessWrap.appendChild(buildStaleBadge());
-  }
-  body.appendChild(freshnessWrap);
-
-  if (state.menuOpen && audience.versions.length > 0) {
-    body.appendChild(buildVersionMenu(audience, (ts) => {
-      state.viewingTs = ts;
-      state.menuOpen = false;
-      rerenderCard(audience);
-    }));
-  }
-
-  card.appendChild(body);
-
-  // Actions
-  const canActions = !state.inFlight && audience.versions.length >= 0;
-  card.appendChild(buildActionBar(
-    audience.id,
-    state.viewingTs,
-    audience.canNarrate,
-    !state.inFlight,
-    {
-      onRegenerate: () => triggerRegenerate(audience, false),
-      onNarrate: () => triggerRegenerate(audience, true),
-    },
-  ));
-
-  if (state.error) {
-    card.appendChild(buildErrorStrip(state.error, () => {
-      state.error = null;
-      rerenderCard(audience);
-    }));
-  }
-
-  return card;
-}
-
-function rerenderCard(audience) {
-  const existing = document.querySelector('[data-audience-id="' + audience.id + '"]');
-  if (!existing) return;
-  const fresh = buildAudienceCard(audience);
-  existing.replaceWith(fresh);
-}
-
-async function triggerRegenerate(audience, narrate) {
-  const state = reportCardState.get(audience.id);
-  state.inFlight = true;
-  state.error = null;
-  rerenderCard(audience);
-
+async function doRegenerate(audience, btn, narrate) {
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = "Regenerating…";
   try {
-    const resp = await fetch("/api/briefs/" + audience.id + "/regenerate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ narrate: !!narrate }),
-    });
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(resp.status + ": " + text.slice(0, 200));
-    }
-    const body = await resp.json();
-    audience.versions = body.versions;
-    audience.latest_meta = body.new_version;
-    state.viewingTs = body.new_version.version_ts;
+    const url = `/api/briefs/${audience.id}/regenerate${narrate ? "?narrate=1" : ""}`;
+    const resp = await fetch(url, { method: "POST" });
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    await refreshReportsLedger();
   } catch (err) {
-    state.error = err.message;
+    showErrorToast(`Regenerate failed for ${audience.title}: ${err.message}`);
+    flashErrorPill(audience.id);
   } finally {
-    state.inFlight = false;
-    rerenderCard(audience);
+    btn.disabled = false;
+    btn.textContent = original;
   }
 }
 
-async function renderReports() {
-  const container = document.getElementById("tab-reports");
-  while (container.firstChild) container.removeChild(container.firstChild);
+function flashErrorPill(audienceId) {
+  const row = document.querySelector(`tr[data-audience-id="${audienceId}"]`);
+  if (!row) return;
+  const pill = row.querySelector(".pill");
+  if (!pill) return;
+  const prior = pill.className;
+  pill.className = "pill pill--status-error";
+  pill.textContent = "Error";
+  setTimeout(() => { pill.className = prior; }, 3000);
+}
 
-  const grid = el("div", { cls: "rpt-grid" });
+function renderRowActions(audience, status) {
+  const wrap = document.createElement("div");
+  wrap.className = "row-actions";
 
-  let audiences;
-  try {
-    const resp = await fetch("/api/briefs/");
-    if (!resp.ok) throw new Error("HTTP " + resp.status);
-    audiences = await resp.json();
-  } catch (err) {
-    grid.appendChild(el("div", { text: "Failed to load briefs: " + err.message }));
-    container.appendChild(grid);
+  if (status !== "empty") {
+    wrap.appendChild(mkActionBtn("Preview", () => openPreview(audience)));
+  }
+
+  wrap.appendChild(mkActionBtn("Regenerate", (btn) => doRegenerate(audience, btn, false)));
+
+  if (audience.canNarrate) {
+    wrap.appendChild(mkActionBtn("Narrate", (btn) => doRegenerate(audience, btn, true)));
+  }
+
+  if (status !== "empty") {
+    wrap.appendChild(mkActionBtn("Download", () => openDownload(audience)));
+    const menu = document.createElement("button");
+    menu.className = "row-actions__menu-trigger";
+    menu.textContent = "▾";
+    menu.onclick = (e) => openVersionMenu(audience, menu, e);
+    wrap.appendChild(menu);
+  }
+
+  return wrap;
+}
+
+function renderLedgerRow(audience) {
+  const tr = document.createElement("tr");
+  tr.dataset.audienceId = audience.id;
+
+  const status = computeRowStatus(audience);
+
+  // Column 1 — audience (thumbnail hover wired below)
+  const td1 = document.createElement("td");
+  td1.textContent = audience.title;
+  td1.className = "ledger-audience";
+  attachThumbnailHover(td1, audience);
+  tr.appendChild(td1);
+
+  // Column 2 — status pill
+  const td2 = document.createElement("td");
+  const pill = document.createElement("span");
+  pill.className = `pill pill--status-${status}`;
+  pill.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+  td2.appendChild(pill);
+  tr.appendChild(td2);
+
+  // Column 3 — freshness
+  const td3 = document.createElement("td");
+  td3.textContent = formatFreshness(audience.latest_meta);
+  tr.appendChild(td3);
+
+  // Column 4 — actions
+  const td4 = document.createElement("td");
+  td4.appendChild(renderRowActions(audience, status));
+  tr.appendChild(td4);
+
+  return tr;
+}
+
+const LEDGER_GROUPS = [
+  { label: "Leadership",     predicate: (a) => a.id === "ciso" || a.id === "board" },
+  { label: "RSM — Regional", predicate: (a) => a.id.startsWith("rsm-") },
+];
+
+async function renderReportsLedger(container) {
+  const resp = await fetch("/api/briefs/");
+  if (!resp.ok) {
+    container.textContent = `Failed to load briefs: HTTP ${resp.status}`;
     return;
   }
+  const data = await resp.json();
+  const audiences = Array.isArray(data) ? data : (data.audiences || []);
 
-  // Top row: CISO + Board
-  for (const a of audiences.filter(x => !x.id.startsWith("rsm-"))) {
-    grid.appendChild(buildAudienceCard(a));
-  }
-  // Subheader
-  grid.appendChild(el("div", { cls: "rpt-subheader", text: "RSM — 5 regions" }));
-  // RSM row
-  for (const a of audiences.filter(x => RSM_AUDIENCE_IDS.includes(x.id))) {
-    grid.appendChild(buildAudienceCard(a));
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  const table = document.createElement("table");
+  table.className = "table table--ledger";
+
+  const thead = document.createElement("thead");
+  const hr = document.createElement("tr");
+  ["Audience", "Status", "Freshness", "Actions"].forEach((label) => {
+    const th = document.createElement("th");
+    th.textContent = label;
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr);
+  table.appendChild(thead);
+
+  for (const group of LEDGER_GROUPS) {
+    const rows = audiences.filter(group.predicate);
+    if (rows.length === 0) continue;
+
+    const tbody = document.createElement("tbody");
+    const headTr = document.createElement("tr");
+    headTr.className = "ledger-group-head";
+    const headTd = document.createElement("td");
+    headTd.colSpan = 4;
+    headTd.textContent = group.label;
+    headTr.appendChild(headTd);
+    tbody.appendChild(headTr);
+
+    rows.forEach((a) => tbody.appendChild(renderLedgerRow(a)));
+    table.appendChild(tbody);
   }
 
-  container.appendChild(grid);
+  container.appendChild(table);
+}
+
+async function refreshReportsLedger() {
+  const container = document.getElementById("tab-reports");
+  if (container) await renderReportsLedger(container);
+}
+
+// Task 9: Version menu with flip-up + outside-click + Escape close
+
+let _openVersionMenu = null;
+
+async function openVersionMenu(audience, trigger, evt) {
+  evt.stopPropagation();
+  closeVersionMenu();
+
+  const resp = await fetch(`/api/briefs/${audience.id}/versions`);
+  if (!resp.ok) {
+    showErrorToast(`Failed to load versions: HTTP ${resp.status}`);
+    return;
+  }
+  const versions = (await resp.json()).versions || [];
+
+  const menu = document.createElement("div");
+  menu.className = "popover";
+  menu.style.pointerEvents = "auto";
+  menu.style.minWidth = "280px";
+
+  if (versions.length === 0) {
+    menu.textContent = "No prior versions.";
+  } else {
+    versions.forEach((v) => {
+      const row = document.createElement("div");
+      row.style.padding = "var(--s-3) var(--s-4)";
+      row.style.cursor = "pointer";
+      row.textContent = `${v.created_at}${v.narrator ? " · narrated" : ""}`;
+      row.onclick = () => useVersion(audience, v);
+      menu.appendChild(row);
+    });
+  }
+
+  document.body.appendChild(menu);
+  positionMenuRelative(menu, trigger);
+
+  _openVersionMenu = menu;
+  setTimeout(() => {
+    document.addEventListener("click", closeOnOutside, { once: true });
+    window.addEventListener("scroll", closeVersionMenu, { once: true, capture: true });
+    document.addEventListener("keydown", closeOnEscape);
+  }, 0);
+}
+
+function positionMenuRelative(menu, trigger) {
+  const rect = trigger.getBoundingClientRect();
+  const viewportH = window.innerHeight;
+  const flipUp = rect.top > viewportH * 0.6;
+  menu.style.left = `${rect.left + window.scrollX}px`;
+  if (flipUp) {
+    menu.style.top = `${rect.top + window.scrollY - 8}px`;
+    menu.style.transform = "translateY(-100%)";
+  } else {
+    menu.style.top = `${rect.bottom + window.scrollY + 4}px`;
+  }
+}
+
+function closeVersionMenu() {
+  if (_openVersionMenu && _openVersionMenu.parentNode) {
+    _openVersionMenu.parentNode.removeChild(_openVersionMenu);
+  }
+  _openVersionMenu = null;
+  document.removeEventListener("keydown", closeOnEscape);
+}
+
+function closeOnOutside(e) {
+  if (_openVersionMenu && !_openVersionMenu.contains(e.target)) {
+    closeVersionMenu();
+  }
+}
+
+function closeOnEscape(e) {
+  if (e.key === "Escape") closeVersionMenu();
+}
+
+function useVersion(audience, version) {
+  audience._activeVersion = version;
+  closeVersionMenu();
+  const row = document.querySelector(`tr[data-audience-id="${audience.id}"]`);
+  if (row) row.replaceWith(renderLedgerRow(audience));
+}
+
+// Task 10: Thumbnail hover popover with edge-flip
+
+let _hoverPopover = null;
+let _hoverTimer = null;
+
+function attachThumbnailHover(cell, audience) {
+  cell.addEventListener("mouseenter", () => {
+    if (_hoverTimer) clearTimeout(_hoverTimer);
+    const status = computeRowStatus(audience);
+    if (status === "empty") return;
+    showThumbnailPopover(cell, audience);
+  });
+  cell.addEventListener("mouseleave", () => {
+    _hoverTimer = setTimeout(closeThumbnailPopover, 150);
+  });
+}
+
+function showThumbnailPopover(cell, audience) {
+  closeThumbnailPopover();
+  const pop = document.createElement("div");
+  pop.className = "popover";
+
+  const img = document.createElement("img");
+  img.className = "popover__thumb";
+  img.src = `/api/briefs/${audience.id}/thumbnail`;
+  img.alt = `${audience.title} cover`;
+  pop.appendChild(img);
+
+  document.body.appendChild(pop);
+
+  const rect = cell.getBoundingClientRect();
+  const rightEdge = window.innerWidth - rect.right;
+  const flipLeft = rightEdge < 280;
+  if (flipLeft) {
+    pop.dataset.side = "left";
+    pop.style.left = `${rect.left + window.scrollX - 8}px`;
+  } else {
+    pop.dataset.side = "right";
+    pop.style.left = `${rect.right + window.scrollX + 8}px`;
+  }
+  pop.style.top = `${rect.top + window.scrollY}px`;
+
+  _hoverPopover = pop;
+}
+
+function closeThumbnailPopover() {
+  if (_hoverPopover && _hoverPopover.parentNode) {
+    _hoverPopover.parentNode.removeChild(_hoverPopover);
+  }
+  _hoverPopover = null;
+}
+
+// Task 11: Error toast stack
+
+let _toastStack = null;
+
+function getToastStack() {
+  if (_toastStack && _toastStack.parentNode) return _toastStack;
+  _toastStack = document.createElement("div");
+  _toastStack.className = "ledger-toast-stack";
+  document.body.appendChild(_toastStack);
+  return _toastStack;
+}
+
+function showErrorToast(message) {
+  const stack = getToastStack();
+  while (stack.children.length >= 3) stack.removeChild(stack.firstChild);
+
+  const toast = document.createElement("div");
+  toast.className = "ledger-toast ledger-toast--error";
+
+  const body = document.createElement("div");
+  body.style.flex = "1";
+  body.textContent = message;
+  toast.appendChild(body);
+
+  const close = document.createElement("button");
+  close.className = "ledger-toast__close";
+  close.textContent = "×";
+  let timer = setTimeout(() => dismiss(), 6000);
+
+  const dismiss = () => {
+    clearTimeout(timer);
+    if (toast.parentNode) toast.parentNode.removeChild(toast);
+  };
+
+  close.onclick = dismiss;
+  toast.addEventListener("mouseenter", () => clearTimeout(timer));
+  toast.addEventListener("mouseleave", () => { timer = setTimeout(dismiss, 6000); });
+
+  toast.appendChild(close);
+  stack.appendChild(toast);
 }
