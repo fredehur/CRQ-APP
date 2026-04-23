@@ -5570,13 +5570,13 @@ window.addEventListener("beforeunload", function (e) {
 
 function computeRowStatus(audience) {
   if (!audience.latest_meta) return "empty";
-  if (audience.latest_meta.pipeline_run_id !== audience.current_run_id) return "stale";
+  if (audience.latest_meta.stale === true) return "stale";
   return "ready";
 }
 
 function formatFreshness(latestMeta) {
-  if (!latestMeta || !latestMeta.created_at) return "—";
-  const ts = new Date(latestMeta.created_at);
+  if (!latestMeta || !latestMeta.version_ts) return "—";
+  const ts = new Date(latestMeta.version_ts);
   const now = new Date();
   const diffMs = now - ts;
   const diffH = diffMs / 3600000;
@@ -5711,6 +5711,23 @@ async function renderReportsLedger(container) {
 
   while (container.firstChild) container.removeChild(container.firstChild);
 
+  // Fix 1 — tab header block
+  const header = document.createElement("div");
+  header.className = "rpt-header";
+  const headerTitle = document.createElement("h2");
+  headerTitle.className = "rpt-header__title";
+  headerTitle.textContent = "Reports";
+  header.appendChild(headerTitle);
+  const headerSubtitle = document.createElement("p");
+  headerSubtitle.className = "rpt-header__subtitle";
+  headerSubtitle.textContent = "Stakeholder briefs rendered from the latest pipeline run. Preview, regenerate, or roll back per audience.";
+  header.appendChild(headerSubtitle);
+  container.appendChild(header);
+
+  // Fix 2 — centered max-width wrapper
+  const ledgerWrap = document.createElement("div");
+  ledgerWrap.className = "rpt-ledger-wrap";
+
   const table = document.createElement("table");
   table.className = "table table--ledger";
 
@@ -5741,7 +5758,8 @@ async function renderReportsLedger(container) {
     table.appendChild(tbody);
   }
 
-  container.appendChild(table);
+  ledgerWrap.appendChild(table);
+  container.appendChild(ledgerWrap);
 }
 
 async function refreshReportsLedger() {

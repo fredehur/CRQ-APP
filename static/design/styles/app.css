@@ -896,7 +896,7 @@ a:hover { text-decoration: underline; }
 
 .table--ledger thead {
   position: sticky; top: 0;
-  background: var(--surface-1);
+  background: var(--surface-2);
   z-index: 1;
 }
 
@@ -907,8 +907,8 @@ a:hover { text-decoration: underline; }
   font-weight: var(--w-semibold);
   letter-spacing: var(--tr-label);
   text-transform: uppercase;
-  color: var(--text-tertiary);
-  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  border-bottom: 2px solid var(--border-strong);
 }
 
 .table--ledger tbody td {
@@ -922,11 +922,12 @@ a:hover { text-decoration: underline; }
 .table--ledger .ledger-group-head td {
   padding: var(--s-5) var(--s-5) var(--s-3);
   font-size: var(--fs-label);
-  font-weight: var(--w-semibold);
+  font-weight: var(--w-regular);
   letter-spacing: var(--tr-label);
   text-transform: uppercase;
   color: var(--text-tertiary);
   background: transparent;
+  border-top: 1px solid var(--border-hairline);
   border-bottom: 0;
 }
 
@@ -1000,7 +1001,9 @@ a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 
-.row-actions .btn { padding: var(--s-2) var(--s-4); font-size: var(--fs-small); }
+.row-actions .btn { padding: var(--s-2) var(--s-4); font-size: var(--fs-small); border: 1px solid var(--border-hairline); }
+
+.row-actions .btn:hover:not(:disabled) { border-color: var(--border-subtle); }
 
 .row-actions__menu-trigger {
   background: transparent; border: 0;
@@ -1386,6 +1389,42 @@ a:hover { text-decoration: underline; }
 
 /* ---------- Tab: Risk Register ---------- */
 
+.rr-header-strip {
+  flex-shrink: 0;
+  display: flex; align-items: center; gap: var(--s-3);
+  padding: var(--s-3) var(--s-5);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
+  font-family: var(--font-sans);
+}
+.rr-header-name {
+  font-size: var(--fs-body); font-weight: var(--w-semibold);
+  color: var(--text-primary);
+}
+.rr-header-sep {
+  color: var(--text-disabled); font-size: var(--fs-small);
+  user-select: none;
+}
+.rr-header-meta {
+  font-size: var(--fs-small); color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+.rr-header-ts {
+  margin-left: auto;
+  font-size: var(--fs-label); color: var(--text-disabled);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+.rr-header-stale-badge {
+  font-size: var(--fs-label); font-weight: var(--w-bold);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--sev-warning, #e3b341);
+  background: rgba(227, 179, 65, 0.10);
+  border: 1px solid rgba(227, 179, 65, 0.40);
+  padding: 2px var(--s-3);
+  border-radius: var(--r-sm);
+}
+
 .ctx-badge {
   display: inline-block;
   font-size: var(--fs-xs);
@@ -1723,3 +1762,30 @@ a:hover { text-decoration: underline; }
 /* Reports CSS handled by Reports V2 plan — no rules migrated here. */
 /* Note: #tab-reports wrapper promote rule from the audit is included below for completeness. */
 #tab-reports { padding: var(--s-7) var(--s-8); overflow-y: auto; max-height: calc(100vh - 60px); }
+
+/* Fix 1 — Tab header */
+.rpt-header {
+  max-width: 1100px;
+  margin: 0 auto var(--s-7);
+  padding: var(--s-7) 0 var(--s-5);
+}
+.rpt-header__title {
+  font-size: var(--fs-h1);
+  font-weight: var(--w-semibold);
+  color: var(--text-primary);
+  letter-spacing: var(--tr-heading);
+  margin: 0 0 var(--s-3);
+}
+.rpt-header__subtitle {
+  font-size: var(--fs-body);
+  color: var(--text-tertiary);
+  line-height: var(--lh-body);
+  margin: 0;
+  max-width: 640px;
+}
+
+/* Fix 2 — Centered max-width ledger container */
+.rpt-ledger-wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+}
