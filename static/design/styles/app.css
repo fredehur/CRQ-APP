@@ -1763,10 +1763,9 @@ a:hover { text-decoration: underline; }
 /* Note: #tab-reports wrapper promote rule from the audit is included below for completeness. */
 #tab-reports { padding: var(--s-7) var(--s-8); overflow-y: auto; max-height: calc(100vh - 60px); }
 
-/* Fix 1 — Tab header */
+/* Tab header */
 .rpt-header {
-  max-width: 1100px;
-  margin: 0 auto var(--s-7);
+  margin: 0 0 var(--s-7);
   padding: var(--s-7) 0 var(--s-5);
 }
 .rpt-header__title {
@@ -1781,11 +1780,10 @@ a:hover { text-decoration: underline; }
   color: var(--text-tertiary);
   line-height: var(--lh-body);
   margin: 0;
-  max-width: 640px;
+  max-width: 720px;
 }
 
-/* Fix 2 — Centered max-width ledger container */
+/* Ledger container — fills the tab surface, matches other tabs */
 .rpt-ledger-wrap {
-  max-width: 1100px;
-  margin: 0 auto;
+  width: 100%;
 }
