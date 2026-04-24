@@ -34,7 +34,7 @@
 
 - [ ] **Step 1: Inventory existing primitives in app.css relevant to Reports V2**
 
-Read `static/design/styles/app.css` and note: `.btn`, `.btn--ghost`, `.pill`, `.pill--critical/high/medium/monitor`, `.table`, `.card`, `.modal`. Note any existing popover / tooltip / toast primitive (likely none).
+Read `static/design/styles/app.css` and note: `.btn`, `.btn-ghost` (note: single-dash, NOT BEM `.btn--ghost`), `.pill`, `.pill--critical/high/medium/monitor`, `.table`, `.card`, `.modal`. Note any existing popover / tooltip / toast primitive (likely none).
 
 - [ ] **Step 2: Create the audit file**
 
@@ -52,7 +52,7 @@ Read `static/design/styles/app.css` and note: `.btn`, `.btn--ghost`, `.pill`, `.
 ### Already in app.css (reused by the ledger unchanged)
 | Primitive | Location | Notes |
 |---|---|---|
-| `.btn`, `.btn--ghost` | app.css:298+ | Row-action strip buttons |
+| `.btn`, `.btn-ghost` | app.css:298+ | Row-action strip buttons |
 | `.pill` | tokens.css:146 | Base pill structure |
 | `.table` | app.css:441+ | Base table structure |
 
@@ -479,7 +479,7 @@ function renderRowActions(audience, status) {
 
 function mkActionBtn(label, handler) {
   const b = document.createElement("button");
-  b.className = "btn btn--ghost";
+  b.className = "btn btn-ghost";
   b.textContent = label;
   b.onclick = () => handler(b);
   return b;

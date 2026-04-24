@@ -29,7 +29,7 @@ Out of scope:
 
 Deliverable: a short section at the top of `docs/design/handoff/app-css-audit.md`, limited to Reports V2 needs.
 
-- Which existing `app.css` primitives the ledger consumes unchanged (`.btn`, `.btn--ghost`, `.table`, `.pill`).
+- Which existing `app.css` primitives the ledger consumes unchanged (`.btn`, `.btn-ghost`, `.table`, `.pill`).
 - Which primitives need new variants added: status-pill variants, dense `.table--ledger` variant.
 - Whether `app.css` has a popover/tooltip primitive; if not, add one.
 - Whether `app.css` has a toast primitive; if not, add one.
@@ -48,7 +48,7 @@ New primitives:
 - `.table--ledger` — modifier on `.table` tightening row padding to `--s-3` (6px vertical), sticky `<thead>`, grouped `<tbody>` with subhead rows using `--text-tertiary`.
 - `.popover` — absolutely positioned floating card anchored to a trigger element, flip-to-side when near viewport edge.
 - `.toast` and `.toast-stack` — top-right stack of transient notifications, auto-dismiss default 6s, persistent close button, `--status-error` tinted for error variants.
-- Row-actions cluster (`.row-actions`) — right-aligned action strip, uses existing `.btn--ghost` variants.
+- Row-actions cluster (`.row-actions`) — right-aligned action strip, uses existing `.btn-ghost` variants.
 
 Rules from `app.css` header comment apply: no hex, tokens only, severity scale untouched, cyan = cyber + focus only.
 
