@@ -1,0 +1,17 @@
+{
+  "company_name": "AeroGrid Wind Solutions (Anonymized)",
+  "industry": "Renewable Energy (75% Wind Turbine Manufacturing, 25% Global Service & Maintenance)",
+  "global_footprint": ["APAC", "AME", "LATAM", "MED", "NCE"],
+  "crown_jewels": [
+    "Proprietary turbine aerodynamic designs and material IP (Manufacturing)",
+    "OT/SCADA networks in global blade manufacturing plants (Manufacturing)",
+    "Real-time predictive maintenance algorithms (Service)",
+    "Live telemetry data from offshore and onshore wind farms (Service)"
+  ],
+  "name": "AeroGrid Wind Solutions",
+  "sectors": ["Wind Energy", "Renewable Energy", "Offshore Wind"],
+  "employee_count": 30000,
+  "countries_of_operation": ["TW", "DE", "US", "BR", "CL", "MA", "IT", "DK", "IN"],
+  "risk_appetite": "AeroGrid maintains a moderate risk tolerance for geopolitical exposure in growth markets, accepting elevated country risk where wind resource is strategic. Zero tolerance for supply chain disruption at crown jewel manufacturing facilities. Conservative stance on cyber exposure to OT/SCADA networks.",
+  "strategic_priorities": "Deliver Q3/Q4 Vestas and Ørsted turbine commitments from Kaohsiung and Hamburg manufacturing hubs. Maintain PPA compliance in Morocco (ONEE) and Southeast Asia. Expand LATAM wind farm O&M capacity. Protect OT stack from ransomware and supply chain attacks."
+}

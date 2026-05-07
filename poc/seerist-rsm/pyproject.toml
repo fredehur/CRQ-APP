@@ -1,0 +1,22 @@
+[project]
+name = "seerist-rsm-poc"
+version = "0.1.0"
+description = "Self-contained slice of the AeroGrid CRQ workspace — Seerist API + RSM pipeline for the MED region. Carved from parent branch poc/seerist-rsm-med."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.84.0",
+    "firecrawl-py>=4.22.1",
+    "fpdf2>=2.8.7",
+    "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "playwright>=1.58.0",
+    "python-dotenv>=1.2.2",
+    "python-pptx>=1.0.2",
+    "tavily-python>=0.7.23",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

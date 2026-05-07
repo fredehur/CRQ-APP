@@ -1,0 +1,2815 @@
+FORMAT: 1A
+HOST: https://app.seerist.com/hyperionapi/
+
+# Seerist
+
+The Seerist API is a REST based API for Authenticating and querying HotSpot, Pulse and 
+Pulse Forecasting data from [Seerist, Inc.](https://seerist.com)
+
+# Allowed HTTPs request
+
+<pre>
+GET:   Get a resource, all outputs are in GeoJson format. There will be a metadata section and a features section with properties and a geometry object.
+POST:  POST is only used in the Authentication API and will not be needed if you are using x-api-key Header Authentication (API Key vs Bearer Token).
+</pre>
+
+# Description of Usual Server Responses:
+- 200 `OK` - the request was successful
+- 400 `Bad Request` - There was something incorrect about your request, maybe the METHOD was wrong (POST vs GET) or a parameter is incorrect
+- 401 `UNAUTHORIZED` - No Valid Bearer Token or API Key was supplied, please use the Auth API to request a new Valid Token or [Contact Us](mailto:help@seerist.com) for an API Key.
+- 429 `Too Many Requests` - You have exceeded your quota for the day. Each API key has a daily quota based on the number of API Calls purchased. This quota will reset each day. 
+
+The Seerist API also preforms caching of various resource calls. We control the cache time within our backend and it is
+synced with our update schedule. Various algorithms update on a predefined schedule and making the same request 
+multiple times in a row will result in the same data being returned. To increase performance we cache these results
+and then invalidate the cache as new data becomes available. You can see if you are receiving cached data by inspecting the 
+response headers for 'X-Cache' key. A value of 'Miss from cloudfront' indicates the request was NOT cached and you are receiving
+the latest data, a value of 'Hit from cloudfront' indicates the opposite and you are receiving cached data.
+
+# Using this documentation and executing Examples
+
+Each method described below contains examples and code samples. You can modify the request parameters within this 
+documentation and send the request directly from your browser. To use any of these request you will need to
+to obtain an API Key from Seerist first. To use these examples select an API Method and in the Request Headers
+find the x-api-key parameter and put the API Key as the value, then select the Call Resource button. 
+
+If you would like code samples from various popular languages (Java, Javascript, Node.js, Ruby, Python and many more) 
+swithch back to the Example view (Button in top right). Scroll back to the 'Try' button and change the Raw dropdown
+to the language you'd like examples from.
+
+# Group Authentication
+
+All request require Authentication, the primary way to Authenticate to the SeeristAPI is via an x-api-key Header. These API keys are sutiable for use on
+desktop applications and server side code. They are issued and are expired manually. Because of this
+it is important to not share the API key or place it in any publically visible place. Due to the 
+simplistic nature of the x-api-key they can only access generic data, no personal data (like alerts). If
+you wish to use an x-api-key Seerist will provide you with one and you will pass it on as an additional
+header parameter (x-api-key).
+
+Here is an example cURL using your x-api-key. Replace API_KEY_HERE with the API Key provided by Seerist.UR
+
+<pre>
+curl --location --request GET 'https://app.seerist.com/hyperionapi/v2/pulse/country' \
+--header 'Content-Type: application/json' \
+--header 'x-api-key: API_KEY_HERE'
+</pre>
+
+
+# Group Hotspots
+
+Hotspots alert you to sudden dangerous events taking place worldwide. Hotspots are triggered by a combination of high activity 
+levels and Events. Hotspots is a machine learning model that monitors activity levels across the globe. When activity spikes, 
+this triggers a Hotspot that notifies the user that they may need to look into the events taking place in that area. 
+
+Both Abi and Matt use Hotspots daily. This is how: 
+ - Every morning, Abi logs into Seerist and uses Hotspots worldwide to quickly determine if activity levels have peaked near her 
+   global offices. Abi also created alerts so she can be notified of any new Hotspots that trigger in the vicinity of her offices. 
+ - On a daily basis, Matt also zooms to the countries/cities his clients are in or traveling to and uses Hotspots to quickly 
+   determine if any dangerous events have occurred, or are occurring, that could hinder their travel. 
+
+The Hotspots API will return a list of Hotspots with various properties, one of those properties will be clusterIds. In order to retrieve the articles associated with a hotspot you will need to query the [World of Data](#reference/world-of-data) endpoint with the cluster id, i.e. v1/wod?clusterId={clusterId}.
+    
+## All HotSpots by Bounds/AoiId [/v1/hotspots{?bounds,aoiId,start,end,pageSize,pageOffset}]
+
+Allows you to query hotspots by a bounding geometry or AOI ID and returns all hotspots in Seerist.
+
++ Parameters
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + `aoiId` : us (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of Records to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+
+### All HotSpots by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (HotSpotBounds Response)  
+
+## Top Hotspots by Bounds/AoiId [/v1/hotspots/topic/top{?bounds,aoiId,start,end,pageSize,pageOffset}]
+
+Returns only the Top Hotspots Related Hotspots by a bounding geomatry or AOI ID
+
++ Parameters
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + `aoiId` : us (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of Records to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+
+### Top HotSpots by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (HotSpotBounds Response)
+    
+## Covid19 Hotspots by Bounds/AoiId [/v1/hotspots/topic/covid19{?bounds,aoiId,start,end,pageSize,pageOffset}]
+
+Returns only COVID19 Related Hotspots by a bounding geomatry or AOI ID
+
++ Parameters
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + `aoiId` : us (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of Records to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+
+### Covid19 HotSpots by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (HotSpotBounds Response)  
+    
+# Group Pulse    
+    
+Pulse allows you to take the pulse of the world anywhere, anytime. Just like doctors take our pulse to assess our general health status, 
+Seerist takes the world’s pulse to determine its health, considering factors such as stability and risk.
+
+Pulse monitors the entire world at four different area levels (country, region, city, and county) and, for each level, produces real time,
+constantly-updating stability assessments. Pulse monitors the entire world and produce real time stability assessments.
+
+This is what the colors mean for Pulse:
+ - If Kandahar is Dark Green, this means it’s a very stable place;
+ - If Kandahar is Light Green, this means it’s a stable place;
+ - If Kandahar is YELLOW, this means it’s a slightly unstable place;
+ - If Kandahar is ORANGE, this means it’s an unstable place;
+ - If Kandahar is RED, this means it’s a very unstable place.
+
+Both Abi and Matt use Pulse on a daily basis. This is how: 
+ - Abi uses Pulse to monitor the stability conditions in and around her company’s global offices. With a few minutes and a handful of clicks, 
+   Pulse allows her to rapidly review the stability conditions of every country and city in which her company has offices and examine the stability 
+   forecast for the next week. With Pulse she detects and monitors downward stability trends that could, over time, create unstable conditions 
+   for her employees. With Pulse she detects stability changes that diverge from the usual trends of those areas. To ensure she doesn’t 
+   miss anything, Abi also created Pulse alerts around every office so she can be notified of any sudden Pulse changes. 
+ - Matt uses Pulse on a regular basis to check the stability conditions of European cities his clients travel to. Pulse allows him to 
+   continuously monitor the cities, look for decreasing stability trends, and catch a glimpse of the forecast to determine if the recent stability 
+   trends are expected to persist into next week. Pulse allows him to determine whether there have been any sudden stability changes out of 
+   norm for that area that could jeopardize his client’s travel plans.     
+    
+## Pulse Region by Bounds [/v2/pulse/region{?model,bounds,start,end,pageSize,pageOffset,sortField,sortDirection,includeForecast}]
+
+Allows you to query Pulse at the region level by Bounding Geometry. Regions are defined as Geohash Level 3 Grids. 
+
++ Parameters
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of events to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+    + sortField : startTime (string, optional) - The result field to sort the FeatureCollection Properties on
+        + Members
+            + geohash
+            + count
+            + score
+            + startTime
+        + Default: startTime
+    + sortDirection : desc (string, optional) - Ascending or Descending
+        + Members
+            + asc
+            + desc
+        + Default: desc
+    + includeForecast : false (bool, optional) - Flag if forcast values should also be included        
+
+### Pulse Region by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (Pulse Response Region)
+    
+## Pulse Country by Bounds [/v2/pulse/country{?model,bounds,start,end,pageSize,pageOffset,sortField,sortDirection,includeForecast}]
+
+Allows you to query Pulse at the Country level by Bounds
+
++ Parameters
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of events to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+    + sortField : startTime (string, optional) - The result field to sort the FeatureCollection Properties on
+        + Members
+            + geohash
+            + count
+            + score
+            + startTime
+        + Default: startTime
+    + sortDirection : desc (string, optional) - Ascending or Descending
+        + Members
+            + asc
+            + desc
+        + Default: desc
+    + includeForecast : false (bool, optional) - Flag if forcast values should also be included        
+
+### Pulse Country by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (Pulse Response Country)
+
+## Pulse City by Bounds [/v2/pulse/city{?model,bounds,start,end,pageSize,pageOffset,sortField,sortDirection,includeForecast}]
+
+Allows you to query pulse at the city level by Bounds
+
++ Parameters
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    + bounds : `-7.03,3.80,41.53,71.06` (string) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of events to include in the response  
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+    + sortField : startTime (string, optional) - The result field to sort the FeatureCollection Properties on
+        + Members
+            + geohash
+            + count
+            + score
+            + startTime
+        + Default: startTime
+    + sortDirection : desc (string, optional) - Ascending or Descending
+        + Members
+            + asc
+            + desc
+        + Default: desc
+    + includeForecast : false (bool, optional) - Flag if forcast values should also be included        
+
+### Pulse City by Bounds [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (Pulse Response City)
+
+## Pulse County by Bounds [/v2/pulse/county{?model,bounds,start,end,pageSize,pageOffset,sortField,sortDirection,includeForecast}]
+
+Allows you to query Pulse at the US County level by Bounds
+
++ Parameters
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    + bounds : `-7.03,3.80,41.53,71.06` (string, optional) - Contains the southwest and northeast lat/lon coordinates of the bounding box corners with format SWLat,SWLon,NELat,NELon, e.g. -7.03,3.80,41.53,71.06
+    + start : `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time) interval, e.g. 2016-09-15T00:00:00.000
+    + end : `2019-01-22T23:59:59.999Z` (string, optional) - End of the date (and optionally time) interval, e.g. 2016-09-20T23:59:59.999
+    + pageSize : 100 (numeric, optional) - Number of events to include in the response
+    + pageOffset : 0 (numeric, optional) - Number of Records to offset in the request, used in conjunction with pageSize to retrieve all records
+    + sortField : startTime (string, optional) - The result field to sort the FeatureCollection Properties on
+        + Members
+            + geohash
+            + count
+            + score
+            + startTime
+        + Default: startTime
+    + sortDirection : desc (string, optional) - Ascending or Descending
+        + Members
+            + asc
+            + desc
+        + Default: desc
+    + includeForecast : false (bool, optional) - Flag if forcast values should also be included
+
+### Pulse County by Bounds [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (Pulse Response County)
+
+## Pulse by Country Code [/v2/pulse/country/{countryCode}{?model}{?omitGeometry}{?includeForecast}]
+
+Query Pulse at the Country Level by Country code (ISO-3166 Alpha-2)
+
++ Parameters
+    + `countryCode` : us (string) - ISO-3166-1 Alpha 2 Country Code for the query
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    + `omitGeometry`: true (string, optional) 
+    Optional parameter to remove country geometry from response
+    + `includeForecast`: true (string, optional)
+    Optional parameter to include forecast in response
+    
+    
+    
+### Pulse by Country Code [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (Pulse Response Country Code)
+    
+## Pulse by City Code [/v2/pulse/city/{cityCode}{?model}]    
+
+Query Pulse at the City level by City code
+
++ Parameters
+    + `cityCode` : et-001 (string) - City Code, these are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+    
+### Pulse by City Code [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+      
++ Response 200 (application/json)
+    + Attributes (Pulse Response City Code)
+
+## Pulse by County Code [/v2/pulse/county/{fipsCode}{?model}]
+
+Query Pulse at the US County level by FIPS code
+
++ Parameters
+    + `fipsCode` : us-fips-51107 (string) - FIPS Code, ("us-fips-" + US FIPS Code)
+    + model: `v2` (string, optional) - Selection of scoring model for Pulse
+        + Members
+            + v1
+            + v2
+        + Default: v1
+
+### Pulse by County Code [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (Pulse Response County Code)
+
+
+# Group Event Clusters
+
+Event Clusters is a machine learning model that learns patterns in unstructured
+data to automatically recognize, categorize and identify information from a
+wide range of risk-related incidents breaking worldwide. Event Clusters are clusters of related Events. Each Feature
+may or may not have additional Articles in the Cluster, this can be determined from the `cluster_size` value. Each Feature
+will have a `cluster_id` value associated with the result and the articled defined in the `id` property and `source_url`
+value will be the latest article within the cluster. This means that over time the values in these fields may change
+but the `cluster_id` field will remain constant as that defines what the cluster is. Clusters are recalculated constantly and stabalize
+after about 48hrs. 
+
+The following are some of our Event Categories, this list is dynamic and will change:
+ - Health
+ - Terrorism
+ - Natural Disasters
+ - Unrest
+ - Conflict
+ - Transportation
+ - Crime
+ - Travel Warnings
+ - Coup
+ - Elections
+ - Transnational Organized Crime (toc)
+ 
+Articles can match to multiple event categories, even if you filter out a specific event it might still be matched in an article where there was a 90% or higher 
+confidence of 2 or more events. New Event Models are currently being trained so this list will change from time to time.
+
+For more information about how Event Clusters are created and how they work please see additional Documentation here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804251/Event+Clusters
+
+## Event Clusters by Category [/v2/clusters/{event_category}?end={end}&start={start}&pageSize={pageSize}&pageOffset={pageOffset}&aoiId={aoiId}&bounds={bounds}&search={search}&severityMin={severityMin}&severityMax={severityMax}]
+
++ Parameters
+    + `event_category` : `travel,unrest,transportation,health,terrorism,conflict,disaster,crime` (string, required) - Comma Separated List of Event Categories, possible values are: travel,unrest,transportation,health,terrorism,conflict,disaster,crime (or any combination)
+    + `start` : `2019-01-22T00:00:00.000Z` (string, optional) - Start Date of the Events (default start is end minus 24hours)
+    + `end` : `2019-01-22T23:59:59.999Z` (string, optional) - End Date of the Events (default is NOW)
+    + `pageSize` : 10 (integer, optional) - Number of results to return per page
+    + `pageOffset` : 10 (integer, optional) - Number of results to offset the results by, can be used for retrieving the next set of results up to 10,000
+    + `aoiId` : us (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + `bounds` : `21.72,-130.30,50.58,-63.53` (string, optional) - Geospatial Bounding Box to restrict the search to
+    + `search`: `search query` (string, optional) - Query string for article searches, see full documentation on how search terms work: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804244/Searching+Events
+    + `severityMin`: 0 (integer, optional) - Minimum severity of the article (0 - 10)
+    + `severityMax`: 10 (integer, optional) - Maximum severity of the article (0 - 10)
+
+### Event Clusters [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (Events Response) 
+    
+## Event Articles [/v2/clusters/{cluster_id}/articles?pageSize={pageSize}&includeRoot={includeRoot}]
++ Parameters
+    + `cluster_id` : `be5937b2-3cf1-4744-903a-50983ca189e9` (string) - Cluster ID to retrieve the articles of
+    + `pageSize`: `10` (number, optional) - Max results to return
+    + `includeRoot`: false (boolean, optional) - Whether not to include the representative (or root) article of the cluster.  This is the article returned from `/v2/clusters` call.
+
+### Event Articles [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (EventArticles Response) 
+    
+# Group Saved Search
+
+## Saved Searches [/v1/savedsearch]
+
+### Get Your Saved Searches [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
++ Response 200 (application/json)
+    + Attributes (Saved Searches Get Response)
+
+## Saved Search [/v1/searches-notifications]
+Requires a bearer token in addition to API key, contact Seerist for details.
+
+### Create Saved Search [POST]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
+    + Attributes (SavedSearchPostType)
++ Response 200 (application/json)
+    + Attributes (Saved Searches POST Response)
+
+## Saved Search [/v1/savedsearch/{savedSearchId}]
++ Parameters
+    + `savedSearchId`: `be5937b2-3cf1-4744-903a-50983ca189e9` (string, required) - Saved search's ID
+
+### Get A Saved Search [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxx
+
++ Response 200 (application/json)
+    + Attributes (Saved Search Get Response)
+
+### Update A Saved Search [PUT]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxx
+
+    + Attributes (SavedSearchPutType)
+
++ Response 200 (application/json)
+    + Attributes (Saved Search PUT Response)
+
+### Delete A Saved Search [DELETE]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxx
+
++ Response 200 (application/json)
+    + Attributes
+        + `statusCode`: `200` (string) - Status of request
+
+# Group World of Data
+
+World of Data is used to query against all our documents clustered or not. Currently the endpoint removes all but the first instance of a cluster on a per page basis
+
+## World of Data [/v1/wod?topic={?topic}&start={?start}&end={?end}&sources={?sources}&pageSize={?pageSize}&pageOffset={?pageOffset}&aoiId={?aoiId}&bounds={?bounds}&search={?search}&sortDirection={?sortDirection}&clusterId={?clusterId}&severityMin={?severityMin}&severityMax={?severityMax}&hotspotsOnly={?hotspotsOnly}&sectors={?sectors}&assets={?assets}&attackTypes={?attackTypes}&perpetrators={?perpetrators}&maritimeSubcategories={?maritimeSubcategories}&maritimeVesselTypes={?maritimeVesselTypes}&riskCategories={?riskCategories}&includeFilterCounts={?includeFilterCounts}&timestampProperties={?timestampProperties}]
+
++ Parameters
+    + aoiId : `us` (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + assets: `1,2` (string, optional) - Comma separated list of numeric identifiers for asset types. Applicable only to verified documents with source of political. A list of asset types is available via the [/v1/config/verified/security/asset-types](#reference/helper-functions/verified-security-asset-types/verified-security-asset-types) endpoint
+    + attackTypes: `35,1` (string, optional) - Comma separated list of numeric identifiers for attack types. Applicable only to verified documents with source of political. A list of attack types is available via the [/v1/config/verified/security/attack-types](#reference/helper-functions/verified-security-attack-types/verified-security-attack-types) endpoint
+    + bounds : `21.72,-130.30,50.58,-63.53` (string, optional) - Geospatial Bounding Box to restrict the search to. 
+    + clusterId: `7276a5ad-8125-4a6e-85bb-d11c1643bed6` (string, optional) - A cluster's id used to restrict results to just documents in that cluster
+    + `end` : `2019-01-22T23:59:59.999Z` (string, optional) - End Date of the documents (default is NOW)
+    + `hotspotsOnly`: true (boolean, optional) - Retrieve only results that are part of a hotspot
+    + `includeFilterCounts`: true (boolean, optional) - When enabled filter counts are included in the metadata portion of the response. These counts reflect the number of documents that would match a particular filter if you were to enable it
+    + `maritimeSubcategories`: "47,48" (string, optional) - Comma separated list of numeric identifiers for maritime subcategories. Applicable only to verified documents with source of maritime. A list of maritime subcategories is available via the [/v1/config/verified/maritime/subcategories](#reference/helper-functions/verified-maritime-subcategories/verified-maritime-subcategories) endpoint
+    + `maritimeVesselTypes`: "1,2" (string, optional) - Comma separated list of numeric identifiers for maritime vessel types. Applicable only to verified documents with source of maritime. A list of maritime vessel types is available via the [/v1/config/verified/maritime/vessel-types](#reference/helper-functions/verified-maritime-vessel-types/verified-maritime-vessel-types) endpoint
+    + `pageOffset` : 10 (integer, optional) - Number of results to offset the results by, can be used for retrieving the next set of results up to 10,000
+    + `pageSize` : 10 (integer, optional) - Number of results to return per page
+    + `perpetrators`: "8,2" (string, optional) - Comma separated list of numeric identifiers for perpetrators. Applicable only to verified documents with source of political. A list of perpetrators is available via the [/v1/config/verified/security/perpetrators](#reference/helper-functions/verified-security-perpetrators/verified-security-perpetrators) endpoint
+    + `riskCategories`: `086211a8-6c52-4277-ba7c-792d392bca12,0af9a5ad-7733-4f9f-b3ce-707e7221f096` (string, optional) - Comma separated list of numeric identifiers for risk categories. Only applicable to sources: analysis or riskRatingChanges. A list of risk categories is available via the [/v1/config/risk-categories](#reference/helper-functions/risk-categories/risk-categories) endpoint
+    + `search`: `search query` (string, optional) - Query string for article searches, see full documentation on how search terms work: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804244/Searching+Events
+    + `sectors`: "1,2" (string, optional) - Comma separated list of numeric identifiers for sectors. Applicable only to verified documents with source of political. A list of sectors is available via the [/v1/config/verified/security/sectors](#reference/helper-functions/verified-sectors/verified-security-sectors) endpoint
+    + `severityMax`: 10 (integer, optional) - Maximum severity of the article (0 - 10)
+    + `severityMin`: 0 (integer, optional) - Minimum severity of the article (0 - 10)
+    + `sortDirection`: `asc` (string, optional) - Direction to sort results. Results are sorted by timestamp
+    + `sources` : `news,political` (string, optional) - Comma separated list of Sources. Available sources: `news, twitter, telegram, instagram, facebook, reddit, youtube, weibo, vk, toutiao, political, maritime, riskRatingChanges, evacuations, elections, analysis`
+    + `start` : `2019-01-22T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    + `topic` : `travel,unrest,transportation,health,terrorism,conflict,disaster,crime` (string, optional) - Comma Separated List of Event Categories, possible values are available via the [v1/config/topics](#reference/helper-functions/topics/topics-config) endpoint where the apiName property is the name to request a topic by
+    + `timestampProperties` : `@completed` (string, optional) - Allows filtering by the @completed field using start and end parameters
+
+### World of Data [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Response) 
+    
+
+## World of Data: Saved Search [/v1/wod/savedsearch/{savedSearchId}/execute?topic={topic}&sources={sources}&start={start}?end={end}&pageSize={pageSize}&pageOffset={pageOffset}&aoiId={aoiId}&bounds={bounds}&search={search}&sortDirection={sortDirection}&clusterId={clusterId}&pois={pois}&poisDistUnits={poisDistUnits}&hotspotsOnly={hotspotsOnly}&sectors={sectors}&assets={assets}&attackTypes={attackTypes}&perpetrators={perpetrators}&maritimeSubcategories={maritimeSubcategories}&maritimeVesselTypes={maritimeVesselTypes}&riskCategories={riskCategories}&clusterRootOnly={clusterRootOnly}&emotions={emotions}&forMap{forMap}&places={places}&placesDistUnits={placesDistUnits}&polygon={polygon}&precision={precision}&severityMin={severityMin}&severityMax={severityMax}&sortField={sortField}&sourceMetadataCountryOfFocus={sourceMetadataCountryOfFocus}&sourceMetadataCountryOfOrigin={sourceMetadataCountryOfOrigin}&sourceMetadataFollowerCountBracket={sourceMetadataFollowerCountBracket}&sourceMetadataLanguage={sourceMetadataLanguage}&sourceMetadataMisinfoSusceptibility={sourceMetadataMisinfoSusceptibility}&sourceMetadataReliability={sourceMetadataReliability}&sourceMetadataSocialAuthenticity={sourceMetadataSocialAuthenticity}&sourceMetadataType={sourceMetadataType}&verifiedType={verifiedType}&eventType={eventType}&sentiments={sentiments}&since={since}]
+
+Use a saved search to set the parameters used by World of Data. Parameters provided in the URI overwrite those of the saved search.
+
++ Parameters
+    + `savedSearchId`: `be5937b2-3cf1-4744-903a-50983ca189e9` (string, required) - Saved search's ID
+    + `aoiId` : `us` (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + `assets`: "1,2" (string, optional) - Comma separated list of numeric identifiers for asset types. Applicable only to verified documents with source of political. A list of asset types is available via the [/v1/config/verified/security/asset-types](#reference/helper-functions/verified-security-asset-types/verified-security-asset-types) endpoint
+    + `attackTypes`: "35,1" (string, optional) - Comma separated list of numeric identifiers for attack types. Applicable only to verified documents with source of political. A list of attack types is available via the [/v1/config/verified/security/attack-types](#reference/helper-functions/verified-security-attack-types/verified-security-attack-types) endpoint
+    + `bounds` : `21.72,-130.30,50.58,-63.53` (string, optional) - Geospatial Bounding Box to restrict the search to.
+    + `clusterId`: `7276a5ad-8125-4a6e-85bb-d11c1643bed6` (string, optional) - A cluster's id used to restrict results to just documents in that cluster
+    + `clusterRootOnly`: false (boolean, optional) - Only find articles where cluster_root=true
+    + `emotions` : `anger,disgust,fear,joy,sadness,surprise` (string, optional) - Comma separated list of Emotions.
+    + `end` : `2019-01-22T23:59:59.999Z` (string, optional) - End Date of the documents (default is NOW)
+    + `eventType`: `all` (string, optional) - Verified Event Types. [all, detected, verified]
+    + `forMap`: false (boolean, optional) - Results will include a Geohash aggregation.
+    + `hotspotsOnly`: true (boolean, optional) - Retrieve only results that are part of a hotspot
+    + `maritimeSubcategories`: "47,48" (string, optional) - Comma separated list of numeric identifiers for maritime subcategories. Applicable only to verified documents with source of maritime. A list of maritime subcategories is available via the [/v1/config/verified/maritime/subcategories](#reference/helper-functions/verified-maritime-subcategories/verified-maritime-subcategories) endpoint
+    + `maritimeVesselTypes`: "1,2" (string, optional) - Comma separated list of numeric identifiers for maritime vessel types. Applicable only to verified documents with source of maritime. A list of maritime vessel types is available via the [/v1/config/verified/maritime/vessel-types](#reference/helper-functions/verified-maritime-vessel-types/verified-maritime-vessel-types) endpoint
+    + `pageOffset` : 10 (integer, optional) - Number of results to offset the results by, can be used for retrieving the next set of results up to 10,000
+    + `pageSize` : 10 (integer, optional) - Number of results to return per page
+    + `perpetrators`: "8,2" (string, optional) - Comma separated list of numeric identifiers for perpetrators. Applicable only to verified documents with source of political. A list of perpetrators is available via the [/v1/config/verified/security/perpetrators](#reference/helper-functions/verified-security-perpetrators/verified-security-perpetrators) endpoint
+    + `places`: [[1, 2, 3]] (array(number), optional) - Array of arrays representing places to search around. [lon, lat, radius]
+    + `placesDistUnits`: `mi` (string, optional) - Distance units for radius of a place. Defaults to miles. 'km' and 'mi' supported
+    + `pois`: [[1, 2, 3]] (array(number), optional) - Array of arrays representing points of interest to search around. [lon, lat, radius]
+    + `poisDistUnits`: `mi` (string, optional) - Distance units for radius of pois. Defaults to miles. 'km' and 'mi' supported
+    + `polygon`: [[1, 2], [2, 3]] (array(number), optional) - Array of arrays representing coordinates of a polygon. [lon, lat]
+    + `precision` : 10 (integer, optional) - Number of the precision specific to request for the map.
+    + `riskCategories`: `086211a8-6c52-4277-ba7c-792d392bca12,0af9a5ad-7733-4f9f-b3ce-707e7221f096` (string, optional) - Comma separated list of numeric identifiers for risk categories. Only applicable to sources: analysis or riskRatingChanges. A list of risk categories is available via the [/v1/config/risk-categories](#reference/helper-functions/risk-categories/risk-categories) endpoint
+    + `search`: `search query` (string, optional) - Query string for article searches, see full documentation on how search terms work: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804244/Searching+Events
+    + `sectors`: "1,2" (string, optional) - Comma separated list of numeric identifiers for sectors. Applicable only to verified documents with source of political. A list of sectors is available via the [/v1/config/verified/security/sectors](#reference/helper-functions/verified-sectors/verified-security-sectors) endpoint
+    + `sentiments` : `negative,neutral,positive` (string, optional) - Comma separated list of Sentiments.
+    + `severityMin` : 0 (integer, optional) - Number of the minimal severity in results return
+    + `severityMax` : 10 (integer, optional) - Number of the maximum severity in results return
+    + `since` : `2025-02-11T20:00:00.000Z` (string, optional) - Returns events that were created or changed since this date and time
+    + `sortDirection`: `asc` (string, optional) - Direction to sort results. Results are sorted by timestamp
+    + `sortField`: `asc` (string, optional) - Database field name to sort results.
+    + `sourceMetadataCountryOfFocus` : `AO,AD`  (string, optional) - Comma Separated List of 2 Letter Country Code.
+    + `sourceMetadataCountryOfOrigin` : `AU,AT` (string, optional) - Comma Separated List of 2 Letter Country Code.
+    + `sourceMetadataFollowerCountBracket` : `high,medium,low`  (string, optional) - Comma Separated List of Source Metadata Follower Count
+    + `sourceMetadataLanguage` : `bs,bn`  (string, optional) - Comma Separated List of 2 Letter Country Code
+    + `sourceMetadataMisinfoSusceptibility` : `AF,issueSpecific`  (string, optional) - Comma Separated List of 2 Letter Country Code in addition to the optional value ["issueSpecific"]
+    + `sourceMetadataReliability` : `high,medium` (string, optional) -  Comma Separated List of Source Metadata Reliability , possible values are available ["high", "medium", "low", "unrated"]
+    + `sourceMetadataSocialAuthenticity` : `authentic,inauthentic` (string, optional) - Comma Separated List, possible values are available ["authentic", "inauthentic", "untagged"]
+    + `sourceMetadataType` : `academic/think tank,activist/extremist` (string, optional) - Comma Separated List of Source Metadata Types
+    + `sources` : `news,political` (string, optional) - Comma separated list of Sources. Available sources: `news, twitter, telegram, instagram, facebook, reddit, youtube, weibo, vk, toutiao, political, maritime, riskRatingChanges, evacuations, elections, analysis`. Please note that Seerist Essentials users are restricted to just verified events (political, maritime, riskRatingChanges, evacuations, elections, analysis) and documents that pertain to hotspots
+    + `start` : `2019-01-22T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    + `topic` : `travel,unrest,transportation,health,terrorism,conflict,disaster,crime` (string, optional) - Comma Separated List of Event Categories, possible values are available via the [v1/config/topics](#reference/helper-functions/topics/topics-config) endpoint where the apiName property is the name to request a topic by
+    + `verifiedType`: `political` (string, optional) - Comma Separated List of Verified Types ["security", "maritime"]
+
+
+        
+### World of Data: Execute Saved Search [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Response)
+
+## World of Data: News and Social [/v1/wod/&sources={?sources}{?sourceMetadataType}{?sourceMetadataReliability}{?sourceMetadataMisinfoSusceptibility}{?sourceMetadataSocialAuthenticity}{?sourceMetadataFollowerCountBracket}{?sourceMetadataLanguage}{?sourceMetadataCountryOfOrigin}{?sourceMetadataCountryOfFocus}{?start}{?end}{?pageOffset}{?pageSize}{?sentiments}{?emotions}{?search}]
+
+Get news and/or social media data by using attributes associated with the source of that data.
+
++ Parameters
+    + sources (array[string], required)
+        + Example: `news,twitter`
+        + Values
+            + `news`
+            + `twitter`
+            + `telegram`
+            + `instagram`
+            + `facebook`
+            + `reddit`
+            + `youtube`
+            + `weibo`
+            + `vk`
+            + `toutiao`
+        
+    + sourceMetadataType (array[string], optional)
+        + Example: `academic/think%20tank`
+        + Values 
+            + `academic/think%20tank`
+            + `activist/extremist`
+            + `forum`
+            + `humanitarian`
+            + `labor%20union`
+            + `official/government`
+            + `other`
+            + `political`
+            + `state-controlled%20media`
+            + `journalistic`
+
+    + sourceMetadataReliability (array[string], optional)
+        Our assessment of source reliability
+        + Example: `high,medium` 
+        + Values
+            + `high`
+            + `medium`
+            + `low`
+            + `unrated`
+
+    + sourceMetadataMisinfoSusceptibility  (array[string], optional)
+        + Example: `issueSpecific,AF,AL`
+        + Values
+            + `issueSpecific`
+            + `AF`
+            + `AL`
+
+    + sourceMetadataSocialAuthenticity (array[string], optional)
+        + Example: `authentic,inauthentic,untagged`
+        + Values
+            + `authentic`
+            + `inauthentic`
+            + `untagged`
+
+    + sourceMetadataFollowerCountBracket (array[string], optional) 
+        + Example: `high,medium,low`
+        + Values
+            + `high`
+            + `medium`
+            + `low`
+    
+    + sourceMetadataLanguage (array[string], optional) 
+        The language the source is written in. ISO-639 codes
+        + Example: `sq,ar`
+        + Values
+            + `sq`
+            + `ar`
+            + `zh-CN`
+            + `etc.`
+
+    + sourceMetadataCountryOfOrigin (array[string], optional) 
+        Where the source is usually authored. ISO-3166-2 code, uppercase
+        + Example: `AF,DZ`
+        + Values
+            + `AF`
+            + `DZ`
+            + `etc.`
+
+    + sourceMetadataCountryOfFocus (array[string], optional)
+        Where the source typically focuses. ISO-3166-2 code, uppercase
+        + Example: `AF,DZ`
+        + Values
+            + `AF`
+            + `DZ`
+            + `etc.`
+                
+    + start (string, optional)
+        + Example: `2019-01-22T00:00:00.000Z`
+        
+    + end (string, optional)
+        + Example: `2024-11-12T00:00:00.000Z`
+        
+    + pageOffset(integer, optional)
+      Number of results to offset the results by, can be used for retrieving the next set of results up to 10,000 Example: 10.
+    
+    + pageSize (integer, optional)
+      The number of results per page. Example: 5
+  
+    + sentiments (string, optional)
+      Comma separated list of Sentiments. Example: negative,neutral,positive
+  
+    + emotions (string, optional)
+      Comma separated list of Emotions. Example: anger,disgust,fear,joy,sadness,surprise
+    
+    + search (string, optional)
+        URL encoded lucene syntax string for article searches.
+        + Example: `potato%20%7C%20chicken`
+
+
+### World of Data: News and Social [GET]
++ Request (application/json)
+    + Headers
+        
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Response)
+
+## World of Data: Verified Events [/v1/wod?aoiId={?aoiId}&sources={?sources}&eventType={?eventType}&start={?start}&end={?end}&bounds={?bounds}&pageSize={?pageSize}]
+
+Get Verified Events by setting the 'sources' parameter as 'political,maritime' and 'eventType' paramter as 'verified'.
+
++ Parameters
+    + `aoiId` : `ua` (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    
+    + `bounds` : `-90,-180,90,180` (string, optional) - Geospatial Bounding Box to restrict the search to.
+    
+    + `start` : `2025-02-01T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    
+    + `end` : `2025-02-10T23:59:59.999Z` (string, optional) - End Date of the documents (default is NOW)
+    
+    + `sources` : `political,maritime` (string, optional) - Comma separated list of Sources. For Verfied Events sources must be 'political,maritime'.
+   
+    + `eventType`: `verified` (string, optional) - Verified Event Type. [verified]
+    
+    + `pageSize`: 5  (number, optional) - The number of results per page.
+    
+        
+    
+
+### Get Verified Events [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Verified Events Response) 
+
+
+
+
+## World of Data: Analysis [/v1/wod?aoiId={?aoiId}&sources={?sources}&start={?start}&end={?end}&bounds={?bounds}&pageSize={?pageSize}]
+
+Set 'sources' parameter as 'analysis' to retrieve analyst reports.
+
++ Parameters
+    + `aoiId` : `de` (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    
+    + `bounds` : `-90,-180,90,180` (string, optional) - Geospatial Bounding Box to restrict the search to.
+    
+    + `start` : `2025-02-01T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    
+    + `end` : `2025-02-10T23:59:59.999Z` (string, optional) - End Date of the documents (default is NOW)
+    
+    + `sources` : `analysis` (string, optional) - Comma separated list of Sources. For Analysis sources must be 'analysis'.
+    
+    + `pageSize`: 5  (number, optional) - The number of results per page.
+
+
+
+### Get Analysis [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Analysis Response)
+    
+## World of Data: Points of Interest Search [/v1/wod?aoiId={?aoiId}&sources={?sources}&eventType={?eventType}&pois={?pois}&poisDistUnits={?poisDistUnits}&start={?start}&end={?end}&pageSize={?pageSize}]
+
+Search for points of interest with 'pois' parameter. It takes lon, lat, and radius to search around.
+
++ Parameters
+    + `start` : `2025-02-01T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    + `end` : `2025-02-10T23:59:59.999Z` (string, optional) - End Date of the documents (default is NOW)
+    + `pois`: [[30.523333,50.450001,20]] (array(number), optional) - Array of arrays representing points of interest to search around. [lon, lat, radius]
+    + `poisDistUnits`: `mi` (string, optional) - Distance units for radius of pois. Defaults to miles. 'km' and 'mi' supported
+    + `sources` : `political,maritime` (string, optional) - Comma separated list of Sources. For Verfied Events sources must be 'political,maritime'.
+    + `eventType`: `verified` (string, optional) - Verified Event Types. [all, detected, verified]
+    + `pageSize`: 5  (number, optional) - The number of results per page.
+    
+
+### Points of Interest Search [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Verified Events Response)
+
+## World of Data: Updated Since [/v1/wod?aoiId={?aoiId}&sources={?sources}&start={?start}&since={?since}&pageSize={?pageSize}]
+
+Allows users to request events that were created or changed since their last API call.
+
++ Parameters
+    + `aoiId` : `ua` (string, optional) - AOI Identifier to limit the results from, this can be a GeoHash value, 2 Letter Country Code or City Code
+    + `sources` : `political,maritime` (string, optional) - Comma separated list of Sources. For Verfied Events sources must be 'political,maritime'.
+    + `start` : `2025-02-11T00:00:00.000Z` (string, optional) - Start Date of the documents (default start is end minus 24hours)
+    + `since` : `2025-02-11T20:00:00.000Z` (string, optional) - Returns events that were created or changed since this date and time
+    + `pageSize`: 5  (number, optional) - The number of results per page.
+    
+
+### Updated Since [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Verified Events Response)
+
+## World of Data: Country Background [/v1/wod/country-background/{countryCode}]
+
+Use a country code to set the parameters used by World of Data to retrieve a country's background.
+
++ Parameters
+    + `countryCode`: `BEN` (string, required) - Country code ISO3 or ISO2
+
+
+
+### Country Background [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Country Background Get Response)
+
+## World of Data: Risk Ratings [/v1/wod/risk-rating]
+### Get All Risk Ratings [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
++ Response 200 (application/json)
+    + Attributes (array[WoD Risk Rating Get Response])
+
+## World of Data: Risk Rating [/v1/wod/risk-rating/{geoCode}]
+
+Use a geography code to set the parameters used by World of Data to retrieve a risk rating for a country, region, zone, port or water.
+
++ Parameters
+    + `geoCode`: `BEN` (string, required) - Geography code
+
+
+### Risk Rating [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Risk Rating Get Response)
+
+
+## World of Data: Breaking Events [/v1/wod/breaking-events?&aoiId={aoiId}&bounds={bounds}&search={search}&status={status}&sortDirection={sortDirection}&end={end}&start={start}&pageOffset={pageOffset}&pageSize={pageSize}]
+
+Breaking Events are early reports of anomalous or high impact events or activities. Seerist’s in-house intelligence team reports Breaking Events as soon as they are detected – even if the information initially does not meet our standards for verification. As further details emerge, the Breaking Event will be republished with additional details until it can be verified.
+
++ Parameters
+    + `aoiId`: `PA,EURC` (string, optional) - Filters aoiId types as country and region.
+    + `bounds`: `21.72,-130.30,50.58,-63.53` (string, optional) - Geospatial bounding box to restrict the search to.
+    + `end`: `2025-01-12T04:00:00.000Z` (string, optional) - The end date to filter languages - ISO 8601 format.
+    + `pageOffset`: 0  (number, optional) - The page offset for pagination.
+    + `pageSize`: 25  (number, optional) - The number of results per page.
+    + `search`: `test`  (string, optional) - String match of a breaking event.
+    + `sortDirection`: `desc` (string, optional) - Specifies the sorting order `asc or desc`.
+    + `start`: `2025-01-01T04:00:00.000Z` (string, required) - The start date to filter languages -  ISO 8601 format.
+    + `status`: `Update` (string, optional) - Status of the events displayed
+
+### Breaking Events [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Breaking Events Get Response)
+
+
+## World of Data: Future Events [/v1/wod/calendar-events?&bounds={bounds}&categories={categories}&impacts={impacts}&severity={severity}&sortDirection={sortDirection}&end={end}&start={start}&pageOffset={pageOffset}&pageSize={pageSize}&since={since}]
+
+Future Events are one-off or recurring events that could cause operational disruption, heightened security threats or result in significant political decisions; they also include public holidays. Events that are typically planned or fixed weeks or more in advance. 
+
+We also cover security events – such as protests, marches, sit-ins and strikes – that are planned at much shorter notice. We primarily focus on events that are likely to have a significant disruptive impact due to their size, parties involved, location or other reason.
+
++ Parameters
+    + `bounds`: `21.72,-130.30,50.58,-63.53` (string, optional) - Geospatial bounding box to restrict the search to.
+    + `categories`: `anniversary,geopolitical` (string, optional) - Comma separated list of calendar event categories. A list of case sensitive categories/subcategories is available via the [/v1/config/calendar-events](#reference/helper-functions/future-events-config/future-events-config) endpoint.
+    + `end`: `2025-01-12T04:00:00.000Z` (string, optional) - The end date to filter languages - ISO 8601 format.
+    + `impacts`: `crime,disasters,conflict,health,political,terrorism` (string, optional) - Comma separated list of impact types. A list of case sensitive impact types is available via the [/v1/config/calendar-events](#reference/helper-functions/future-events-config/future-events-config) endpoint.
+    + `pageOffset`: 0  (number, optional) - The page offset for pagination.
+    + `pageSize`: 25  (number, optional) - The number of results per page.
+    + `severity`: `low,medium`  (string, optional) - Comma separated list of severity levels. A list of case sensitive severities is available via the [/v1/config/calendar-events](#reference/helper-functions/future-events-config/future-events-config) endpoint.
+    + `since`: `2019-01-22T00:00:00.000Z` (string, optional) - ISO date/time to retrieve documents from 
+    + `sortDirection`: `desc` (string, optional) - Specifies the sorting order `asc or desc`.
+    + `start`: `2025-01-01T04:00:00.000Z` (string, required) - The start date to filter languages -  ISO 8601 format.
+
+### Future Events [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (WoD Future Events Get Response)
+
+
+    
+# Group Scribe
+
+Scribe is an auto summarization tool powered by artificial intelligence and machine learning that combines
+all of the important information about a given location on a specific date into human readable English.
+Scribe summarizes the hotspots, top events, articles, and pulse changes that have happened in the given location,
+presenting them in grammatically correct English ready to be inserted into a report.
+
+## Auto Summary [/v2/auto-summary/{locationCode}/{locationType}?date={date}]
+Returns the Scribe summary for a city or country on any given date within the last 60 days
+
++ Parameters
+    + `locationCode` : `us` (string, required) - This can either be a country code in ISO-3166-1 Alpha 2 Country Code format, or a city code which are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
+    + `locationType` : `country` (string, required) - This can either have the value  'country' or 'city' based on what type of location the query is for
+    + `date` : `2021-04-02T00:00:00.000Z` (string, optional) - Date the Scribe report should be generated for, this date must be within 60 days of now. Defaults to today's date
+
+### Auto Summary [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (Scribe Response)
+
+# Group Helper Functions
+
+These are additional Helper functions that can be used to help query other API endpoints
+
+## Country AOIs [/v1/aois/country]
+Returns a list of Country codes and the bounds we use internally. We suggest cacheing this as it will change
+infrequently.
+
+### Country AOIs [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[AOI Country])
+
+## City AOIs [/v1/aois/city]
+
+Returns a list of City codes and the bounds we use internally. We suggest cacheing this as it will change
+infrequently.
+
+### City AOIs [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[AOI City])
+
+## County AOIs [/v1/aois/county]
+
+Returns a list of County codes and the bounds we use internally. We suggest cacheing this as it will change
+infrequently.
+
+### County AOIs [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[AOI County])
+
+## Topics [/v1/config/topics?ui={ui}]
+
+Returns a list of topics. Useful to see which topics are available and to see their `apiName` property which is used in filtering other endpoints such as `v1/wod?topic=travel`
+
++ Parameters
+    + `ui`: true (boolean, optional) - Determines if user interface specific properties are included. Notably 'singular' and 'plural'.
+
+### Topics Config [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Topic Config])
+
+## Verified Sectors [/v1/config/verified/security/sectors]
+
+Returns a list of sectors. Useful for finding sector, and their ids, to filter by like so: `v1/wod?sources=political&sector=1`
+
+### Verified Security Sectors [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Security Sector])
+
+## Verified Security Asset Types [/v1/config/verified/security/asset-types]
+
+Returns a list of asset types. Useful for finding asset types, and their ids, to filter by like so: `v1/wod?sources=political&assets=1`
+
+### Verified Security Asset types [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Security Asset Type])
+
+## Verified Security Attack Types [/v1/config/verified/security/attack-types]
+
+Returns a list of attack types. Useful for finding attack types, and their ids, to filter by like so: `v1/wod?sources=political&attackTypes=3`
+
+### Verified Security Attack types [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Security Attack Type])
+
+
+## Verified Security Perpetrators [/v1/config/verified/security/perpetrators]
+
+Returns a list of perpetrators. Useful for finding perpetrators, and their ids, to filter by like so: `v1/wod?sources=political&perpetrators=18`
+
+### Verified Security Perpetrators [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Security Perpetrator])
+
+
+## Verified Maritime Subcategories [/v1/config/verified/maritime/subcategories]
+
+Returns a list of maritime subcategories. Useful for finding subcategories, and their ids, to filter by like so: `v1/wod?sources=maritime&maritimeSubcategories=47`
+
+### Verified Maritime Subcategories [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Maritime Subcategories])
+
+
+## Verified Maritime Vessel Types [/v1/config/verified/maritime/vessel-types]
+
+Returns a list of vessel types. Useful for finding vessel types, and their ids, to filter by like so: `v1/wod?sources=maritime&maritimeVesselTypes=1`
+
+### Verified Maritime Vessel Types [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Verified Maritime Subcategories])
+    
+
+## Risk Categories [/v1/config/risk-categories]
+
+Returns a list of risk categories. Useful for finding risk categories, and their ids, to filter by like so: `v1/wod?sources=analysis&riskCategories=dd8fac8d-6f95-41e5-9f8e-9878037a2969`
+
+### Risk Categories [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)   
+    + Attributes (array[Risk Categories])
+
+
+### Future Event Types [/v1/config/calendar-events]
+
+Returns a list of Impact and Severity types to filter Future Events like so: `v1/wod/calendar-events?impacts=Health`
+
+### Future Event Types [GET]
++ Request (application/json)
+    + Headers
+
+            x-api-key: xxxx
+
++ Response 200 (application/json)
+    + Attributes (array[Future Event Types])
+
+
+# Data Structures
+
+
+## HotSpotBounds Response (object)
++ `metadata` (MetadataHotSpotBoundsType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeaureCollection'
++ `features` (array[FeatureCollectionHotSpotBoundsType])
+
+## HotSpot GeoHash Response (object)
++ `metadata` (MetadataHotSpotGeoHashType) - MetadataObject
++ `type` : FeatureCollection (fixed) - Will be fixed String 'FeaureCollection'
++ `features` (array[FeatureCollectionHotSpotGeoHashType])
+
+## Pulse Response Region (object)
++ `metadata` (MetadataPulseType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeaureCollection'
++ `features` (array[FeatureCollectionPulseRegionType])
+
+## Pulse Response Country (object)
++ `metadata` (MetadataPulseCountryType) - MetadataObject
++ `type` : FeatureCollection (fixed) - Will be fixed String 'FeaureCollection'
++ `features` (array[FeatureCollectionPulseCountryType])
+
+## MetadataHotSpotBoundsType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : `2019-01-22T00:00:00.000Z` (string) - Start Date of the HotSpot Scores
++ `endDate` : `2019-01-22T23:59:59.999Z` (string) - End Date of the HotSpot Scores
++ `bounds` : `-90,-180,90,180` (string) - Bounds the HotSpot scores are within
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
+
+## HotSpotHistogramType (object)
++ `key_as_string` : `2019-04-10T00:00:00.000Z` (string) - Date of the results
++ `activity` (array[ScoreValues]) - Activity Score values for the day
++ `pulse` (array[ScoreValues]) - Pulse Scores for the day
+
+## MetadataHotSpotGeoHashType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `bounds` : `null` (string) - In a GeoHash query it will be null
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `geohash` : ttt (string) - GeoHash associated with the Individual Results
++ `histogram` (array[HotSpotHistogramType]) - On a multi-day query this will include the outputs for each day, useful in a graph
+
+## MetadataPulseType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `bounds` : `-90,-180,90,180` (string) - Bounds input as part of the query string
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `stats` (StatsType)
+
+## MetadataPulseGeoHashType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `bounds` : `-90,-180,90,180` (string) - Bounds input as part of the query string
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `geohash` : ttt (string) - The GeoHash the Results are related to
++ `histogram` : xxx (string) - Ignore this, it is legacy and will be removed in future deployments
+
+## MetadataPulseCountryType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `stats` (StatsType)
+
+## Pulse Response City (object)
++ `metadata` (MetadataPulseCityType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `features` (array[FeatureCollectionPulseCityType])
+
+## Pulse Response County (object)
++ `metadata` (MetadataPulseCountyType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `features` (array[FeatureCollectionPulseCountyType])
+
+## MetadataPulseCityType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `stats` (StatsType)
+
+## MetadataPulseCountyType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 10 (number) - Count of results in the Features array
++ `total` : 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `stats` (StatsType)
+
+## FeatureCollectionPulseCityType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (PulseCityPropertiesType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseCountyType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (PulseCountyPropertiesType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseCityCodeType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (PulseCityCodePropertiesType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseCountyCodeType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (PulseCountyCodePropertiesType)
++ `geometry` (Geometry)
+
+## PulseCityPropertiesType (object)
++ `id`: `et-001` (string) - identifier for the location.  For Pulse Cities this is the same as `cityCode`.
++ `country` : et (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `city` : Addis Ababa (string) - Name of the city for the Pulse Values
++ `cityCode` : `et-001` (string) - City Code, these are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
++ `forecast` (array[ForecastType])
+
+## PulseCountyPropertiesType (object)'
++ `id`: `us-fips-51107` (string) - identifier for the location.  For Pulse Counties this is the same as `fipsCode`.
++ `country` : us (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `county` : Loudoun (string) - Name of the county for the Pulse Values
++ `state` : va (string) - 2 letter US state abbreviation
++ `fipsCode` : `us-fips-51107` (string) - FIPS Code, "us-fips-" + US FIPS code
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
++ `forecast` (array[ForecastType])
+
+## PulseCityCodePropertiesType (object)
++ `id`: `et-001` (string) - identifier for the location.  For Pulse Cities this is the same as `cityCode`.
++ `country` : et (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `city` : Addis Ababa (string) - Name of the city for the Pulse Values
++ `cityCode` : `et-001` (string) - City Code, these are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
+
+## PulseCountyCodePropertiesType (object)
++ `id`: `us-fips-51107` (string) - identifier for the location.  For Pulse Counties this is the same as `fipsCode`.
++ `country` : us (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `county` : Loudoun (string) - Name of the county for the Pulse Values
++ `state` : va (string) - 2 letter US state abbreviation
++ `fipsCode` : `us-fips-51107` (string) - FIPS Code, "us-fips-" + US FIPS code
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
++ `forecast` (array[ForecastType])
+
+
+## Pulse Response Country Code (object)
++ `metadata` (MetadataPulseCountryCodeType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeaureCollection'
++ `features` (array[FeatureCollectionPulseCountryCodeType])
+
+## MetadataPulseCountryCodeType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 1 (number) - Count of results in the Features array
++ `total` : 1 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `daily_histogram` : ignore (string) - Ignore this it will be removed in future deployments
++ `global_histogram` : ignore (string) - Ignore this it will be removed in future deployments
++ `country` : us (string) - Country Code for this response, these are ISO-3166-1 Alpha 2 Country Codes
++ `forecast` (array[ForecastType])
++ `stats` (StatsType)
+
+## Pulse Response City Code (object)
++ `metadata` (MetadataPulseCityCodeType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `features` (array[FeatureCollectionPulseCityCodeType])
+
+## Pulse Response County Code (object)
++ `metadata` (MetadataPulseCountyCodeType) - MetadataObject
++ `type` : FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `features` (array[FeatureCollectionPulseCountyCodeType])
+
+
+## MetadataPulseCityCodeType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 1 (number) - Count of results in the Features array
++ `total` : 1 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `daily_histogram` : ignore (string) - Ignore this it will be removed in future deployments
++ `forecast` (array[ForecastType])
++ `city` : ci-001 (string) - City Code for this response, these are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
++ `stats` (StatsType)
+
+## MetadataPulseCountyCodeType (object)
++ `status` : success (string) - This will indicate if the call was successful or a failure
++ `statusCode` : 200 (number) - HTTP Status code of the response
++ `count` : 1 (number) - Count of results in the Features array
++ `total` : 1 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `startDate` : 2019-01-22T00:00:00.000Z (string) - Start Date of the Pulse Scores
++ `endDate` : 2019-01-22T23:59:59.999Z (string) - End Date of the Pulse Scores
++ `prev` : url (string) - A url to the previous set of results, null if no prior results exist
++ `next` : url (string) - A url to the next set of results, null if no next results exist
++ `daily_histogram` : ignore (string) - Ignore this it will be removed in future deployments
++ `forecast` (array[ForecastType])
++ `county` : `us-fips-51107` (string) - FIPS Code, "us-fips-" + US FIPS code
++ `stats` (StatsType)
+
+## StatsType (object)
+Overall Stats for the response collection
+### Properties
++ `total` : 123.456 (number) - total count in query
++ `max` : 5.2 (number) - max count in query
++ `avg` : 0.13 (number) - average count in query
++ `min` : `-12.13` (number) - min count in query
+
+## FeatureCollectionHotSpotBoundsType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (HotSpotBoundsType)
++ `geometry` (Geometry)
+
+## HotSpotBoundsType (object)
++ `geohash` : zu4 (string) - GeoHash Level 3 Grid the results belong in
++ `topics` (array[hotspotTopic]) - List of Topics that triggered this hotspot, the enum below is an example, there could be more or less than shown
++ `clusterIds` : guid (array[string]) - Array of clusterIds that triggered this hotspot, using the [World of Data](#reference/world-of-data) endpoint with the cluster id, i.e. v1/wod?clusterId={clusterId}, to retrieve source articles
++ `hotspotTypes` (array[hotspotType]) - Type of Hotspot (covid19 or top)
++ `location_metadata` (LocationMetadata)
++ `trigger_start`: `2019-04-10T00:00:00.000Z` - Date/Time the hotspot was first created
++ `startTime`: `2019-04-10T00:00:00.000Z` - Start Time is when a hotspot crosses a day boundry. You can take startTime - age_in_hours and it will equal trigger_start. This is the field the start/end parameters use for the query filter.
++ `keywords` : police (array[string]) - List of keywords calculated for this hotspot
++ `age_in_hours` : 12 (number) - The age of this hotspot is Hours, HotSpots can persist indefinitely as long as the news cycle is still reporting on the events that initially triggered it.
+
+## LocationMetadata (object)
++ `country` : `Republic of Belarus` (string, optional) - Full Name of the Country this Hotspot is in (optional)
++ `city` : `Minsk` (string, optional) - Full Name of the City this Hotspot is in (optional)
++ `countryCode` : `by` (string, optional) - ISO3166-2 Country Code (optional)
++ `state` : `Horad Minsk` (string, optional) - Full State Name this hotspot is in (optional)
++ `pop_country` : 327167434 (number, optional) - Population of the Country (optional)
++ `pop_city` : 42620 (number, optional) - Population of the City (optional)
++ `pop_state` : 1316216 (number, optional) - Population of the State (optional)
+
+## FeatureCollectionHotSpotGeoHashType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (HotSpotGeoHashType)
++ `geometry` (Geometry)
+
+## HotSpotGeoHashType (object)
++ `geohash` : zu4 (string) - GeoHash Level 3 Grid the results belong in
++ `hotspot`: netural - Value of the Hotspot: positive, netural, negative
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the HotSpot value
++ `subscores` (string) - IGNORE
++ `activity` (ScoreValues)
++ `pulse` (ScoreValues)
+
+## FeatureCollectionPulseType (object)
++ `type` : Feature (fixed) - Will be 'Feature'
++ `properties` (PulsePropertiesType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseRegionType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (PulsePropertiesType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseCountryType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (PulsePropertiesCountryType)
++ `geometry` (Geometry)
+
+## FeatureCollectionPulseCountryCodeType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (PulsePropertiesCountryCodeType)
++ `geometry` (Geometry)
+
+## PulsePropertiesCountryType (object)
++ `id`: af (string) - identifier for the location.  For Pulse Countries this is the ISO-3166-1 Alpha 2 Country Code
++ `country`: af (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
++ `forecast` (array[ForecastType])
++ `color`: #feffd1 (string) - hexcode of the color used to represent the category of the score.  This color is based on the value in `stability_score.gauge`
+
+## PulsePropertiesCountryCodeType (object)
++ `id`: af (string) - identifier for the location.  For Pulse Countries this is the ISO-3166-1 Alpha 2 Country Code
++ `country`: af (string) - ISO-3166-1 Alpha 2 Country Code associated with the results
++ `stability_score` (StabilityScoreCountryType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `subscores` (string) - IGNORE
+
+## StabilityScoreCountryType
+Scores (count and score) provide microtrends in an area and allow for detection of anomalies.
+### Properties
++ `score`: 53.1 (number) - This is the locations current Pulse Score
++ `weighted_history`: [50.40059, 59.54017, 60.57533, 59.51267, 60.84364, 56.9053, 68.90844, 54.94861, 57.21074, 51.52571, 56.58085, 37.84858, 52.02826, 51.09785, 50.30812, 52.89689, 43.53131, 52.88821, 63.40511, 50.90452, 58.45877, 69.89093, 66.99459, 57.08388, 68.6219, 69.92016, 82.87419, 84.01442, 68.77072, 75.89362, 71.83182, 75.40349, 74.11217, 66.88354, 66.68625, 63.36663, 73.3197, 67.35927, 62.9608, 69.26604, 74.99744, 69.61131, 71.74669, 70.72616, 71.78783, 68.94454, 67.90274, 59.37698, 58.21984, 55.87007, 63.00509, 64.82871, 62.57738, 63.02125, 55.46333, 53.22712, 61.69931, 54.49629, 62.75388, 58.48648, 54.85189, 60.63192, 69.58954, 65.41414, 35.02534, 49.53149, 51.85131, 63.1299, 71.54243, 58.60919, 55.03974, 68.60723, 71.18807, 72.43138, 66.18255, 71.04476, 76.2, 69.6, 64.3, 62.9, 61.3, 55.8, 66.4, 71.4, 68.3, 60.3, 63, 71.3, 52.5, 53.1] (array[number]) - Array of Historical Pulse Scores. The last element in the array is Today's Score for this location, each value before it is minus 1 day.
++ `stats` (StatsPtcType)
++ `count`: `-1.85` (number) - Ignore
++ `trend`: [52.1, 52.1, 52, 52, 51.9, 51.9, 51.8, 51.8, 51.7, 51.7, 51.6, 51.6, 51.5, 51.5, 51.4, 51.4, 51.3, 51.3, 51.2, 51.2, 51.1, 51.1, 51, 51, 50.9, 50.9, 50.8, 50.7, 50.7, 50.6, 50.6, 50.5, 50.5, 50.4, 50.4, 50.3, 50.3, 50.2, 50.2, 50.1, 50.1, 50, 50, 49.9, 49.9, 49.8, 49.8, 49.7, 49.7, 49.6, 49.6, 49.5, 49.5, 49.4, 49.4, 49.3, 49.3, 49.2, 49.2, 49.1] (array[number]) - Array of values producing a linear regression trendline of the scores in `stability_score.weighted_history`. The last element in the array is Today's Score for this location, each value before it is minus 1 day.
++ `score_gauge`: `normal` (PulseScoreGauge) - The classification of the Pulse score.  Can be `very_low`, `low`, `normal`, `high`, `very_high`.
++ `delta` (PulseDelta)
++ `baseline:` `60.1` (number) - (model v2 only) Baseline Pulse score just using Risk ratings and without any AI adjustments
++ `baseline_delta`: `-7.0` (number) - (model v2 only) Difference between the Pulse score and the baseline (score - baseline)
++ `score_adjustments` (PulseScoreAdjustments)
++ `mean_event_counts` (array[PulseEventCountsType])
+
+## PulsePropertiesType (object)
++ `id`: zu4 (string) - identifier for the location.  For Pulse Regions this is same as `geohash`
++ `geohash`: zu4 (string) - GeoHash Level 3 Grid the results belong in
++ `stability_score` (StabilityScoreType)
++ `startTime`: `2019-04-10T00:00:00.000Z` - Date of the Pulse value
++ `locations` (array[LocationsType])
++ `subscores` (string) - IGNORE
++ `forecast` (array[ForecastType])
+
+## PulseDelta (object)
+Changes in the score over different time periods
+### Properties
++ `1`: `7.1` (number) - Difference between the current Pulse score and the previous day's score
++ `7`: `-26.2` (number) - Difference between the current Pulse score and the score from 7 days prior
++ `30`: `-20.3` (number) - Difference between the current Pulse score and teh score from 30 days prior
+
+## PulseScoreGauge (enum)
++ `very_low`
++ `low`
++ `normal`
++ `high`
++ `very_high`
+
+## ScoreValues
++ `count`: 3 - Cumulative score value. This is value takes into account not only information from startTime, but also information over time
++ `score`: 90.3 -  Percentile rank of stability_score.count vs the historical values over a period of time.
+
+## StatsPtcType
++ `percentiles` (PercentilesType)
++ `min`: `-12.132` (number) - minumum value for a period of historic time for the startTime 0th percentile
++ `max`: 6.5 (number) - maximum value for a period of historic time for the startTime 100th percentile
+
+## PercentilesType
+Score/Count at the Percentile Rank's listed.
+### Properties
++ `very_high`: `3.76` (number) - value at 90%
++ `high`: `-1.01` (number) - value at 25%
++ `low`: `-2.06` (number) - value at 10%
++ `very_low`: `-7.82` (number) - value at 2%
+
+## PulseScoreAdjustments
+(model v2 only) EventsAI security adjustments made from the baseline that gave use our final score (sum is baseline_delta value)
+### Properties
++ `conflict`: `3.1` (number) - Conflict score adjustments from baseline
++ `crime`: `-6.1` (number) - Crime score adjustments from baseline
++ `terrorism`: `1.6` (number) - Terrorism score adjustments from baseline
++ `unrest`: `-5.6` (number) - Civil Unrest adjustments from baseline
+
+## PulseEventCountsType
+(model v2 only) Document counts and averages that drove the Pulse score adjustments
+### Properties
++ `name` (PulseEventNames)
++ `actual`: `100` (number) - Actual count of event documents
++ `expected`: `50.2` (number) - Seasonal weighted average of document counts
++ `expected_upper`: `77.2` (number) - Upper bound of expected document count range
++ `expected_lower`: `20.4` (number) - Lower bound of expected document count range
+
+## PulseEventNames (enum)
++ `all` - Counts and averages for documents
++ `conflict` - Counts and averages for Conflict events
++ `crime` - Counts and averages for Crime events
++ `terrorism` - Counts and averages for Terrorism events
++ `unrest` - Counts and averages for Civil Unrest events
+
+## LocationsType
+Locations Array will contain all the Country Names and Codes the Results falls within
+### Properties
++ `country`: Russia (string) - Country Name
++ `code`: ru (string) - ISO-3166-1 Alpha 2 Country Code
+
+## ForecastType (object)
+This is an optional object that will only be returned if includeForecast=true in the Query params
+### Properties
++ `startTime`: `2019-04-12T00:00:00.000Z` - Date the Forecast start on, usually Today+1day
++ `upper` (ForecastValueType)
++ `lower` (ForecastValueType)
++ `mean` (ForecastValueMeanType)
+
+## ForecastValueType
+Upper is 95th Percentile
+Lower is 5th Percentile
+### Properties
++ `count`: 0.38 (number) - Cumulative score value. This is value takes into account not only information from startTime, but also information over time
++ `score`: 50 (number) - Percentile rank of stability_score.count vs the historical values over a period of time.
+
+## ForecastValueMeanType
++ `count`: 0.38 (number) - Cumulative score value. This is value takes into account not only information from startTime, but also information over time
++ `score`: 50 (number) - Percentile rank of stability_score.count vs the historical values over a period of time.
++ `probability`: 1 (number) - Confidence Value for the Forecast Mean 0-1
+
+
+## StabilityScoreType
+Scores (count and score) provide microtrends in an area and allow for detection of anomalies.
+### Properties
++ `score`: 16.34 (number) - Today's Pulse Score for this location.
++ `stats` (StatsPtcType)
++ `count`: `-1.85` (number) - IGNORE
++ `locations` (array[LocationsType])
++ `weighted_history`: [50.40059, 59.54017, 60.57533, 59.51267, 60.84364, 56.9053, 68.90844, 54.94861, 57.21074, 51.52571, 56.58085, 37.84858, 52.02826, 51.09785, 50.30812, 52.89689, 43.53131, 52.88821, 63.40511, 50.90452, 58.45877, 69.89093, 66.99459, 57.08388, 68.6219, 69.92016, 82.87419, 84.01442, 68.77072, 75.89362, 71.83182, 75.40349, 74.11217, 66.88354, 66.68625, 63.36663, 73.3197, 67.35927, 62.9608, 69.26604, 74.99744, 69.61131, 71.74669, 70.72616, 71.78783, 68.94454, 67.90274, 59.37698, 58.21984, 55.87007, 63.00509, 64.82871, 62.57738, 63.02125, 55.46333, 53.22712, 61.69931, 54.49629, 62.75388, 58.48648, 54.85189, 60.63192, 69.58954, 65.41414, 35.02534, 49.53149, 51.85131, 63.1299, 71.54243, 58.60919, 55.03974, 68.60723, 71.18807, 72.43138, 66.18255, 71.04476, 76.2, 69.6, 64.3, 62.9, 61.3, 55.8, 66.4, 71.4, 68.3, 60.3, 63, 71.3, 52.5, 53.1] (array[number]) - Array of Historical Pulse Scores. The last element in the array is Today's Score for this location, each value before it is minus 1 day.
++ `trend`: [52.1, 52.1, 52, 52, 51.9, 51.9, 51.8, 51.8, 51.7, 51.7, 51.6, 51.6, 51.5, 51.5, 51.4, 51.4, 51.3, 51.3, 51.2, 51.2, 51.1, 51.1, 51, 51, 50.9, 50.9, 50.8, 50.7, 50.7, 50.6, 50.6, 50.5, 50.5, 50.4, 50.4, 50.3, 50.3, 50.2, 50.2, 50.1, 50.1, 50, 50, 49.9, 49.9, 49.8, 49.8, 49.7, 49.7, 49.6, 49.6, 49.5, 49.5, 49.4, 49.4, 49.3, 49.3, 49.2, 49.2, 49.1] (array[number]) - Array of values producing a linear regression trendline of the scores in `stability_score.weighted_history`. The last element in the array is Today's Score for this location, each value before it is minus 1 day.
++ `score_gauge`: `normal` (PulseScoreGauge) - The classification of the Pulse score.  Can be `very_low`, `low`, `normal`, `high`, `very_high`.
++ `delta` (PulseDelta)
++ `baseline`: `60.1` (number) - (model v2 only) Baseline Pulse score just using Risk ratings and without any AI adjustments
++ `baseline_delta`: `-7.0` (number) - (model v2 only) Difference between the Pulse score and the baseline (score - baseline)
++ `score_adjustments` (PulseScoreAdjustments)
++ `mean_event_counts` (array[PulseEventCountsType])
+
+## MetadataType (object)
++ `status`: success (string) - This will indicate if the call was successful or a failure
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `count`: 10 (number) - Count of results in the Features array
++ `total`: 139 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `prev`: url (string) - A url to the previous set of results
++ `next`: url (string) - A url to the next set of results
+
+## FeatureCollection (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (object) - Properties for this object, will vary by request
++ `geometry` (Geometry)
+
+## AOI Country (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (AOICountryPropertiesType)
++ `geometry` (Geometry)
+
+## AOICountryPropertiesType
++ `iso2`: ZW (string) - ISO-3166-1 Alpha 2 Country Codes
++ `iso3`: ZWE (string) - ISO-3166-1 Alpha 3 Country Codes
++ `officialName`: Zimbabwe (string) - Name of the Country
++ `displayName`: Zimbabwe (string) - Name of the Country
++ `numericCode`: 716 (number) - ISO Code of the Country
++ `currencyCode`: `ZWL` (string) - Code of the Country's Currency
++ `currencyName`: Zimbabwe Dollar (string) - Name of the Country's Currency
++ `capital`: Harare (string) - Capital of the Country
++ `edgar`: Y5 (string) -  Electronic Data Gathering, Analysis, and Retrieval code for the country
++ `fifa`: ZIM (string) -  Fédération Internationale de Football Association code for the country
++ `geonameId`: 878675 (number) - ID assigned by the GeoNames Organization
++ `ioc`: ZIM (string) - International Olympic Committee code for the Country
++ `itu`: ZWE (string) - International Numbering Resources Database code for the Country
++ `wmo`: ZW (string) - World Meteorological Organization code for the Country
++ `dosInfoUrl`: httpurl (string) - Department of State Travel Information on this Country
+
+## Future Event Types (object)
++ `key`: `disasters` (string)
++ `text`: Disasters (string)
++ `value`: `Disasters` (string)
++ `label`: `Disasters` (string)
+
+## AOI City (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (AOICityPropertiesType)
++ `geometry` (Geometry)
+
+## AOI County (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (AOICountyPropertiesType)
++ `geometry` (Geometry)
+
+
+## AOICityPropertiesType
++ `code`: et-001 (string) - City Code, these are unique to Seerist and are ISO-3166-1 Alpha 2 Country Codes + an index (001)
++ `countryName`: Côte d'Ivoire (string) - Name of the Country
++ `country`: ci (string) - ISO-3166-1 Alpha 2 Country Code for the query
++ `displayName`: Abidjan (string) - Name of the Country
++ `officialName`: Abidjan (string) - Name of the Country
+
+## AOICountyPropertiesType
++ `code`: `us-fips-51107` (string) - FIPS Code, "us-fips-" + US FIPS code
++ `countryName`: United States (string) - Name of the Country
++ `country`: us (string) - ISO-3166-1 Alpha 2 Country Code for the query
++ `displayName`: Loudoun (string) - Name of the Country
++ `stateAbbrev`: va (string) - 2 letter US state code
++ `state`: Virginia (string) - name of US state
++ `stateFIPS`: 51 (number) - US state FIPS code
++ `FIPS`: 51107 (number) - US county FIPS code
++ `NAME`: Loudoun (string) - Name of the Country
+
+## Topic Config (object)
++ `parentIds`: transportation (array[string]) - List of `id` props that represent topics this topic is a child of
++ `id`: disaster (string) - Unique identifier for this topic
++ `display`: `Disaster` (string) - Display friendly representation of this topic
++ `apiName`: `disaster` (string) - Identifier to use when specifying topics in other API endpoints
++ `supportsDetected`: true (boolean) - True implies it topic is compatible with detected sources Absent implies it is not
++ `isOther`: false (boolean) - True means the topic is conceptual and used while constructing interfaces
++ `singular`: `Disaster` (string) - Display friendly representation of this topic
++ `plural`: `Disasters` (string) - Display friendly representation of the plural version of this topic
+
+## Verified Security Sector (object)
++ `Id`: 1 (number) - Id of sector
++ `Name`: `Agriculture` (string) - Name of sector
+
+## Verified Security Asset Type (object)
++ `Id`: 3 (number) - Id of asset-types
++ `Name`: `Airport` (string) - Name of asset-types
+
+## Verified Security Attack Type (object)
++ `Id`: 1 (number) - Id of attack type
++ `Name`: `Airstrike` (string) - Name of attack type
+
+## Verified Security Perpetrator (object)
++ `Id`: 18 (number) - Id of perpetrator
++ `Name`: Common criminals (string) - Name of perpetrator
+
+## Verified Maritime Subcategories (object)
++ `Id`: 47 (number) - Id of subcategory
++ `Name`: `Attempted activism` (string) - Name of subcategory
+
+## Future Events Impact Severity Types (object)
++ `Id`: 47 (number) - Id of subcategory
++ `Name`: `Attempted activism` (string) - Name of subcategory
+
+## Verified Maritime Vessel Types (object)
++ `Id`: 1 (number) - Id of vessel type
++ `Name`: `Cargo` (string) - Name of vessel type
+
+## Risk Categories (object)
++ `id`: `a75f55f3-e351-48b1-85bb-da464a00dd51` (string) - Id for risk category
++ `name`: political stability (string) - Name of risk rating on documents.
++ `display`: Political Stability (string) - Display friendly representation of risk category
++ `parentId`: `dd8fac8d-6f95-41e5-9f8e-9878037a2969` (string) - Id for parent risk category
+
+## GeometryPoint (object)
+A geometry is a GeoJSON object where the type member's value is one of the following strings: "Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", or "GeometryCollection".
+
+<http://geojson.org/geojson-spec.html#geometry-objects>
+
+### Properties
+- type: `point` (string, fixed) - Type of geometry (Point).
+- coordinates (Position) - Coordinates of point
+
+
+## Geometry (object)
+A geometry is a GeoJSON object where the type member's value is one of the following strings: "Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", or "GeometryCollection".
+
+<http://geojson.org/geojson-spec.html#geometry-objects>
+
+### Properties
+- type: `Polygon` (string, fixed) - Type of the geometry (Polygon).
+- coordinates (array[Polygon], required) - The structure for the elements in this array is determined by the type of geometry.
+
+## Position (array, fixed)
+- 0 (number)
+- 0 (number)
+- 0 (number, optional)
+A single position.
+
+### Items
+- *0.0* (number, required) - northing / longitude
+- *0.0* (number, required) - easting / latitude
+- *0.0* (number, optional) - altitude)
+
+## Line String (Geometry)
+
+### Properties
+- type: LineString (string, fixed)
+- coordinates (array, required)
+    - (Position, required)
+    - (Position, required)
+    - (Position, optional)
+
+## LinearRing Coordinates (array)
+A LinearRing is closed LineString with 4 or more positions. The first and last positions are equivalent (they represent equivalent points). Though a LinearRing is not explicitly represented as a GeoJSON geometry type, it is referred to in the Polygon geometry type definition.
+
+### Items
+- (Position, required)
+- (Position, required)
+- (Position, required)
+- (Position, required)
+
+## Polygon (object)
+Coordinates of a Polygon are an array of LinearRing coordinate arrays. The first element in the array represents the exterior ring. Any subsequent elements represent interior rings (or holes).
+
+### Properties
+- type: Polygon (string, fixed)
+- coordinates (array[LinearRing Coordinates], required) - an array of LinearRing coordinate arrays. For Polygons with multiple rings, the first must be the exterior ring and any others must be interior rings or holes.
+
+## Events Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataEventsCodeType) - MetadataObject
++ `features` (array[FeatureCollectionEventsType])
+
+## WoD Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDType])
+
+## WoD News Social Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDNewsSocialType])
+
+## WoD Verified Events Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDVerifiedType])
+
+## WoD Analysis Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDAnalysisType])
+
+## WoD Country Background Get Response
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDCountryBackgroundType])
+
+## WoD Risk Rating Get Response
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionWoDRiskRatingType])
+
+## WoD Breaking Events Get Response
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionBreakingEventsType])
+
+## WoD Future Events Get Response
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataWodBaseCodeType) - MetadataObject
++ `features` (array[FeatureCollectionFutureEventsType])
+
+## Saved Searches Get Response
++ `statusCode`: HTTP status code
++ `total`: Number of saved searches
++ `savedSearches` (array[SavedSearchType])
+
+## Saved Search Get Response
++ `statusCode`: HTTP status code
++ `savedSearch` (SavedSearchType)
+
+## Saved Searches POST Response
++ `statusCode`: HTTP status code
++ `createResult`:  Saved Search POST createResult
++ `savedSearch` (SavedSearchType)
+
+## Saved Search POST createResult
++ `status`: success (string) - status of create request
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `message`: Successfully saved (string) - Message regarding status of create request
++ `timestamp`: 2021-06-16T14:36:18.801Z (string) - timestamp for when request was processed
+
+## Saved Search PUT Response
++ `status`: success (string) - status of create request
++ `statusCode`: 200 (number) - HTTP status code
++ `message`: Search successfully updated (string) - Message regarding status of create request
++ `timestamp`: 2021-06-16T14:36:18.801Z (string) - timestamp for when request was processed
++ `savedSearch` (SavedSearchType)
+
+## MetadataEventsCodeType (object)
++ `status`: success (string) - This will indicate if the call was successful or a failure
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `pageSize`: 10 (number) - Max Results to return 
++ `prev`: url (string) - A url to the previous set of results, null if no prior results exist
++ `next`: url (string) - A url to the next set of results, null if no next results exist
++ `totalsFiltered` (EventsTotalsFilteredType) - Total number of events with applied topic filters
++ `totalsOverall` (EventsTotalsType) - Total number of Events without any filters applied
+
+## MetadataWodCodeType (object)
++ `status`: success (string) - This will indicate if the call was successful or a failure
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `pageSize`: 10 (number) - Max Results to return 
++ `prev`: url (string) - A url to the previous set of results, null if no prior results exist
++ `next`: url (string) - A url to the next set of results, null if no next results exist
++ `total`:15 (number) - Total number of matching documents
++ `filterCounts` (FilterCountsType) - The number of documents that match a particular filter if it were to be enabled (enabled via the includeFilterCounts query string parameter)
+
+## MetadataWodBaseCodeType (object)
++ `status`: success (string) - This will indicate if the call was successful or a failure
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `pageSize`: 10 (number) - Max Results to return
++ `prev`: url (string) - A url to the previous set of results, null if no prior results exist
++ `next`: url (string) - A url to the next set of results, null if no next results exist
++ `total`:1 (number) - Total number of matching documents
+
+## FilterCountsType (object)
++ `riskCategoryTotals` (RiskCategoriesTotalsType) - Filter counts regarding the risk categories
++ `sourceTotals` (SourceTotalsType) - Filter counts regarding sources
++ `topicTotals` (TopicTotalsType) - Filter counts regarding topics
+
+## RiskCategoriesTotalsType (object)
++ `{{risk_category_name}}`: 1 (number) - Number of documents that would match this risk category if requested
+
+## SourceTotalsType (object)
++ `{{source_name}}`: 1 (number) - Number of documents that would match this source if requested
+
+## TopicTotalsType (object)
++ `{{topic_name}}`: 1 (number) - Number of documents that would match this topic if requested
+
+## EventsTotalsFilteredType (object)
++ `total`: 1 (number) - Total number of Events in this result set
++ `health`: 1 (number) - Total number of Health related Events in this result set
++ `terrorism`: 1 (number) - Total number of Terrorism related Events in this result set
++ `disasters`: 1 (number) - Total number of Natural Disaster related Events in this result set
++ `unrest`: 1 (number) - Total number of Unrest related Events in this result set
++ `conflict`: 1 (number) - Total number of Conflict related Events in this result set
++ `transportation`: 1 (number) - Total number of Transportation related Events in this result set
++ `crime`: 1 (number) - Total number of Crime related Events in this result set
++ `travel`: 1 (number) - Total number of Travel Warning related Events in this result set
++ `toc`: 1 (number) - Total number of Transnational Organized Crime related Events in this result set
++ `election`: 1 (number) - Total number of Election related Events in this result set
++ `coup`: 1 (number) - Total number of Coup related Events in this result set
++ `diplomacy`: 1 (number) - Total number of Diplomacy related Events in this result set
+
+## EventsTotalsType (object)
++ `total`: 1 (number) - Total number of Events overall (without `event_category` filters)
++ `health`: 1 (number) - Total number of Health related Events overall (without `event_category` filters)
++ `terrorism`: 1 (number) - Total number of Terrorism related Events overall (without `event_category` filters)
++ `disasters`: 1 (number) - Total number of Natural Disaster related Events overall (without `event_category` filters)
++ `unrest`: 1 (number) - Total number of Unrest related Events overall (without `event_category` filters)
++ `conflict`: 1 (number) - Total number of Conflict related Events overall (without `event_category` filters)
++ `transportation`: 1 (number) - Total number of Transportation related overall (without `event_category` filters)
++ `crime`: 1 (number) - Total number of Crime related Events overall (without `event_category` filters)
++ `travel`: 1 (number) - Total number of Travel Warning related Events overall (without `event_category` filters)
++ `toc`: 1 (number) - Total number of Transnational Organized Crime related Events overall (without `event_category` filters)
++ `election`: 1 (number) - Total number of Election related Events overall (without `event_category` filters)
++ `coup`: 1 (number) - Total number of Coup related Events overall (without `event_category` filters)
++ `diplomacy`: 1 (number) - Total number of Diplomacy related Events in this result set
+
+
+## FeatureCollectionEventsType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (EventsType)
++ `geometry` (Geometry)
+
+## FeatureCollectionWoDType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionWoDNewsSocialType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDNewsSocialType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+
+## FeatureCollectionWoDVerifiedType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDVerifiedType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionWoDAnalysisType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDAnalysisType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionWoDCountryBackgroundType
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDCountryBackgroundType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionWoDRiskRatingType
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDRiskRatingType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionBreakingEventsType
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDBreakingEventsType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## FeatureCollectionFutureEventsType
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (WoDFutureEventsType) - Properties of this document. Please note these are **not** available for all sources.
++ `geometry` (GeometryPoint)
+
+## EventsType (object)
++ `id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Unique Identifier for the Article chosen to represent the cluster, this can change as the cluster evolves
++ `cluster_id`: `46f21da9-3fac-435d-a3de-e97f7a416c00` (string) - GUID for the Cluster, this will not change as the cluster evolves
++ `cluster_size`: 8 (number, optional) - Number of articles in this cluster
++ `updated`: `2020-10-07T18:45:56.105Z` (string) - Time when the most recent article was added to the cluster
++ `timestamp`: `2020-10-07T18:45:56.105Z` (string) - Publish date of the Article chosen to represent the cluster
++ `title`: `article title` (string) - Title of the Article chosen to represent the cluster
++ `summary`: `article summary` (string) - Short Summary of the Article chosen to represent the cluster
++ `lang`: en (string, optional) - Language code (ISO-639-1) for the Article Source
++ `translated`: true (boolean, optional) - True if the Summary and/Or Title were translated TO English from 'lang'
++ `veracity`: `Official Source` (string) - Our determination of the quality of the original Source, for a definition of each see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1563459585/Article+Veracity
++ `source_url`: `http://url.to/original/article` (string) - A web URL to the original source of the Article
++ `image_url`: `http://url.to/image/associated/with/article.png` (string, optional) - A web URL to an image that was associated with the Article
++ `topic_scores` (EventTopicScoresType) - Dynamic list of the topic scores the articles in the cluster, for more information see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804251/Event+Clusters
++ `category_types` (array[string]) - Topic Category's this cluster matched to, this list is dynamic and will change over time
++ `source`: `domain.com` - Domain Name for this Article
++ `location_metadata` (LocationMetadata)
++ `severity`: 6 (number, optional) - Severity of the article (0 - 10)
+
+## WoDType
++ `@completed`: `2020-10-07T18:50:56.105Z` (string) - Time that the document's processing was finished
++ `@timestamp`: `2020-10-07T18:45:56.105Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform
++ `assets` (array[WoDFeatureAssetType]) - Array of assets pertaining to this document. Corresponds to [/v1/config/verified/security/asset-types](#reference/helper-functions/verified-security-asset-types/verified-security-asset-types)
++ `attackTypes` (array[WoDFeatureAttackType]) - Array of attack types pertaining to this document. Corresponds to [/v1/config/verified/security/attack-types](#reference/helper-functions/verified-security-attack-types/verified-security-attack-types)
++ `author` (string) The author of the document. Only available on tweets currently
++ `body` (WoDBodyType) - Body of document including html tags and special characters
++ `cluster_id`: `46f21da9-3fac-435d-a3de-e97f7a416c00` (string) - GUID for the Cluster, this will not change as the cluster evolves
++ `countries` (array[WoDFeatureCountryType]) - Array of countries related to this document. Corresponds to v1/config/countries
++ `countryCode`: `FRA` (string) - ISO3 code for country
++ `countryName`: `France` (string) - the country where the event took place (this includes national waters, for maritime events)”
++ `damageRatingName` (damageRatingName) - Rating of damage
++ `damageRatingId` (damageRatingId) - Identifier for damage rating
++ `dwt`: `177066` (string) - Deadweight tonnage
++ `filtered_cluster_size`: 8 (number) - Number of documents in this cluster that meet request filters
++ `flag` (array[WoDFeatureFlagType]) - Array of flag country names
++ `flagCode`: `PAN` (string) - ISO3 country code for flag on vessel
++ `grt`: `92053` (string) - Gross register tonnage
++ `id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Unique Identifier for the document
++ `imos`: [9587362, 9587362, 9587362] (array[number]) - Array of International Maritime Organization numbers.
++ `imo`: `9587362` (number) - International Maritime Organization number 
++ `labeled_categories` (array[LabeledCategoryType]) - Array of event types and their respective scores that meet confidence threshold
++ `lang`: `en` (string) - Language code (ISO-639-1) for the Document Source
++ `link`: `http://source-website.html` (string) - A web URL to the original source
++ `locality`: `West End, Roatan, Honduras` (string) - description of the location of a maritime verified event
++ `locationPrecisionId` (locationPrecisionId) - Description of the location's precision
++ `locationPrecisionName` (locationPrecisionName) - Vessel's disposition (note: 6-8 only apply to maritime and not political documents)
++ `perpetratorFreeText`: `Fulani` (string) - The name (where known) of the group or organisation that carried out a Verified Event” (could be a terrorist group, union, protest organisation etc.)
++ `perpetratorTypes` (array[WoDPerpetratorTypes]) - Array of risks related to this document. Corresponds to v1/config/verified/security/perpetrators
++ `publishedDate`: `2023-04-06T14:26:31Z` (string) - the date and time when the event was first published
++ `references` (array[WoDFeatureReferenceType]) - Array of references pertaining to this document
++ `regionCode`: `EURC` (string) - Region code corresponds to v1/config/regions
++ `regionName`: `Europe & CIS` (string) - Region name corresponds to the English name in the output of v1/config/regions
++ `regions` (array[WoDFeatureRegionType]) - List of regions related to this document
++ `risks` (array[WoDFeatureRiskType]) - Array of risks related to this document. Corresponds to v1/config/risk-categories
++ `sanitizedBody` (WoDSanitizedBodyType) - Body of document with special characters removed
++ `sanitizedSummary` (WoDSanitizedSummaryType) - Summary of document with special characters removed
++ `secondaryCountries` (array[WoDSecondaryCountryTypes]) - added when there is a cross-border aspect to a verified event, for example cross-border shelling or airstrikes” (e.g. Russia is tagged as a secondary country in Ukraine war incidents as the source of the attack; Ukraine is the ‘countryName’ as the location of the attacks)
++ `sectors` (array[WoDFeatureSectorType]) - Array of sectors related to this document. Corresponds to v1/config/verified/security/sectors
++ `securityInterventionTypes` (array[WoDSecurityInterventionType]) - List of relevant security interventions
++ `sentiment`: `-1.866` (number) - Calculated sentiment for the document
++ `emotions`: (Emotions) - Emotions for the document
++ `severity`: 6 (number, optional) - Severity of the article (0 - 10)
++ `source` (LiveSearchSources) - Source document came from
++ `src_image_url`: `http://sharingimage` (string, optional) - URL to an image of the document if available
++ `stolenItemTypes` (array[WoDStolenItemType]) - List of types of stolen items
++ `summary`: `document summary` (string) - Short Summary of the document
++ `tags` (array[WoDTagType]) - additional tags on analysis updates that include a mix of topic markers, additions information on sources or other elements, and in some cases internal system tags
++ `title`: `document title` (string) - Title of the Document
++ `topic_scores_v2` (array[LabeledCategoryType]) - (DEPRECATED) Array of event types and their respective scores
++ `topic_scores` (EventTopicScoresType) - (DEPRECATED) Dynamic list of the topic scores the article matched, for more information see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804251/Event+Clusters
++ `totalFatalities`: 0 (number) - Total number of fatalities
++ `totalInjuries`: 0 (number) - Total number of fatalities
++ `translated`: true (boolean, optional) - True if the Summary and/Or Title were translated TO English from 'lang'
++ `updated`: `2023-04-06T14:28:30Z` (string) - the date and time when the event was last changed (e.g. to make corrections or add more up-to-date information)
++ `veracity`: `Official Source` (string) - Our determination of the quality of the original Source, for a definition of each see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1563459585/Article+Veracity . Tweets veracity property will reflect whether the user is 'Verified' or 'Unverified'
++ `vesselCounterMeasureTypes` (array[WoDVesselCounterMeasureType]) - List of relevant vessel countermeasure types
++ `vesselDisposition` (vesselDisposition) - Vessel's disposition
++ `vesselName`: `Stolt Bismuth` (string) - Name of the vessel
++ `vesselSubtypeName`: `Aircraft carrier` (string) - Name of vessel's subtype. Ex. Aircraft carrier, Research vessel, or Yacht
++ `vesselTypes` (array[WodFeatureVesselTypes])  - Array of vessel types
++ `vesselTypeId`: `Personnel` (string) - Identifier for vessel's type. Corresponds to v1/config/risk-categories
++ `vesselTypeName`: `Leisure` (string) - Name for this type of vessel
++ `vesselSubtypes` (array[WodFeatureVesselSubtypes])  - Array of vessel types
++ `waterName`: `Singapore Strait` (string) - Name of body of water the incident this document covers happened in
+
+## WoDVerifiedType
++ `@completed`: `2025-02-01T13:07:37.029Z` (string) - Time that the document's processing was finished
++ `@timestamp`: `2025-02-10T00:00:00.000Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform
++ `assets` (array[WoDFeatureAssetType]) - Array of assets pertaining to this document. Corresponds to [/v1/config/verified/security/asset-types](#reference/helper-functions/verified-security-asset-types/verified-security-asset-types)
++ `attackTypes` (array[WoDFeatureAttackType]) - Array of attack types pertaining to this document. Corresponds to [/v1/config/verified/security/attack-types](#reference/helper-functions/verified-security-attack-types/verified-security-attack-types)
++ `countryCode`: `FRA` (string) - ISO3 code for country
++ `countryName`: `France` (string) - the country where the event took place (this includes national waters, for maritime events)”
++ `damageRatingName` (damageRatingName) - Rating of damage
++ `dwt`: `177066` (string) - Deadweight tonnage
++ `countryFlagUrl`: `https://app.seerist.com/attachments/flags/countries/PAN.png` (string) - Url for country flag
++ `flagCode`: `PAN` (string) - ISO3 country code for flag on vessel
++ `grt`: `92053` (string) - Gross register tonnage
++ `id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Unique Identifier for the document
++ `imos`: [9587362, 9587362, 9587362] (array[number]) - Array of International Maritime Organization numbers.
++ `imo`: `9587362` (number) - International Maritime Organization number 
++ `location` (WoDVerifiedLocationType) - Location of event
++ `labeled_categories` (array[LabeledCategoryType]) - Array of event types and their respective scores that meet confidence threshold
++ `locationPrecisionId` (locationPrecisionId) - Description of the location's precision
++ `locationPrecisionName` (locationPrecisionName) - Vessel's disposition (note: 6-8 only apply to maritime and not political documents)
++ `perpetratorTypes` (array[WoDPerpetratorTypes]) - Array of risks related to this document. Corresponds to v1/config/verified/security/perpetrators
++ `publishedHistory` (array[WoDVerifiedEventsPublishedHistoryType]) - List of dates the event was published and republished.
++ `initialPublishedDate`: `2023-04-06T14:26:31Z` (string) - the date and time when the event was first published
++ `revisedPublishedDate`: `2023-04-06T15:26:31Z` (string) - the date and time when the event was revised
++ `references` (array[WoDFeatureReferenceType]) - Array of references pertaining to this document
++ `regionCode`: `EURC` (string) - Region code corresponds to v1/config/regions
++ `regionName`: `Europe & CIS` (string) - Region name corresponds to the English name in the output of v1/config/regions
++ `secondaryCountries` (array[WoDSecondaryCountryTypes]) - added when there is a cross-border aspect to a verified event, for example cross-border shelling or airstrikes” (e.g. Russia is tagged as a secondary country in Ukraine war incidents as the source of the attack; Ukraine is the ‘countryName’ as the location of the attacks)
++ `sectors` (array[WoDFeatureSectorType]) - Array of sectors related to this document. Corresponds to v1/config/verified/security/sectors
++ `severity`: 6 (number, optional) - Severity of the article (0 - 10)
++ `sources` (array[WoDFeatureReferenceType]) - Array of sources pertaining to this document
++ `source`: `political` (string) - Verified Event source type ['political', 'maritime']
++ `stolenItemTypes` (array[WoDStolenItemType]) - List of types of stolen items
++ `title`: `document title` (string) - Title of the Document
++ `eventType`: verified (string) - Indicates eventType [verified]
++ `topic_scores_v2` (array[LabeledCategoryType]) - (DEPRECATED) Array of event types and their respective scores
++ `totalFatalities`: 0 (number) - Total number of fatalities
++ `totalInjuries`: 0 (number) - Total number of fatalities
++ `vesselCounterMeasureTypes` (array[WoDVesselCounterMeasureType]) - List of relevant vessel countermeasure types
++ `vesselDisposition` (vesselDisposition) - Vessel's disposition
++ `vesselName`: `Stolt Bismuth` (string) - Name of the vessel
++ `vesselSubtypeName`: `Aircraft carrier` (string) - Name of vessel's subtype. Ex. Aircraft carrier, Research vessel, or Yacht
++ `vesselTypes` (array[WodFeatureVesselTypes])  - Array of vessel types
++ `vesselTypeId`: `Personnel` (string) - Identifier for vessel's type. Corresponds to v1/config/risk-categories
++ `vesselTypeName`: `Leisure` (string) - Name for this type of vessel
++ `vesselSubtypes` (array[WodFeatureVesselSubtypes])  - Array of vessel types
++ `waterName`: `Singapore Strait` (string) - Name of body of water the incident this document covers happened in
+
+## WoDAnalysisType
++ `@completed`: `2025-02-12T18:14:12.961Z` (string) - Time that the document's processing was finished
++ `@timestamp`: `2025-02-12T18:00:49.486Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform
++ `body` (WoDBodyType) - Body of document including html tags and special characters
++ `countries` (array[WoDFeatureAnalysisCountryType]) - Array of countries related to this document. Corresponds to v1/config/countries 
++ `publishedDate`: `2025-02-12T18:00:49.486Z` (string) - the date and time when the event was first published
++ `regions` (array[WoDFeatureAnalysisRegionsType]) - List of regions related to this document
++ `risks` (array[WoDFeatureAnalysisRiskType]) - Array of risks related to this document. Corresponds to v1/config/risk-categories
++ `sanitizedBody` (WoDSanitizedBodyType) - Body of document with special characters removed
++ `sanitizedSummary` (WoDSanitizedSummaryType) - Summary of document with special characters removed
++ `sectors` (array[WoDFeatureSectorType]) - Array of sectors related to this document. Corresponds to v1/config/verified/security/sectors
++ `source`: `analysis` - Source document came from
++ `summary`: `document summary` (string) - Short Summary of the document
++ `tags` (array[WoDAnalysisTagType]) - additional tags on analysis updates that include a mix of topic markers, additions information on sources or other elements, and in some cases internal system tags
++ `title`: `document title` (string) - Title of the Document
++ `updated`: `2025-02-12T18:15:57.918Z` (string) - the date and time when the event was last changed (e.g. to make corrections or add more up-to-date information)
++ `id`: `1020627` (string) - Unique Identifier for the document
+
+
+## WoDCountryBackgroundType
++ `body` (WoDBodyType) - Body of document including html tags and special characters
++ `bodyItems` (array[WoDFeatureBodyItemsType]) - Overview body items
++ `countryCode`: `BEL` (string) - ISO3 code for country corresponds to v1/config/countries
++ `countryId`: `2af41caa-f5f1-4e7f-b91b-20e9ffe5a64e` (string) - Unique Identifier of a country
++ `evacuationLevel`: 6 (number) - Numerical value of the evacuation level
++ `evacuationLevelId`: `1a1e16b5-8d4e-4f25-bb7a-b7801e2aa2ca` (string) - Unique Identifier of the evacuation level
++ `evacuationName`: `No plan required` (string) - Name of the evacuation level
++ `id`: `2af41caa-f5f1-4e7f-b91b-20e9ffe5a64e` (string) - Unique Identifier for the document
++ `isoCode2`: `BE` (string) - ISO2 code for country corresponds to v1/config/countries
++ `labeled_categories` (array[LabeledCategoryType]) - Array of event types and their respective scores that meet confidence threshold
++ `location` (ScribeHotspotsEventsLocation)
++ `name` (WoDOverviewNameType)
++ `publishDate`: `2023-05-29T08:21:33.000000Z` (string) - the date and time when it was first published
++ `regionCode`: `EURC` (string) - Region code corresponds to v1/config/regions
++ `regionId`: `c7c446ad-18bb-4afc-a357-f0ad545aecd6` (string) - Unique Identifier of a region
++ `riskContent` (array[WoDRiskContentType]) - Array of risk content items
++ `sanitizedBody` (WoDSanitizedBodyType) - Body of document with special characters removed
++ `scenarios` (array[WoDScenariosType]) - Array of scenarios
++ `source`: `country-background` (string) - Source document came from
++ `title` (WoDOverviewTitleType)
+
+## WoDNewsSocialType
++ `@completed`: `2020-10-07T18:50:56.105Z` (string) - Time that the document's processing was finished
++ `@timestamp`: `2020-10-07T18:45:56.105Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform
++ `author` (string) The author of the document. Only available on tweets currently
++ `cluster_id`: `46f21da9-3fac-435d-a3de-e97f7a416c00` (string) - GUID for the Cluster, this will not change as the cluster evolves
++ `filtered_cluster_size`: 8 (number) - Number of documents in this cluster that meet request filters
++ `id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Unique Identifier for the document
++ `labeled_categories` (array[LabeledCategoryType]) - Array of event types and their respective scores that meet confidence threshold
++ `lang`: `en` (string) - Language code (ISO-639-1) for the Document Source
++ `link`: `http://source-website.html` (string) - A web URL to the original source
++ `locationPrecisionId` (locationPrecisionId) - Description of the location's precision
++ `locationPrecisionName` (locationPrecisionName) - Vessel's disposition (note: 6-8 only apply to maritime and not political documents)
++ `references` (array[WoDFeatureReferenceType]) - Array of references pertaining to this document
++ `sentiment`: `-1.866` (number) - Calculated sentiment for the document
++ `severity`: 6 (number, optional) - Severity of the article (0 - 10)
++ `source` (LiveSearchSources) - Source document came from
++ `src_image_url`: `http://sharingimage` (string, optional) - URL to an image of the document if available
++ `summary`: `document summary` (string) - Short Summary of the document
++ `title`: `document title` (string) - Title of the Document
++ `topic_scores_v2` (array[LabeledCategoryType]) - (DEPRECATED) Array of event types and their respective scores
++ `topic_scores` (EventTopicScoresType) - (DEPRECATED) Dynamic list of the topic scores the article matched, for more information see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804251/Event+Clusters
++ `translated`: true (boolean, optional) - True if the Summary and/Or Title were translated TO English from 'lang'
++ `veracity`: `Official Source` (string) - Our determination of the quality of the original Source, for a definition of each see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1563459585/Article+Veracity . Tweets veracity property will reflect whether the user is 'Verified' or 'Unverified'
+
+## WoDRiskRatingType
++ `code`: `ARAS` (string) - Code of country, region, zone, port or water
++ `evacuationLevel`: 6 (number, optional) - Numerical value of the evacuation level
++ `evacuationLevelId`: `1a1e16b5-8d4e-4f25-bb7a-b7801e2aa2ca` (string, optional) - Unique Identifier of the evacuation level
++ `id`: `1c2bc86c-3f96-4fdd-b3a0-662e6fdcd41a` (string) - Unique Identifier for the document
++ `isoCode2`: `BF` (string, optional) - ISO2 code for country corresponds to v1/config/countries
++ `labeled_categories` (array[LabeledCategoryType]) - Array of event types and their respective scores that meet confidence threshold
++ `location` (ScribeHotspotsEventsLocation)
++ `name`: `Arabian Sea` (string) - Name of country (ISO3), region, zone, port or water
++ `parent` (WoDRiskRatingParentType, optional)
++ `ratings` (array[WoDRiskRatingsType]) - Array of ratings
++ `source`: `risk-rating` (string) - Source document came from
++ `type` (WoDRiskRatingTypeName)
+
+## WoDBreakingEventsType
++ `@timestamp`: `2025-01-09T20:35:06.668Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform.
++ `source`: `https://x.com/convzlacomando/status/1877461014209302895?s=12&t=K4f_4SNbcUUqoAY3QJKFkQ` (string) - A web URL to the original source
++ `initialPublishedDate`: `2025-01-09T20:36:17.936Z` (string) - First publication date of the event. It must correspond to the first element in publishedHistory.
++ `revisedPublishedDate`: `2025-01-09T22:46:03.256Z` (string) - Date of the last publication made. It must be the same as the last element of publishedHistory.
++ `@completed`: `2025-01-09T20:36:20.336Z` (string) - Time that the document's processing was finished.
++ `@updated`: `2025-01-09T20:35:06.668Z` (string) - Date of the last modification made to the event
++ `title` (WoDBreakingFutureTitleType) - Title of the Document 
++ `content` (WoDBreakingFutureContentType)
++ `location` (WoDBreakingEventsLocation)
++ `status`: `Confirmed` (string) - Status of the event.
++ `language`: `en` (string) - Language code.
++ `type`: `event` (string) - It is always event.
++ `sources` (array[WoDFeatureReferenceType]) - Array of references pertaining to this event
++ `subtype`: `breaking-event` (string) - Always breaking-event.
++ `publishedHistory` (array[WoDPublishedHistoryType]) - List of dates the event was published and republished.
++ `id`: `3864` (string) - Unique Identifier for the document
+
+## WoDFutureEventsType
++ `@timestamp`: `2025-01-09T20:35:06.668Z` (string) - Document Publish Date, if we are unable to extract a Publish Date this will be the time of ingest into our platform.
++ `source`: `https://x.com/convzlacomando/status/1877461014209302895?s=12&t=K4f_4SNbcUUqoAY3QJKFkQ` (string) - A web URL to the original source
++ `@completed`: `2025-01-09T20:36:20.336Z` (string) - Time that the document's processing was finished.
++ `@eventDaterange` (WoDDateRangeType) - Date range of the Future event 
++ `title` (WoDBreakingFutureTitleType) - Title of the Future Event 
++ `content` (WoDBreakingFutureContentType)
++ `location` (WoDFutureEventsLocation)
++ `event` (WoDFutureEventType)
++ `language`: `en` - Language code of the future event
++ `type`: `event` - Type of the future event (event)
++ `subtype`: `calendar` - Subtype of the future event (calendar)
++ `id`: `19454` (string) - Id for the future event
+
+## WoDFeatureRegionType
++ `code`: `EURC` (string) - Region's code
++ `tagged_by_user`: false (boolean) - If this region was added by a user
++ `id`: `c7c446ad-18bb-4afc-a357-f0ad545aecd6` - id for this region
+
+## WoDFeatureAnalysisRegionsType
++ `code`: `EURC` (string) - Region's code
++ `name`: `Europe & CIS` (string) - Region's name
++ `id`: `c7c446ad-18bb-4afc-a357-f0ad545aecd6` - id for this region
+
+## Emotions (array, fixed)
+Emotions returned for the event
+
+### Items
+- `anger` (string) - Emotions associated with document
+
+## WoDFeatureReferenceType
++ `name`: `elwatannews.com` (string) - Name of document's source
++ `url`: `https://www.elwatannews.com/news/details/6511696` (string) - URL of document's source
+
+## WoDFeatureAssetType
++ `name`: `Personnel` (string) - Name of asset
++ `id`: `98` (number) - Identifier for asset
+
+## WoDFeatureAttackType
++ `name`: `Kidnap` (string) - Name of the attack type
++ `id`: `12` (number) - Identifier for the attack type
+
+## WoDSecurityInterventionType
++ `name` (WoDSecurityInterventionTypeName) - Description of security intervention
++ `id` (WoDSecurityInterventionTypeId) - Identifier for security intervention
+
+# WoDSecurityInterventionTypeName (enum)
++ No response from authorities
++ Interception by authorities
++ Investigation by authorities
+
+# WoDSecurityInterventionTypeId (enum)
++ 1
++ 2
++ 3
+
+## WoDStolenItemType
++ `name` (WoDStolenItemTypeName) - Description of stolen item type
++ `id` (WoDStolenItemTypeId) - Identifier for stolen item type
+
+# WoDStolenItemTypeName (enum)
++ Nothing
++ Ship's stores
++ Cash
++ Crew / passenger belongings
++ Equipment
++ Fast Rescue Craft
++ `Cargo (container)`
++ `Cargo (other)`
++ Other
+
+# WoDStolenItemTypeId (enum)
++ 1
++ 2
++ 3
++ 4
++ 5
++ 6
++ 7
++ 8
++ 9
+
+## WoDVesselCounterMeasureType
++ `name` (WoDVesselCounterMeasureTypeName) - Description of vessel countermeasure type
++ `id` (WoDVesselCounterMeasureTypeId) - Identifier for vessel countermeasure type
+
+# WoDVesselCounterMeasureTypeName (enum)
++ Crew alarm
++ Razor wire
++ Fire hoses
++ Increase speed
++ Search lights
++ Distress Call
++ Evasive maneuvers
++ Notify authorities
++ Flares
++ Citadel
++ Unarmed Security Team
++ Armed Security Team
++ Display weapons
++ "Warning Shots
++ Exchange of fire
++ Escort / Security Vessel
++ Military personnel
++ Other
++ Blank
+
+# WoDVesselCounterMeasureTypeId (enum)
++ 1
++ 2
++ 3
++ 4
++ 5
++ 6
++ 7
++ 8
++ 9
++ 10
++ 11
++ 12
++ 13
++ 14
++ 15
++ 16
++ 17
++ 18
++ 19
+
+## WoDFeatureCountryType
++ `code`: `POL` (string) - ISO3 code for the country
++ `tagged_by_user`: true (boolean) - If the country was tagged by a user
++ `id`: `a16a5959-ba5a-4d17-8aad-d33bfefc9c0e` (string) - Unique identifier for country
++ `name` (array[WoDFeatureCountryNameType]) - Array of country names in select languages
++ `flagUrl`: `https://app.seerist.com/attachments/flags/countries/POL.png` - URL pointing to an image of the country's flag
+
+## WoDFeatureAnalysisCountryType
++ `code`: `POL` (string) - ISO3 code for the country
++ `id`: `a16a5959-ba5a-4d17-8aad-d33bfefc9c0e` (string) - Unique identifier for country
++ `name` (array[WoDFeatureCountryNameType]) - Array of country names in select languages
++ `flagUrl`: `https://app.seerist.com/attachments/flags/countries/POL.png` - URL pointing to an image of the country's flag
+
+
+## WoDFeatureCountryNameType
++ `languageCode`: `en` (string) - Language code
++ `text`: `Poland` (string) - Country's name in corresponding language
+
+## WoDFeatureSectorType
++ `name`: `Government` (string) - Name of the sector
++ `id`: `7` (number) - Identifier for the sector
+
+## WoDFeatureRiskType
++ `name`: `political` (string) - Name of risk type
++ `tagged_by_user`: false (boolean) - If this risk was tagged by a user
++ `id`: `dd8fac8d-6f95-41e5-9f8e-9878037a2969` (string) - id for this risk type
+
+## WoDFeatureAnalysisRiskType
++ `name`: `political` (string) - Name of risk type
++ `id`: `dd8fac8d-6f95-41e5-9f8e-9878037a2969` (string) - id for this risk type
+
+## WoDPerpetratorTypes
++ `name`: `Security forces` (string) - Name of perpetrator type
+
+## WoDSecondaryCountryTypes
++ `code`: `ru` (string) - ISO-3166-2 country code since 2024 Feb, ISO-3166-3 code prior to 2024 Feb
++ `name`: `Russia` (string) - Name of country
+
+## WoDTagType
++ `tagged_by_user`: `true` (boolean) - if the tag was applied by a user
++ `name`: WoDTagTypeNameTypes - Display names for tag in select languages
++ `type`: `system` (string) - Type of tag
+
+## WoDAnalysisTagType
++ `name`: `Global Issue` - Display names for tag in select languages
++ `id`: `a0575d68-4585-4a8f-a016-3dff84e46434` - Tag id
++ `type`: `topic` (string) - Type of tag
+
+#WoDTagTypeNameTypes
++ `en`: `Daily` (string) - English name for tag
++ `zh`: `日常的` (string) - Chinese name for tag
++ `es`: `Diaria` (string) - Spanish name for tag
+
+#WoDBodyType
++ `en`: `<p>info</p>` (string) - English version of body
++ `zh`: `<p>信息</p>` (string) - Chinese version of body
++ `es`: `<p>información</p>` (string) - Spanish version of body
+
+#WoDBreakingFutureContentType
++ `en`: `<p>info</p>` (string) - English version of content
++ `raw`: `<p>información<</p>` (string) - Original version of content
+
+#WoDSanitizedBodyType
++ `en`: `<p>info</p>` (string) - English version of body with special characters removed
++ `zh`: `<p>信息</p>` (string) - Chinese version of body with special characters removed
++ `es`: `<p>información</p>` (string) - Spanish version of body with special characters removed
+
+#WoDSanitizedSummaryType
++ `en`: `document summary` (string) - English version of summary
++ `zh`: `文档摘要` (string) - Chinese version of summary
++ `es`: `resumen del documento` (string) - Spanish version of summary
+
+#WoDOverviewNameType
++ `en`: `Overview` (string) - English overview name for country
++ `zh`: `概述` (string) - Chinese overview name for country
++ `es`: `Descripción general` (string) - Spanish overview name for country
+
+#WoDOverviewTitleType
++ `en`: `Title` (string) - English overview title for country
++ `zh`: `标题` (string) - Chinese overview title for country
++ `es`: `Título` (string) - Spanish overview title for country
+
+#WoDBreakingFutureTitleType
++ `en`: `Title` (string) - English overview title for country
++ `raw`: `Título` (string) - Original overview title for country
+
+#WoDScenarioType
++ `en`: `<p>info</p>` (string) - English version of scenario with special characters removed
++ `zh`: `<p>信息</p>` (string) - Chinese version of scenario with special characters removed
++ `es`: `<p>información</p>` (string) - Spanish version of scenario with special characters removed
+
+#WoDVerifiedLocationType
++ `lon`: 98.86142696 (number) - longitude
++ `lat`: 18.890653921 (number) - latitude
+
+#WoDFeatureBodyItemsType
++ `id`: `e0e5d469-5fad-45b8-9c2a-ae5be4a0eb16` (string) - Unique identifier for body item
++ `publishDate`: `2023-05-29T08:21:33.000000Z` (string) - the date and time when it was published
++ `risks` (array[WoDFeatureRiskType]) - Array of risks related to this document. Corresponds to v1/config/risk-categories
++ `tags` (array[WoDTagType]) - Array of tags related to this document.
++ `title` (WoDOverviewTitleType) - Title of body items
+
+## WoDRiskContentType (object)
++ `body` (WoDBodyType) - Body of document including html tags and special characters
++ `id`: `e0e5d469-5fad-45b8-9c2a-ae5be4a0eb16` (string) - Unique identifier for body item
++ `name` (WoDOverviewNameType)
++ `publishDate`: `2023-05-29T08:21:33.000000Z` (string) - the date and time when it was published
++ `risks` (array[WoDFeatureRiskType]) - Array of risks related to this document. Corresponds to v1/config/risk-categories
++ `sanitizedBody` (WoDSanitizedBodyType) - Body of document with special characters removed
++ `title` (WoDOverviewTitleType) - Title of risk content
+
+## WoDSpecificIssuesType (object)
++ `id`: `c6688790-e2ba-4ffb-a428-e8629c8e4605` (string) - Unique identifier for specific issue
++ `rate_value`: 2 (number) - Numerical value of the rate type
++ `risk_type_id`: `a75f55f3-e351-48b1-85bb-da464a00dd51` (string) - Unique Identifier of the risk type
++ `summary` (WoDSanitizedSummaryType) - Summary of specific issue with special characters removed
+
+## WoDScenariosType (object)
++ `id`: `e0e5d469-5fad-45b8-9c2a-ae5be4a0eb16` (string) - Unique identifier for body item
++ `overview` (WoDOverviewNameType)
++ `publishDate`: `2023-05-29T08:21:33.000000Z` (string) - the date and time when it was published
++ `sanitizedOverview` (WoDOverviewNameType)
++ `sanitizedScenarioDevelopments` (WoDScenarioType)
++ `scenarioDevelopments` (WoDScenarioType)
++ `scenarioType`: `Most Likely` (string) - Type of scenario
++ `specificIssues` (array[WoDSpecificIssuesType]) - Array of specific issues related to this document
++ `title` (WoDOverviewTitleType) - Title of risk content
+
+## WoDRiskRatingTypeName (enum)
++ country
++ port
++ region
++ water
++ zone
+
+## WoDRiskRatingParentType (object)
++ `code`: `AFRI` (string) - Code of country or region
++ `id`: `a5246635-831d-4d7a-bd56-c0900c681568` (string) - Unique identifier for body item
++ `name`: `Africa` (string) - Name of country (ISO3) or region
++ `type` (WoDRiskRatingTypeName)
+
+## WoDRiskRatingsType (object)
++ `@updated`: `2022-01-25T11:25:04.000000Z` (string)
++ `id`: `72bf112a-8d3e-4381-954e-b020f6611b51` (string) - Unique identifier for risk ratings item
++ `rateName`: `High` (string)
++ `riskCategoryName`: `political` (string)
++ `riskCategoryParentName`: null (string)
++ `riskCategoryId`: `dd8fac8d-6f95-41e5-9f8e-9878037a2969` (string)
++ `riskCategoryParentId`: `7f357035-6ea3-4dee-ab26-1cbe82c2fbf2` (string)
++ `rateId`: `903cdbc0-717e-4f19-9cf3-64ca56cf6530` (string)
++ `rateValue`: 4 (number)
+
+## WoDBreakingEventsLocation (object)
++ `metadata` (WoDBreakingEventsLocationMetadata) - region and countries where the event took place.
++ `point` (ScribeHotspotsEventsLocation)
+
+## WoDBreakingEventsLocationMetadata (object)
++ `region` : `AMER` (string)
++ `countries` : `Venezuela` (string)
++ `countryCodes` : `VE` (string)
+
+## WoDPublishedHistoryType (object)
++ `published`: `2025-01-09T20:36:17.936Z` (string)
+
+## WoDVerifiedEventsPublishedHistoryType (object)
++ `publisher`: `email address` (string)
++ `published`: `2025-01-09T20:36:17.936Z` (string)
+
+## WoDFeatureFlagType (object)
++ `name`: `Madeira` (string)
+
+## WodFeatureVesselTypes (object)
++ `name`: `Cargo` (string)
++ `id`: 1 (number)
+
+## WodFeatureVesselSubtypes (object)
++ `name`: `General Cargo` (string)
+
+## WoDDateRangeType (object)
++ `gte`: `2025-02-04` (string)
++ `lte`: `2025-02-04` (string)
+
+## WoDFutureEventsLocation (object)
++ `metadata` (WoDFutureEventsLocationMetadata) - Future event location information.
++ `point` (ScribeHotspotsEventsLocation)
+
+## WoDFutureEventsLocationMetadata (object)
++ `relatedCountryCodes`: IL,VA (array[string]) - List of related country codes
++ `city`: `Beijing` (array[string]) - List of cities
++ `cityCode`: `cn-001` (array[string]) - List of city codes
++ `region` : `AMER` (array[string])
++ `countries` : `Venezuela` (array[string])
++ `countryCodes` : `VE` (array[string])
++ `relatedCountries`: `Israel` (array[string]) - List of related country names
+
+## WoDFutureEventType (object)
++ `severity`: `Low` (string) - Severity of the event
++ `locationPrecision`: `City` (string, optional) - Precision of the location
++ `perpetratorDetails`: `Details` (string, optional) - Details of perpetrator if known.
++ `impactCategory`: `Political` (array[string]) - Future Events Impact Categories
++ `eventDateType`: `Moveable` (string)
++ `category`: `Geopolitical` (string)
++ `subcategory`: `Intergovernmental Forum` (string)
++ `tags`: `china_us_competition` (array[string])
+
+## SavedSearchType (object)
++ `user_id`: `auth0|5c1d4642bd87ca3999f4d7e7` (string) - User's ID
++ `owner_id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Owners user ID
++ `saved_search_id`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Saved search's ID
++ `name`: `e0f5a05c1d4642bd87ca3999f4d7e771` (string) - Saved search's name
++ `description`: `About this saved search` (string) - optional description of saved search
++ `params` (SavedSearchParamsType)
++ `expiration_date`: `1621623193220` (number) - TBD with forthcoming search notification feature
++ `creation_time`: `1621623193220` (number) - 13 digit timestamp indicating when savedsearch was created
++ `last_update_time`: `1621623193220` (number) - 13 digit timestamp indicating when savedsearch was last updated
+
+## SavedSearchPostType
++ `name`: `Some Name` (string, required) - Saved search's name
++ `description`: `About this saved search` (string) - optional description of saved search
++ `params` (SavedSearchParamsType)
+
+## SavedSearchPutType
++ `name`: `Some Name` (string, optional) - Saved search's name
++ `description`: `About this saved search` (string) - optional description of saved search
++ `params` (SavedSearchParamsType)
+
+## SavedSearchParamsType
++ `search`: `some keywords` (string, optional) - text to search
++ `start`: `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time), e.g. 2016-09-15T00:00:00.000
++ `end`: `2019-01-22T00:00:00.000Z` (string, optional) - Start of the date (and optionally time), e.g. 2016-09-15T00:00:00.000
++ `time_range`: `-7` (number, optional) - Number of days for search to look back. (Incompatible with start and end)
++ `bounds`: `-85.0511,-180.0000,82.1866,79.5153` (string, optional) - Geospatial Bounding Box to restrict the search to.
++ `bounds_type` (SavedSearchBoundsType, optional) - Determines how bounds will be treated
++ `sources` (array[LiveSearchSources], optional) - List of Sources for search to use
++ `topics`: `crime` (array[string]) - Topics for search to use.
++ `places` (array[SavedSearchParamsPlacesType], optional) - List of places
+
+## SavedSearchParamsPlacesType (array)
++ (object)
+    f+ `lon`: `2.10` (number) - longitude
+    + `lat`: 1.0 (number) - latitude
+    + `radius`: 10 (number) - radius around place to search
+    + `place_id`: `place_id` (string) - place's id
+
+## SavedSearchBoundsType (enum)
++ mapextent - Search should respect geo filters
++ worldwide - Search should disregard geo filters
+
+# LiveSearchSources (enum)
++ news
++ twitter
++ telegram
++ instagram
++ facebook
++ reddit
++ youtube
++ weibo
++ vk
++ toutiao
+
+# damageRatingName (enum)
++ Insignificant
++ Low
++ Medium
++ High
++ Extreme
+
+# damageRatingId (enum)
++ 1
++ 2
++ 3
++ 4
++ 5
+
+# vesselDisposition (enum)
++ Anchored
++ Underway
++ Adrift
++ STS
++ Berthed
++ Unknown
+
+# locationPrecisionName (enum)
++ Asset / Building / Business
++ Street / Neighbourhood
++ City
++ Unmappable
++ Research
++ Accurate
++ Estimated
++ Unknown
+
+# locationPrecisionId (enum)
++ 1
++ 2
++ 3
++ 4
++ 5
++ 6
++ 7
++ 8
+
+#hotspotType (enum)
++ top
++ covid19
+
+# hotspotTopic (enum)
++ conflict
++ crime
++ transportation
++ terrorism
++ health
++ social
++ disaster
++ travel
++ covid19
+
+## EventTopicScoresType (object)
++ `unrest`: 0.98 (number) - Confidence Score for this article in the Health Event, articles with a score > 0.9 are considered a match
++ `<more>`: 0.88 (number) - This is a dynamic list and can include 1 or more topic scores
+
+## LabeledCategoryType (object)
++ `name`: unrest (string) - Name of the event type
++ `score`: 0.92 (number) - Confidence Score for event type
+
+## EventSourceType (object)
++ url: http://cnn.com/article1 (string) - The Web URL For this article
++ links (EventSourceLinksType)
+
+## EventSourceLinksType (object)
++ `sharing_image`: http://sharingimage (string, optional) - URL to an image of the article if available
++ `related_images`: http://relatedimages (string, optional) - Additional URL's to an image of the article if available
++ `social_image_embeds`: http://socialimages (string, optional) - URL to image suitable for social media
++ `social_video_embeds`: http://socialvideo (string, optional) - URL to video suitable for social media if available
+
+
+## EventArticles Response (object)
++ `type`: FeatureCollection (string) - Will be fixed String 'FeatureCollection'
++ `metadata` (MetadataEventArticlesCodeType) - MetadataObject
++ `features` (array[FeatureCollectionEventArticlesType])
+
+## MetadataEventArticlesCodeType (object)
++ `status`: success (string) - This will indicate if the call was successful or a failure
++ `statusCode`: 200 (number) - HTTP Status code of the response
++ `total`: 9 (number) - Number of results in this response, if count > total use the next link to get the next set of results
++ `count`: 9 (number) - Total number of results produced by the query, all can be retrieved via paging
++ `prev`: url (string) - A url to the previous set of results, null if no prior results exist
++ `next`: url (string) - A url to the next set of results, null if no next results exist
++ `pageSize`: 10 (number) - Max Results to return
+
+## FeatureCollectionEventArticlesType (object)
++ `type`: Feature (fixed) - Will be 'Feature'
++ `properties` (EventArticlesType)
++ `geometry` (Geometry)
+
+## EventArticlesType (object)
++ `id`: `1509a9ef51895eb61c182dd20ac59038` (string) - unique Article Identifier
++ `cluster_id`: `46f21da9-3fac-435d-a3de-e97f7a416c00` (string, optional) - GUID for the Cluster
++ `timestamp`: `2020-10-07T14:15:00.000Z` (string) - Article Publish Date, if we are unable to extract an Article Publish Date this will be the time of ingest into our platform
++ `title`: `Article Title` (string) - Title of the article
++ `summary`: `article summary` (string) - Short Summary of the article in it's original language
++ `lang`: en (string, optional) - Language code (ISO-639-1) for the Article Source
++ `translated`: true (boolean, optional) - True if the Summary and/Or Title were translated TO English from 'lang'
++ `veracity`: `Official Source` (string) - Our determination of the quality of the original Source, for a definition of each see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1563459585/Article+Veracity
++ `source_url`: `http://url.to/original/article` (string) - A web URL to the original source of the Article
++ `image_url`: `http://url.to/image/associated/with/article.png` (string, optional) - A web URL to an image that was associated with the Article
++ `topic_scores` (EventTopicScoresType) - Dynamic list of the topic scores the article matched, for more information see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1562804251/Event+Clusters
++ `category_types` (array[string]) - Topic Category's this article matched to
++ `source`: `domain.com` - Domain Name for this Article
++ `location_metadata` (LocationMetadata)
++ `severity`: 6 (number, optional) - Severity of the article (0 - 10)
+
+## Scribe Response (object)
++ `narrative` (ScribeNarrativeType)
+
+## ScribeNarrativeType (object)
++ `doc_count` (ScribeDocCountType)
++ `pulse` (ScribePulseType)
++ `hotspots` (ScribeHotspotsType)
++ `top_events` (ScribeTopEventsType)
+
+## ScribeDocCountType (object)
++ `web`: `describes how many articles of each type were found in the location on the given date formatted for web` (string) - Describes how many articles of each type were found in the location on the given date formatted for web
++ `mobile`: `describes how many articles of each type were found in the location on the given date formatted for mobile` (string) - Describes how many articles of each type were found in the location on the given date formatted for mobile
+
+## ScribePulseType (object)
++ `web`: `describes pulse observations in the location on a given date formatted for web` (string) - Describes pulse observations in the location on a given date formatted for web
++ `mobile`: `describes pulse observations in the location on a given date formatted for mobile` (string) - Describes pulse observations in the location on a given date formatted for mobile
+
+## ScribeHotspotsType (object)
++ `paragraph` (ScribeHotspotsParagraph)
++ `location` (LocationMetadata)
++ `events` (array[ScribeHotspotsEvents])
+
+## ScribeHotspotsParagraph (object)
++ `web`: `describes the hotspots found in the location over the past 30 days from the given date formatted for web` (string) - Describes the hotspots found in the location over the past 30 days from the given date formatted for web
++ `mobile`: `describes the hotspots found in the location over the past 30 days from the given date formatted for mobile` (string) - Describes the hotspots found in the location over the past 30 days from the given date formatted for mobile
+
+## ScribeHotspotsEvents (object)
++ `@eventtime`: `2021-03-23T09:24:24.000Z` (string) - Article Publish Date, if we are unable to extract an Article Publish Date this will be the time of ingest into our platform
++ `@timestamp`: `2021-03-23T09:24:24.000Z` (string) - The time of ingest into our platform
++ `updated`: `2021-03-23T09:24:24.000Z` (string) - Most recent time a process was run on this Article
++ `cluster_id`: `0628309e-3cc2-4521-9d44-0af9e6b894eb` (string) - GUID for the Cluster
++ `cluster_size`: 1 (number) - Size of the cluster the Article is in
++ `src` (ScribeHotspotsEventsSrc)
++ `location` (ScribeHotspotsEventsLocation)
++ `location_metadata` (LocationMetadata)
++ `newspaper` (ScribeHotspotsEventsNewspaper)
++ `topic_scores` (EventTopicScoresType)
+
+## ScribeHotspotsEventsNewspaper (object)
++ `title`: `article title` (string) - The current title of the Article
+
+## ScribeHotspotsEventsSrc (object)
++ `url`: `url` (string) - A web URL to the original source of the Article
+
+## ScribeHotspotsEventsLocation (object)
++ `lon`: 85.668 (number) - The longitude of the location the event is attributed to
++ `lat`: 42.963 (number) - The latitude of the location the event is attributed to
+
+## ScribeTopEventsType (object)
++ `paragraph` (ScribeTopEventsParagraph)
++ `events` (array[ScribeTopEventsEvents])
+
+## ScribeTopEventsParagraph (object)
++ `web`: `describes the top events found in the location for the given date formatted for web` (string) - Describes the top events found in the location for the given date formatted for web
++ `mobile`: `describes the top events found in the location for the given date formatted for mobile` (string) - Describes the top events found in the location for the given date formatted for mobile
+
+## ScribeTopEventsEvents (object)
++ `@timestamp`: `2021-03-23T09:24:24.000Z` (string) - The time of ingest into our platform
++ `id`: `41952ad1a73b4325a9ae78f6e6b23c13` (string) - Unique identifier for the article
++ `@completed`: `2021-03-23T09:24:24.000Z` (string) - The time when the platform finished processing the Article
++ `@eventtime`: `2021-03-23T09:24:24.000Z` (string) - Article Publish Date, if we are unable to extract an Article Publish Date this will be the time of ingest into our platform
++ `@updated`: `2021-03-23T09:24:24.000Z` (string) - Most recent time a process was run on this Article
++ `cluster_id`: `b2e55db3-76aa-456d-9e46-ab970ca7ea65` (string) - Unique identifier of the cluster that this Article belongs to
++ `cluster_expiration`: `2021-03-23T09:24:24.000Z` (string) - Time at which the cluster this Article belongs to will expire
++ `title`: `article title` (string) - Title of the Article
++ `src` (ScribeHotspotsEventsSrc)
++ `common_src`: `standard.co.uk` (string) - Domain the Article came from
++ `location` (ScribeHotspotsEventsLocation)
++ `newspaper` (ScribeTopEventsNewspaper)
++ `topic_scores` (EventTopicScoresType)
++ `topic_scores_v2` (array[TopicScoresV2, TopicScoresV2More])
++ `topic_subtypes` (TopicSubtypes)
++ `topic_subtype_subcomponents` (TopicSubtypeSubcomponents)
++ `topic_version` (TopicVersions)
++ `topic_subtype_version` (TopicVersions)
++ `entity_org` (EntityOrgs)
++ `entity_fac` (EntityFacs)
++ `entity_location` (EntityLocation)
++ `entity_person` (EntityPerson)
+
+## ScribeTopEventsNewspaper (object)
++ `id`: `41952ad1a73b4325a9ae78f6e6b23c13` (string) - Unique identifier for the Article
++ `processed_time`: `2021-03-23T09:24:24.000Z` (string) - The time when the platform finished processing the Article
++ `publish_date`: `2021-03-23T09:24:24.000Z` (string) - Article Publish Date, if we are unable to extract an Article Publish Date this will be the time of ingest into our platform
++ `title`: `article title` (string) - Title of the Article
++ `summary` : `summary of the article` (string) - Short summary of the Article in it's original language
++ `text`: `article text` - The full text of the original Article
++ `veracity`: `Unknown Quality` (string) - Our determination of the quality of the original Source, for a definition of each see here: https://seerist.atlassian.net/wiki/spaces/BGS/pages/1563459585/Article+Veracity
++ `url`: `url` (string) - A web URL to the original source of the Article
++ `is_opinion`: false (boolean) - A boolean denoting whether our machine learning algorithms have determined this Article to be an opinion piece
++ `lang`: `en` (string) - Language code for the Article source
++ `keywords` (NewspaperKeywords)
+
+## NewspaperKeywords (array, fixed)
+List of keywords pulled out of the Article text
+
+### Items
+- `covid` (string) - Keyword found in the Article
+- `<more>` (string) - This is a dynamic list and can include 1 or more keywords
+
+## TopicScoresV2 (object)
++ `score`: 0.86463 (number) - Confidence Score for this Article that it fits the particular topic, Articles with a score > 0.8 are considered a match
++ `name`: `health` (string) - Name of the topic to which the score corresponds
+
+## TopicScoresV2More (object)
++ `score`: 0.99 (number) - Confidence Score for this Article that it fits the particular topic, Articles with a score > 0.8 are considered a match
++ `name`: `<more>` (string) - This is a dynamic list and can include 1 or more topic scores
+
+## TopicVersions (object)
++ `health`: `1.4.0` (string) - The current working version of the given model
++ `<more>`: `1.0.0` (string) - This is a dynamic list and can include 1 or more topic score versions
+
+## EntityOrgs (array, fixed)
+List of Organizations found in the Article by our Named Entity Recognition processes
+
+### Items
+- `THE UNITED NATIONS` (string) - Fully capitalized version of an organization entity extracted from the Article
+- `<more>` (string) - This is a dynamic list and can include 0 or more extracted organizations
+
+## EntityFacs (array, fixed)
+List of facilities or points of interest found in the Article by our Named Entity Recognition process
+
+### Items
+- `THE HENNEPIN COUNTY COURTHOUSE` (string) - Fully capitalized version of a facility entity extracted from the Article
+- `<more>` (string) - This is a dynamic list and can include 0 or more extracted facilities
+
+## TopicSubtypeSubcomponents (array, fixed)
+List of lowest-level topic subtype subcomponents that apply to this Article
+
+### Items
+- `transportation_maritime_port` (string) - Name of a topic subtype subcomponent that this Article has been classified under
+- `<more>` (string) - This is a dynamic list and can include 0 or more subtype subcomponents
+
+## EntityLocation (array, fixed)
+Lists of locations found in the Article by our Named Entity Recognition process
+
+### Items
+- `NORTHERN IRELAND` (string) - Fully capitalized version of a location entity extracted from the Article
+- `<more>` (string) - This is a dynamic list and can include 0 or more extracted locations
+
+## EntityPerson (array, fixed)
+List of people found in the Article by our Named Entity Recognition process
+
+### Items
+- `BORIS JOHNSON` (string) - Fully capitalized version of a location entity extracted from the Article
+- `<more>` (string) - This is a dynamic list and can include 0 or more extracted people
+
+## TopicSubtypes (array, fixed)
+List of topic subtypes that apply to this Article
+
+### Items
+- `maritime` (string) - Topic subtype that this Article has been classified under
+- `<more>` (string) - This is a dynamic list and can include 0 or more subtypes

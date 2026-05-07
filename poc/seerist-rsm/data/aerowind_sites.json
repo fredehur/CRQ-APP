@@ -1,0 +1,239 @@
+{
+  "sites": [
+    {
+      "site_id": "med-casablanca-ops",
+      "name": "Casablanca Wind Farm Operations",
+      "region": "MED",
+      "country": "MA",
+      "lat": 33.57,
+      "lon": -7.59,
+      "type": "operations",
+      "subtype": "onshore wind farm O&M",
+      "poi_radius_km": 100,
+      "personnel_count": 47,
+      "expat_count": 8,
+      "shift_pattern": "24/7",
+      "criticality": "major",
+      "produces": "On-farm operations + maintenance",
+      "dependencies": [
+        "nce-hamburg-mfg"
+      ],
+      "feeds_into": [],
+      "customer_dependencies": [
+        {
+          "customer": "ONEE Morocco",
+          "product": "Power purchase agreement",
+          "exposure": "high"
+        }
+      ],
+      "previous_incidents": [
+        {
+          "date": "2025-02-22",
+          "type": "labour",
+          "summary": "Port-of-Casablanca strike delayed nacelle delivery 6 days",
+          "outcome": "resolved"
+        }
+      ],
+      "site_lead": {
+        "name": "Karim Benali",
+        "phone": "+212-522-555-040"
+      },
+      "duty_officer": {
+        "name": "MED Duty Desk",
+        "phone": "+39-091-555-0100"
+      },
+      "embassy_contact": {
+        "country_of_origin": "DK",
+        "contact": "Royal Danish Embassy Rabat",
+        "phone": "+212-537-67-7800"
+      },
+      "notable_dates": [
+        {
+          "date": "2026-05-01",
+          "event": "Labour Day",
+          "risk": "elevated unrest probability in port cities"
+        }
+      ],
+      "tier": "crown_jewel",
+      "asset_type": "wind_farm",
+      "status": "active",
+      "seerist_country_code": "MA",
+      "contractors_count": 15,
+      "country_lead": {
+        "name": "Karim Benali",
+        "email": "k.benali@aerogrid.com",
+        "phone": "+212-522-555-040"
+      },
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "AeroGrid's primary North African wind O&M hub managing the ONEE Morocco power purchase agreement on the Casablanca corridor; sole facility in the region with 24/7 operations. Political stability of the Casablanca port corridor is the portfolio's highest geopolitical exposure this quarter.",
+      "downstream_dependency": "ONEE Morocco PPA grid-delivery commitment; nacelle replacement via Casablanca port means port disruption directly halts on-farm O&M capability.",
+      "standing_notes": "April general election raised short-term unrest posture through Q3 2026. Port strike risk elevated through May Labour Day. APT28 scanning of Moroccan energy ASNs noted — physical and cyber exposure treated as joint signal. Posture raised through May; reassess at Q3 board.",
+      "relevant_seerist_categories": [
+        "civil_unrest",
+        "terrorism",
+        "political_violence",
+        "labour_dispute"
+      ],
+      "threat_actors_of_interest": [
+        28
+      ],
+      "relevant_attack_types": [
+        1,
+        3,
+        4
+      ],
+      "ot_stack": [
+        {
+          "vendor": "Siemens Gamesa",
+          "product": "SG SCADA Wind",
+          "version": "5.x"
+        },
+        {
+          "vendor": "Schneider Electric",
+          "product": "EcoStruxure",
+          "version": "2.x"
+        }
+      ],
+      "site_cyber_actors_of_interest": [
+        28
+      ]
+    },
+    {
+      "site_id": "med-palermo-offshore",
+      "name": "Palermo Offshore Ops",
+      "region": "MED",
+      "country": "IT",
+      "lat": 38.12,
+      "lon": 13.36,
+      "type": "manufacturing",
+      "subtype": "offshore tower assembly",
+      "poi_radius_km": 50,
+      "personnel_count": 210,
+      "expat_count": 14,
+      "shift_pattern": "two shifts",
+      "criticality": "crown_jewel",
+      "produces": "Offshore tower segments",
+      "dependencies": [],
+      "feeds_into": [
+        "nce-hamburg-mfg"
+      ],
+      "customer_dependencies": [],
+      "previous_incidents": [],
+      "site_lead": {
+        "name": "Giulia Romano",
+        "phone": "+39-091-555-0250"
+      },
+      "duty_officer": {
+        "name": "MED Duty Desk",
+        "phone": "+39-091-555-0100"
+      },
+      "embassy_contact": {
+        "country_of_origin": "DK",
+        "contact": "Royal Danish Embassy Rome",
+        "phone": "+39-06-9774-8300"
+      },
+      "notable_dates": [],
+      "tier": "crown_jewel",
+      "asset_type": "manufacturing",
+      "status": "active",
+      "seerist_country_code": "IT",
+      "contractors_count": 30,
+      "country_lead": {
+        "name": "Giulia Romano",
+        "email": "g.romano@aerogrid.com",
+        "phone": "+39-091-555-0250"
+      },
+      "host_country_risk_baseline": "elevated",
+      "criticality_drivers": "Sole facility producing offshore tower segments for the Mediterranean and NCE project pipeline; feeds Hamburg directly. Italian port strike risk creates seasonal delivery disruption exposure on the Palermo–Hamburg route.",
+      "downstream_dependency": "Offshore tower segments flow to Hamburg (nce-hamburg-mfg); Orsted Q4 offshore farm delivery exposed to any Palermo shutdown.",
+      "standing_notes": "Port strike watch active — Italian labour calendar historically elevated in spring. Taranto commissioning on track. No active incidents at Palermo.",
+      "relevant_seerist_categories": [
+        "labour_dispute",
+        "civil_unrest",
+        "maritime"
+      ],
+      "threat_actors_of_interest": [],
+      "relevant_attack_types": [
+        3,
+        7
+      ],
+      "ot_stack": [
+        {
+          "vendor": "GE Vernova",
+          "product": "Mark VIe",
+          "version": "06.x"
+        },
+        {
+          "vendor": "ABB",
+          "product": "Symphony Plus",
+          "version": "3.x"
+        }
+      ],
+      "site_cyber_actors_of_interest": null
+    },
+    {
+      "site_id": "med-malaga-svc",
+      "name": "Malaga Service Hub",
+      "region": "MED",
+      "country": "ES",
+      "lat": 36.72,
+      "lon": -4.42,
+      "type": "service",
+      "subtype": "offshore O&M dispatch",
+      "poi_radius_km": 30,
+      "personnel_count": 18,
+      "expat_count": 1,
+      "shift_pattern": "single shift",
+      "criticality": "standard",
+      "produces": "Offshore O&M dispatch",
+      "dependencies": [],
+      "feeds_into": [],
+      "customer_dependencies": [],
+      "previous_incidents": [],
+      "site_lead": {
+        "name": "Ana Morales",
+        "phone": "+34-95-555-0260"
+      },
+      "duty_officer": {
+        "name": "MED Duty Desk",
+        "phone": "+39-091-555-0100"
+      },
+      "embassy_contact": {
+        "country_of_origin": "DK",
+        "contact": "Royal Danish Embassy Madrid",
+        "phone": "+34-91-432-8400"
+      },
+      "notable_dates": [],
+      "tier": "minor",
+      "asset_type": "ops_center",
+      "status": "active",
+      "seerist_country_code": "ES",
+      "contractors_count": 4,
+      "country_lead": {
+        "name": "Ana Morales",
+        "email": "a.morales@aerogrid.com",
+        "phone": "+34-95-555-0260"
+      },
+      "host_country_risk_baseline": "low",
+      "criticality_drivers": "Small offshore O&M dispatch hub for the Spanish Mediterranean portfolio; minimal production exposure.",
+      "downstream_dependency": "No direct production dependency; services Spanish offshore customer SLAs.",
+      "standing_notes": "APT28 scanning of Spanish energy ASNs noted — no direct impact at Malaga confirmed. Standard cyber watch.",
+      "relevant_seerist_categories": [
+        "terrorism",
+        "civil_unrest",
+        "cyber"
+      ],
+      "threat_actors_of_interest": [
+        28
+      ],
+      "relevant_attack_types": [
+        1,
+        5
+      ],
+      "ot_stack": null,
+      "site_cyber_actors_of_interest": [
+        28
+      ]
+    }
+  ]
+}

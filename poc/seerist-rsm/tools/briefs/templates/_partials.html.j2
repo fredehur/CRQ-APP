@@ -1,0 +1,28 @@
+{# tools/briefs/templates/_partials.html.j2 #}
+{% macro pill(label, severity) -%}
+<span class="pill pill--{{ severity }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro sev(label, severity) -%}
+<span class="sev sev--{{ severity }}">{{ label }}</span>
+{%- endmacro %}
+
+{% macro pulse(label, severity, arrow) -%}
+<span class="pulse pulse--{{ severity }}"><span class="dot"></span>{{ label }} <span class="arrow">{{ arrow }}</span></span>
+{%- endmacro %}
+
+{% macro meta_rail(items) -%}
+<div class="meta-rail">
+{%- for it in items -%}
+{{ it }}{% if not loop.last %} <span class="dot">·</span> {% endif %}
+{%- endfor -%}
+</div>
+{%- endmacro %}
+
+{% macro ref(label) -%}
+<span class="ref">[{{ label }}]</span>
+{%- endmacro %}
+
+{% macro tier(label, kind) -%}
+<span class="tier tier--{{ kind }}">{{ label }}</span>
+{%- endmacro %}
