@@ -1,0 +1,136 @@
+{
+  "region": "MED",
+  "collected_at": "2026-04-14T05:00:00Z",
+  "collection_window": {"since": "2026-04-07T05:00:00Z", "days": 7},
+  "situational": {
+    "events": [
+      {
+        "signal_id": "seerist:event:med-0042",
+        "title": "Civil unrest in Rabat over fuel prices",
+        "category": "Unrest",
+        "severity": 3,
+        "location": {"lat": 34.02, "lon": -6.83, "name": "Rabat, Morocco", "country_code": "MA"},
+        "source_reliability": "high",
+        "source_count": 6,
+        "timestamp": "2026-04-12T14:00:00Z",
+        "verified": false
+      },
+      {
+        "signal_id": "seerist:event:med-0043",
+        "title": "Strike action at Port of Casablanca",
+        "category": "Labour",
+        "severity": 4,
+        "location": {"lat": 33.59, "lon": -7.61, "name": "Port of Casablanca, Morocco", "country_code": "MA"},
+        "source_reliability": "high",
+        "source_count": 4,
+        "timestamp": "2026-04-13T07:00:00Z",
+        "verified": true
+      },
+      {
+        "signal_id": "seerist:event:med-0001",
+        "title": "Palermo port workers strike over austerity pension cuts",
+        "category": "Unrest",
+        "severity": 3,
+        "location": {"lat": 38.12, "lon": 13.36, "name": "Palermo, Italy", "country_code": "IT"},
+        "source_reliability": "high",
+        "source_count": 7,
+        "timestamp": "2026-04-09T09:00:00Z",
+        "verified": false
+      }
+    ],
+    "verified_events": [
+      {
+        "signal_id": "seerist:verified:med-0043",
+        "title": "Strike action at Port of Casablanca",
+        "verified_at": "2026-04-13T11:00:00Z",
+        "verifier": "Seerist analyst desk",
+        "linked_event_id": "seerist:event:med-0043"
+      }
+    ],
+    "breaking_news": [
+      {
+        "signal_id": "seerist:breaking:med-0007",
+        "title": "Port of Casablanca closure widens — sympathy strikes spreading",
+        "first_seen": "2026-04-14T03:00:00Z",
+        "location": {"lat": 33.59, "lon": -7.61, "name": "Casablanca, Morocco", "country_code": "MA"},
+        "source_count": 9
+      }
+    ],
+    "news": [
+      {
+        "signal_id": "seerist:news:med-0501",
+        "title": "Morocco protests enter second week",
+        "outlet": "Reuters",
+        "url": "https://example.com/morocco-protests-week-two",
+        "published_at": "2026-04-13T10:00:00Z"
+      }
+    ]
+  },
+  "analytical": {
+    "pulse": {
+      "countries": {
+        "IT": {"score": 3.8, "color": "orange", "delta": -0.2, "forecast": 3.6,
+               "subcategories": {"political": 4.0, "security": 3.5}},
+        "MA": {"score": 2.6, "color": "red", "delta": -0.6, "forecast": 2.4,
+               "subcategories": {"political": 2.5, "security": 2.7}}
+      },
+      "region_summary": {
+        "worst_country": "MA",
+        "worst_score": 2.6,
+        "avg_delta": -0.4,
+        "trend_direction": "declining"
+      }
+    },
+    "hotspots": [
+      {
+        "signal_id": "seerist:hotspot:med-0019",
+        "location": {"lat": 33.57, "lon": -7.59, "name": "Casablanca outskirts", "country_code": "MA"},
+        "category_hint": "labour unrest",
+        "deviation_score": 0.91,
+        "first_detected": "2026-04-13T22:00:00Z",
+        "watch_window_hours": 48
+      }
+    ],
+    "scribe": [
+      {
+        "signal_id": "seerist:scribe:med-0003",
+        "text": "Analyst note: Casablanca port action follows the same pattern as the Feb 2025 strike — expect 4-6 day disruption window if previous trajectory holds.",
+        "author": "Seerist MENA desk",
+        "date": "2026-04-13T18:00:00Z"
+      }
+    ],
+    "wod_searches": [
+      {
+        "term": "Casablanca port closure",
+        "spike_factor": 4.2,
+        "first_detected": "2026-04-13T20:00:00Z",
+        "region_correlation": ["MA"]
+      }
+    ],
+    "analysis_reports": [
+      {
+        "report_id": "seerist:analysis:med-2026-04-008",
+        "title": "Morocco Q2 2026 outlook: labour and price-driven unrest probability HIGH",
+        "published_at": "2026-04-10T00:00:00Z",
+        "url": "https://example.com/seerist/morocco-q2-outlook"
+      }
+    ],
+    "risk_ratings": {
+      "IT": {"overall": "Medium", "political": "Medium", "security": "Medium", "operational": "Low",
+             "trend": "stable"},
+      "MA": {"overall": "High", "political": "High", "security": "High", "operational": "Medium",
+             "trend": "rising"}
+    }
+  },
+  "poi_alerts": [
+    {
+      "signal_id": "seerist:poi:med-001",
+      "facility": "Casablanca Wind Farm Operations",
+      "coordinates": [-7.59, 33.57],
+      "radius_km": 100,
+      "matching_events": ["seerist:event:med-0042", "seerist:event:med-0043"],
+      "nearest_event_km": 3
+    }
+  ],
+  "source_provenance": "seerist"
+}

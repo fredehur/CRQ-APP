@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
@@ -653,3 +653,40 @@ class WeeklySynthesisOutput(_Strict):
     sites_narrative: list[SiteNarrativeOut]
     regional_cyber_standing_notes: str | None = None
     evidence_why_lines: dict[str, str]
+
+
+# ---- SIGNAL MODELS (used by loaders and joins) ----
+
+class SignalLocation(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    lat: float
+    lon: float
+    name: str
+    country_code: str
+
+
+class PhysicalSignal(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    signal_id: str
+    title: str
+    category: str | None = None
+    pillar: str | None = None
+    severity: int = 5
+    location: SignalLocation | None = None
+    url: str | None = None
+    outlet: str | None = None
+    published_at: datetime
+    attack_type: int | None = None
+    perpetrator: int | None = None
+
+    @property
+    def country(self) -> str | None:
+        return self.location.country_code if self.location else None
+
+
+class CyberIndicator(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    signal_id: str
+    text: str
+    source_url: str | None = None
+    source_name: str | None = None

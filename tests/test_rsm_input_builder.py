@@ -66,3 +66,59 @@ def test_manifest_summary_renders_cadence(chdir_repo):
 def test_required_inputs_missing_still_raises(chdir_repo):
     with pytest.raises(FileNotFoundError):
         build_rsm_inputs("MED", cadence="daily", output_dir="__nonexistent_dir__")
+
+
+def test_manifest_includes_cyber_watchlist_when_present(chdir_repo, tmp_path, monkeypatch):
+    """If data/cyber_watchlist.json exists, manifest includes it."""
+    import tools.rsm_input_builder as rib
+
+    wl_path = tmp_path / "cyber_watchlist.json"
+    wl_path.write_text(json.dumps({
+        "threat_actor_groups": [{"name": "APT40", "motivation": "espionage"}],
+        "sector_targeting_campaigns": [],
+        "cve_watch_categories": ["ICS/SCADA"],
+        "global_cyber_geographies_of_concern": ["China"],
+    }), encoding="utf-8")
+
+    # monkeypatch the module-level constant that Task B1 will add
+    monkeypatch.setattr(rib, "WATCHLIST_FILE", wl_path)
+
+    try:
+        m = build_rsm_inputs("MED", cadence="daily")
+    except FileNotFoundError:
+        pytest.skip("MED pipeline not populated")
+    assert "cyber_watchlist" in m
+    assert m["cyber_watchlist"] is not None
+    assert m["cyber_watchlist"]["threat_actor_groups"][0]["name"] == "APT40"
+
+
+def test_manifest_cyber_watchlist_none_when_absent(chdir_repo, tmp_path, monkeypatch):
+    """Missing watchlist file → manifest['cyber_watchlist'] is None."""
+    import tools.rsm_input_builder as rib
+    monkeypatch.setattr(rib, "WATCHLIST_FILE", tmp_path / "nonexistent.json")
+    try:
+        m = build_rsm_inputs("MED", cadence="daily")
+    except FileNotFoundError:
+        pytest.skip("MED pipeline not populated")
+    assert m["cyber_watchlist"] is None
+
+
+def test_manifest_summary_mentions_watchlist_when_present(chdir_repo, tmp_path, monkeypatch):
+    """manifest_summary surfaces actor/campaign counts."""
+    import tools.rsm_input_builder as rib
+
+    wl_path = tmp_path / "cyber_watchlist.json"
+    wl_path.write_text(json.dumps({
+        "threat_actor_groups": [{"name": "APT40"}, {"name": "Volt Typhoon"}],
+        "sector_targeting_campaigns": [{"campaign_name": "VOLT ICS"}],
+        "cve_watch_categories": ["ICS/SCADA"],
+    }), encoding="utf-8")
+    monkeypatch.setattr(rib, "WATCHLIST_FILE", wl_path)
+
+    try:
+        m = build_rsm_inputs("MED", cadence="daily")
+    except FileNotFoundError:
+        pytest.skip("MED pipeline not populated")
+    summary = manifest_summary(m)
+    assert "watchlist" in summary.lower()
+    assert "APT40" in summary or "2" in summary  # actor count or name

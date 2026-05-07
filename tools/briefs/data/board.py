@@ -1,4 +1,5 @@
 from datetime import date
+from tools.briefs.pipeline_state import global_run_id
 from tools.briefs.models import (
     BoardBriefData, BoardCover, PosturePanel, BoardTakeaway, RegionDelta,
     KeyDevelopment, AlsoTrackingItem, WatchNextItem, MatrixDot, RegisterRow,
@@ -7,7 +8,7 @@ from tools.briefs.models import (
 )
 
 
-def load_board_data(quarter: str) -> BoardBriefData:
+def load_board_data(quarter: str) -> tuple[BoardBriefData, str | None]:
     """Static mock matching docs/design/handoff/Board Report Q2 2026.html.
 
     Future: replaced by a quarterly synthesizer reading aggregated regional output.
@@ -28,7 +29,7 @@ def load_board_data(quarter: str) -> BoardBriefData:
         distribution_note="AeroGrid Wind Solutions · Board of Directors",
     )
 
-    return BoardBriefData(
+    brief = BoardBriefData(
         cover=cover,
         state_of_risk_line=(
             "Q2 2026 saw elevated North African unrest, sustained EU renewables "
@@ -528,3 +529,4 @@ def load_board_data(quarter: str) -> BoardBriefData:
             },
         ),
     )
+    return brief, global_run_id()

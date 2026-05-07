@@ -16,6 +16,7 @@ from pathlib import Path
 FOOTPRINT_FILE = Path("data/regional_footprint.json")
 OUTPUT_DIR = Path("output")
 KNOWN_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
+WATCHLIST_FILE = Path("data/cyber_watchlist.json")
 
 
 # ── Public API ──────────────────────────────────────────────────────────────
@@ -61,6 +62,19 @@ def build_context(region: str) -> None:
 
     data = footprint[region]
     block = _format_context_block(data, region)
+    if WATCHLIST_FILE.exists():
+        try:
+            watchlist = json.loads(WATCHLIST_FILE.read_text(encoding="utf-8"))
+            has_content = any([
+                watchlist.get("threat_actor_groups"),
+                watchlist.get("sector_targeting_campaigns"),
+                watchlist.get("cve_watch_categories"),
+                watchlist.get("global_cyber_geographies_of_concern"),
+            ])
+            if has_content:
+                block += _format_watchlist_block(watchlist)
+        except Exception:
+            pass
     out_path.write_text(block, encoding="utf-8")
     print(f"Context block written: {out_path}")
 
@@ -111,6 +125,37 @@ def _format_context_block(data: dict, region: str) -> str:
         lines.append("")
         lines.append("Notes:")
         lines.append(notes)
+
+    return "\n".join(lines)
+
+
+def _format_watchlist_block(watchlist: dict) -> str:
+    lines = ["", "[GLOBAL CYBER WATCHLIST]"]
+
+    actors = watchlist.get("threat_actor_groups", [])
+    if actors:
+        lines.append("Threat Actors:")
+        for a in actors:
+            aliases = ", ".join(a.get("aliases", []))
+            alias_str = f" (aka {aliases})" if aliases else ""
+            lines.append(f"  - {a.get('name', '')}{alias_str} — {a.get('motivation', '')}")
+
+    campaigns = watchlist.get("sector_targeting_campaigns", [])
+    if campaigns:
+        lines.append("Active Campaigns:")
+        for c in campaigns:
+            lines.append(
+                f"  - {c.get('campaign_name', '')} / {c.get('actor', '')} "
+                f"— sectors: {', '.join(c.get('sectors', []))}"
+            )
+
+    cves = watchlist.get("cve_watch_categories", [])
+    if cves:
+        lines.append(f"CVE Watch Categories: {' | '.join(cves)}")
+
+    geos = watchlist.get("global_cyber_geographies_of_concern", [])
+    if geos:
+        lines.append(f"Cyber Geographies of Concern: {', '.join(geos)}")
 
     return "\n".join(lines)
 

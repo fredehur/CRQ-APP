@@ -1,0 +1,1182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CRQ Command Center · Design System v1.0</title>
+<meta name="viewport" content="width=1200">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/tokens.css">
+<link rel="stylesheet" href="styles/system.css">
+</head>
+<body>
+
+<div class="sys-shell">
+<!-- ——— Sidebar ——— -->
+<aside class="sys-nav">
+  <div class="brand">CRQ<span> ·</span> Command Center</div>
+  <div class="sub">Design System · v1.0 · 2026-04-20</div>
+
+  <div class="group">
+    <div class="group-title">01 Foundations</div>
+    <a href="#brand"><span class="num-prefix">01.1</span> Brand &amp; Principles</a>
+    <a href="#color"><span class="num-prefix">01.2</span> Color</a>
+    <a href="#severity"><span class="num-prefix">01.3</span> Severity Palette</a>
+    <a href="#type"><span class="num-prefix">01.4</span> Typography</a>
+    <a href="#space"><span class="num-prefix">01.5</span> Spacing &amp; Layout</a>
+  </div>
+
+  <div class="group">
+    <div class="group-title">02 Components</div>
+    <a href="#pills"><span class="num-prefix">02.1</span> Pill Bands</a>
+    <a href="#dots"><span class="num-prefix">02.2</span> Severity Dots</a>
+    <a href="#cats"><span class="num-prefix">02.3</span> Category Icons</a>
+    <a href="#drivers"><span class="num-prefix">02.4</span> Driver Lists</a>
+    <a href="#exec-card"><span class="num-prefix">02.5</span> Executive Cards</a>
+    <a href="#meta"><span class="num-prefix">02.6</span> Meta Rails &amp; Bands</a>
+    <a href="#scatter"><span class="num-prefix">02.7</span> Likelihood × Impact Chart</a>
+  </div>
+
+  <div class="group">
+    <div class="group-title">03 Compositions</div>
+    <a href="#comp-a4"><span class="num-prefix">03.1</span> A4 Brief Page</a>
+    <a href="#comp-slide"><span class="num-prefix">03.2</span> 16:9 Slide</a>
+  </div>
+
+  <div class="group">
+    <div class="group-title">04 Usage</div>
+    <a href="#dodont"><span class="num-prefix">04.1</span> Do / Don't</a>
+    <a href="#exports"><span class="num-prefix">04.2</span> Export Formats</a>
+  </div>
+</aside>
+
+<!-- ——— Main ——— -->
+<main class="sys-main">
+
+<!-- === Cover === -->
+<section class="sec" id="cover">
+  <div class="row row--between" style="align-items:flex-end;">
+    <div>
+      <div class="t-label c-mute">DESIGN SYSTEM · v1.0 · 2026-04-20</div>
+      <h1 class="t-display" style="margin:14px 0 8px;">CRQ Command Center<br/>Visual Language</h1>
+      <p class="t-body c-mute" style="max-width: 580px;">
+        The locked design language for Cyber Risk Quantification artifacts — cycle briefs, board decks,
+        threat scorecards, and analyst exports. Derived from the W16 cycle brief reference. Every token, component,
+        and composition here is authoritative; future CRQ outputs should inherit from it without modification.
+      </p>
+    </div>
+    <div class="stack stack--sm" style="align-items:flex-end;">
+      <div class="t-label-sm">AUDIENCES</div>
+      <div class="t-small c-ink">CISO · Board · Analyst Teams</div>
+      <div class="t-label-sm" style="margin-top: 12px;">OUTPUT FORMATS</div>
+      <div class="t-small c-ink">A4 PDF · 16:9 PPTX · Web</div>
+    </div>
+  </div>
+
+  <!-- Quick-ref strip -->
+  <div class="grid grid--4" style="margin-top: 32px;">
+    <div class="card card--tight">
+      <div class="t-label-sm c-mute">TYPEFACE</div>
+      <div class="t-h3" style="margin-top:6px;">IBM Plex Sans</div>
+      <div class="t-xs" style="margin-top:4px;">400 · 500 · 600 · 700</div>
+    </div>
+    <div class="card card--tight">
+      <div class="t-label-sm c-mute">BRAND NAVY</div>
+      <div class="row" style="margin-top:6px; gap:8px;">
+        <span style="width:20px;height:20px;border-radius:4px;background:#1B2D6E;"></span>
+        <div class="t-h3" style="font-variant-numeric:tabular-nums;">#1B2D6E</div>
+      </div>
+    </div>
+    <div class="card card--tight">
+      <div class="t-label-sm c-mute">BRAND BRIGHT</div>
+      <div class="row" style="margin-top:6px; gap:8px;">
+        <span style="width:20px;height:20px;border-radius:4px;background:#2E5BFF;"></span>
+        <div class="t-h3" style="font-variant-numeric:tabular-nums;">#2E5BFF</div>
+      </div>
+    </div>
+    <div class="card card--tight">
+      <div class="t-label-sm c-mute">SEVERITY GRADES</div>
+      <div class="row" style="margin-top:6px; gap:6px;">
+        <span class="sdot sdot--lg sdot--critical"></span>
+        <span class="sdot sdot--lg sdot--high"></span>
+        <span class="sdot sdot--lg sdot--medium"></span>
+        <span class="sdot sdot--lg sdot--monitor"></span>
+        <span class="t-xs c-mute" style="margin-left:auto;">4 grades</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 01.1 Brand & Principles === -->
+<section class="sec" id="brand">
+  <div class="sec-head">
+    <div>
+      <div class="num">01.1 · FOUNDATIONS</div>
+      <div class="title" style="margin-top:6px;">Brand &amp; Principles</div>
+    </div>
+    <div class="lede">
+      CRQ is a threat-intelligence practice. Its artifacts are read under pressure — by executives
+      deciding this week, not this quarter. Every design choice below serves signal over ornament.
+    </div>
+  </div>
+
+  <div class="grid grid--3">
+    <div class="card">
+      <div class="t-label-sm c-mute">P·01</div>
+      <div class="t-h2" style="margin:6px 0 8px;">Signal over ornament</div>
+      <div class="t-small c-mute">No gradients, no decorative imagery, no emoji. Color exists to encode severity; whitespace exists to separate signal.</div>
+    </div>
+    <div class="card">
+      <div class="t-label-sm c-mute">P·02</div>
+      <div class="t-h2" style="margin:6px 0 8px;">Print-report density</div>
+      <div class="t-small c-mute">Dense enough that a CISO can absorb a page in 60 seconds. Loose enough that the board can read it on a screen from six feet.</div>
+    </div>
+    <div class="card">
+      <div class="t-label-sm c-mute">P·03</div>
+      <div class="t-h2" style="margin:6px 0 8px;">Structured evidence</div>
+      <div class="t-small c-mute">Every claim travels with its confidence: Admiralty grade, source count, refresh time. Meta-rails are not optional.</div>
+    </div>
+  </div>
+</section>
+
+<!-- === 01.2 Color === -->
+<section class="sec" id="color">
+  <div class="sec-head">
+    <div>
+      <div class="num">01.2 · FOUNDATIONS</div>
+      <div class="title" style="margin-top:6px;">Color</div>
+    </div>
+    <div class="lede">
+      A narrow palette: two brand colors, four severity colors, a neutral ramp. Accent colors outside this set are not permitted.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">01.2.A</span><span class="name">Brand</span></div>
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="swatch">
+        <div class="chip" style="background:#1B2D6E"></div>
+        <div>
+          <div class="name">Brand Navy</div>
+          <div class="hex">#1B2D6E · oklch(0.29 0.12 267)</div>
+          <div class="var">--brand-navy · headings, strong text, primary surfaces</div>
+        </div>
+      </div>
+      <div class="swatch">
+        <div class="chip" style="background:#2E5BFF"></div>
+        <div>
+          <div class="name">Brand Bright</div>
+          <div class="hex">#2E5BFF · oklch(0.58 0.22 265)</div>
+          <div class="var">--brand-bright · active states, links, emphasis accents</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="display:flex; flex-direction:column; gap:12px;">
+      <div class="t-label-sm c-mute">USAGE RATIOS</div>
+      <div class="t-small c-mute">Navy carries structure; Bright carries attention. The brief uses them in roughly 85/15.</div>
+      <div style="display:flex; height:48px; border-radius:4px; overflow:hidden; margin-top:6px;">
+        <div style="background:#1B2D6E; flex: 85;"></div>
+        <div style="background:#2E5BFF; flex: 15;"></div>
+      </div>
+      <div class="row row--between t-xs c-mute" style="margin-top: -4px;">
+        <span>Navy · 85%</span><span>Bright · 15%</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">01.2.B</span><span class="name">Neutrals</span></div>
+  <div class="card">
+    <div class="grid" style="grid-template-columns: repeat(6, 1fr); gap: 0; border: 1px solid var(--ink-150); border-radius: 4px; overflow: hidden;">
+      <div style="height: 88px; background:#FBFBFD; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm c-mute">PAPER</div>
+        <div class="t-xs c-faint">#FBFBFD</div>
+      </div>
+      <div style="height: 88px; background:#F5F6FA; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm c-mute">INK-50</div>
+        <div class="t-xs c-faint">#F5F6FA</div>
+      </div>
+      <div style="height: 88px; background:#EEF0F6; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm c-mute">INK-100</div>
+        <div class="t-xs c-faint">#EEF0F6</div>
+      </div>
+      <div style="height: 88px; background:#D6D9E5; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm c-mute">INK-200</div>
+        <div class="t-xs c-faint">#D6D9E5</div>
+      </div>
+      <div style="height: 88px; background:#6E7596; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm" style="color:#D6D9E5;">INK-400</div>
+        <div class="t-xs" style="color:#D6D9E5;">#6E7596</div>
+      </div>
+      <div style="height: 88px; background:#0E1530; padding: 8px; display:flex; flex-direction:column; justify-content:flex-end;">
+        <div class="t-label-sm" style="color:#A8ADC4;">INK-900</div>
+        <div class="t-xs" style="color:#A8ADC4;">#0E1530</div>
+      </div>
+    </div>
+    <div class="t-xs c-mute" style="margin-top: 10px;">
+      Backgrounds live in the Paper → INK-100 range; body copy in INK-900; secondary in INK-500; dividers in INK-200.
+      No pure black; pure white is reserved for card surfaces on tinted pages.
+    </div>
+  </div>
+</section>
+
+<!-- === 01.3 Severity Palette === -->
+<section class="sec" id="severity">
+  <div class="sec-head">
+    <div>
+      <div class="num">01.3 · FOUNDATIONS</div>
+      <div class="title" style="margin-top:6px;">Severity Palette</div>
+    </div>
+    <div class="lede">
+      Four ordered grades. Always in this order — left to right, top to bottom.
+      Severity color is semantic; never use it for decoration.
+    </div>
+  </div>
+
+  <div class="card">
+    <table class="tokens">
+      <thead>
+        <tr>
+          <th style="width:52px;"></th>
+          <th>Grade</th>
+          <th>Hex</th>
+          <th>Token</th>
+          <th>Tint (bg)</th>
+          <th>Use for</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="sdot sdot--xl sdot--critical"></span></td>
+          <td><span class="pill pill--critical">Critical</span></td>
+          <td class="num">#d1242f</td>
+          <td><code>--sev-critical</code></td>
+          <td><span style="display:inline-block; width:32px;height:20px;border-radius:3px;background:#FBE9EB;border:1px solid var(--ink-200);"></span></td>
+          <td>Active, confirmed, immediate decision required</td>
+        </tr>
+        <tr>
+          <td><span class="sdot sdot--xl sdot--high"></span></td>
+          <td><span class="pill pill--high">High</span></td>
+          <td class="num">#cf6f12</td>
+          <td><code>--sev-high</code></td>
+          <td><span style="display:inline-block; width:32px;height:20px;border-radius:3px;background:#FBEEDF;border:1px solid var(--ink-200);"></span></td>
+          <td>Confirmed, elevated monitoring cadence</td>
+        </tr>
+        <tr>
+          <td><span class="sdot sdot--xl sdot--medium"></span></td>
+          <td><span class="pill pill--medium">Medium</span></td>
+          <td class="num">#9a7300</td>
+          <td><code>--sev-medium</code></td>
+          <td><span style="display:inline-block; width:32px;height:20px;border-radius:3px;background:#F6EED6;border:1px solid var(--ink-200);"></span></td>
+          <td>Ongoing pattern, contained</td>
+        </tr>
+        <tr>
+          <td><span class="sdot sdot--xl sdot--monitor"></span></td>
+          <td><span class="pill pill--monitor">Monitor</span></td>
+          <td class="num">#0969da</td>
+          <td><code>--sev-monitor</code></td>
+          <td><span style="display:inline-block; width:32px;height:20px;border-radius:3px;background:#E1EDFB;border:1px solid var(--ink-200);"></span></td>
+          <td>Watch-list; triggering events not yet observed</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- === 01.4 Typography === -->
+<section class="sec" id="type">
+  <div class="sec-head">
+    <div>
+      <div class="num">01.4 · FOUNDATIONS</div>
+      <div class="title" style="margin-top:6px;">Typography</div>
+    </div>
+    <div class="lede">
+      One typeface: IBM Plex Sans. Hierarchy comes from weight, size, and tracking — not from family mixing.
+      Tabular numerals are applied to metadata and any data column.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">01.4.A</span><span class="name">Scale</span></div>
+  <div class="card">
+    <div class="spec"><div class="meta">Display · 40/46 · 600 · −0.01em</div><div class="t-display">Global posture held at HIGH.</div></div>
+    <div class="spec"><div class="meta">H1 · 28/32 · 600 · −0.01em</div><div class="t-h1">Taiwan Strait — sustained chokepoint pressure</div></div>
+    <div class="spec"><div class="meta">H2 · 20/24 · 600 · −0.01em</div><div class="t-h2">Key drivers &amp; assumptions</div></div>
+    <div class="spec"><div class="meta">H3 · 15/20 · 600</div><div class="t-h3">Business implications</div></div>
+    <div class="spec"><div class="meta">Body · 13/19 · 400</div><div class="t-body">APAC's share of CRITICAL signal volume has held within ±3 points across the last three reporting cycles despite changes in collection coverage.</div></div>
+    <div class="spec"><div class="meta">Small · 11.5/17 · 400</div><div class="t-small">Reroute adds 8–14 days. Cargo insurance spiking; energy shipments repriced weekly.</div></div>
+    <div class="spec"><div class="meta">Label · 10.5/10 · 600 · 0.12em · UPPER</div><div class="t-label c-navy">CRITICAL · MED · NEW</div></div>
+    <div class="spec"><div class="meta">Meta · 10.5/14 · 500 · 0.08em · UPPER</div><div class="t-xs" style="letter-spacing:0.08em; text-transform:uppercase;">Admiralty B2 · 12 sources · refreshed 2026-04-17 06:00 UTC</div></div>
+  </div>
+
+  <div class="sub-head"><span class="tag">01.4.B</span><span class="name">Weights in use</span></div>
+  <div class="card">
+    <div class="grid grid--4" style="gap: 0;">
+      <div style="padding: 16px; border-right: 1px solid var(--ink-150);">
+        <div class="t-label-sm c-mute">400 · REGULAR</div>
+        <div style="font-weight: 400; font-size: 24px; color: var(--ink-900); margin-top:8px;">Chokepoint</div>
+        <div class="t-xs c-mute" style="margin-top:4px;">Body copy</div>
+      </div>
+      <div style="padding: 16px; border-right: 1px solid var(--ink-150);">
+        <div class="t-label-sm c-mute">500 · MEDIUM</div>
+        <div style="font-weight: 500; font-size: 24px; color: var(--ink-900); margin-top:8px;">Chokepoint</div>
+        <div class="t-xs c-mute" style="margin-top:4px;">Emphasis · meta labels</div>
+      </div>
+      <div style="padding: 16px; border-right: 1px solid var(--ink-150);">
+        <div class="t-label-sm c-mute">600 · SEMIBOLD</div>
+        <div style="font-weight: 600; font-size: 24px; color: var(--ink-700); margin-top:8px;">Chokepoint</div>
+        <div class="t-xs c-mute" style="margin-top:4px;">All headings · pill labels</div>
+      </div>
+      <div style="padding: 16px;">
+        <div class="t-label-sm c-mute">700 · BOLD</div>
+        <div style="font-weight: 700; font-size: 24px; color: var(--ink-700); margin-top:8px;">Chokepoint</div>
+        <div class="t-xs c-mute" style="margin-top:4px;">Category-icon letters only</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 01.5 Spacing === -->
+<section class="sec" id="space">
+  <div class="sec-head">
+    <div>
+      <div class="num">01.5 · FOUNDATIONS</div>
+      <div class="title" style="margin-top:6px;">Spacing &amp; Layout</div>
+    </div>
+    <div class="lede">
+      4-pt base. Radii and borders are minimal; the report aesthetic uses the rule — a top or bottom border —
+      as its primary structural device, not cards or shadows.
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="t-label-sm c-mute">SPACE SCALE</div>
+      <table class="tokens" style="margin-top: 8px;">
+        <tbody>
+          <tr><td><code>--s-2</code></td><td class="num">4 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:4px;"></span></td></tr>
+          <tr><td><code>--s-4</code></td><td class="num">8 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:8px;"></span></td></tr>
+          <tr><td><code>--s-5</code></td><td class="num">12 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:12px;"></span></td></tr>
+          <tr><td><code>--s-6</code></td><td class="num">16 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:16px;"></span></td></tr>
+          <tr><td><code>--s-7</code></td><td class="num">20 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:20px;"></span></td></tr>
+          <tr><td><code>--s-8</code></td><td class="num">24 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:24px;"></span></td></tr>
+          <tr><td><code>--s-9</code></td><td class="num">32 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:32px;"></span></td></tr>
+          <tr><td><code>--s-10</code></td><td class="num">40 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:40px;"></span></td></tr>
+          <tr><td><code>--s-11</code></td><td class="num">56 px</td><td><span style="display:inline-block;height:6px;background:var(--brand-bright);width:56px;"></span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="t-label-sm c-mute">RADII &amp; RULES</div>
+      <table class="tokens" style="margin-top: 8px;">
+        <tbody>
+          <tr><td><code>--r-pill</code></td><td class="num">999 px</td><td><span class="pill pill--neutral">LABEL</span></td></tr>
+          <tr><td><code>--r-md</code></td><td class="num">4 px</td><td><span style="display:inline-block;width:40px;height:18px;background:var(--ink-100);border-radius:4px;"></span></td></tr>
+          <tr><td><code>--r-card</code></td><td class="num">8 px</td><td><span style="display:inline-block;width:40px;height:18px;background:var(--ink-100);border-radius:8px;"></span></td></tr>
+        </tbody>
+      </table>
+      <div class="t-label-sm c-mute" style="margin-top: 20px;">SECTION RULES</div>
+      <div style="border-top: 1px solid var(--ink-700); margin-top: 10px; padding-top: 6px;">
+        <div class="t-xs c-mute">1 px · --ink-700 · primary section divider</div>
+      </div>
+      <div style="border-top: 1px solid var(--ink-200); margin-top: 10px; padding-top: 6px;">
+        <div class="t-xs c-mute">1 px · --ink-200 · table row · card outline</div>
+      </div>
+      <div style="border-top: 1px solid var(--ink-150); margin-top: 10px; padding-top: 6px;">
+        <div class="t-xs c-mute">1 px · --ink-150 · internal list divider</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">01.5.B</span><span class="name">Page frames</span></div>
+  <div class="grid grid--2">
+    <div>
+      <div class="frame-meta"><span class="label">A4 · 210 × 297 mm</span><span class="size">margin 16 · 20 mm</span></div>
+      <div class="frame frame--a4" style="padding: 16px;">
+        <div style="border: 1px dashed var(--brand-bright); height: 100%; position: relative;">
+          <div class="t-label-sm c-bright" style="position:absolute; top: 8px; left: 50%; transform: translateX(-50%);">CONTENT AREA</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="frame-meta"><span class="label">SLIDE · 1920 × 1080 (16:9)</span><span class="size">margin 72 px</span></div>
+      <div class="frame frame--slide" style="padding: 20px;">
+        <div style="border: 1px dashed var(--brand-bright); height: 100%; position: relative;">
+          <div class="t-label-sm c-bright" style="position:absolute; top: 8px; left: 50%; transform: translateX(-50%);">CONTENT AREA</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 02.1 Pills === -->
+<section class="sec" id="pills">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.1 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Pill Bands</div>
+    </div>
+    <div class="lede">
+      Severity-colored rounded pills. Used to label every significant unit — scenario cards, developments, appendix callouts.
+      Solid fill, white text, 20&nbsp;px height, 9&nbsp;px horizontal padding, 12% tracking.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.1.A</span><span class="name">Single-grade pills</span></div>
+  <div class="card">
+    <div class="row" style="flex-wrap:wrap; gap:10px;">
+      <span class="pill pill--critical">Critical</span>
+      <span class="pill pill--high">High</span>
+      <span class="pill pill--medium">Medium</span>
+      <span class="pill pill--monitor">Monitor</span>
+      <span class="pill pill--navy">Navy</span>
+      <span class="pill pill--bright">Bright</span>
+      <span class="pill pill--ghost">Ghost</span>
+      <span class="pill pill--tag">Tag</span>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.1.B</span><span class="name">Pill bands — compound labels</span></div>
+  <div class="card stack">
+    <div class="row" style="flex-wrap:wrap; gap:14px;">
+      <span class="pill-combo pill--critical">CRITICAL <span class="sep">·</span> MED <span class="sep">·</span> NEW</span>
+      <span class="pill-combo pill--critical">CRITICAL <span class="sep">·</span> APAC</span>
+      <span class="pill-combo pill--high">HIGH <span class="sep">·</span> APAC <span class="sep">·</span> NEW</span>
+      <span class="pill-combo pill--high">HIGH <span class="sep">·</span> APAC</span>
+      <span class="pill-combo pill--medium">MEDIUM <span class="sep">·</span> NCE</span>
+      <span class="pill-combo pill--monitor">MONITOR <span class="sep">·</span> AME</span>
+    </div>
+    <div class="hr" style="margin: 8px 0;"></div>
+    <div class="t-small c-mute">
+      Format: <code style="font-family: ui-monospace,Menlo,monospace;">GRADE · REGION [· NEW]</code>.
+      Grade leads. Region codes — APAC, AME, LATAM, MED, NCE — always second. <code style="font-family: ui-monospace,Menlo,monospace;">NEW</code> flag optional, always last.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.1.C</span><span class="name">Pillband — scenario page header</span></div>
+  <div class="card">
+    <div class="t-label c-mute">APAC · SCENARIO 01 OF 3</div>
+    <div class="t-h1" style="margin-top: 10px;">Taiwan Strait disruption escalates into sustained chokepoint pressure</div>
+    <div class="t-xs c-mute" style="margin-top: 14px; letter-spacing: var(--tr-meta); text-transform: uppercase;">
+      As a plain label-band · no pill fill · paired with an H1 title
+    </div>
+  </div>
+</section>
+
+<!-- === 02.2 Dots === -->
+<section class="sec" id="dots">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.2 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Severity Dots</div>
+    </div>
+    <div class="lede">
+      Small circular markers for data-dense contexts: tables, scatter charts, legends, inline meta.
+      Same palette as pills. Four sizes: 8 · 12 · 16 · 24 px.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid grid--4" style="gap: 24px;">
+      <div class="stack">
+        <div class="t-label-sm c-mute">8 PX</div>
+        <div class="row" style="gap:10px;">
+          <span class="sdot sdot--critical"></span>
+          <span class="sdot sdot--high"></span>
+          <span class="sdot sdot--medium"></span>
+          <span class="sdot sdot--monitor"></span>
+        </div>
+        <div class="t-xs c-mute">Inline with body text</div>
+      </div>
+      <div class="stack">
+        <div class="t-label-sm c-mute">12 PX</div>
+        <div class="row" style="gap:10px;">
+          <span class="sdot sdot--lg sdot--critical"></span>
+          <span class="sdot sdot--lg sdot--high"></span>
+          <span class="sdot sdot--lg sdot--medium"></span>
+          <span class="sdot sdot--lg sdot--monitor"></span>
+        </div>
+        <div class="t-xs c-mute">Scatter plot default</div>
+      </div>
+      <div class="stack">
+        <div class="t-label-sm c-mute">16 PX</div>
+        <div class="row" style="gap:10px;">
+          <span class="sdot sdot--xl sdot--critical"></span>
+          <span class="sdot sdot--xl sdot--high"></span>
+          <span class="sdot sdot--xl sdot--medium"></span>
+          <span class="sdot sdot--xl sdot--monitor"></span>
+        </div>
+        <div class="t-xs c-mute">Legend &amp; tokens</div>
+      </div>
+      <div class="stack">
+        <div class="t-label-sm c-mute">24 PX</div>
+        <div class="row" style="gap:10px;">
+          <span class="sdot sdot--critical" style="width:24px;height:24px;"></span>
+          <span class="sdot sdot--high" style="width:24px;height:24px;"></span>
+          <span class="sdot sdot--medium" style="width:24px;height:24px;"></span>
+          <span class="sdot sdot--monitor" style="width:24px;height:24px;"></span>
+        </div>
+        <div class="t-xs c-mute">Scorecard headers</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.2.B</span><span class="name">In context — inline status</span></div>
+  <div class="card">
+    <div class="stack" style="gap:10px;">
+      <div class="row t-small"><span class="sdot sdot--critical" style="margin-right:8px;"></span>Eastern Mediterranean shadow-fleet activity confirmed <span class="c-faint" style="margin-left:auto;">MED · 2026-04-17</span></div>
+      <div class="row t-small"><span class="sdot sdot--critical" style="margin-right:8px;"></span>Taiwan Strait — sustained chokepoint pressure <span class="c-faint" style="margin-left:auto;">APAC · 2026-04-17</span></div>
+      <div class="row t-small"><span class="sdot sdot--high" style="margin-right:8px;"></span>JP/KR energy — OT phishing campaign confirmed <span class="c-faint" style="margin-left:auto;">APAC · 2026-04-17</span></div>
+      <div class="row t-small"><span class="sdot sdot--high" style="margin-right:8px;"></span>Southeast Asia typhoon-driven crew shortages <span class="c-faint" style="margin-left:auto;">APAC · 2026-04-17</span></div>
+      <div class="row t-small"><span class="sdot sdot--medium" style="margin-right:8px;"></span>Baltic cable interference activity ongoing <span class="c-faint" style="margin-left:auto;">NCE · 2026-04-17</span></div>
+      <div class="row t-small"><span class="sdot sdot--monitor" style="margin-right:8px;"></span>US grid OT reconnaissance activity <span class="c-faint" style="margin-left:auto;">AME · 2026-04-17</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- === 02.3 Category icons === -->
+<section class="sec" id="cats">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.3 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Category Icon Circles</div>
+    </div>
+    <div class="lede">
+      Driver categories appear as filled navy circles with a single bold letter. Five categories; no other shapes,
+      no decorative icons. Letter is IBM Plex Sans 700.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="grid grid--5" style="grid-template-columns: repeat(5, 1fr); gap: 20px;">
+      <div class="stack" style="align-items:center; text-align:center;">
+        <span class="cat cat--xl">M</span>
+        <div class="t-label-sm c-mute" style="margin-top:8px;">MARITIME</div>
+        <div class="t-xs c-mute">Shipping · ports · chokepoints</div>
+      </div>
+      <div class="stack" style="align-items:center; text-align:center;">
+        <span class="cat cat--xl">W</span>
+        <div class="t-label-sm c-mute" style="margin-top:8px;">WEATHER</div>
+        <div class="t-xs c-mute">Typhoon · drought · climate</div>
+      </div>
+      <div class="stack" style="align-items:center; text-align:center;">
+        <span class="cat cat--xl">C</span>
+        <div class="t-label-sm c-mute" style="margin-top:8px;">CYBER</div>
+        <div class="t-xs c-mute">OT intrusion · phishing · ICS</div>
+      </div>
+      <div class="stack" style="align-items:center; text-align:center;">
+        <span class="cat cat--xl">G</span>
+        <div class="t-label-sm c-mute" style="margin-top:8px;">GEOPOLITICAL</div>
+        <div class="t-xs c-mute">Sanctions · state actors</div>
+      </div>
+      <div class="stack" style="align-items:center; text-align:center;">
+        <span class="cat cat--xl">S</span>
+        <div class="t-label-sm c-mute" style="margin-top:8px;">SUPPLY</div>
+        <div class="t-xs c-mute">Inventory · counterparty · logistics</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.3.B</span><span class="name">Sizes</span></div>
+  <div class="card">
+    <div class="row" style="gap: 32px;">
+      <div class="stack" style="align-items:center;">
+        <span class="cat">M</span>
+        <div class="t-xs c-mute">18 px · inline</div>
+      </div>
+      <div class="stack" style="align-items:center;">
+        <span class="cat cat--lg">M</span>
+        <div class="t-xs c-mute">26 px · driver row</div>
+      </div>
+      <div class="stack" style="align-items:center;">
+        <span class="cat cat--xl">M</span>
+        <div class="t-xs c-mute">40 px · category header</div>
+      </div>
+      <div class="stack" style="align-items:center;">
+        <span class="cat cat--xl cat--ghost">M</span>
+        <div class="t-xs c-mute">Ghost variant · on navy bg</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 02.4 Driver lists === -->
+<section class="sec" id="drivers">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.4 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Driver &amp; Assumption Lists</div>
+    </div>
+    <div class="lede">
+      The signature list style: category circle · bold driver · arrow-prefixed assumption. Used on every scenario page
+      to surface the causal logic behind a forecast.
+    </div>
+  </div>
+
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="t-label-sm c-mute">KEY DRIVERS &amp; ASSUMPTIONS · APAC 01</div>
+      <ul class="drivers" style="margin-top: 10px;">
+        <li>
+          <span class="cat cat--lg">M</span>
+          <div>
+            <div class="d-main">Maritime coercion intensifies</div>
+            <div class="d-sub">Strait transit costs sustained 2–3× baseline</div>
+          </div>
+        </li>
+        <li>
+          <span class="cat cat--lg">W</span>
+          <div>
+            <div class="d-main">Typhoon season prolonged</div>
+            <div class="d-sub">Crew shortages persist into Q3</div>
+          </div>
+        </li>
+        <li>
+          <span class="cat cat--lg">C</span>
+          <div>
+            <div class="d-main">OT-targeted intrusion campaign</div>
+            <div class="d-sub">Energy-sector ICS exposure widens</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="t-label-sm c-mute">KEY DRIVERS &amp; ASSUMPTIONS · MED 02</div>
+      <ul class="drivers" style="margin-top: 10px;">
+        <li>
+          <span class="cat cat--lg">M</span>
+          <div>
+            <div class="d-main">Shadow-fleet activity confirmed</div>
+            <div class="d-sub">Insurance withdrawal accelerating across carriers</div>
+          </div>
+        </li>
+        <li>
+          <span class="cat cat--lg">G</span>
+          <div>
+            <div class="d-main">Regional tensions propagating</div>
+            <div class="d-sub">Adjacent ports entering elevated-risk classifications</div>
+          </div>
+        </li>
+        <li>
+          <span class="cat cat--lg">C</span>
+          <div>
+            <div class="d-main">Port-OT reconnaissance observed</div>
+            <div class="d-sub">Pre-positioning signatures consistent with prior campaigns</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- === 02.5 Exec Card === -->
+<section class="sec" id="exec-card">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.5 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Executive Cards</div>
+    </div>
+    <div class="lede">
+      The atomic unit of the executive summary. One scenario per card: pill band, title, body clause.
+      Card surface white; no severity-tinted fills — severity lives in the pill, not the card.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.5.A</span><span class="name">Exec card — development</span></div>
+  <div class="grid grid--2">
+    <div class="card">
+      <div class="row" style="gap: 6px; flex-wrap:wrap;">
+        <span class="pill-combo pill--critical">CRITICAL <span class="sep">·</span> MED <span class="sep">·</span> NEW</span>
+      </div>
+      <div class="t-h3" style="margin: 10px 0 6px;">Eastern Mediterranean shadow-fleet activity confirmed</div>
+      <div class="t-small c-mute">Suez throughput degraded; 3 insurers withdrew Gulf-of-Iskenderun coverage within 72 hours. Reroute adds 8–14 days.</div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap: 6px; flex-wrap:wrap;">
+        <span class="pill-combo pill--critical">CRITICAL <span class="sep">·</span> APAC</span>
+      </div>
+      <div class="t-h3" style="margin: 10px 0 6px;">Taiwan Strait — sustained chokepoint pressure</div>
+      <div class="t-small c-mute">APAC turbine shipments at 2–3× baseline transit costs; unchanged for 3 cycles.</div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap: 6px; flex-wrap:wrap;">
+        <span class="pill-combo pill--high">HIGH <span class="sep">·</span> APAC <span class="sep">·</span> NEW</span>
+      </div>
+      <div class="t-h3" style="margin: 10px 0 6px;">JP/KR energy — OT phishing campaign confirmed</div>
+      <div class="t-small c-mute">Active sector targeting; elevated monitoring cadence for OT-connected sites.</div>
+    </div>
+    <div class="card">
+      <div class="row" style="gap: 6px; flex-wrap:wrap;">
+        <span class="pill-combo pill--medium">MEDIUM <span class="sep">·</span> NCE</span>
+      </div>
+      <div class="t-h3" style="margin: 10px 0 6px;">Baltic cable interference activity ongoing</div>
+      <div class="t-small c-mute">Pattern consistent with prior-cycle gray-zone activity; no escalation triggers observed.</div>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.5.B</span><span class="name">Also-tracking item — inline compact</span></div>
+  <div class="card">
+    <div class="grid grid--3" style="gap: 20px;">
+      <div>
+        <div class="t-label-sm c-mute">LATAM</div>
+        <div class="t-small" style="margin-top: 4px;">Panama Canal drought-related logistics strain</div>
+      </div>
+      <div>
+        <div class="t-label-sm c-mute">NCE</div>
+        <div class="t-small" style="margin-top: 4px;">Emerging EU subsea-infrastructure regulation</div>
+      </div>
+      <div>
+        <div class="t-label-sm c-mute">AME</div>
+        <div class="t-small" style="margin-top: 4px;">US grid OT reconnaissance activity</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 02.6 Meta + bands === -->
+<section class="sec" id="meta">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.6 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Meta Rails &amp; Section Bands</div>
+    </div>
+    <div class="lede">
+      Every claim carries its provenance. The meta-rail appears once per scenario page; section bands mark
+      categorical boundaries within a page.
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.6.A</span><span class="name">Meta rail</span></div>
+  <div class="card stack">
+    <div class="meta-rail">Admiralty B2 <span class="dot">·</span> 12 sources <span class="dot">·</span> refreshed 2026-04-17 06:00 UTC</div>
+    <div class="meta-rail">Admiralty B3 <span class="dot">·</span> 6 sources <span class="dot">·</span> refreshed 2026-04-17 06:00 UTC</div>
+    <div class="meta-rail">Cycle 2026-W16 <span class="dot">·</span> Published 2026-04-17 <span class="dot">·</span> v1.0 <span class="dot">·</span> Internal stakeholders only</div>
+    <div class="hr" style="margin: 8px 0;"></div>
+    <div class="t-small c-mute">Format: <code style="font-family:ui-monospace,Menlo,monospace;">[Admiralty grade] · [source count] · [refresh timestamp UTC]</code>. Always lowercase 'refreshed'; timestamps tabular.</div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.6.B</span><span class="name">Section bands</span></div>
+  <div class="card stack stack--md">
+    <div class="row" style="flex-wrap:wrap; gap: 10px;">
+      <span class="band">APAC · SCENARIO 01 OF 3</span>
+      <span class="band band--bright">EXECUTIVE SUMMARY · CYCLE 2026-W16</span>
+      <span class="band band--light">METHODOLOGY · SOURCES · CHANGE LOG</span>
+    </div>
+    <div class="row" style="flex-wrap:wrap; gap: 10px;">
+      <span class="band band--critical">CRITICAL DEVELOPMENTS</span>
+      <span class="band band--high">HIGH PRIORITY</span>
+      <span class="band band--medium">MEDIUM · ONGOING</span>
+      <span class="band band--monitor">MONITOR</span>
+    </div>
+  </div>
+
+  <div class="sub-head"><span class="tag">02.6.C</span><span class="name">Confidence badge</span></div>
+  <div class="card row" style="gap: 16px; flex-wrap: wrap;">
+    <span style="font-size: 11px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-700); font-weight: 600; padding: 5px 10px; border: 1px solid var(--ink-700); border-radius: 2px;">CONFIDENCE: HIGH · ADMIRALTY B2</span>
+    <span style="font-size: 11px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-700); font-weight: 600; padding: 5px 10px; border: 1px solid var(--ink-700); border-radius: 2px;">CONFIDENCE: MEDIUM · ADMIRALTY B3</span>
+    <span style="font-size: 11px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-700); font-weight: 600; padding: 5px 10px; border: 1px solid var(--ink-700); border-radius: 2px;">CONFIDENCE: LOW · ADMIRALTY C2</span>
+  </div>
+</section>
+
+<!-- === 02.7 Scatter === -->
+<section class="sec" id="scatter">
+  <div class="sec-head">
+    <div>
+      <div class="num">02.7 · COMPONENTS</div>
+      <div class="title" style="margin-top:6px;">Likelihood × Impact Chart</div>
+    </div>
+    <div class="lede">
+      The portfolio view. Each scenario is one dot, plotted by likelihood (x) and potential impact (y),
+      colored by severity grade. Top-right quadrant shaded to mark the high-likelihood, high-impact zone.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="scatter">
+      <div class="legend">
+        <span><span class="sdot sdot--lg sdot--critical"></span>CRITICAL</span>
+        <span><span class="sdot sdot--lg sdot--high"></span>HIGH</span>
+        <span><span class="sdot sdot--lg sdot--medium"></span>MEDIUM</span>
+        <span><span class="sdot sdot--lg sdot--monitor"></span>MONITOR</span>
+      </div>
+      <div class="canvas">
+        <!-- 8 scenarios plotted -->
+        <div class="sdot sdot--lg sdot--critical dot dot--lg" style="left: 78%; bottom: 82%;" title="Taiwan Strait"></div>
+        <span class="dot-label" style="left: 78%; bottom: 82%;">APAC · Taiwan Strait</span>
+
+        <div class="sdot sdot--lg sdot--critical dot dot--lg" style="left: 70%; bottom: 74%;" title="MED shadow-fleet"></div>
+        <span class="dot-label" style="left: 70%; bottom: 74%;">MED · Shadow-fleet</span>
+
+        <div class="sdot sdot--lg sdot--high dot" style="left: 60%; bottom: 62%;" title="JP/KR OT"></div>
+        <span class="dot-label" style="left: 60%; bottom: 62%;">APAC · JP/KR OT</span>
+
+        <div class="sdot sdot--lg sdot--high dot" style="left: 52%; bottom: 54%;" title="SEA typhoon"></div>
+        <span class="dot-label" style="left: 52%; bottom: 54%;">APAC · SEA typhoon</span>
+
+        <div class="sdot sdot--lg sdot--medium dot" style="left: 42%; bottom: 48%;" title="Baltic cable"></div>
+        <span class="dot-label" style="left: 42%; bottom: 48%;">NCE · Baltic cable</span>
+
+        <div class="sdot sdot--lg sdot--medium dot" style="left: 35%; bottom: 38%;" title="Panama drought"></div>
+        <span class="dot-label" style="left: 35%; bottom: 38%;">LATAM · Panama</span>
+
+        <div class="sdot sdot--lg sdot--monitor dot" style="left: 28%; bottom: 30%;" title="US grid"></div>
+        <span class="dot-label" style="left: 28%; bottom: 30%;">AME · US grid</span>
+
+        <div class="sdot sdot--lg sdot--monitor dot" style="left: 22%; bottom: 22%;" title="EU regulation"></div>
+        <span class="dot-label" style="left: 22%; bottom: 22%;">NCE · EU reg</span>
+      </div>
+      <div class="axis-x"><span>LOW LIKELIHOOD</span><span>HIGH LIKELIHOOD →</span></div>
+      <div class="axis-y"><span>LOW IMPACT</span><span>HIGH IMPACT →</span></div>
+    </div>
+    <div class="t-xs c-mute" style="margin-top: 12px; letter-spacing: var(--tr-meta); text-transform: uppercase;">
+      Admiralty B2 · Refreshed 2026-04-17 · Diagonal hatching marks the high-likelihood / high-impact quadrant. Dots sized 12 px default, 16 px for emphasis.
+    </div>
+  </div>
+</section>
+
+<!-- === 03.1 A4 Composition === -->
+<section class="sec" id="comp-a4">
+  <div class="sec-head">
+    <div>
+      <div class="num">03.1 · COMPOSITIONS</div>
+      <div class="title" style="margin-top:6px;">A4 Brief Page</div>
+    </div>
+    <div class="lede">
+      Executive summary layout — reference for the PDF pipeline. Page 2 of a standard cycle brief.
+    </div>
+  </div>
+
+  <div class="frame-meta"><span class="label">A4 · 210 × 297 mm · PAGE 2/7</span><span class="size">EXECUTIVE SUMMARY</span></div>
+  <div class="frame frame--a4">
+    <div class="page-brief">
+      <div class="ph-top">
+        <span>2 / 7 &nbsp;&nbsp; CRQ COMMAND CENTER</span>
+        <span>GLOBAL CYCLE BRIEF · v1.0</span>
+      </div>
+
+      <div class="pillband-title">EXECUTIVE SUMMARY · CYCLE 2026-W16</div>
+      <h1>Global posture held at HIGH. Two new CRITICAL-grade developments this cycle; three ongoing situations worth sustained attention.</h1>
+
+      <div class="pillband-title" style="margin-top: 4px;">KEY DEVELOPMENTS</div>
+      <div class="exec-grid">
+        <div style="display:flex; flex-direction:column; gap: 8px;">
+          <div class="sev-card">
+            <div class="head"><span class="pill-combo pill--critical" style="height:16px; padding:0 7px; font-size:8.5px;">CRITICAL <span class="sep">·</span> MED <span class="sep">·</span> NEW</span></div>
+            <div class="title">Eastern Mediterranean shadow-fleet activity confirmed</div>
+            <div class="body">Suez throughput degraded; 3 insurers withdrew Gulf-of-Iskenderun coverage within 72 hours. Reroute adds 8–14 days.</div>
+          </div>
+          <div class="sev-card">
+            <div class="head"><span class="pill-combo pill--critical" style="height:16px; padding:0 7px; font-size:8.5px;">CRITICAL <span class="sep">·</span> APAC</span></div>
+            <div class="title">Taiwan Strait — sustained chokepoint pressure</div>
+            <div class="body">APAC turbine shipments at 2–3× baseline transit costs; unchanged for 3 cycles.</div>
+          </div>
+          <div class="sev-card">
+            <div class="head"><span class="pill-combo pill--high" style="height:16px; padding:0 7px; font-size:8.5px;">HIGH <span class="sep">·</span> APAC <span class="sep">·</span> NEW</span></div>
+            <div class="title">JP/KR energy — OT phishing campaign confirmed</div>
+            <div class="body">Active sector targeting; elevated monitoring cadence for OT-connected sites.</div>
+          </div>
+          <div class="sev-card">
+            <div class="head"><span class="pill-combo pill--high" style="height:16px; padding:0 7px; font-size:8.5px;">HIGH <span class="sep">·</span> APAC</span></div>
+            <div class="title">Southeast Asia typhoon-driven crew shortages</div>
+            <div class="body">Regional shipping throughput down ~22%.</div>
+          </div>
+          <div class="sev-card">
+            <div class="head"><span class="pill-combo pill--medium" style="height:16px; padding:0 7px; font-size:8.5px;">MEDIUM <span class="sep">·</span> NCE</span></div>
+            <div class="title">Baltic cable interference activity ongoing</div>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap: 12px;">
+          <div>
+            <div class="pillband-title">ALSO TRACKING</div>
+            <div class="also" style="margin-top: 6px;">
+              <div class="item"><span class="tag">LATAM</span>Panama Canal drought-related logistics strain</div>
+              <div class="item"><span class="tag">NCE</span>Emerging EU subsea-infrastructure regulation</div>
+              <div class="item"><span class="tag">AME</span>US grid OT reconnaissance activity</div>
+            </div>
+          </div>
+          <div class="watchnext">
+            <div class="pillband-title" style="color: var(--ink-700);">WATCH NEXT</div>
+            <div style="font-size: 9.5px; margin-top: 6px; color: var(--ink-700); line-height: 1.5;">
+              Typhoon season closure and Taiwan Strait stabilization are the two variables that would de-escalate APAC.
+              Watch MED for further underwriter withdrawals — insurance-market response remains the leading indicator of escalation.
+            </div>
+          </div>
+          <div class="confidence">CONFIDENCE: HIGH · ADMIRALTY B2</div>
+        </div>
+      </div>
+
+      <div class="ph-bot">
+        <span>CYCLE 2026-W16 · 11–17 APR 2026</span>
+        <span>PREPARED BY CRQ ANALYST TEAM</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 03.2 Slide Composition === -->
+<section class="sec" id="comp-slide">
+  <div class="sec-head">
+    <div>
+      <div class="num">03.2 · COMPOSITIONS</div>
+      <div class="title" style="margin-top:6px;">16:9 Slide</div>
+    </div>
+    <div class="lede">
+      PPTX export reference. Large-scale scenario title slide with driver list and priority-action column.
+    </div>
+  </div>
+
+  <div class="frame-meta"><span class="label">SLIDE · 1920 × 1080 · APAC SCENARIO</span><span class="size">16:9</span></div>
+  <div class="frame frame--slide">
+    <div class="page-slide">
+      <div class="slide-head">
+        <div>
+          <div class="slide-brand">CRQ COMMAND CENTER · GLOBAL CYCLE BRIEF</div>
+          <div style="font-size: 9px; color: var(--ink-400); letter-spacing: var(--tr-label); text-transform: uppercase; margin-top: 2px;">APAC · SCENARIO 01 OF 3 · BASELINE</div>
+        </div>
+        <div style="font-size: 9px; color: var(--ink-400); letter-spacing: var(--tr-label); text-transform: uppercase;">CYCLE 2026-W16 · PAGE 03 / 07</div>
+      </div>
+      <h1>Taiwan Strait disruption escalates into sustained chokepoint pressure</h1>
+
+      <div style="display:grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 20px; margin-top: 10px; flex: 1;">
+        <div>
+          <div style="font-size: 9.5px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-500); font-weight: 600;">KEY DRIVERS &amp; ASSUMPTIONS</div>
+          <ul class="drivers" style="margin-top: 8px;">
+            <li>
+              <span class="cat cat--lg">M</span>
+              <div>
+                <div class="d-main">Maritime coercion intensifies</div>
+                <div class="d-sub">Strait transit costs sustained 2–3× baseline</div>
+              </div>
+            </li>
+            <li>
+              <span class="cat cat--lg">W</span>
+              <div>
+                <div class="d-main">Typhoon season prolonged</div>
+                <div class="d-sub">Crew shortages persist into Q3</div>
+              </div>
+            </li>
+            <li>
+              <span class="cat cat--lg">C</span>
+              <div>
+                <div class="d-main">OT-targeted intrusion campaign</div>
+                <div class="d-sub">Energy-sector ICS exposure widens</div>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-size: 9.5px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-500); font-weight: 600;">BUSINESS IMPLICATIONS</div>
+          <ul class="bullets" style="margin-top: 10px;">
+            <li>Strait-dependent shipping at sustained risk; reroute adds 8–14 days.</li>
+            <li>Energy / insurance margin pressure continues; reinsurance firming.</li>
+            <li>Diversified routing gains advantage; concentration punished.</li>
+            <li>Sanctions and emergency measures evolving rapidly.</li>
+          </ul>
+        </div>
+        <div>
+          <div style="font-size: 9.5px; letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-500); font-weight: 600;">PRIORITY ACTIONS · 0–90 DAYS</div>
+          <ul class="bullets" style="margin-top: 10px;">
+            <li>Stress-test exposure to Strait shipping &amp; energy disruption.</li>
+            <li>Harden resilience for energy, logistics, cyber-dependent ops.</li>
+            <li>Review sanctions, insurance, counterparty risk per jurisdiction.</li>
+            <li>Activate maritime route contingencies; validate alternate ports.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="border-top: 1px solid var(--ink-200); padding-top: 8px; margin-top: auto;">
+        <div class="meta-rail">Admiralty B2 <span class="dot">·</span> 12 sources <span class="dot">·</span> refreshed 2026-04-17 06:00 UTC</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- === 04.1 Do/Don't === -->
+<section class="sec" id="dodont">
+  <div class="sec-head">
+    <div>
+      <div class="num">04.1 · USAGE</div>
+      <div class="title" style="margin-top:6px;">Do / Don't</div>
+    </div>
+    <div class="lede">
+      The most common ways the system is broken, paired with the correct approach. If an output looks different
+      from everything here, it's almost certainly one of these.
+    </div>
+  </div>
+
+  <div class="dd">
+    <div class="dd-card dd-card--do">
+      <div class="head"><span class="sdot sdot--lg" style="background:#1a7f3f;"></span>Do — Pill leads, severity owned</div>
+      <div class="demo">
+        <div style="width:100%;">
+          <span class="pill-combo pill--critical">CRITICAL <span class="sep">·</span> MED <span class="sep">·</span> NEW</span>
+          <div class="t-h3" style="margin-top: 10px;">Eastern Mediterranean shadow-fleet activity confirmed</div>
+        </div>
+      </div>
+      <div class="note">Pill band carries the severity grade, region, and flag — once — above the title. Title stays navy.</div>
+    </div>
+    <div class="dd-card dd-card--dont">
+      <div class="head"><span class="sdot sdot--lg sdot--critical"></span>Don't — Recolor the title</div>
+      <div class="demo">
+        <div style="width:100%;">
+          <div style="color: var(--sev-critical); font-weight: 600; font-size: 15px;">Eastern Mediterranean shadow-fleet activity confirmed</div>
+          <div class="t-xs" style="color: var(--sev-critical); margin-top: 4px;">CRITICAL · MED · NEW</div>
+        </div>
+      </div>
+      <div class="note">Severity color lives in the pill and the dot. Not in the headline. This double-encodes and reduces scan-ability.</div>
+    </div>
+
+    <div class="dd-card dd-card--do">
+      <div class="head"><span class="sdot sdot--lg" style="background:#1a7f3f;"></span>Do — Meta rail with evidence</div>
+      <div class="demo">
+        <div class="meta-rail">Admiralty B2 <span class="dot">·</span> 12 sources <span class="dot">·</span> refreshed 2026-04-17 06:00 UTC</div>
+      </div>
+      <div class="note">Every claim travels with its confidence — Admiralty grade, source count, timestamp. Tabular numerals. Lowercase 'refreshed'.</div>
+    </div>
+    <div class="dd-card dd-card--dont">
+      <div class="head"><span class="sdot sdot--lg sdot--critical"></span>Don't — Omit provenance</div>
+      <div class="demo">
+        <div class="t-xs c-mute">Data refreshed recently.</div>
+      </div>
+      <div class="note">Vague timestamps, no source count, no Admiralty grade. A CRQ claim without provenance is inadmissible.</div>
+    </div>
+
+    <div class="dd-card dd-card--do">
+      <div class="head"><span class="sdot sdot--lg" style="background:#1a7f3f;"></span>Do — Navy circle, single letter</div>
+      <div class="demo">
+        <div class="row" style="gap: 12px;">
+          <span class="cat cat--xl">M</span>
+          <span class="cat cat--xl">W</span>
+          <span class="cat cat--xl">C</span>
+          <span class="cat cat--xl">G</span>
+          <span class="cat cat--xl">S</span>
+        </div>
+      </div>
+      <div class="note">M · W · C · G · S. Five categories. Filled navy. No other icons, no pictograms, no emoji.</div>
+    </div>
+    <div class="dd-card dd-card--dont">
+      <div class="head"><span class="sdot sdot--lg sdot--critical"></span>Don't — Decorative iconography</div>
+      <div class="demo">
+        <div class="row" style="gap: 12px; font-size: 28px;">
+          <span>⚠</span><span>🌊</span><span>🛡️</span><span>🔒</span><span>📦</span>
+        </div>
+      </div>
+      <div class="note">Emoji and illustrative icons undermine the report tone and render inconsistently across PDF / PPTX pipelines.</div>
+    </div>
+
+    <div class="dd-card dd-card--do">
+      <div class="head"><span class="sdot sdot--lg" style="background:#1a7f3f;"></span>Do — White cards, rule dividers</div>
+      <div class="demo">
+        <div style="width: 100%; background: var(--white); border: 1px solid var(--ink-150); border-radius: 4px; padding: 12px;">
+          <div class="t-label-sm c-mute">APAC · SCENARIO 01 OF 3</div>
+          <div class="t-h3" style="margin-top: 4px;">Taiwan Strait — sustained chokepoint pressure</div>
+        </div>
+      </div>
+      <div class="note">Structure comes from rules and white cards. Shadows are minimal; no colored backgrounds behind body copy.</div>
+    </div>
+    <div class="dd-card dd-card--dont">
+      <div class="head"><span class="sdot sdot--lg sdot--critical"></span>Don't — Tinted severity backgrounds</div>
+      <div class="demo">
+        <div style="width: 100%; background: var(--sev-critical-tint); border-left: 4px solid var(--sev-critical); padding: 12px;">
+          <div class="t-h3">Taiwan Strait — sustained chokepoint pressure</div>
+        </div>
+      </div>
+      <div class="note">Severity tints and accent-border cards read as alert-UI, not board reporting. The pill is enough.</div>
+    </div>
+  </div>
+</section>
+
+<!-- === 04.2 Exports === -->
+<section class="sec" id="exports">
+  <div class="sec-head">
+    <div>
+      <div class="num">04.2 · USAGE</div>
+      <div class="title" style="margin-top:6px;">Export Formats</div>
+    </div>
+    <div class="lede">Constraints that apply per output channel. Type scale, margins, and card sizing must inherit the foundations above.</div>
+  </div>
+
+  <div class="card">
+    <table class="tokens">
+      <thead>
+        <tr><th>Format</th><th>Size</th><th>Pipeline</th><th>Body min</th><th>Notes</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A4 PDF</td>
+          <td class="num">210 × 297 mm</td>
+          <td>Playwright → Chromium print · Jinja2 HTML templates</td>
+          <td class="num">9 pt</td>
+          <td>Rule-based sectioning; 16/20 mm margins; landscape permitted for portfolio chart.</td>
+        </tr>
+        <tr>
+          <td>PPTX 16:9</td>
+          <td class="num">1920 × 1080 px</td>
+          <td>gen_pptx (editable) · <code>deck-stage</code> scaffold</td>
+          <td class="num">24 px</td>
+          <td>Body min 24 px · titles 48+ px · keep driver list intact (category circles survive export).</td>
+        </tr>
+        <tr>
+          <td>Web (scorecard)</td>
+          <td class="num">responsive</td>
+          <td>React · inherits tokens.css</td>
+          <td class="num">13 px</td>
+          <td>Sticky meta-rail at page bottom; retain rule-based section dividers.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="sub-head"><span class="tag">04.2.B</span><span class="name">Change log — v1.0</span></div>
+  <div class="card">
+    <table class="tokens">
+      <thead><tr><th>Date</th><th>Change</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td class="num">2026-04-20</td><td>v1.0 published — tokens, components, compositions locked from Cycle 2026-W16 brief.</td><td>CRQ Analyst Team</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="hr-strong" style="margin-top: 48px;"></div>
+  <div class="row row--between" style="margin-top: 12px; align-items: baseline;">
+    <div class="t-label-sm c-mute">CRQ COMMAND CENTER · DESIGN SYSTEM · v1.0 · 2026-04-20</div>
+    <div class="t-label-sm c-mute">INTERNAL REFERENCE</div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ——— Scroll-spy sidebar ———
+const nav = document.querySelector('.sys-nav');
+const links = [...nav.querySelectorAll('a[href^="#"]')];
+const sections = links.map(a => document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const byId = Object.fromEntries(links.map(a => [a.getAttribute('href').slice(1), a]));
+
+function update() {
+  let current = sections[0]?.id;
+  const y = window.scrollY + 120;
+  for (const s of sections) {
+    if (s.offsetTop <= y) current = s.id;
+  }
+  links.forEach(a => a.classList.remove('active'));
+  byId[current]?.classList.add('active');
+}
+window.addEventListener('scroll', update, { passive: true });
+update();
+
+// Smooth scroll
+links.forEach(a => a.addEventListener('click', e => {
+  const id = a.getAttribute('href').slice(1);
+  const el = document.getElementById(id);
+  if (el) {
+    e.preventDefault();
+    window.scrollTo({ top: el.offsetTop - 16, behavior: 'smooth' });
+    history.replaceState(null, '', '#' + id);
+  }
+}));
+</script>
+
+</body>
+</html>

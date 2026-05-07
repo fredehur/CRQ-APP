@@ -1,0 +1,38 @@
+{
+  "scribe": [
+    {
+      "signal_id": "seerist:scribe:med-001",
+      "type": "country_summary",
+      "country_code": "IT",
+      "assessment": "Italy faces moderate geopolitical risk with ongoing port industrial action and EU regulatory compliance pressures on energy operators. Insider threat risk is elevated at third-party service providers with privileged OT access.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:MED→IT"]
+    },
+    {
+      "signal_id": "seerist:scribe:med-002",
+      "type": "country_summary",
+      "country_code": "MA",
+      "assessment": "Morocco's political environment is stable but North African regional instability creates cross-border logistics risk. Seerist does not assess active cyber threat campaigns targeting Moroccan energy infrastructure at this time.",
+      "date": "2026-04-10",
+      "derived_from": ["region_map:MED→MA"]
+    }
+  ],
+  "wod_searches": [
+    {
+      "signal_id": "seerist:wod:med-001",
+      "query": "Insider misuse energy infrastructure",
+      "derived_from": ["scenario_map:insider_misuse"],
+      "result_count": 2,
+      "top_results": [
+        {
+          "title": "European energy operators report rise in privileged access misuse incidents",
+          "source": "Gartner",
+          "severity": 5,
+          "timestamp": "2026-04-05T10:00:00Z",
+          "source_reliability": "high"
+        }
+      ],
+      "generated_at": "2026-04-10T09:15:00Z"
+    }
+  ]
+}

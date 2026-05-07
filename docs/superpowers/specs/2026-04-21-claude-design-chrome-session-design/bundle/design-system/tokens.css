@@ -1,0 +1,343 @@
+/* CRQ Design System · Tokens
+ * Locked design language extracted from CRQ Cycle Brief v1.0
+ * ------------------------------------------------------- */
+
+:root {
+  /* — Brand — */
+  --brand-navy: #1B2D6E;
+  --brand-bright: #2E5BFF;
+
+  /* — Severity — */
+  --sev-critical: #d1242f;
+  --sev-high:     #cf6f12;
+  --sev-medium:   #9a7300;
+  --sev-monitor:  #0969da;
+
+  /* — Neutrals (warm-cool neutral, print-report) — */
+  --ink-900: #0E1530;     /* primary text */
+  --ink-700: #1B2D6E;     /* navy — headings / strong */
+  --ink-500: #4A5275;     /* secondary text */
+  --ink-400: #6E7596;     /* tertiary text */
+  --ink-300: #A8ADC4;     /* disabled / placeholder */
+  --ink-200: #D6D9E5;     /* dividers */
+  --ink-150: #E4E6EF;     /* soft dividers */
+  --ink-100: #EEF0F6;     /* subtle fill */
+  --ink-50:  #F5F6FA;     /* page tint */
+  --paper:   #FBFBFD;     /* page background */
+  --white:   #FFFFFF;
+
+  /* — Severity tints (solid fill is default; tints for backgrounds) — */
+  --sev-critical-tint: #FBE9EB;
+  --sev-high-tint:     #FBEEDF;
+  --sev-medium-tint:   #F6EED6;
+  --sev-monitor-tint:  #E1EDFB;
+
+  /* — Type — */
+  --font-sans: "IBM Plex Sans", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+
+  /* Weights used */
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+
+  /* Type scale (print-density; sized for A4 + screen use) */
+  --fs-display: 40px;   /* Cover number / hero */
+  --fs-h1: 28px;        /* Page title */
+  --fs-h2: 20px;        /* Section title */
+  --fs-h3: 15px;        /* Sub-section */
+  --fs-body: 13px;      /* Body */
+  --fs-small: 11.5px;   /* Caption / bullets in dense lists */
+  --fs-xs: 10.5px;      /* Meta / footer */
+  --fs-label: 10.5px;   /* All-caps pill label */
+  --fs-label-sm: 9.5px; /* All-caps tiny meta */
+
+  /* Tracking */
+  --tr-label: 0.12em;   /* All-caps labels */
+  --tr-meta: 0.08em;    /* Meta */
+  --tr-heading: -0.01em;
+
+  /* Line-heights */
+  --lh-tight: 1.15;
+  --lh-body: 1.45;
+  --lh-loose: 1.55;
+
+  /* — Space — */
+  --s-0: 0;
+  --s-1: 2px;
+  --s-2: 4px;
+  --s-3: 6px;
+  --s-4: 8px;
+  --s-5: 12px;
+  --s-6: 16px;
+  --s-7: 20px;
+  --s-8: 24px;
+  --s-9: 32px;
+  --s-10: 40px;
+  --s-11: 56px;
+  --s-12: 72px;
+
+  /* — Radius — */
+  --r-pill: 999px;
+  --r-md: 4px;
+  --r-lg: 6px;
+  --r-card: 8px;
+
+  /* — Borders / shadow (minimal; print-like) — */
+  --bw-hair: 0.5px;
+  --bw-1: 1px;
+  --bw-2: 2px;
+  --shadow-card: 0 1px 0 rgba(14, 21, 48, 0.04), 0 0 0 1px var(--ink-150);
+  --shadow-raise: 0 4px 16px -6px rgba(14, 21, 48, 0.12), 0 0 0 1px var(--ink-150);
+
+  /* — Layout — */
+  --page-A4-w: 794px;      /* 210mm @ 96dpi */
+  --page-A4-h: 1123px;     /* 297mm */
+  --page-slide-w: 1280px;
+  --page-slide-h: 720px;
+  --page-pad: 48px;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--ink-50);
+  color: var(--ink-900);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-feature-settings: "ss02", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ——— Type utilities ——— */
+.t-display  { font-size: var(--fs-display); line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h1       { font-size: var(--fs-h1);      line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h2       { font-size: var(--fs-h2);      line-height: var(--lh-tight); font-weight: var(--w-semibold); letter-spacing: var(--tr-heading); color: var(--ink-700);}
+.t-h3       { font-size: var(--fs-h3);      line-height: 1.3; font-weight: var(--w-semibold); color: var(--ink-900);}
+.t-body     { font-size: var(--fs-body);    line-height: var(--lh-body); color: var(--ink-900); }
+.t-sec      { font-size: var(--fs-body);    line-height: var(--lh-body); color: var(--ink-500); }
+.t-small    { font-size: var(--fs-small);   line-height: 1.5; color: var(--ink-500); }
+.t-xs       { font-size: var(--fs-xs);      line-height: 1.4; color: var(--ink-400); }
+.t-label    { font-size: var(--fs-label);   line-height: 1; font-weight: var(--w-semibold); letter-spacing: var(--tr-label); text-transform: uppercase; }
+.t-label-sm { font-size: var(--fs-label-sm);line-height: 1; font-weight: var(--w-semibold); letter-spacing: var(--tr-label); text-transform: uppercase; color: var(--ink-500); }
+
+.c-navy   { color: var(--brand-navy); }
+.c-bright { color: var(--brand-bright); }
+.c-ink    { color: var(--ink-900); }
+.c-mute   { color: var(--ink-500); }
+.c-faint  { color: var(--ink-400); }
+
+.c-critical { color: var(--sev-critical); }
+.c-high     { color: var(--sev-high); }
+.c-medium   { color: var(--sev-medium); }
+.c-monitor  { color: var(--sev-monitor); }
+
+/* Tabular numerals for metadata */
+.t-num, .num { font-variant-numeric: tabular-nums; }
+
+/* Dividers */
+.hr { height: 1px; background: var(--ink-200); border: 0; margin: 0; }
+.hr-strong { height: 1px; background: var(--ink-700); border: 0; margin: 0; }
+
+/* ——— Pill band (severity label pills) ——— */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 20px; padding: 0 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label);
+  font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label);
+  text-transform: uppercase;
+  color: var(--white);
+  white-space: nowrap;
+  line-height: 1;
+}
+.pill--critical { background: var(--sev-critical); }
+.pill--high     { background: var(--sev-high); }
+.pill--medium   { background: var(--sev-medium); }
+.pill--monitor  { background: var(--sev-monitor); }
+.pill--navy     { background: var(--brand-navy); }
+.pill--bright   { background: var(--brand-bright); }
+.pill--neutral  { background: var(--ink-700); }
+.pill--ghost    { background: transparent; color: var(--ink-700); box-shadow: inset 0 0 0 1px var(--ink-200); }
+.pill--tag      { background: var(--ink-100); color: var(--ink-500); }
+
+/* Pill-band: CRITICAL · MED · NEW — a chain of small pills, ' · ' separators allowed inside one pill */
+.pillband {
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.pillband .sep {
+  color: rgba(255,255,255,0.65);
+  font-weight: var(--w-regular);
+  letter-spacing: var(--tr-label);
+}
+/* Single "combined" pill band variant: one pill with severity color, inline dots */
+.pill-combo {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 10px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  color: var(--white); line-height: 1;
+  gap: 8px;
+}
+.pill-combo .sep { opacity: 0.6; }
+
+/* ——— Severity dot ——— */
+.sdot {
+  display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+  vertical-align: middle;
+}
+.sdot--lg { width: 12px; height: 12px; }
+.sdot--xl { width: 16px; height: 16px; }
+.sdot--critical { background: var(--sev-critical); }
+.sdot--high     { background: var(--sev-high); }
+.sdot--medium   { background: var(--sev-medium); }
+.sdot--monitor  { background: var(--sev-monitor); }
+
+/* Severity dot with ring (for scatter plots — visual weight without blowing out) */
+.sdot-ring {
+  display: inline-block; border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--white), 0 0 0 3px currentColor;
+}
+
+/* ——— Category icon circles ——— *
+ * M Maritime · W Weather · C Cyber · G Geopolitical · S Supply
+ * Filled navy circle, white letter. Sized to align inline with body text.
+ */
+.cat {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--brand-navy); color: var(--white);
+  font-size: 10px; font-weight: var(--w-bold);
+  letter-spacing: 0; line-height: 1;
+  flex: none;
+}
+.cat--lg  { width: 26px; height: 26px; font-size: 13px; }
+.cat--xl  { width: 40px; height: 40px; font-size: 18px; }
+.cat--ghost { background: var(--white); color: var(--brand-navy); box-shadow: inset 0 0 0 1px var(--brand-navy); }
+.cat--bright { background: var(--brand-bright); }
+.cat--M { background: var(--brand-navy); }
+.cat--W { background: var(--brand-navy); }
+.cat--C { background: var(--brand-navy); }
+.cat--G { background: var(--brand-navy); }
+.cat--S { background: var(--brand-navy); }
+
+/* ——— Card ——— */
+.card {
+  background: var(--white);
+  border: 1px solid var(--ink-150);
+  border-radius: var(--r-card);
+  padding: 20px;
+}
+.card--flat { border-radius: 0; border: 0; border-top: 1px solid var(--ink-200); padding: 16px 0; }
+.card--tight { padding: 14px 16px; }
+.card--severity-critical { border-top: 2px solid var(--sev-critical); }
+.card--severity-high     { border-top: 2px solid var(--sev-high); }
+.card--severity-medium   { border-top: 2px solid var(--sev-medium); }
+.card--severity-monitor  { border-top: 2px solid var(--sev-monitor); }
+
+/* Bullet style — brief uses ▸ at right */
+.bullets { margin: 0; padding: 0; list-style: none; }
+.bullets li {
+  position: relative;
+  padding-right: 14px;
+  padding-left: 0;
+  margin-bottom: 6px;
+  font-size: var(--fs-small);
+  line-height: 1.5;
+  color: var(--ink-900);
+}
+.bullets li::after {
+  content: "▸";
+  position: absolute; right: 0; top: 0.05em;
+  color: var(--ink-700);
+  font-size: 7px;
+  line-height: 1.5em;
+}
+.bullets--left li { padding-right: 0; padding-left: 14px; }
+.bullets--left li::after { right: auto; left: 0; top: 0.05em; }
+
+/* Driver list — M/W/C/G prefix */
+.drivers { margin: 0; padding: 0; list-style: none; }
+.drivers li {
+  display: grid;
+  grid-template-columns: 26px 1fr;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ink-150);
+  align-items: start;
+}
+.drivers li:last-child { border-bottom: 0; }
+.drivers .cat { margin-top: 1px; }
+.drivers .d-main { font-size: var(--fs-small); font-weight: var(--w-semibold); color: var(--ink-900); line-height: 1.35; }
+.drivers .d-sub  { font-size: var(--fs-small); color: var(--ink-500); margin-top: 2px; }
+.drivers .d-sub::before { content: "— "; color: var(--ink-400); }
+
+/* Meta rail — e.g. "Admiralty B2 · 12 sources · refreshed 2026-04-17 06:00 UTC" */
+.meta-rail {
+  font-size: var(--fs-xs);
+  color: var(--ink-400);
+  letter-spacing: var(--tr-meta);
+  text-transform: uppercase;
+  font-weight: var(--w-medium);
+}
+.meta-rail .dot { opacity: 0.5; margin: 0 6px; }
+
+/* Pill row */
+.pill-row { display: inline-flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+/* Print-report section header — a bold full-bleed band */
+.band {
+  background: var(--brand-navy); color: var(--white);
+  padding: 6px 12px;
+  font-size: var(--fs-label); font-weight: var(--w-semibold);
+  letter-spacing: var(--tr-label); text-transform: uppercase;
+  line-height: 1.2;
+  display: inline-block;
+}
+.band--light { background: var(--ink-100); color: var(--ink-700); }
+.band--bright { background: var(--brand-bright); color: var(--white); }
+.band--critical { background: var(--sev-critical); }
+.band--high { background: var(--sev-high); }
+.band--medium { background: var(--sev-medium); }
+.band--monitor { background: var(--sev-monitor); }
+
+/* Rule for top/bottom of page (brief style) */
+.rule-top, .rule-bot { border-top: 1px solid var(--ink-700); }
+.rule-bot { border-top: 0; border-bottom: 1px solid var(--ink-700); }
+
+/* Grid helpers */
+.grid { display: grid; gap: 16px; }
+.grid--2 { grid-template-columns: 1fr 1fr; }
+.grid--3 { grid-template-columns: repeat(3, 1fr); }
+.grid--4 { grid-template-columns: repeat(4, 1fr); }
+.row { display: flex; gap: 12px; align-items: center; }
+.row--between { justify-content: space-between; }
+.row--top { align-items: flex-start; }
+.stack { display: flex; flex-direction: column; gap: 8px; }
+.stack--sm { gap: 4px; }
+.stack--md { gap: 12px; }
+.stack--lg { gap: 20px; }
+
+/* Swatches for token page */
+.swatch {
+  display: grid; grid-template-columns: 56px 1fr; gap: 12px; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--ink-150);
+}
+.swatch:last-child { border-bottom: 0; }
+.swatch .chip { height: 40px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.04); }
+.swatch .name { font-size: var(--fs-small); font-weight: var(--w-semibold); color: var(--ink-900); }
+.swatch .hex  { font-size: var(--fs-xs); color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase; font-variant-numeric: tabular-nums; }
+.swatch .var  { font-size: var(--fs-xs); color: var(--ink-400); }
+
+/* Type specimen row */
+.spec {
+  display: grid; grid-template-columns: 160px 1fr; gap: 16px; align-items: baseline;
+  padding: 12px 0; border-bottom: 1px solid var(--ink-150);
+}
+.spec:last-child { border-bottom: 0; }
+.spec .meta { font-size: var(--fs-xs); color: var(--ink-500); letter-spacing: var(--tr-meta); text-transform: uppercase; font-variant-numeric: tabular-nums; }
