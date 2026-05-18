@@ -35,12 +35,11 @@ def test_client_uses_x_api_key():
 
 
 def test_client_none_without_key():
-    """Client creation returns None when no API key set."""
-    with patch.dict("os.environ", {}, clear=True):
+    """Client creation returns None when no API key set, ignoring parent .env files."""
+    with patch.dict("os.environ", {}, clear=True), patch("dotenv.load_dotenv", lambda *args, **kwargs: False):
         import importlib
         import tools.seerist_client as mod
         importlib.reload(mod)
-        # SeeristClient should raise or return None
         assert mod.SeeristClient.create() is None
 
 
@@ -75,3 +74,53 @@ def test_normalize_event():
     assert result["location"]["lat"] == 31.23
     assert result["source_reliability"] == "high"
     assert result["verified"] is False
+
+
+def test_filter_keeps_clusters_lowercase_iso2():
+    """/v2/clusters returns location_metadata.countryCode lowercase (e.g. 'tr')."""
+    from tools.seerist_client import _filter_by_country
+    feats = [
+        {"properties": {"location_metadata": {"countryCode": "tr"}, "title": "Istanbul protest"}},
+        {"properties": {"location_metadata": {"countryCode": "il"}, "title": "Israel event"}},
+        {"properties": {"location_metadata": {"countryCode": "ma"}, "title": "Morocco event"}},
+    ]
+    out = _filter_by_country(feats, "MED")
+    titles = [f["properties"]["title"] for f in out]
+    assert "Istanbul protest" in titles
+    assert "Morocco event" in titles
+    assert "Israel event" not in titles
+
+
+def test_filter_keeps_wod_iso3_uppercase():
+    """/v1/wod returns properties.countryCode uppercase ISO-3 (e.g. 'ITA')."""
+    from tools.seerist_client import _filter_by_country
+    feats = [
+        {"properties": {"countryCode": "ITA", "title": "Italy verified event"}},
+        {"properties": {"countryCode": "PSE", "title": "Palestine verified"}},
+        {"properties": {"countryCode": "ESP", "title": "Spain verified"}},
+    ]
+    out = _filter_by_country(feats, "MED")
+    titles = [f["properties"]["title"] for f in out]
+    assert "Italy verified event" in titles
+    assert "Spain verified" in titles
+    assert "Palestine verified" not in titles
+
+
+def test_filter_passes_through_when_no_filter_set():
+    """APAC/AME use full AoI — no country filter applied."""
+    from tools.seerist_client import _filter_by_country
+    feats = [{"properties": {"countryCode": "ZZZ"}}]
+    assert _filter_by_country(feats, "APAC") == feats
+    assert _filter_by_country(feats, "AME") == feats
+
+
+def test_filter_handles_missing_country_data():
+    """Features with no country info anywhere get dropped (not crash)."""
+    from tools.seerist_client import _filter_by_country
+    feats = [
+        {"properties": {"title": "no country"}},
+        {"properties": {"location_metadata": {}, "title": "empty meta"}},
+        {"properties": {"location_metadata": "not-a-dict", "title": "bad meta type"}},
+    ]
+    out = _filter_by_country(feats, "MED")
+    assert out == []

@@ -12,11 +12,21 @@ import sys
 from datetime import datetime, timedelta, timezone
 
 import httpx
+import truststore
 from dotenv import load_dotenv
 
+truststore.inject_into_ssl()
 load_dotenv()
 
 BASE_URL = "https://app.seerist.com/hyperionapi/"
+
+# Seerist risk category UUIDs that map to cyber topics
+_CYBER_RISK_CATEGORY_IDS = [
+    "53bd26cf-58fb-4ce9-8d04-e239f40d6710",
+    "d49316b4-45f5-4337-b69b-0b4ee12d3db7",
+    "11a90149-d226-49f5-b668-1c4061a06065",
+    "7b53a8c4-4ad5-41de-8c5c-73e9427a27eb",
+]
 
 # CRQ region → Seerist Area of Interest code
 REGION_AOI_MAP = {
@@ -36,12 +46,34 @@ REGION_COUNTRIES = {
     "NCE": ["DE", "PL", "DK", "SE", "NO", "FI"],
 }
 
-# LATAM/MED/NCE share AoI with AME/MENA/EURC — filter by country
-REGION_COUNTRY_FILTER = {
-    "LATAM": {"BR", "CL", "CO", "AR", "PE"},
-    "MED": {"IT", "ES", "GR", "TR", "MA", "EG"},
-    "NCE": {"DE", "PL", "DK", "SE", "NO", "FI"},
+# Country lists per CRQ region, in spec order (used for aoiId construction).
+# Sets below are derived from these for defense-in-depth filtering.
+_REGION_COUNTRY_ORDER = {
+    "LATAM": ("BR", "CL", "CO", "AR", "PE"),
+    "MED":   ("IT", "ES", "GR", "TR", "MA", "EG"),
+    "NCE":   ("DE", "PL", "DK", "SE", "NO", "FI"),
 }
+
+# LATAM/MED/NCE share AoI with AME/MENA/EURC — filter by country
+REGION_COUNTRY_FILTER = {r: set(cs) for r, cs in _REGION_COUNTRY_ORDER.items()}
+
+# ISO-3 → ISO-2 for the codes /v1/wod emits for the regions we filter
+_ISO3_TO_ISO2 = {
+    "BRA": "BR", "CHL": "CL", "COL": "CO", "ARG": "AR", "PER": "PE",
+    "ITA": "IT", "ESP": "ES", "GRC": "GR", "TUR": "TR", "MAR": "MA", "EGY": "EG",
+    "DEU": "DE", "POL": "PL", "DNK": "DK", "SWE": "SE", "NOR": "NO", "FIN": "FI",
+}
+
+
+def _aoi_param_for_region(region: str) -> str:
+    """Return the aoiId param value for a CRQ region."""
+    direct = {"APAC": "APAC", "AME": "AMER"}
+    if region in direct:
+        return direct[region]
+    ordered = _REGION_COUNTRY_ORDER.get(region)
+    if not ordered:
+        return REGION_AOI_MAP[region]
+    return ",".join(ordered)
 
 
 _DAMAGE_RATING_TO_SEVERITY = {"low": 2, "medium": 5, "high": 8, "severe": 10}
@@ -92,6 +124,17 @@ def _normalize_event(feature: dict, region: str, seq: int, *, verified: bool = F
         else:
             severity = 0
 
+    lm = props.get("location_metadata") if isinstance(props.get("location_metadata"), dict) else {}
+    location_name = (
+        props.get("locationName")
+        or props.get("locationPrecisionName")
+        or props.get("countryName")
+        or (lm.get("city") if lm else "")
+        or (lm.get("state") if lm else "")
+        or (lm.get("country") if lm else "")
+        or ""
+    )
+
     return {
         "signal_id": f"{prefix}:{region.lower()}-{seq:03d}",
         "title": title,
@@ -100,13 +143,8 @@ def _normalize_event(feature: dict, region: str, seq: int, *, verified: bool = F
         "location": {
             "lat": coords[1] if len(coords) > 1 else 0,
             "lon": coords[0] if coords else 0,
-            "name": (
-                props.get("locationName")
-                or props.get("locationPrecisionName")
-                or props.get("countryName")
-                or ""
-            ),
-            "country_code": props.get("countryCode", ""),
+            "name": location_name,
+            "country_code": _feature_country_iso2(feature),
         },
         "source_reliability": props.get("sourceMetadataReliability", "medium"),
         "source_count": props.get("cluster_size") or props.get("sourcesCount") or 0,
@@ -173,13 +211,35 @@ def _date_range(days: int) -> tuple[str, str]:
     return start.strftime("%Y-%m-%dT%H:%M:%S.000Z"), end.strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
+def _feature_country_iso2(feature: dict) -> str:
+    """Extract a feature's country code, normalized to ISO-2 uppercase.
+
+    Handles three Seerist response shapes:
+    - /v2/clusters and /v1/hotspots: properties.location_metadata.countryCode
+      (ISO-2 lowercase, e.g. "ps")
+    - /v1/wod (verified, news, breaking): properties.countryCode
+      (ISO-3 uppercase, e.g. "PSE"); occasionally ISO-2 uppercase
+    Returns "" when no country info is present.
+    """
+    props = feature.get("properties") or {}
+    lm = props.get("location_metadata")
+    code = ""
+    if isinstance(lm, dict):
+        code = lm.get("countryCode") or ""
+    if not code:
+        code = props.get("countryCode") or ""
+    code = code.upper()
+    if len(code) == 3:
+        code = _ISO3_TO_ISO2.get(code, code)
+    return code
+
+
 def _filter_by_country(features: list, region: str) -> list:
     """For shared AoIs (LATAM/MED/NCE), filter features to region's countries."""
     country_filter = REGION_COUNTRY_FILTER.get(region)
     if not country_filter:
         return features
-    return [f for f in features
-            if f.get("properties", {}).get("countryCode", "").upper() in country_filter]
+    return [f for f in features if _feature_country_iso2(f) in country_filter]
 
 
 class SeeristClient:
@@ -213,7 +273,7 @@ class SeeristClient:
 
     def get_events(self, region: str, days: int = 7) -> list[dict]:
         """Events AI — clustered events. GET /v2/clusters/{categories}."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         categories = "conflict,terrorism,unrest,crime,health,transportation"
         resp = self._client.get(
@@ -227,7 +287,7 @@ class SeeristClient:
 
     def get_verified_events(self, region: str, days: int = 90) -> list[dict]:
         """Verified Events — human-confirmed. GET /v1/wod with political/maritime sources."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         resp = self._client.get(
             "/v1/wod",
@@ -240,7 +300,7 @@ class SeeristClient:
 
     def get_hotspots(self, region: str, days: int = 7) -> list[dict]:
         """Hotspots AI — anomaly detection. GET /v1/hotspots."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         resp = self._client.get(
             "/v1/hotspots",
@@ -294,7 +354,7 @@ class SeeristClient:
 
     def get_analysis_reports(self, region: str, days: int = 30) -> list[dict]:
         """Analysis Reports — GET /v1/wod with sources=analysis."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         resp = self._client.get(
             "/v1/wod",
@@ -327,6 +387,29 @@ class SeeristClient:
             })
         return result
 
+    def get_cyber_analysis(self, since: datetime, page_size: int = 100) -> list[dict]:
+        """Cyber Analysis — global cyber risk documents. GET /v1/wod with riskCategories filter.
+
+        No AoI filter — cyber documents are global; region-relevance is determined downstream.
+        Returns raw feature properties dicts (not GeoJSON-normalized) so the collector can
+        map them into the cyber_signals schema with full field visibility.
+        """
+        try:
+            resp = self._client.get(
+                "/v1/wod",
+                params={
+                    "sources": "analysis",
+                    "start": since.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                    "pageSize": str(page_size),
+                    "riskCategories": ",".join(_CYBER_RISK_CATEGORY_IDS),
+                },
+            )
+            resp.raise_for_status()
+            return resp.json().get("features", [])
+        except Exception as e:
+            print(f"[seerist] Cyber analysis error: {e}", file=sys.stderr)
+            return []
+
     def get_scribe_summary(self, country_code: str, date: str) -> dict:
         """Scribe AI — country summary. GET /v2/auto-summary/{code}/country."""
         resp = self._client.get(
@@ -338,7 +421,7 @@ class SeeristClient:
 
     def get_breaking_events(self, region: str) -> list[dict]:
         """Breaking News. GET /v1/wod/breaking-events."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         resp = self._client.get(
             "/v1/wod/breaking-events",
             params={"aoiId": aoi, "pageSize": "10"},
@@ -359,7 +442,7 @@ class SeeristClient:
 
     def get_news(self, region: str, days: int = 7) -> list[dict]:
         """News — curated coverage. GET /v1/wod with sources=news."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         resp = self._client.get(
             "/v1/wod",
@@ -388,7 +471,7 @@ class SeeristClient:
 
     def search_wod(self, region: str, query: str, days: int = 7) -> dict:
         """WoD Search — Lucene syntax. GET /v1/wod with search param."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         start, end = _date_range(days)
         resp = self._client.get(
             "/v1/wod",
@@ -425,7 +508,7 @@ class SeeristClient:
 
     def get_events_since(self, region: str, timestamp: str) -> list[dict]:
         """Delta collection — events since last run. GET /v1/wod with since param."""
-        aoi = REGION_AOI_MAP[region]
+        aoi = _aoi_param_for_region(region)
         resp = self._client.get(
             "/v1/wod",
             params={"aoiId": aoi, "since": timestamp, "pageSize": "50"},

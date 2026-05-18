@@ -1,0 +1,88 @@
+{
+  "threat_actor_groups": [
+    {
+      "name": "Sandworm",
+      "aliases": ["BlackEnergy", "Voodoo Bear", "TeleBots", "IRIDIUM"],
+      "regions": ["NCE", "MED", "AME"],
+      "sectors": ["energy", "wind", "renewable", "industrial"],
+      "notes": "Russian GRU Unit 74455. Notorious for destructive wiper attacks against energy infrastructure; responsible for Ukraine power-grid outages and NotPetya."
+    },
+    {
+      "name": "APT28",
+      "aliases": ["Fancy Bear", "Sofacy", "Strontium", "Forest Blizzard"],
+      "regions": ["NCE", "MED", "AME", "APAC"],
+      "sectors": ["energy", "industrial", "general"],
+      "notes": "Russian GRU Unit 26165. Broad espionage mandate; targets government, defence, energy, and media in NATO-adjacent countries."
+    },
+    {
+      "name": "APT29",
+      "aliases": ["Cozy Bear", "Midnight Blizzard", "The Dukes", "NOBELIUM"],
+      "regions": ["NCE", "MED", "AME", "APAC"],
+      "sectors": ["energy", "general"],
+      "notes": "Russian SVR. Long-dwell espionage; supply-chain compromise (SolarWinds). Targets technology and energy sector vendors."
+    },
+    {
+      "name": "APT35",
+      "aliases": ["Charming Kitten", "Mint Sandstorm", "TA453", "Phosphorus"],
+      "regions": ["MED", "NCE", "AME"],
+      "sectors": ["energy", "industrial", "general"],
+      "notes": "Iranian IRGC intelligence unit. Phishing and credential-theft campaigns against energy, defence, and government targets."
+    },
+    {
+      "name": "MuddyWater",
+      "aliases": ["Mango Sandstorm", "Static Kitten", "MERCURY"],
+      "regions": ["MED", "NCE"],
+      "sectors": ["energy", "industrial", "maritime", "general"],
+      "notes": "Iranian MOIS. Active across the MED region and Middle East; supply-chain and spear-phishing focus; has targeted energy and telecoms."
+    },
+    {
+      "name": "OilRig",
+      "aliases": ["APT34", "Helix Kitten", "EUROPIUM", "Crambus"],
+      "regions": ["MED", "AME"],
+      "sectors": ["energy", "wind", "renewable", "industrial", "maritime"],
+      "notes": "Iranian MOIS. Persistent intrusions into oil, gas, and energy infrastructure in the Gulf and Mediterranean. Crambus is a closely linked cluster."
+    },
+    {
+      "name": "Lazarus",
+      "aliases": ["Hidden Cobra", "Zinc", "Diamond Sleet"],
+      "regions": ["APAC", "AME", "NCE", "MED"],
+      "sectors": ["energy", "general"],
+      "notes": "DPRK RGB. Financially motivated (crypto theft) and espionage. Has targeted energy and critical infrastructure globally."
+    },
+    {
+      "name": "MEDUSA",
+      "aliases": ["MEDUSA Ransomware"],
+      "regions": ["MED", "NCE", "AME", "LATAM", "APAC"],
+      "sectors": ["general"],
+      "notes": "Ransomware-as-a-service crew. Opportunistic; has hit European industrial and energy organisations. Double-extortion model."
+    },
+    {
+      "name": "LockBit",
+      "aliases": ["LockBit 3.0", "LockBit Black"],
+      "regions": ["MED", "NCE", "AME", "LATAM", "APAC"],
+      "sectors": ["general"],
+      "notes": "Prolific ransomware-as-a-service group. Sector-agnostic; frequently hits industrial and energy companies in Europe and the Americas."
+    },
+    {
+      "name": "Volt Typhoon",
+      "aliases": ["Bronze Silhouette", "Vanguard Panda"],
+      "regions": ["APAC", "AME", "NCE"],
+      "sectors": ["energy", "wind", "renewable", "industrial", "maritime"],
+      "notes": "Chinese MSS-linked. Pre-positioning in critical infrastructure (power, water, comms) for potential disruption in conflict scenarios. Particular focus on wind and renewable sectors."
+    },
+    {
+      "name": "Pioneer Kitten",
+      "aliases": ["Fox Kitten", "UNC757", "Parisite"],
+      "regions": ["MED", "AME", "NCE"],
+      "sectors": ["energy", "industrial", "general"],
+      "notes": "Iranian threat actor. Initial-access broker; exploits VPN and network-edge vulnerabilities. Sells access to ransomware affiliates targeting energy and manufacturing."
+    },
+    {
+      "name": "Scarab",
+      "aliases": ["Scarab Ransomware"],
+      "regions": ["MED", "NCE", "AME"],
+      "sectors": ["industrial", "energy", "general"],
+      "notes": "MED-region opportunistic ransomware cluster with observed activity in Southern Europe and North Africa. Targets under-patched industrial systems."
+    }
+  ]
+}
