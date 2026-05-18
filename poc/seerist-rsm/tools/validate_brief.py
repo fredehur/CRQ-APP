@@ -35,6 +35,7 @@ REQUIRED_SECTIONS = [
     "CYBER",
     "EARLY WARNING",
     "WATCH",  # matches "WATCH — NEXT 72H"
+    "APPENDIX",  # matches "APPENDIX — SOURCES" (synthesized by normalize_citations.py)
 ]
 
 _SITE_ROW_RE = re.compile(
@@ -83,6 +84,50 @@ def _check_cyber_section_has_content(brief: str) -> None:
     if not body:
         raise ValidationError(
             "CYBER section is empty — must contain at least one bullet or prose line"
+        )
+
+
+# Body citation: numeric bracket like `[1]` or `[1, 2]` (post-normalize form).
+# Excludes severity bands, surface chips, and site row meta which contain
+# letters or non-comma separators.
+_BODY_CITE_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)+|\d+)\]")
+# Appendix entry: a line that starts with `[N]` inside the APPENDIX block.
+_APPENDIX_ENTRY_RE = re.compile(r"^\[(\d+)\]\s+", re.M)
+
+
+def _check_citation_bijection(brief: str) -> None:
+    """Enforce that every body `[N]` has a matching `[N] ...` line in APPENDIX,
+    and that every APPENDIX entry is cited at least once in the body.
+
+    This is the anti-drift gate: an invented or stale claim_id cannot survive
+    the normalize step, and an orphan body number (or unused appendix row) is a
+    formatting bug that gets blocked before render.
+    """
+    appendix_split = re.split(r"^█\s*APPENDIX[^\n]*\n", brief, maxsplit=1, flags=re.M)
+    if len(appendix_split) != 2:
+        # _check_sections already raised; this is defensive.
+        raise ValidationError("APPENDIX section not found")
+    body, appendix = appendix_split
+
+    body_cites: set[int] = set()
+    for m in _BODY_CITE_RE.finditer(body):
+        for tok in m.group(1).split(","):
+            body_cites.add(int(tok.strip()))
+
+    appendix_ids: set[int] = {int(m.group(1)) for m in _APPENDIX_ENTRY_RE.finditer(appendix)}
+
+    orphan_body = sorted(body_cites - appendix_ids)
+    if orphan_body:
+        raise ValidationError(
+            f"Body cites {orphan_body} but APPENDIX has no matching entry. "
+            "Re-run normalize_citations.py or check the formatter output for stale claim_ids."
+        )
+
+    unused_appendix = sorted(appendix_ids - body_cites)
+    if unused_appendix:
+        raise ValidationError(
+            f"APPENDIX lists {unused_appendix} but no body bullet cites them. "
+            "Every appendix entry must be cited at least once."
         )
 
 
@@ -144,6 +189,7 @@ def main() -> int:
         _check_no_reply_taxonomy(brief)
         _check_cyber_section_has_content(brief)
         _check_site_discipline(brief, manifest)
+        _check_citation_bijection(brief)
     except ValidationError as e:
         print(f"[validate_brief] FAIL: {e}", file=sys.stderr)
         return 1

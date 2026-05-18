@@ -208,7 +208,7 @@ def phase_prep_format(region: str, date_iso: str) -> None:
 
 
 def phase_render(region: str, date_iso: str) -> None:
-    """Phase C: validate the brief, render HTML. No SMTP — operator handles email."""
+    """Phase C: normalize citations, validate, render HTML. No SMTP — operator handles email."""
     day = _day_dir(region, date_iso)
     brief_path = day / "brief.md"
     if not brief_path.exists():
@@ -221,14 +221,31 @@ def phase_render(region: str, date_iso: str) -> None:
         raise SystemExit(
             f"[poc_runner] {manifest_path} not found — run --collect first."
         )
+    claims_path = day / "claims.json"
+    if not claims_path.exists():
+        raise SystemExit(
+            f"[poc_runner] {claims_path} not found — claims.json drives appendix synthesis. "
+            "Re-run --collect/--prep-format and the analyst step."
+        )
 
-    # 1. Validate brief BEFORE render (non-zero exit blocks HTML generation)
+    # 1. Normalize citations: rewrite `[claim_id]` body cites to `[N]` and
+    #    synthesize the APPENDIX — SOURCES block from claims.json. Idempotent;
+    #    archive the raw formatter output as brief.raw.md the first time only.
+    brief_raw = day / "brief.raw.md"
+    if not brief_raw.exists():
+        shutil.copy2(brief_path, brief_raw)
+    _run([
+        sys.executable, "tools/normalize_citations.py",
+        str(brief_path), str(claims_path),
+    ])
+
+    # 2. Validate brief BEFORE render (non-zero exit blocks HTML generation)
     _run([
         sys.executable, "tools/validate_brief.py",
         str(brief_path), str(manifest_path),
     ])
 
-    # 2. Render HTML
+    # 3. Render HTML
     html_path = day / "email.html"
     subject = f"AEROWIND // {region} Daily Intelligence — {date_iso}"
     _run([

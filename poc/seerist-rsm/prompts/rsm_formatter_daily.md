@@ -235,6 +235,19 @@ the **final token** on the bullet line (before the period if any).
 
 If a bullet synthesizes multiple claims, list all: `[med-001, med-002]`.
 
+**Do NOT write a numbered APPENDIX section.** The downstream tool
+`normalize_citations.py` runs after you exit and does three things deterministically:
+1. Walks the brief in document order and assigns each unique `claim_id` a sequential
+   number `[1]`, `[2]`, ...
+2. Rewrites every `[<claim_id>]` body cite to its number (e.g. `[med-001]` → `[1]`,
+   `[med-001, med-002]` → `[1, 2]`).
+3. Appends a synthesized `█ APPENDIX — SOURCES` block at the end of the brief
+   listing each `[N]` against the underlying signal_ids from claims.json.
+
+Your job: cite by `claim_id`. Code's job: numbering, dedup, appendix. This
+boundary makes phantom citations mechanically impossible — an invented short ID
+that doesn't match a claim_id will fail normalization and block the render.
+
 ### Bullet prefix format
 
 **Physical bullets** (in PHYSICAL & GEOPOLITICAL and AEROWIND EXPOSURE consequence rows):

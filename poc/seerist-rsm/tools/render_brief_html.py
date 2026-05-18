@@ -53,6 +53,16 @@ _CHIP_BASE_STYLE = (
 _BAND_RE = re.compile(r"\[([A-Z]+)\s+·\s+sev\s+\d+\s+·\s+[^\]]+\]")
 # V2: matches a `[surface_tag]` immediately after an optional `- ` bullet prefix
 _SURFACE_TAG_RE = re.compile(r"^(-\s+)?\[([A-Za-z/\s]+)\]\s+")
+# V9: numeric body citation, e.g. `[1]` or `[1, 2]` — produced by normalize_citations.py
+_CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
+# V9: APPENDIX entry line, e.g. `[1] snippet text — sig:id (label)`
+_APPENDIX_ENTRY_RE = re.compile(r"^\[(\d+)\]\s+(.+)$")
+
+_SUP_STYLE = (
+    "font-size:10px;vertical-align:super;line-height:0;color:#4f46e5;"
+    "font-family:SF Mono,Menlo,Consolas,monospace;"
+)
+_ANCHOR_STYLE = "color:#4f46e5;text-decoration:none;"
 
 
 def _apply_severity_color(text: str) -> str:
@@ -70,6 +80,50 @@ def _apply_severity_color(text: str) -> str:
         colored_band = f'<span style="color:{color};font-weight:600;">{band}</span>'
         return inner.replace(f"[{band}", f"[{colored_band}", 1)
     return _BAND_RE.sub(_replace, text)
+
+
+def _apply_citation_anchors(text: str) -> str:
+    """Transform body `[N]` / `[N, M]` cites into superscript anchors that jump
+    to `#ref-N` in the rendered APPENDIX block. Idempotent on text with no
+    numeric brackets; leaves severity bands and surface chips untouched (those
+    contain letters or non-comma separators)."""
+    def _replace(m: re.Match) -> str:
+        inner = m.group(1)
+        nums = [n.strip() for n in inner.split(",")]
+        linked = ", ".join(
+            f'<a href="#ref-{n}" style="{_ANCHOR_STYLE}">{n}</a>' for n in nums
+        )
+        return f'<sup style="{_SUP_STYLE}">[{linked}]</sup>'
+    return _CITATION_RE.sub(_replace, text)
+
+
+def _render_appendix_block(body: str) -> str:
+    """Render the APPENDIX body as a list of anchored `<div id="ref-N">` rows.
+
+    Body lines are expected to be either `[N] entry_text` rows or a single
+    `No sources cited this window.` sentinel. Anything else passes through as
+    a plain styled line.
+    """
+    rows: list[str] = []
+    for line in body.split("\n"):
+        line = line.rstrip()
+        if not line:
+            continue
+        m = _APPENDIX_ENTRY_RE.match(line)
+        if not m:
+            rows.append(
+                f'<div style="font-size:12px;line-height:1.6;color:#525252;font-style:italic;">'
+                f'{line}</div>'
+            )
+            continue
+        n, entry = m.group(1), m.group(2)
+        rows.append(
+            f'<div id="ref-{n}" style="font-size:12px;line-height:1.55;color:#374151;'
+            f'margin-bottom:4px;padding-left:4px;">'
+            f'<span style="color:#4f46e5;font-weight:600;">[{n}]</span> {entry}'
+            f'</div>'
+        )
+    return "\n".join(rows)
 
 
 def _apply_surface_chip(line: str) -> str:
@@ -217,19 +271,35 @@ def render(brief_md: Path, manifest_json: Path, *, subject: str) -> str:
     for s in parsed["sections"]:
         s["header"] = escape(s["header"])
         is_cyber = "CYBER" in s["header"]
-        is_exposure = "EXPOSURE" in s["header"]
+        # Only the AEROWIND EXPOSURE (physical) section uses site_blocks.
+        # The CYBER — ACTIVE EXPOSURE section also contains "EXPOSURE" but
+        # must fall through to the prose-rendering branch so spans, surface
+        # chips, and citation anchors get applied to its body.
+        is_exposure = "AEROWIND EXPOSURE" in s["header"]
+        is_appendix = "APPENDIX" in s["header"]
         raw_body = escape(s["body"])
 
-        if is_exposure:
+        if is_appendix:
+            # V9: APPENDIX renders as anchored entry rows. No citation anchors
+            # applied inside the appendix itself (those would self-link).
+            s["appendix_html"] = _render_appendix_block(raw_body)
+            s["body"] = raw_body
+            s["site_blocks"] = []
+        elif is_exposure:
             # V5: split into per-site blocks; each gets border-left styling in template
             site_blocks = _split_exposure_into_site_blocks(raw_body)
-            # Apply V1 severity spans within each block
-            s["site_blocks"] = [_apply_severity_color(b) for b in site_blocks]
+            # V1 severity spans + V9 citation anchors per block
+            s["site_blocks"] = [
+                _apply_citation_anchors(_apply_severity_color(b)) for b in site_blocks
+            ]
             s["body"] = raw_body  # fallback, not used when site_blocks present
+            s["appendix_html"] = ""
         else:
-            # V1 + V2: apply span decorations to the escaped body
-            s["body"] = _render_body_with_spans(raw_body, is_cyber=is_cyber)
+            # V1 + V2 + V9: apply span decorations and citation anchors to the escaped body
+            decorated = _render_body_with_spans(raw_body, is_cyber=is_cyber)
+            s["body"] = _apply_citation_anchors(decorated)
             s["site_blocks"] = []
+            s["appendix_html"] = ""
 
     env = Environment(
         loader=FileSystemLoader(str(TEMPLATE_DIR)),

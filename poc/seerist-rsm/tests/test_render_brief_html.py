@@ -22,13 +22,16 @@ Quiet night across MED with one new incident near Palermo.
 █ CYBER — ACTIVE EXPOSURE
 THREATS ACTIVE: MEDUSA · Sandworm + 3 others (full list watched)
 
-- [OT/ICS] [MED · sev 3 · Probable] MEDUSA ransomware group claimed responsibility for Italian energy firm breach affecting 2 substations in Sicily. [med-cyb-001]
+- [OT/ICS] [MED · sev 3 · Probable] MEDUSA ransomware group claimed responsibility for Italian energy firm breach affecting 2 substations in Sicily. [1]
 
 █ EARLY WARNING — NEW
 No new anomalies.
 
 █ WATCH — NEXT 72H
 - Italian spring labour calendar active — Palermo–Hamburg tower-segment corridor potentially exposed.
+
+█ APPENDIX — SOURCES
+[1] MEDUSA ransomware group claimed responsibility for Italian energy firm breach. — seerist:cyber:med-001 (Seerist analysis)
 """
 
 
@@ -50,7 +53,8 @@ def test_render_returns_html_with_all_section_headers(tmp_path):
 
     for header in ["SITUATION", "AEROWIND EXPOSURE",
                    "PHYSICAL &amp; GEOPOLITICAL",
-                   "EARLY WARNING", "WATCH"]:
+                   "EARLY WARNING", "WATCH",
+                   "APPENDIX"]:
         assert header in html, f"missing section header: {header}"
     # CYBER section always renders as a full block with heading
     assert "CYBER — ACTIVE EXPOSURE" in html, "missing CYBER — ACTIVE EXPOSURE section heading"
@@ -103,7 +107,7 @@ PULSE: elevated-watch | ADM: B2 | NEW: 1 EVT · 0 HOT · 0 CYB
 Overview line.
 
 █ PHYSICAL & GEOPOLITICAL — LAST 24H
-- [CRITICAL · sev 6 · Confirmed] Bomb threat at Palermo port — facility within 5 km. [med-crit-001]
+- [CRITICAL · sev 6 · Confirmed] Bomb threat at Palermo port — facility within 5 km. [1]
 
 █ AEROWIND EXPOSURE
 ▪ Palermo [CROWN_JEWEL · 120 personnel, 8 expat]
@@ -112,13 +116,17 @@ Overview line.
 █ CYBER — ACTIVE EXPOSURE
 THREATS ACTIVE: none
 
-- [OT/ICS] [LOW · sev 1 · Possible] No new signals this window. [med-cyb-001]
+- [OT/ICS] [LOW · sev 1 · Possible] No new signals this window. [2]
 
 █ EARLY WARNING — NEW
 No new anomalies.
 
 █ WATCH — NEXT 72H
 Monitor port situation.
+
+█ APPENDIX — SOURCES
+[1] Bomb threat at Palermo port. — seerist:verified:med-001 (Seerist verified event)
+[2] Quiet cyber window. — seerist:cyber:med-001 (Seerist analysis)
 """
 
 OT_ICS_BRIEF = """AEROWIND // MED DAILY // 2026-05-17Z
@@ -137,13 +145,16 @@ No new physical signals.
 █ CYBER — ACTIVE EXPOSURE
 THREATS ACTIVE: APT28
 
-- [OT/ICS] [MED · sev 3 · Probable] ICS breach pattern confirmed against European energy. [med-cyb-002]
+- [OT/ICS] [MED · sev 3 · Probable] ICS breach pattern confirmed against European energy. [1]
 
 █ EARLY WARNING — NEW
 No new anomalies.
 
 █ WATCH — NEXT 72H
 Watch ICS exposure.
+
+█ APPENDIX — SOURCES
+[1] ICS breach pattern confirmed against European energy. — seerist:cyber:med-002 (Seerist analysis)
 """
 
 
@@ -173,5 +184,63 @@ def test_surface_tag_chip_rendered(tmp_path):
     }))
 
     html = render_brief_html.render(brief, manifest, subject="TEST")
-    assert "#dbeafe" in html, "OT/ICS chip background color not found in rendered HTML"
+    # Match the OT/ICS-specific chip text color (#1e40af) to disambiguate from
+    # the EVT stat-strip chip which also uses #dbeafe background.
+    assert "color:#1e40af" in html, "OT/ICS chip text color not found in rendered HTML"
     assert "OT/ICS" in html, "OT/ICS surface tag text not found in rendered HTML"
+    # Plain bracketed `[OT/ICS]` must NOT survive — it should have been wrapped in a chip span.
+    assert "[OT/ICS]" not in html, "surface tag should be wrapped in chip, not plain text"
+
+
+def test_body_citation_becomes_superscript_anchor(tmp_path):
+    """A body `[1]` cite renders as a superscript link to `#ref-1`."""
+    brief = tmp_path / "brief.md"
+    brief.write_text(OT_ICS_BRIEF, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "region": "MED",
+        "cadence": "daily",
+        "site_registry": [{"site_id": "med-pal", "name": "Palermo"}],
+    }))
+
+    html = render_brief_html.render(brief, manifest, subject="TEST")
+    # Superscript span wraps the linked citation number
+    assert "<sup" in html, "no <sup> wrapper for body cite"
+    assert 'href="#ref-1"' in html, "body cite should link to #ref-1"
+
+
+def test_appendix_entries_have_anchor_ids(tmp_path):
+    """Each `[N] ...` entry in APPENDIX renders with `id=\"ref-N\"` so body
+    cites can jump to it via the anchor."""
+    brief = tmp_path / "brief.md"
+    brief.write_text(CRITICAL_BRIEF, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "region": "MED",
+        "cadence": "daily",
+        "site_registry": [{"site_id": "med-pal", "name": "Palermo"}],
+    }))
+
+    html = render_brief_html.render(brief, manifest, subject="TEST")
+    assert 'id="ref-1"' in html, "appendix entry [1] missing anchor id"
+    assert 'id="ref-2"' in html, "appendix entry [2] missing anchor id"
+    # The entry text itself comes through
+    assert "Bomb threat at Palermo port" in html
+
+
+def test_multi_cite_renders_two_linked_numbers(tmp_path):
+    """`[1, 2]` in body renders as two anchored numbers inside one <sup>."""
+    brief_text = CRITICAL_BRIEF.replace("[1]", "[1, 2]")
+    brief = tmp_path / "brief.md"
+    brief.write_text(brief_text, encoding="utf-8")
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({
+        "region": "MED",
+        "cadence": "daily",
+        "site_registry": [{"site_id": "med-pal", "name": "Palermo"}],
+    }))
+
+    html = render_brief_html.render(brief, manifest, subject="TEST")
+    assert 'href="#ref-1"' in html and 'href="#ref-2"' in html
+    # Both anchors should appear inside the same superscript wrapper somewhere
+    assert "<sup" in html

@@ -9,7 +9,7 @@
   <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#f4f4f4;">
     <tr>
       <td align="center" style="padding:24px 12px;">
-        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="640" style="max-width:640px;background:#ffffff;border:1px solid #d4d4d4;">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="720" style="max-width:720px;background:#ffffff;border:1px solid #d4d4d4;">
 
           {# Header band #}
           <tr>
@@ -37,7 +37,7 @@
             {# V6: increased section padding 22px 24px #}
             <td style="padding:22px 24px;border-top:1px solid #e5e5e5;">
 
-              {# V4: section heading — 13px, bold, darker color; accent for PHYSICAL/EARLY WARNING/CYBER #}
+              {# V4: section heading — 13px, bold, darker color; accent for PHYSICAL/EARLY WARNING/CYBER/APPENDIX #}
               {% if "CYBER" in section.header %}
               <div style="font-family:SF Mono,Menlo,Consolas,monospace;font-size:13px;color:#3b0764;font-weight:600;letter-spacing:0.08em;margin:0 0 10px;">
                 █ {{ section.header }}
@@ -46,13 +46,21 @@
               <div style="font-family:SF Mono,Menlo,Consolas,monospace;font-size:13px;color:#7c2d12;font-weight:600;letter-spacing:0.08em;margin:0 0 10px;">
                 █ {{ section.header }}
               </div>
+              {% elif "APPENDIX" in section.header %}
+              <div style="font-family:SF Mono,Menlo,Consolas,monospace;font-size:12px;color:#525252;font-weight:600;letter-spacing:0.08em;margin:0 0 10px;">
+                █ {{ section.header }}
+              </div>
               {% else %}
               <div style="font-family:SF Mono,Menlo,Consolas,monospace;font-size:13px;color:#1f2937;font-weight:600;letter-spacing:0.08em;margin:0 0 10px;">
                 █ {{ section.header }}
               </div>
               {% endif %}
 
-              {% if "CYBER" in section.header %}
+              {% if "APPENDIX" in section.header %}
+              {# V9: APPENDIX — SOURCES — anchored entries the body [N] cites jump to #}
+              <div>{{ section.appendix_html }}</div>
+
+              {% elif "CYBER" in section.header %}
               {# CYBER section: left-border accent, pre-wrap for tree chars; V8: keep pre-wrap stripped for body #}
               <div style="border-left:3px solid #5b21b6;padding-left:10px;">
                 {% set body_lines = section.body.split('\n') %}
