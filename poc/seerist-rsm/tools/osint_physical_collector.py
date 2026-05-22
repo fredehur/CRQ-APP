@@ -35,58 +35,58 @@ def _mock_collect(region: str) -> dict:
     return data
 
 
+def _field(obj, name):
+    """Read a field from a result that may be a dict or a typed SDK object."""
+    if obj is None:
+        return None
+    if isinstance(obj, dict):
+        return obj.get(name)
+    return getattr(obj, name, None)
+
+
 def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
-    """Tavily search via httpx. Requires TAVILY_API_KEY.
+    """Tavily search via the official tavily-python SDK. Requires TAVILY_API_KEY.
 
-    Self-contained — mirrors tools/osint_search.py:search_tavily in the parent
-    repo so this slice has no dependency on modules that aren't carved in.
+    Uses the pinned SDK (which handles auth correctly) rather than hand-rolled
+    HTTP. Errors propagate so an auth/SDK failure fails the run loudly instead of
+    yielding an empty brief.
     """
-    import httpx
+    from tavily import TavilyClient
 
-    resp = httpx.post(
-        "https://api.tavily.com/search",
-        json={
-            "api_key": os.environ["TAVILY_API_KEY"],
-            "query": query,
-            "max_results": max_results,
-            "search_depth": "basic",
-        },
-        timeout=15,
-    )
-    resp.raise_for_status()
+    client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
+    resp = client.search(query, max_results=max_results, search_depth="basic")
+    results = _field(resp, "results") or []
     return [
         {
-            "title": r.get("title", ""),
-            "url": r.get("url", ""),
-            "source": r.get("url", ""),
-            "published_date": r.get("published_date", ""),
-            "summary": r.get("content", ""),
+            "title": _field(r, "title") or "",
+            "url": _field(r, "url") or "",
+            "source": _field(r, "url") or "",
+            "published_date": _field(r, "published_date") or "",
+            "summary": _field(r, "content") or "",
         }
-        for r in resp.json().get("results", [])
+        for r in results
     ]
 
 
 def _firecrawl_extract(url: str) -> dict | None:
-    """Firecrawl main-content extract. Requires FIRECRAWL_API_KEY.
+    """Firecrawl main-content extract via firecrawl-py v4. Requires FIRECRAWL_API_KEY.
 
-    Self-contained — mirrors tools/firecrawl_scraper.py:_call_firecrawl. Returns
-    {content, location} or None on empty/failed extraction. NOTE: confirm the
-    firecrawl-py call signature against the installed version on the live machine.
+    v4 SDK: `Firecrawl(api_key=...).scrape(url, formats=["markdown"],
+    only_main_content=True)` returns a Document (attribute access). Field reads
+    go through `_field` to tolerate dict-vs-object differences across v4 point
+    releases. Returns {content, location} or None on empty extraction.
     """
     if not url:
         return None
-    from firecrawl import FirecrawlApp
+    from firecrawl import Firecrawl
 
-    app = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
-    result = app.scrape_url(
-        url,
-        params={"onlyMainContent": True, "formats": ["markdown"], "timeout": 20000},
-    )
-    markdown = (result.get("markdown") or "").strip()
+    app = Firecrawl(api_key=os.environ["FIRECRAWL_API_KEY"])
+    doc = app.scrape(url, formats=["markdown"], only_main_content=True)
+    markdown = (_field(doc, "markdown") or "").strip()
     if not markdown:
         return None
-    meta = result.get("metadata") or {}
-    return {"content": markdown, "location": meta.get("location") or {}}
+    location = _field(_field(doc, "metadata"), "location") or {}
+    return {"content": markdown, "location": location}
 
 
 def _live_collect(region: str) -> dict:
@@ -94,6 +94,10 @@ def _live_collect(region: str) -> dict:
 
     Region-keyed queries (no site/org context), so this is safe in both
     org-grounded and region-guided runs. The key guard lives in collect().
+
+    Tavily errors propagate (an auth/SDK failure fails the run loudly rather than
+    silently producing an empty brief). Per-URL Firecrawl failures are tolerated
+    — one unscrapable page should not abort the whole collection.
     """
     queries = [
         f"{region} unrest protest 2026",
@@ -104,26 +108,27 @@ def _live_collect(region: str) -> dict:
 
     raw_signals = []
     for q in queries:
-        try:
-            hits = _tavily_search(q, max_results=5)
-            for hit in hits:
+        hits = _tavily_search(q, max_results=5)
+        for hit in hits:
+            try:
                 extracted = _firecrawl_extract(hit.get("url", ""))
-                if not extracted:
-                    continue
-                raw_signals.append({
-                    "signal_id": f"osint:physical:{region.lower()}-{len(raw_signals) + 1:03d}",
-                    "title": hit.get("title", ""),
-                    "category": "physical",
-                    "pillar": "physical",
-                    "severity": 0,
-                    "location": extracted.get("location") or {},
-                    "url": hit.get("url", ""),
-                    "outlet": hit.get("source", ""),
-                    "source_count": 1,
-                    "published_at": hit.get("published_date", ""),
-                })
-        except Exception as e:
-            print(f"[osint_physical] query failed: {q} — {e}", file=sys.stderr)
+            except Exception as e:
+                print(f"[osint_physical] extract failed for {hit.get('url', '')} — {e}", file=sys.stderr)
+                continue
+            if not extracted:
+                continue
+            raw_signals.append({
+                "signal_id": f"osint:physical:{region.lower()}-{len(raw_signals) + 1:03d}",
+                "title": hit.get("title", ""),
+                "category": "physical",
+                "pillar": "physical",
+                "severity": 0,
+                "location": extracted.get("location") or {},
+                "url": hit.get("url", ""),
+                "outlet": hit.get("source", ""),
+                "source_count": 1,
+                "published_at": hit.get("published_date", ""),
+            })
 
     return {
         "region": region,

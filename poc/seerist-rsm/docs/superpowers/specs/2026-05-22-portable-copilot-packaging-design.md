@@ -67,10 +67,15 @@ mock. `osint_collector.py` itself is a heavy 3-LLM-call loop (deps: `anthropic`,
 is the wrong thing to port. Instead, make `osint_physical_collector.py`
 self-contained: replace the broken import with two in-file primitives mirroring
 the working code —
-- `_tavily_search(query, max_results)` → `httpx` POST to `https://api.tavily.com/search`
-  (mirrors `osint_search.py:search_tavily`),
-- `_firecrawl_extract(url)` → `FirecrawlApp(...).scrape_url(...)` returning main
-  content + location (mirrors `firecrawl_scraper.py:_call_firecrawl`).
+- `_tavily_search(query, max_results)` → the pinned `tavily-python` SDK
+  (`TavilyClient(api_key=...).search(...)`), which handles auth correctly (do
+  NOT hand-roll an httpx call with the key in the JSON body — current Tavily
+  auth is Bearer-header and the SDK manages it),
+- `_firecrawl_extract(url)` → firecrawl-py **v4** `Firecrawl(...).scrape(url,
+  formats=["markdown"], only_main_content=True)`, reading the returned Document
+  via attribute access (defensively, to tolerate dict-vs-object across point
+  releases). NOTE: the older `FirecrawlApp(...).scrape_url(params=...)` dict form
+  is v1 and does NOT work on the pinned `firecrawl-py>=4.22.1`.
 The slice already declares `httpx`, `firecrawl-py`, `tavily-python` in
 `pyproject.toml`, so no new deps. OSINT queries are **region-keyed**
 (`"{region} unrest protest 2026"` etc.), so the mode is safe in both
@@ -191,14 +196,14 @@ Steps the agent performs:
 
 Idempotent — re-running overwrites the config and re-checks the key.
 
-**Seerist key is sufficient — and the OSINT layer degrades by design.**
-`phase_collect` does not call `osint_physical_collector`; it stubs
-`osint_signals.json` / `data.json` with `{}` and lets `rsm_input_builder` fire
-its documented fallbacks. So `SEERIST_API_KEY` alone produces a clean run — the
-TAVILY / FIRECRAWL / ANTHROPIC keys in `.env.example` are **not** needed (the
-Copilot agent itself performs the analyst/formatter LLM work). The brief simply
-runs without the OSINT physical layer; setup should state this so a thinner
-brief isn't a surprise.
+**Key requirements depend on whether OSINT is used.** With OSINT **off**,
+`SEERIST_API_KEY` alone produces a clean run: `phase_collect` does not invoke
+`osint_physical_collector`, stubs `osint_signals.json` / `data.json` with `{}`,
+and `rsm_input_builder` fires its "skip the physical-OSINT layer" fallback. With
+OSINT **on**, `phase_collect` runs `osint_physical_collector` (live, key-guarded)
+and `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` become required — missing keys fail
+loudly. No `ANTHROPIC_API_KEY` is ever needed (the Copilot agent does the
+analyst/formatter LLM work).
 
 ### 3. `.github/prompts/create-skill.prompt.md`
 

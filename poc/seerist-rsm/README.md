@@ -134,7 +134,7 @@ Note: `test_client_none_without_key` reads from the environment after `load_dote
    python tools/rsm_dispatcher.py --daily --region MED
    ```
 
-The collectors fall back to mock fixtures if the relevant API key is missing — so you can do a partial live test (e.g. Seerist live, OSINT mock) without errors.
+When run **directly** (the manual CLI above), the collectors fall back to mock fixtures if the relevant API key is missing — handy for a partial test (e.g. Seerist live, OSINT mock). This is the bare-CLI behavior only. The `/crq-run` flow always passes `--require-live`, so there a missing key **fails loudly** rather than silently mocking — that is the live-only guarantee described at the top of this README.
 
 ## Working without Claude Code
 
