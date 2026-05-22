@@ -1,6 +1,6 @@
 # Portable Copilot Packaging Layer — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **Execution:** Built via the `/prime-dev` blueprint — the orchestrator (Opus) owns ALL Bash (runs every test and static check); Builders (Sonnet, no Bash) write files and report `files_written` + `verify` commands; a Validator (Sonnet, read-only) checks each unit against this plan and the spec before acceptance. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Let an operator clone the repo and, inside GitHub Copilot (VSCode), run `/install` → `/setup` → `/create-skill` → `/crq-run` to produce live regional risk briefs.
 
