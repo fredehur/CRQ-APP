@@ -27,10 +27,11 @@ Do the following, in order:
    `SEERIST_API_KEY`. If `.env` is missing, copy `.env.example` to `.env` and tell
    the operator to fill `SEERIST_API_KEY`, then STOP — do not write config until a
    key is present. This pipeline is **live-only**; there is no mock fallback.
-   Note: only `SEERIST_API_KEY` is required. The OSINT layer (TAVILY/FIRECRAWL)
-   degrades by design — its absence yields a thinner brief, not an error. The
-   analyst/formatter LLM work is done by you (the agent), so no ANTHROPIC key is
-   needed.
+   Note: `SEERIST_API_KEY` is the ONLY key the `/crq-run` pipeline uses — briefs
+   are built from Seerist signals. The `TAVILY_API_KEY` / `FIRECRAWL_API_KEY` in
+   `.env.example` are NOT used by `/crq-run` (they only feed the separate, manual
+   `osint_physical_collector.py` tool). And the analyst/formatter writing is done
+   by you (the agent), so no `ANTHROPIC_API_KEY` is needed either.
 4. Write `crq.config.json` at the repo root with exactly:
 
    ```json
