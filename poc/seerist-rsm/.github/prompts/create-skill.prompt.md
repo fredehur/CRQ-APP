@@ -23,9 +23,11 @@ tools: ['editFiles']
 
    # /crq-run — Produce today's regional brief(s)
 
-   1. Ask the operator: which region(s)? (APAC / AME / LATAM / MED / NCE, or ALL.)
-      And org-grounded or region-guided for this run? (Default comes from
-      crq.config.json — if they have no preference, omit the override.)
+   1. Ask the operator two things:
+      - Which region(s) for today's brief? (APAC / AME / LATAM / MED / NCE, or ALL.)
+      - Org-grounded (names their sites + people) or region-guided (region only,
+        no company details)? The default comes from crq.config.json — if they
+        have no preference, just use the default (omit the override flag).
    2. Run: `uv run python tools/crq_run.py collect --regions <THEIR REGIONS>`
       Add `--region-guided` or `--org-grounded` only if they chose to override
       the default. The command prints one `analyst_request.md` path per region.

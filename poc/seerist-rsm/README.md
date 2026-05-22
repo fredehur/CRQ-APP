@@ -4,6 +4,29 @@ Self-contained slice of the AeroGrid CRQ workspace, carved out so the **Seerist 
 
 This slice is **MED-only**. The site registry, mock fixtures, and runtime behavior are all narrowed to the Mediterranean region.
 
+## Run it in GitHub Copilot (recommended path)
+
+If you are on the VSCode + Copilot workstation, you do not need to learn the CLI below. The repo ships four Copilot prompt files (in `.github/prompts/`) that drive the whole pipeline. In Copilot Chat, type the slash command — Copilot runs the steps for you.
+
+**One-time setup (run each command once, in order):**
+
+| Step | Command in Copilot Chat | What it does |
+|---|---|---|
+| 1 | `/install` | Checks Python + `uv`, installs dependencies, creates your `.env`. |
+| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env`. This is required — the pipeline runs against the live Seerist API, not mock data. |
+| 3 | `/setup` | Asks for your **brand label** (the name on the brief header) and whether briefs default to **org-grounded** or **region-guided**. Writes `crq.config.json`. |
+| 4 | `/create-skill` | Generates the `/crq-run` command. (You may need to reload the VSCode window before it appears.) |
+
+**Every time you want a brief:**
+
+> `/crq-run`
+
+Copilot asks which region(s) you want today (APAC, AME, LATAM, MED, NCE, or all) and whether to ground it in your sites or keep it region-only. It then collects live signals, writes the analysis and the brief, and gives you a finished `email.html` per region — ready to read or send.
+
+> **Org-grounded vs region-guided:** *org-grounded* briefs name your specific sites, personnel, and exposure. *region-guided* briefs cover the region's risk landscape with no company details — useful for a prospect who hasn't shared their footprint yet.
+
+The rest of this README documents the underlying CLI (what those prompt files call) for anyone who wants to run it by hand or without Copilot.
+
 ## What is in this folder
 
 | Path | Purpose |
@@ -14,6 +37,9 @@ This slice is **MED-only**. The site registry, mock fixtures, and runtime behavi
 | `tools/poi_proximity.py` | Joins Seerist + OSINT events with site coordinates → distance + cascade output |
 | `tools/rsm_dispatcher.py` | Async per-region fan-out, emits placeholder mock briefs in `--mock` mode |
 | `tools/rsm_input_builder.py` | Builds the structured input manifest the RSM formatter agent reads |
+| `tools/crq_run.py` | Orchestrator behind `/crq-run` — loops regions, sequences the phases, threads one date, translates config to flags |
+| `.github/prompts/*.prompt.md` | The Copilot commands: `/install`, `/setup`, `/create-skill` (which generates `/crq-run`) |
+| `crq.config.example.json` | Example config — `/setup` writes the real `crq.config.json` from it |
 | `tools/notifier.py` | SMTP delivery (mock-friendly) |
 | `tools/config.py` | Path constants used by the dispatcher |
 | `tools/briefs/templates/` | Jinja2 brief templates (`rsm.html.j2`, `_partials.html.j2`) |
@@ -109,6 +135,8 @@ Note: `test_client_none_without_key` reads from the environment after `load_dote
 The collectors fall back to mock fixtures if the relevant API key is missing — so you can do a partial live test (e.g. Seerist live, OSINT mock) without errors.
 
 ## Working without Claude Code
+
+> **Most operators should use the `/crq-run` flow at the top of this README instead** — it produces a real, finished brief with no manual pasting. The notes below are the older manual fallback, kept for reference.
 
 The `.claude/agents/rsm-formatter-agent.md` and `.claude/agents/rsm-weekly-synthesizer.md` files are agent prompts originally invoked by Claude Code's subagent system. **They will not auto-execute under VSCode + Copilot.** Two options:
 

@@ -96,7 +96,10 @@ def write_state(state: dict, path: Path = STATE_PATH) -> None:
 
 def read_state(path: Path = STATE_PATH) -> dict:
     if not path.exists():
-        raise CrqRunError("crq_run_state.json not found. Run `crq_run.py collect` first.")
+        raise CrqRunError(
+            "crq_run_state.json not found. Run the collect step first:\n"
+            "  uv run python tools/crq_run.py collect --regions <REGION(S)>"
+        )
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -123,12 +126,15 @@ def cmd_collect(regions, org_grounded_override, date, config_path=CONFIG_PATH, s
         {"date": date, "regions": region_list, "org_context": org_context, "brand_label": brand_label},
         state_path,
     )
-    print(f"\n[crq_run] collect complete for {date} — {', '.join(region_list)}")
+    print(f"\n[crq_run] Collected signals for {date}: {', '.join(region_list)}.")
+    print("Analyst request(s) to work through:")
     for region in region_list:
         print(f"  {_day_dir(region, date) / 'analyst_request.md'}")
     print(
-        "\nAGENT STEP REQUIRED: for each path above, write claims.json + "
-        "analyst_report.md to that directory, then run: crq_run.py prep"
+        "\nAGENT STEP REQUIRED: for each analyst_request.md above, read it, then write\n"
+        "claims.json and analyst_report.md into the SAME folder (follow the AUTHORING\n"
+        "CONTRACT in the /crq-run skill). When all regions are done, run:\n"
+        "  uv run python tools/crq_run.py prep"
     )
 
 
@@ -136,12 +142,15 @@ def cmd_prep(state_path=STATE_PATH):
     state = read_state(state_path)
     for region in state["regions"]:
         _run(build_phase_argv(region, state["date"], "--prep-format"))
-    print(f"\n[crq_run] prep complete — {', '.join(state['regions'])}")
+    print(f"\n[crq_run] Prepared formatter inputs: {', '.join(state['regions'])}.")
+    print("Formatter request(s) to work through:")
     for region in state["regions"]:
         print(f"  {_day_dir(region, state['date']) / 'formatter_request.md'}")
     print(
-        "\nAGENT STEP REQUIRED: for each path above, write brief.md to that "
-        "directory, then run: crq_run.py render"
+        "\nAGENT STEP REQUIRED: for each formatter_request.md above, read it, then write\n"
+        "brief.md into the SAME folder (follow the AUTHORING CONTRACT). When all regions\n"
+        "are done, run:\n"
+        "  uv run python tools/crq_run.py render"
     )
 
 
@@ -149,7 +158,8 @@ def cmd_render(state_path=STATE_PATH):
     state = read_state(state_path)
     for region in state["regions"]:
         _run(build_phase_argv(region, state["date"], "--render"))
-    print(f"\n[crq_run] render complete — {', '.join(state['regions'])}")
+    print(f"\n[crq_run] Done. Briefs rendered for {', '.join(state['regions'])}.")
+    print("Open each email.html in a browser to read or send the brief:")
     for region in state["regions"]:
         print(f"  {_day_dir(region, state['date']) / 'email.html'}")
 
