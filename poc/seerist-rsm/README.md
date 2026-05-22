@@ -13,17 +13,19 @@ If you are on the VSCode + Copilot workstation, you do not need to learn the CLI
 | Step | Command in Copilot Chat | What it does |
 |---|---|---|
 | 1 | `/install` | Checks Python + `uv`, installs dependencies, creates your `.env`. |
-| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env`. This is required — the pipeline runs against the live Seerist API, not mock data. |
-| 3 | `/setup` | Asks for your **brand label** (the name on the brief header) and whether briefs default to **org-grounded** or **region-guided**. Writes `crq.config.json`. |
+| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env` (required — the pipeline runs against the live Seerist API, not mock data). If you plan to use OSINT mode, also set `TAVILY_API_KEY` + `FIRECRAWL_API_KEY`. |
+| 3 | `/setup` | Asks for your **brand label** (the name on the brief header), whether briefs default to **org-grounded** or **region-guided**, and whether to include the **OSINT physical pillar** by default. Writes `crq.config.json`. |
 | 4 | `/create-skill` | Generates the `/crq-run` command. (You may need to reload the VSCode window before it appears.) |
 
 **Every time you want a brief:**
 
 > `/crq-run`
 
-Copilot asks which region(s) you want today (APAC, AME, LATAM, MED, NCE, or all) and whether to ground it in your sites or keep it region-only. It then collects live signals, writes the analysis and the brief, and gives you a finished `email.html` per region — ready to read or send.
+Copilot asks three things: which region(s) today (APAC, AME, LATAM, MED, NCE, or all), whether to ground it in your sites or keep it region-only, and whether to add OSINT enrichment. It then collects live signals, writes the analysis and the brief, and gives you a finished `email.html` per region — ready to read or send.
 
 > **Org-grounded vs region-guided:** *org-grounded* briefs name your specific sites, personnel, and exposure. *region-guided* briefs cover the region's risk landscape with no company details — useful for a prospect who hasn't shared their footprint yet.
+>
+> **OSINT physical pillar:** optional web/news enrichment (protests, conflict, maritime, disasters) via Tavily + Firecrawl, layered on top of the Seerist signals. Needs both keys; if on without them, the run stops with a clear message rather than silently producing a thinner brief.
 
 The rest of this README documents the underlying CLI (what those prompt files call) for anyone who wants to run it by hand or without Copilot.
 

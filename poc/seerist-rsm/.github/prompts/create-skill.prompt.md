@@ -23,14 +23,19 @@ tools: ['editFiles']
 
    # /crq-run — Produce today's regional brief(s)
 
-   1. Ask the operator two things:
+   1. Ask the operator three things:
       - Which region(s) for today's brief? (APAC / AME / LATAM / MED / NCE, or ALL.)
       - Org-grounded (names their sites + people) or region-guided (region only,
-        no company details)? The default comes from crq.config.json — if they
-        have no preference, just use the default (omit the override flag).
+        no company details)? Default comes from crq.config.json.
+      - Include OSINT physical-pillar enrichment (extra web/news on protests,
+        conflict, maritime, disasters)? It needs Tavily + Firecrawl keys. Default
+        comes from crq.config.json.
+      For any choice where they have no preference, just use the default (omit the
+      override flag).
    2. Run: `uv run python tools/crq_run.py collect --regions <THEIR REGIONS>`
-      Add `--region-guided` or `--org-grounded` only if they chose to override
-      the default. The command prints one `analyst_request.md` path per region.
+      Add overrides ONLY when they differ from the defaults:
+      `--region-guided` / `--org-grounded`, and `--osint` / `--no-osint`.
+      The command prints one `analyst_request.md` path per region.
    3. For EACH printed `analyst_request.md`: read it and write `claims.json` +
       `analyst_report.md` into the SAME directory. Follow the AUTHORING CONTRACT
       below — the render step enforces it deterministically.

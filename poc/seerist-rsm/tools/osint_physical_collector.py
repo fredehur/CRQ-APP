@@ -35,26 +35,66 @@ def _mock_collect(region: str) -> dict:
     return data
 
 
+def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
+    """Tavily search via httpx. Requires TAVILY_API_KEY.
+
+    Self-contained — mirrors tools/osint_search.py:search_tavily in the parent
+    repo so this slice has no dependency on modules that aren't carved in.
+    """
+    import httpx
+
+    resp = httpx.post(
+        "https://api.tavily.com/search",
+        json={
+            "api_key": os.environ["TAVILY_API_KEY"],
+            "query": query,
+            "max_results": max_results,
+            "search_depth": "basic",
+        },
+        timeout=15,
+    )
+    resp.raise_for_status()
+    return [
+        {
+            "title": r.get("title", ""),
+            "url": r.get("url", ""),
+            "source": r.get("url", ""),
+            "published_date": r.get("published_date", ""),
+            "summary": r.get("content", ""),
+        }
+        for r in resp.json().get("results", [])
+    ]
+
+
+def _firecrawl_extract(url: str) -> dict | None:
+    """Firecrawl main-content extract. Requires FIRECRAWL_API_KEY.
+
+    Self-contained — mirrors tools/firecrawl_scraper.py:_call_firecrawl. Returns
+    {content, location} or None on empty/failed extraction. NOTE: confirm the
+    firecrawl-py call signature against the installed version on the live machine.
+    """
+    if not url:
+        return None
+    from firecrawl import FirecrawlApp
+
+    app = FirecrawlApp(api_key=os.environ["FIRECRAWL_API_KEY"])
+    result = app.scrape_url(
+        url,
+        params={"onlyMainContent": True, "formats": ["markdown"], "timeout": 20000},
+    )
+    markdown = (result.get("markdown") or "").strip()
+    if not markdown:
+        return None
+    meta = result.get("metadata") or {}
+    return {"content": markdown, "location": meta.get("location") or {}}
+
+
 def _live_collect(region: str) -> dict:
     """Tavily search + Firecrawl deep extraction for physical-pillar signals.
 
-    Mirrors tools/osint_collector.py for the cyber pillar — same APIs, same
-    shape, different category filters.
+    Region-keyed queries (no site/org context), so this is safe in both
+    org-grounded and region-guided runs. The key guard lives in collect().
     """
-    try:
-        from tools.osint_collector import (
-            _tavily_search,
-            _firecrawl_extract,
-        )
-    except ImportError:
-        print("[osint_physical] osint_collector helpers unavailable — falling back to mock",
-              file=sys.stderr)
-        return _mock_collect(region)
-
-    if not os.environ.get("TAVILY_API_KEY"):
-        print("[osint_physical] no TAVILY_API_KEY — falling back to mock", file=sys.stderr)
-        return _mock_collect(region)
-
     queries = [
         f"{region} unrest protest 2026",
         f"{region} terrorism attack 2026",
@@ -94,10 +134,24 @@ def _live_collect(region: str) -> dict:
     }
 
 
-def collect(region: str, mock: bool = True) -> dict:
+REQUIRED_LIVE_KEYS = ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
+
+
+def collect(region: str, mock: bool = True, require_live: bool = False) -> dict:
     region = region.upper()
     if region not in VALID_REGIONS:
         raise ValueError(f"invalid region '{region}' — must be one of {VALID_REGIONS}")
+
+    # Live-only guard: if OSINT is requested live, fail loudly when the keys are
+    # absent rather than silently falling back to mock fixtures.
+    if require_live:
+        missing = [k for k in REQUIRED_LIVE_KEYS if not os.environ.get(k)]
+        if missing:
+            raise ValueError(
+                f"OSINT requested live but missing key(s): {', '.join(missing)}. "
+                "Set them in .env, or run the pipeline without OSINT."
+            )
+        mock = False
 
     data = _mock_collect(region) if mock else _live_collect(region)
 
@@ -112,12 +166,16 @@ def collect(region: str, mock: bool = True) -> dict:
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage: osint_physical_collector.py REGION [--mock]", file=sys.stderr)
+        print("Usage: osint_physical_collector.py REGION [--mock] [--require-live]", file=sys.stderr)
         sys.exit(1)
     region = args[0].upper()
-    mock = "--mock" in args or not os.environ.get("TAVILY_API_KEY")
+    require_live = "--require-live" in args
+    if require_live:
+        mock = False  # collect() guards the keys and fails loudly if absent
+    else:
+        mock = "--mock" in args or not os.environ.get("TAVILY_API_KEY")
     try:
-        collect(region, mock=mock)
+        collect(region, mock=mock, require_live=require_live)
     except (ValueError, FileNotFoundError) as e:
         print(f"[osint_physical] {e}", file=sys.stderr)
         sys.exit(1)

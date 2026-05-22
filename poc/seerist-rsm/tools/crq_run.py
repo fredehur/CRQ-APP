@@ -45,6 +45,11 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
         raise CrqRunError("crq.config.json: brand_label must be a string. Re-run /setup.")
     if not isinstance(cfg["org_context_default"], bool):
         raise CrqRunError("crq.config.json: org_context_default must be a boolean. Re-run /setup.")
+    # osint_default is optional (older configs predate it); defaults to off.
+    osint_default = cfg.get("osint_default", False)
+    if not isinstance(osint_default, bool):
+        raise CrqRunError("crq.config.json: osint_default must be a boolean. Re-run /setup.")
+    cfg["osint_default"] = osint_default
     return cfg
 
 
@@ -68,13 +73,22 @@ def expand_regions(regions: list[str]) -> list[str]:
     return deduped
 
 
-def resolve_org_context(override: bool | None, config_default: bool) -> bool:
-    """override: True (org-grounded) / False (region-guided) / None (use config default)."""
+def resolve_override(override: bool | None, config_default: bool) -> bool:
+    """Generic per-run override: None means use the config default."""
     return config_default if override is None else override
 
 
-def build_collect_argv(region: str, date: str, *, org_context: bool, brand_label: str) -> list[str]:
+def resolve_org_context(override: bool | None, config_default: bool) -> bool:
+    """override: True (org-grounded) / False (region-guided) / None (use config default)."""
+    return resolve_override(override, config_default)
+
+
+def build_collect_argv(
+    region: str, date: str, *, org_context: bool, brand_label: str, osint: bool = False
+) -> list[str]:
     argv = [sys.executable, POC_RUNNER, region, date, "--collect", "--require-live"]
+    if osint:
+        argv.append("--osint")
     if not org_context:
         argv.append("--no-org-context")
     argv += ["--brand", brand_label]
@@ -114,14 +128,17 @@ def _day_dir(region: str, date: str) -> Path:
     return PROJECT_ROOT / "output" / "poc" / region.lower() / date
 
 
-def cmd_collect(regions, org_grounded_override, date, config_path=CONFIG_PATH, state_path=STATE_PATH):
+def cmd_collect(regions, org_grounded_override, date, osint_override=None,
+                config_path=CONFIG_PATH, state_path=STATE_PATH):
     cfg = load_config(config_path)
     region_list = expand_regions(regions)
     date = date or today_iso()
     org_context = resolve_org_context(org_grounded_override, cfg["org_context_default"])
+    osint = resolve_override(osint_override, cfg["osint_default"])
     brand_label = cfg["brand_label"]
     for region in region_list:
-        _run(build_collect_argv(region, date, org_context=org_context, brand_label=brand_label))
+        _run(build_collect_argv(region, date, org_context=org_context,
+                                brand_label=brand_label, osint=osint))
     write_state(
         {"date": date, "regions": region_list, "org_context": org_context, "brand_label": brand_label},
         state_path,
@@ -175,6 +192,11 @@ def main(argv: list[str] | None = None) -> int:
                      help="Force region-guided (no org context) for this run")
     grp.add_argument("--org-grounded", dest="override", action="store_const", const=True,
                      help="Force org-grounded for this run")
+    ogrp = pc.add_mutually_exclusive_group()
+    ogrp.add_argument("--osint", dest="osint_override", action="store_const", const=True, default=None,
+                      help="Include the OSINT physical pillar (web/news) this run (needs Tavily/Firecrawl keys)")
+    ogrp.add_argument("--no-osint", dest="osint_override", action="store_const", const=False,
+                      help="Skip the OSINT physical pillar this run (Seerist-only)")
     pc.add_argument("--date", default=None, help="YYYY-MM-DD; defaults to today (UTC)")
 
     sub.add_parser("prep", help="Run --prep-format for each region in run-state.")
@@ -183,7 +205,8 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     try:
         if args.cmd == "collect":
-            cmd_collect(regions=args.regions, org_grounded_override=args.override, date=args.date)
+            cmd_collect(regions=args.regions, org_grounded_override=args.override,
+                        osint_override=args.osint_override, date=args.date)
         elif args.cmd == "prep":
             cmd_prep()
         elif args.cmd == "render":

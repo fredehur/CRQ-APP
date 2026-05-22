@@ -28,7 +28,9 @@ are explicitly out of scope for this spec.
   phase sequencing, config→flags translation, date threading, and `--require-live`
   enforcement are owned by a new deterministic orchestrator, **`tools/crq_run.py`**.
   The Copilot agent owns only the two genuine judgment steps (analyst, formatter).
-  This adds exactly one new tool; existing `tools/` files are unchanged.
+  This adds one new tool (`crq_run.py`); the only existing tools touched are the
+  OSINT additions (`osint_physical_collector.py` self-contained primitives +
+  `poc_runner.py` `--osint` wiring — see the OSINT section).
 
 ## Architecture
 
@@ -49,6 +51,50 @@ Two layers:
 
 Config in `crq.config.json` (defaults) + `.env` (secrets). The agent runs in
 agent mode with file-edit + terminal tools (frontmatter contract below).
+
+## OSINT physical-pillar mode (per-run, added)
+
+A second optional mode, asked per run alongside region + org/region-guided:
+**include the OSINT physical pillar** (web/news enrichment via Tavily + Firecrawl)
+or run Seerist-only. Mirrors the org-context pattern: a `osint_default` in
+`crq.config.json` set by `/setup`, overridable per run in `/crq-run`.
+
+**Making OSINT genuinely live (the real fix).** `osint_physical_collector.py`
+today imports `_tavily_search` / `_firecrawl_extract` from `tools.osint_collector`
+— **functions that do not exist there**, so its live path always falls back to
+mock. `osint_collector.py` itself is a heavy 3-LLM-call loop (deps: `anthropic`,
+`collection_gate`, `osint_search`, `firecrawl_scraper`, several data files) and
+is the wrong thing to port. Instead, make `osint_physical_collector.py`
+self-contained: replace the broken import with two in-file primitives mirroring
+the working code —
+- `_tavily_search(query, max_results)` → `httpx` POST to `https://api.tavily.com/search`
+  (mirrors `osint_search.py:search_tavily`),
+- `_firecrawl_extract(url)` → `FirecrawlApp(...).scrape_url(...)` returning main
+  content + location (mirrors `firecrawl_scraper.py:_call_firecrawl`).
+The slice already declares `httpx`, `firecrawl-py`, `tavily-python` in
+`pyproject.toml`, so no new deps. OSINT queries are **region-keyed**
+(`"{region} unrest protest 2026"` etc.), so the mode is safe in both
+org-grounded and region-guided runs (no site names).
+
+**Fail loudly on missing keys.** When OSINT is requested for a live run and
+`TAVILY_API_KEY` (and Firecrawl) are absent, stop with a clear message —
+mirroring the Seerist `--require-live` guard. No silent mock fallback. Add a
+`require_live` path to `osint_physical_collector.collect()` (and a guard in
+`poc_runner.phase_collect`) so the live-only guarantee holds for OSINT too.
+
+**Plumbing (mirrors org-context exactly):**
+- `crq.config.json` gains `osint_default: bool`.
+- `/setup` asks for it; `crq.config.example.json` documents it.
+- `crq_run.py collect` gains `--osint` / `--no-osint` (override; default from
+  config), resolved like org-context, and threads `--osint` into the
+  `poc_runner --collect` argv.
+- `poc_runner.phase_collect` gains an `osint` param + `--osint` CLI flag. When
+  set, after the Seerist collect it guards the keys (fail loudly) and runs the
+  OSINT collector, writing `output/regional/{region}/osint_physical_signals.json`
+  — which `build_rsm_inputs` already reads (the downstream wiring exists; the
+  manifest's "skip the physical-OSINT layer" fallback fires only when OSINT is off).
+- `/crq-run` asks the operator "Include OSINT physical-pillar enrichment?" and
+  passes the override.
 
 ### Prompt-file frontmatter contract (version-sensitive — verify against the installed VS Code)
 

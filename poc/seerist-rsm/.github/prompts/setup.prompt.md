@@ -23,24 +23,31 @@ Do the following, in order:
      no company details (good for prospects who haven't shared their sites).
    This is only the *default*; `/crq-run` asks again each run, so they can switch
    per brief.
-3. **Verify the live key.** Confirm `.env` exists and contains a non-empty
+3. Ask whether to include the **OSINT physical pillar** by default — extra
+   web/news enrichment (protests, conflict, maritime, disasters) on top of the
+   Seerist signals. It needs `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` in `.env`.
+   Default **off** if they have no preference. Again, only the *default* —
+   `/crq-run` asks per run.
+4. **Verify the keys.** Confirm `.env` exists and contains a non-empty
    `SEERIST_API_KEY`. If `.env` is missing, copy `.env.example` to `.env` and tell
    the operator to fill `SEERIST_API_KEY`, then STOP — do not write config until a
    key is present. This pipeline is **live-only**; there is no mock fallback.
-   Note: `SEERIST_API_KEY` is the ONLY key the `/crq-run` pipeline uses — briefs
-   are built from Seerist signals. The `TAVILY_API_KEY` / `FIRECRAWL_API_KEY` in
-   `.env.example` are NOT used by `/crq-run` (they only feed the separate, manual
-   `osint_physical_collector.py` tool). And the analyst/formatter writing is done
-   by you (the agent), so no `ANTHROPIC_API_KEY` is needed either.
-4. Write `crq.config.json` at the repo root with exactly:
+   - `SEERIST_API_KEY` is always required — briefs are built from Seerist signals.
+   - `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` are required ONLY when OSINT is used
+     (the default from step 3, or a per-run choice in `/crq-run`). If the OSINT
+     default is on, verify both are present; if absent, warn the operator that
+     OSINT runs will fail loudly until they set them.
+   - No `ANTHROPIC_API_KEY` is needed — you (the agent) do the analyst/formatter writing.
+5. Write `crq.config.json` at the repo root with exactly:
 
    ```json
    {
      "brand_label": "<their brand>",
-     "org_context_default": <true|false>
+     "org_context_default": <true|false>,
+     "osint_default": <true|false>
    }
    ```
 
-5. Confirm: "Setup complete. Next: run `/create-skill`."
+6. Confirm: "Setup complete. Next: run `/create-skill`."
 
 Re-running `/setup` overwrites the config and re-checks the key.

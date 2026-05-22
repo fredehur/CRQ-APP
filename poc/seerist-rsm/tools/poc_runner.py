@@ -63,6 +63,7 @@ def phase_collect(
     require_live: bool,
     no_org_context: bool = False,
     brand: str | None = None,
+    osint: bool = False,
 ) -> None:
     """Phase A: collect, compute POI, build manifest, write analyst_request.md.
 
@@ -103,6 +104,28 @@ def phase_collect(
         poi_canonical = OUTPUT_ROOT / "regional" / region.lower() / "poi_proximity.json"
         if poi_canonical.exists():
             shutil.copy2(poi_canonical, day / "poi_proximity.json")
+
+    # 2b. OSINT physical pillar (optional, region-keyed → safe in both modes).
+    #     build_rsm_inputs reads osint_physical_signals.json from the canonical
+    #     regional dir. When OSINT is off, remove any stale file so it can't leak
+    #     into this run's manifest.
+    osint_canonical = OUTPUT_ROOT / "regional" / region.lower() / "osint_physical_signals.json"
+    if osint:
+        if require_live:
+            _missing = [k for k in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY") if not os.environ.get(k)]
+            if _missing:
+                raise SystemExit(
+                    f"[poc_runner] --osint requires {', '.join(_missing)} in .env. "
+                    "Set the key(s), or run without OSINT."
+                )
+        osint_cmd = [sys.executable, "tools/osint_physical_collector.py", region]
+        if require_live:
+            osint_cmd.append("--require-live")
+        _run(osint_cmd)
+        if osint_canonical.exists():
+            shutil.copy2(osint_canonical, day / "osint_physical_signals.json")
+    elif osint_canonical.exists():
+        osint_canonical.unlink()
 
     # 3. Build the manifest (reads aerowind_sites.json + optional signals)
     sys.path.insert(0, str(REPO_ROOT))
@@ -332,6 +355,11 @@ def main() -> int:
         help="Header brand label override (default: AEROWIND, or a neutral label "
              "in --no-org-context mode)",
     )
+    p.add_argument(
+        "--osint", action="store_true",
+        help="Include the OSINT physical pillar (Tavily/Firecrawl web+news enrichment). "
+             "With --require-live, fails loudly if the OSINT keys are absent.",
+    )
     args = p.parse_args()
 
     if not (args.collect or args.prep_format or args.render):
@@ -344,6 +372,7 @@ def main() -> int:
             require_live=args.require_live,
             no_org_context=args.no_org_context,
             brand=args.brand,
+            osint=args.osint,
         )
     if args.prep_format:
         phase_prep_format(args.region, args.date_iso)

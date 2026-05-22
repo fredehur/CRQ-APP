@@ -234,3 +234,69 @@ def test_main_error_exits_nonzero(monkeypatch, capsys):
     rc = crq_run.main(["prep"])
     assert rc == 1
     assert "/setup" in capsys.readouterr().err
+
+
+# OSINT physical-pillar mode
+def test_load_config_osint_default_optional_defaults_false(tmp_path):
+    p = _write_config(tmp_path, {"brand_label": "ACME", "org_context_default": True})
+    assert crq_run.load_config(p)["osint_default"] is False
+
+
+def test_load_config_osint_default_present_bool(tmp_path):
+    p = _write_config(tmp_path, {"brand_label": "ACME", "org_context_default": True, "osint_default": True})
+    assert crq_run.load_config(p)["osint_default"] is True
+
+
+def test_load_config_osint_default_wrong_type(tmp_path):
+    p = _write_config(tmp_path, {"brand_label": "A", "org_context_default": True, "osint_default": "yes"})
+    with pytest.raises(crq_run.CrqRunError, match="osint_default"):
+        crq_run.load_config(p)
+
+
+def test_build_collect_argv_osint_on():
+    argv = crq_run.build_collect_argv("MED", "2026-05-22", org_context=True, brand_label="X", osint=True)
+    assert "--osint" in argv and "--require-live" in argv and argv[-2:] == ["--brand", "X"]
+
+
+def test_build_collect_argv_osint_off_by_default():
+    argv = crq_run.build_collect_argv("MED", "2026-05-22", org_context=True, brand_label="X")
+    assert "--osint" not in argv
+
+
+def test_cmd_collect_osint_override_on(tmp_path, monkeypatch):
+    cfg = tmp_path / "crq.config.json"
+    cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True}), encoding="utf-8")
+    calls = _patch_run(monkeypatch)
+    crq_run.cmd_collect(regions=["MED"], org_grounded_override=None, osint_override=True,
+                        date="2026-05-22", config_path=cfg, state_path=tmp_path / "s.json")
+    assert "--osint" in calls[0]
+
+
+def test_cmd_collect_osint_default_from_config(tmp_path, monkeypatch):
+    cfg = tmp_path / "crq.config.json"
+    cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True, "osint_default": True}), encoding="utf-8")
+    calls = _patch_run(monkeypatch)
+    crq_run.cmd_collect(regions=["MED"], org_grounded_override=None, osint_override=None,
+                        date="2026-05-22", config_path=cfg, state_path=tmp_path / "s.json")
+    assert "--osint" in calls[0]
+
+
+def test_cmd_collect_osint_override_off_beats_config_default(tmp_path, monkeypatch):
+    cfg = tmp_path / "crq.config.json"
+    cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True, "osint_default": True}), encoding="utf-8")
+    calls = _patch_run(monkeypatch)
+    crq_run.cmd_collect(regions=["MED"], org_grounded_override=None, osint_override=False,
+                        date="2026-05-22", config_path=cfg, state_path=tmp_path / "s.json")
+    assert "--osint" not in calls[0]
+
+
+def test_main_collect_osint_flags(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(crq_run, "cmd_collect",
+        lambda regions, org_grounded_override, osint_override, date, **kw: captured.update(osint=osint_override))
+    crq_run.main(["collect", "--regions", "MED", "--osint"])
+    assert captured["osint"] is True
+    crq_run.main(["collect", "--regions", "MED", "--no-osint"])
+    assert captured["osint"] is False
+    crq_run.main(["collect", "--regions", "MED"])
+    assert captured["osint"] is None
