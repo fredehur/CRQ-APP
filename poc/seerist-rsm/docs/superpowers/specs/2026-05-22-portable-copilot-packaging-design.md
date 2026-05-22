@@ -2,7 +2,7 @@
 
 **Date:** 2026-05-22
 **Slice:** `poc/seerist-rsm`
-**Status:** Draft for review (revised after independent design review)
+**Status:** Draft for review (revised after independent design review + `/prime-dev` boundary alignment)
 
 ## Goal
 
@@ -22,20 +22,33 @@ are explicitly out of scope for this spec.
   mode in the operator flow. Setup makes a live `SEERIST_API_KEY` mandatory.
 - **Region is chosen per run**, not fixed at setup. Any of APAC / AME / LATAM /
   MED / NCE (one or several) can be requested for "today's" brief.
-- **Zero changes to the deterministic tools** (Approach A). The Copilot agent
-  reads config and drives `tools/poc_runner.py` exactly as it stands today.
+- **Orchestration lives in code, not the prompt file.** `agent-boundary-principles.md`
+  names "orchestration in a markdown file an LLM follows" as the #1 failure mode
+  ("works 90% of the time; the other 10% is invisible"). So the region loop,
+  phase sequencing, config→flags translation, date threading, and `--require-live`
+  enforcement are owned by a new deterministic orchestrator, **`tools/crq_run.py`**.
+  The Copilot agent owns only the two genuine judgment steps (analyst, formatter).
+  This adds exactly one new tool; existing `tools/` files are unchanged.
 
 ## Architecture
 
-A pure-markdown packaging layer under `.github/prompts/`:
+Two layers:
 
-- three **authored** prompt files: `install`, `setup`, `create-skill`;
-- one **generated** prompt file: `crq-run` (written by `create-skill`);
-- one config file `crq.config.json` (defaults) + `.env` (secrets).
+1. **Code orchestrator** — `tools/crq_run.py` (new). Owns everything
+   deterministic: read `crq.config.json` + per-run args, resolve today's date
+   once, expand/validate the region list, translate config→`poc_runner` flags
+   (`--no-org-context`, `--brand`, `--require-live`), sequence the phases across
+   regions, and persist run state. Unit-testable Python. **Pauses** at the two
+   points that require judgment (analyst, formatter) by exiting after a batch
+   with a clear "AGENT STEP REQUIRED" message.
+2. **Markdown packaging** under `.github/prompts/` — three authored prompt files
+   (`install`, `setup`, `create-skill`) + one generated (`crq-run`). The
+   generated `crq-run` skill is now **thin**: it collects the operator's per-run
+   answers, calls `crq_run.py` for each deterministic batch, and performs the two
+   authoring steps in between. It contains no loops, sequencing, or flag logic.
 
-The Copilot agent runs in **agent mode** with file-edit and terminal tools
-granted via prompt-file frontmatter. It reads `crq.config.json`, asks the
-operator the per-run questions, and shells out to `poc_runner.py`.
+Config in `crq.config.json` (defaults) + `.env` (secrets). The agent runs in
+agent mode with file-edit + terminal tools (frontmatter contract below).
 
 ### Prompt-file frontmatter contract (version-sensitive — verify against the installed VS Code)
 
@@ -90,9 +103,33 @@ That is the entire schema. Deliberately minimal:
   cadence knob would be inert. Weekly lives in `rsm_dispatcher.py`, outside this
   flow.
 
-There is no code loader (Approach A). The agent reads and validates the JSON
-against this documented shape. Missing/invalid → the run skill tells the
-operator to re-run `/setup`.
+`crq_run.py` reads and validates this config (a small typed loader with a unit
+test). Missing/invalid → `crq_run.py` exits non-zero with a message telling the
+operator to run `/setup`.
+
+### 0. `tools/crq_run.py` (the code orchestrator) — the one new tool
+
+Owns all deterministic orchestration the prompt file must NOT. Three
+subcommands mirroring the pipeline's natural batch boundaries:
+
+| Subcommand | What it does (code-owned) | Then |
+|---|---|---|
+| `crq_run.py collect --regions MED NCE \| ALL [--region-guided]` | Load config; resolve **today's date once**; expand/validate regions (`ALL`→5 codes); translate flags; for each region run `poc_runner.py <R> <DATE> --collect --require-live [--no-org-context] --brand "<brand>"`; write `crq_run_state.json` (date, regions, org_context, brand). | Print each region's `analyst_request.md` path + "AGENT STEP REQUIRED: write claims.json + analyst_report.md, then run `crq_run.py prep`." |
+| `crq_run.py prep` | Read run-state; for each region run `poc_runner.py <R> <DATE> --prep-format`. | Print each `formatter_request.md` path + "AGENT STEP REQUIRED: write brief.md, then run `crq_run.py render`." |
+| `crq_run.py render` | Read run-state; for each region run `poc_runner.py <R> <DATE> --render`. | Print each `email.html` path. |
+
+Why three subcommands and not one unattended run: the two judgment steps
+(analyst, formatter) must happen *between* phases and require the agent. Code
+owns the loop, sequencing, flags, date, and state; the agent owns only the two
+authoring steps. `crq_run.py` performs **no LLM calls** and makes **no judgment**
+— it is pure orchestration, fully unit-testable.
+
+Inputs: `crq.config.json`, `.env`, CLI args (regions, `--region-guided` /
+`--org-grounded` overriding the config default, optional `--date`). Outputs:
+per-region `poc_runner` invocations + `crq_run_state.json`. Failure modes:
+missing/invalid config → exit non-zero (point to `/setup`); unknown region →
+exit non-zero; `poc_runner` non-zero (e.g. `--require-live` with no key) →
+surface verbatim and stop.
 
 ### 2. `.github/prompts/setup.prompt.md`
 
@@ -123,10 +160,12 @@ Frontmatter per the contract above (`agent: agent`, `tools: ['editFiles']`).
 
 Steps:
 1. Read `crq.config.json`; refuse (point to `/setup`) if missing/invalid.
-2. Generate `.github/prompts/crq-run.prompt.md`, emitting **the correct
-   frontmatter into the generated file** (`agent: agent`,
+2. Generate the **thin** `.github/prompts/crq-run.prompt.md` (see §5), emitting
+   **the correct frontmatter into the generated file** (`agent: agent`,
    `tools: ['editFiles', 'runCommands']`) — not just a body. The generated skill
-   embeds `brand_label` and `org_context_default` from config.
+   delegates all orchestration to `crq_run.py` (which reads `crq.config.json`
+   itself at run time), so it does not hard-code config values — it only carries
+   the operator Q&A and the two authoring steps.
 3. Tell the operator they may need to reload the VSCode window before `/crq-run`
    appears in the `/` completion list.
 
@@ -143,49 +182,33 @@ Steps:
    cannot be relied on to deterministically invoke another — chaining here is
    human guidance, not automated control flow.)
 
-### 5. The generated `crq-run.prompt.md` — the run skill
+### 5. The generated `crq-run.prompt.md` — the run skill (thin)
 
-This is the heart of the layer. It encodes the **real five-step state machine**
-that `poc_runner.py` requires, looped per selected region.
+With orchestration in `crq_run.py`, the run skill is now a short conversational
+wrapper. It contains **no loops, no phase sequencing, no flag logic** — only the
+operator Q&A and the two authoring steps:
 
-Run sequence:
-1. **Resolve today's date once** (`YYYY-MM-DD`) and reuse it for every phase and
-   region. Output is keyed by `output/poc/<region>/<date>/`, and phases B and C
-   re-derive the same directory — so a single consistent date is mandatory.
-2. Ask the operator: which region(s) (subset of APAC/AME/LATAM/MED/NCE), and
-   org-grounded vs region-guided for this brief (default from
-   `org_context_default`).
-3. Resolve flags: region-guided → append `--no-org-context`; always pass
-   `--brand "<brand_label>"`.
-4. **Per region, run the five steps in order:**
-   1. `uv run python tools/poc_runner.py <REGION> <DATE> --collect --require-live [--no-org-context] --brand "<brand_label>"`
-      — **`--require-live` is mandatory**: without it, a missing/typo'd
-      `SEERIST_API_KEY` makes the collector fall back to mock fixtures silently,
-      defeating the live-only guarantee. With it, `phase_collect` fails loudly
-      when no key is present.
-   2. Agent reads `output/poc/<region>/<date>/analyst_request.md` and **writes
-      `claims.json` + `analyst_report.md`** to that directory, following the
-      **authoring contract** below.
-   3. `uv run python tools/poc_runner.py <REGION> <DATE> --prep-format`
-      (precondition: `claims.json` + `analyst_report.md` + manifest must exist).
-   4. Agent reads `formatter_request.md` and **writes `brief.md`** to that
-      directory, following the authoring contract below.
-   5. `uv run python tools/poc_runner.py <REGION> <DATE> --render`
-      — this first runs `normalize_citations.py` (which **hard-fails if the brief
-      cites any `claim_id` absent from `claims.json`**), then `validate_brief.py`,
-      then renders. A render can fail for citation/validation reasons, not just
-      missing files.
-5. Report each region's `output/poc/<region>/<date>/email.html` path.
+1. Ask the operator: which region(s)? org-grounded or region-guided (default
+   from `org_context_default`)?
+2. Run `uv run python tools/crq_run.py collect --regions <...> [--region-guided]`.
+3. For **each** `analyst_request.md` path it prints: read it and **write
+   `claims.json` + `analyst_report.md`** per the authoring contract below.
+4. Run `uv run python tools/crq_run.py prep`.
+5. For **each** `formatter_request.md` path it prints: read it and **write
+   `brief.md`** per the authoring contract.
+6. Run `uv run python tools/crq_run.py render`; report the `email.html` paths.
 
-The two LLM steps (4.2 and 4.4) are **distinct prompts read at different
-times** — `formatter_request.md` does not exist until `--prep-format` runs, so
-they cannot be fused.
+All sequencing, the region loop, the single shared date, flag translation, and
+`--require-live` live in `crq_run.py` — the skill just relays the operator's
+answers in and the LLM authoring out. The two authoring steps (3 and 5) are
+**distinct prompts read at different times**: `formatter_request.md` does not
+exist until `crq_run.py prep` runs.
 
 #### Agent authoring contract (what the run skill must tell the agent)
 
-`--render` enforces deterministic gates the agent cannot see while writing.
-The generated `crq-run` skill must spell these out so agent-authored files pass
-on the first try:
+`crq_run.py render` → `poc_runner --render` enforces deterministic gates the
+agent cannot see while writing. The generated `crq-run` skill must spell these
+out so agent-authored files pass on the first try:
 
 - **Citation bijection** (`validate_brief.py`): body cites must use
   `[<claim_id>]` form (e.g. `[med-001]`), **not** raw numbers — `normalize_citations`
@@ -211,9 +234,12 @@ git clone <repo>
   → open in VSCode
   → /install      (uv sync, .env scaffold; instructs next steps)
   → /setup        (writes crq.config.json, verifies live key)
-  → /create-skill (generates crq-run.prompt.md)
+  → /create-skill (generates the thin crq-run.prompt.md)
   → (reload window if needed)
-  → /crq-run      (asks region(s) + org/region-guided; runs the 5-step loop live)
+  → /crq-run      (asks region(s) + org/region-guided, then:
+                     crq_run.py collect → agent writes claims/report
+                   → crq_run.py prep    → agent writes brief
+                   → crq_run.py render  → email.html per region)
 ```
 
 ## Error handling
@@ -222,9 +248,11 @@ git clone <repo>
 - **setup:** missing/empty `SEERIST_API_KEY` → stop, point to `.env.example`.
   No mock fallback.
 - **create-skill:** missing/invalid `crq.config.json` → stop, point to `/setup`.
-- **crq-run:** if a phase precondition file is missing, surface the
-  `poc_runner` `SystemExit` message verbatim rather than continuing; if a region
-  returns no live signals, report it and continue to the next region.
+- **crq_run.py:** missing/invalid config or unknown region → exit non-zero with a
+  pointer to `/setup`; any `poc_runner` non-zero exit (e.g. `--require-live` with
+  no key, or a missing phase-precondition file) is surfaced verbatim and stops
+  the run. `--require-live` is always passed on collect, so a missing key fails
+  loudly rather than silently falling back to mock.
 - **Date consistency:** the resolved date is stated explicitly to the operator
   and reused; a re-run on a later day starts a fresh dated directory. Caveat:
   `rsm_input_builder._filter_notable_dates` keys its 7-day horizon off the real
@@ -234,22 +262,27 @@ git clone <repo>
 
 ## Testing / verification
 
-Prompt files are markdown and run live + LLM-in-the-loop, so full end-to-end
-cannot run unattended — and not in the authoring environment (no live
-`SEERIST_API_KEY`, and `truststore` is absent here, so the live collector path
-cannot execute locally). Verification therefore splits:
+Moving orchestration into `crq_run.py` makes the previously-untestable parts
+**unit-testable** — the core win of this revision. Verification splits three ways:
 
-- **Static, doable at authoring time:**
-  - `crq.config.json` validates against the documented schema.
+- **`crq_run.py` unit tests (`tests/test_crq_run.py`)** — the real coverage:
+  - config load + validation (valid, missing, malformed → correct exit).
+  - region expansion: `ALL` → the 5 region codes; unknown region → non-zero exit.
+  - **flag translation**: `--region-guided` → `--no-org-context`; `--brand` always
+    passed; `--require-live` always on collect. Assert the exact `poc_runner`
+    argv built per region (mock/patch the subprocess call — no live API needed).
+  - single shared **date** threaded across collect/prep/render via `crq_run_state.json`.
+  - run-state round-trip (collect writes it; prep/render read it).
+- **Static checks (authoring time):**
+  - `crq.config.example.json` validates against the schema.
   - the generated `crq-run.prompt.md` has well-formed frontmatter (`agent: agent`,
-    `tools: ['editFiles', 'runCommands']`) and a body.
-  - the exact `poc_runner` command strings the run skill emits parse against the
-    real CLI: `poc_runner.py <REGION> <DATE> --collect|--prep-format|--render
-    [--no-org-context] [--brand ...]` — confirming region+date positionals and
-    flag names match `tools/poc_runner.py`.
-- **Operator acceptance walkthrough (live):** a documented checklist —
-  clone → /install → /setup (real key) → /create-skill → /crq-run for MED →
-  confirm `email.html` is produced and neutrally/branded per config.
+    `tools: ['editFiles', 'runCommands']`) and a body, and contains no orchestration
+    logic (delegates to `crq_run.py`).
+- **Operator acceptance walkthrough (live, manual):** clone → /install → /setup
+  (real key) → /create-skill → /crq-run for MED → confirm `email.html` is
+  produced. (Full live run can't execute in the authoring env: no live
+  `SEERIST_API_KEY`, and `truststore` is absent, so the live collector path
+  can't run locally — hence the unit tests mock the subprocess boundary.)
 
 ## Out of scope (future specs)
 
@@ -262,19 +295,25 @@ cannot execute locally). Verification therefore splits:
 ## Files added
 
 ```
+tools/crq_run.py                         (committed — the code orchestrator)
+tests/test_crq_run.py                    (committed — unit tests)
 .github/prompts/install.prompt.md        (committed)
 .github/prompts/setup.prompt.md          (committed)
 .github/prompts/create-skill.prompt.md   (committed)
 crq.config.example.json                  (committed — neutral defaults to copy)
 crq.config.json                          (per-install artifact — gitignored)
+crq_run_state.json                       (per-run artifact — gitignored)
 .github/prompts/crq-run.prompt.md        (generated by /create-skill — gitignored)
 docs/.../<this spec>                      (committed)
 ```
 
 `crq.config.json` holds **no secrets** (only `brand_label` + a bool), but it is a
-**per-install artifact** (brand differs per client), so it is added to
-`.gitignore` along with the generated `crq-run.prompt.md`. A committed
-`crq.config.example.json` documents the shape. Secrets remain solely in `.env`
-(already gitignored).
+**per-install artifact** (brand differs per client), so it — along with the
+generated `crq-run.prompt.md` and the per-run `crq_run_state.json` — is added to
+`.gitignore`. A committed `crq.config.example.json` documents the shape. Secrets
+remain solely in `.env` (already gitignored).
 
-No changes to any file under `tools/`.
+**`tools/` change scope:** adds one new file, `tools/crq_run.py` (the
+orchestrator). The existing tools (`poc_runner.py`, `seerist_collector.py`,
+`rsm_input_builder.py`, validators, renderer) are **unchanged** — `crq_run.py`
+drives them through their existing CLIs.
