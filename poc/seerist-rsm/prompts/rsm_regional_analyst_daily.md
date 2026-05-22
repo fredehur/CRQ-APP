@@ -66,6 +66,22 @@ Each entry has:
 
 Do not read or reference `poi_proximity.json` — it is not part of this PoC.
 
+### Region-guided mode (no org context)
+
+Check the manifest field `org_context_included`. If it is **false**, the run is
+region-guided: the region is the only scoping input. In this mode `poi_alerts`
+is **empty by design** and the manifest `site_registry` is empty. You MUST:
+
+- produce **region-level** claims only — do not name any specific site or
+  facility, and do not emit claims with `geographic_resonance="facility"` or any
+  `site_id`;
+- skip the per-facility "Site exposure" guidance above; instead summarize which
+  countries / sub-areas in the region are most elevated this period from the
+  pulse, risk-rating, and event context.
+
+If `org_context_included` is true (default), follow the per-facility guidance
+above unchanged.
+
 ---
 
 ## Authoritative cyber source — seerist_signals.json › cyber_signals

@@ -38,6 +38,12 @@ REQUIRED_SECTIONS = [
     "APPENDIX",  # matches "APPENDIX — SOURCES" (synthesized by normalize_citations.py)
 ]
 
+# In region-guided mode (manifest org_context_included == False) the brief is
+# company-agnostic: the AEROWIND EXPOSURE section is replaced by a region-level
+# REGIONAL EXPOSURE section.
+ORG_EXPOSURE_SECTION = "AEROWIND EXPOSURE"
+REGION_EXPOSURE_SECTION = "REGIONAL EXPOSURE"
+
 _SITE_ROW_RE = re.compile(
     r"^▪\s+(?P<name>[A-Za-z][\w \-]+?)\s+"
     r"\[(?P<crit>[A-Z][A-Z _]+)\s*·\s*"
@@ -52,8 +58,13 @@ class ValidationError(Exception):
     pass
 
 
-def _check_sections(brief: str) -> None:
+def _check_sections(brief: str, org_context_included: bool = True) -> None:
+    exposure_section = (
+        ORG_EXPOSURE_SECTION if org_context_included else REGION_EXPOSURE_SECTION
+    )
     for header in REQUIRED_SECTIONS:
+        if header == ORG_EXPOSURE_SECTION:
+            header = exposure_section
         if header == "WATCH":
             if "█ WATCH — NEXT 72H" not in brief:
                 raise ValidationError("Missing required section: WATCH — NEXT 72H")
@@ -183,9 +194,10 @@ def main() -> int:
 
     brief = args.brief_md.read_text(encoding="utf-8")
     manifest = json.loads(args.manifest_json.read_text(encoding="utf-8"))
+    org_context_included = manifest.get("org_context_included", True)
 
     try:
-        _check_sections(brief)
+        _check_sections(brief, org_context_included=org_context_included)
         _check_no_reply_taxonomy(brief)
         _check_cyber_section_has_content(brief)
         _check_site_discipline(brief, manifest)

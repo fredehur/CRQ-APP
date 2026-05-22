@@ -70,12 +70,30 @@ def _previous_incidents_per_site(sites: list) -> list:
     return out
 
 
-def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "output") -> dict:
+DEFAULT_BRAND_LABEL = "AEROWIND"
+NO_ORG_BRAND_LABEL = "REGIONAL RISK INTELLIGENCE"
+
+
+def build_rsm_inputs(
+    region: str,
+    cadence: str = "weekly",
+    output_dir: str = "output",
+    include_org_context: bool = True,
+    brand_label: str | None = None,
+) -> dict:
     """Build the input manifest for rsm-formatter-agent.
 
     Args:
         region: APAC | AME | LATAM | MED | NCE
         cadence: daily | weekly | flash
+        include_org_context: when False, run in region-guided mode — the region
+            is the only scoping input. All org grounding (site registry, notable
+            dates, previous incidents, site proximity, audience) is withheld and
+            the org fallbacks are forced on, regardless of which files exist on
+            disk. Used for prospect/demo briefs and isolated signal testing.
+        brand_label: header brand string the formatter must use. Defaults to
+            "AEROWIND" in normal mode and "REGIONAL RISK INTELLIGENCE" in
+            region-guided mode; pass an explicit value to override either.
 
     Raises:
         ValueError: if cadence is not one of VALID_CADENCES
@@ -85,6 +103,9 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
         raise ValueError(
             f"invalid cadence '{cadence}' — must be one of {VALID_CADENCES}"
         )
+
+    if brand_label is None:
+        brand_label = DEFAULT_BRAND_LABEL if include_org_context else NO_ORG_BRAND_LABEL
 
     _PROJECT_ROOT = Path(__file__).parent.parent
     region_lower = region.lower()
@@ -123,6 +144,12 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
         "poi_proximity": str(poi_proximity_path) if poi_proximity_path.exists() else None,
     }
 
+    # Region-guided mode: withhold all org grounding regardless of which files
+    # exist on disk. Forcing these to None makes the existing org fallbacks fire.
+    if not include_org_context:
+        for _org_key in ("aerowind_sites", "audience_config", "poi_proximity"):
+            optional[_org_key] = None
+
     fallback_flags = {k: v is None for k, v in optional.items()}
 
     fallback_instructions: dict = {}
@@ -156,13 +183,20 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
         )
 
     # ── Site registry filtered to this region ────────────────────────────────
-    sites_doc = _load_json(sites_path)
-    region_sites = _filter_sites_to_region(sites_doc, region)
-    notable_dates = _filter_notable_dates(region_sites)
-    previous_incidents = _previous_incidents_per_site(region_sites)
-
-    # ── poi_proximity inline (if present) ────────────────────────────────────
-    poi_proximity = _load_json(poi_proximity_path) if poi_proximity_path.exists() else None
+    # Region-guided mode withholds the registry entirely — the region is the
+    # only scoping input.
+    if include_org_context:
+        sites_doc = _load_json(sites_path)
+        region_sites = _filter_sites_to_region(sites_doc, region)
+        notable_dates = _filter_notable_dates(region_sites)
+        previous_incidents = _previous_incidents_per_site(region_sites)
+        # ── poi_proximity inline (if present) ────────────────────────────────
+        poi_proximity = _load_json(poi_proximity_path) if poi_proximity_path.exists() else None
+    else:
+        region_sites = []
+        notable_dates = []
+        previous_incidents = []
+        poi_proximity = None
 
     # ── cyber watchlist (global, non-region-specific) ────────────────────────
     cyber_watchlist = _load_json(WATCHLIST_FILE)
@@ -191,6 +225,8 @@ def build_rsm_inputs(region: str, cadence: str = "weekly", output_dir: str = "ou
     return {
         "region": region.upper(),
         "cadence": cadence,
+        "org_context_included": include_org_context,
+        "brand_label": brand_label,
         "required": required,
         "optional": optional,
         "fallback_flags": fallback_flags,
@@ -210,6 +246,15 @@ def manifest_summary(manifest: dict) -> str:
     lines = [
         f"RSM INPUT MANIFEST — {manifest['region']} — CADENCE: {manifest['cadence'].upper()}"
     ]
+
+    if not manifest.get("org_context_included", True):
+        region = manifest["region"]
+        lines.append(
+            f"\nREGION-GUIDED MODE — no org context. The brief covers the {region} "
+            "regional risk landscape only. Do NOT name specific sites, facilities, "
+            "or personnel. Use the REGIONAL EXPOSURE section for region-level "
+            f"exposure. Header band brand: {manifest.get('brand_label', '')}."
+        )
 
     lines.append("\nRequired inputs (all present):")
     for k, v in manifest["required"].items():
@@ -288,7 +333,17 @@ def manifest_summary(manifest: dict) -> str:
 
 if __name__ == "__main__":
     import sys
-    region = sys.argv[1] if len(sys.argv) > 1 else "APAC"
-    cadence = sys.argv[2] if len(sys.argv) > 2 else "weekly"
-    manifest = build_rsm_inputs(region, cadence=cadence)
+    # The summary contains Unicode glyphs (— → ▪); make stdout robust on
+    # Windows consoles defaulting to cp1252 so the CLI never crashes on encode.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[attr-defined]
+    except Exception:
+        pass
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    region = args[0] if len(args) > 0 else "APAC"
+    cadence = args[1] if len(args) > 1 else "weekly"
+    include_org_context = "--no-org-context" not in sys.argv[1:]
+    manifest = build_rsm_inputs(
+        region, cadence=cadence, include_org_context=include_org_context
+    )
     print(manifest_summary(manifest))

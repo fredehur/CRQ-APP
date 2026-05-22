@@ -251,7 +251,7 @@ def _collect_cyber_signals(
     return all_signals, summary
 
 
-def _mock_collect(region: str, window_days: int) -> dict:
+def _mock_collect(region: str, window_days: int, no_org_context: bool = False) -> dict:
     """Read mock fixture, stamp metadata."""
     fixture = FIXTURES_DIR / f"{region.lower()}_seerist.json"
     if not fixture.exists():
@@ -259,6 +259,11 @@ def _mock_collect(region: str, window_days: int) -> dict:
     data = json.loads(fixture.read_text(encoding="utf-8"))
     data["collected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     data["collection_window"] = {"days": window_days}
+
+    # Region-guided mode: the fixture ships baked-in facility-keyed poi_alerts
+    # (with real site names). Strip them so no org context reaches downstream.
+    if no_org_context:
+        data["poi_alerts"] = []
 
     threat_actor_context = _load_threat_actor_context()
     data.setdefault("analytical", {})["threat_actor_context"] = threat_actor_context
@@ -276,21 +281,24 @@ def _mock_collect(region: str, window_days: int) -> dict:
     return data
 
 
-def _live_collect(region: str, window_days: int) -> dict:
+def _live_collect(region: str, window_days: int, no_org_context: bool = False) -> dict:
     """Call Seerist API for all Tier 1 data types."""
     from tools.seerist_client import SeeristClient, REGION_COUNTRIES
 
     client = SeeristClient.create()
     if client is None:
         print("[seerist_collector] No SEERIST_API_KEY — falling back to mock", file=sys.stderr)
-        return _mock_collect(region, window_days)
+        return _mock_collect(region, window_days, no_org_context=no_org_context)
 
     countries = REGION_COUNTRIES.get(region, [])[:3]
     now = datetime.now(timezone.utc)
 
-    # Load facility coords for POI search — group events by nearest facility
+    # Load facility coords for POI search — group events by nearest facility.
+    # Region-guided mode skips this entirely: no facility coordinates are read
+    # and poi_alerts stays empty, so the region is the only scoping input.
     poi_alerts = []
-    try:
+    if not no_org_context:
+      try:
         sites_doc = json.loads(Path("data/aerowind_sites.json").read_text(encoding="utf-8"))
         facilities = [s for s in sites_doc.get("sites", []) if s["region"] == region]
         if facilities:
@@ -326,7 +334,7 @@ def _live_collect(region: str, window_days: int) -> dict:
                     "matching_events": fac_events,
                     "nearest_event_km": round(nearest_km, 2) if nearest_km != float("inf") else None,
                 })
-    except Exception as e:
+      except Exception as e:
         print(f"[seerist_collector] POI search error: {e}", file=sys.stderr)
 
     # Fetch last_run_timestamp for delta collection
@@ -396,13 +404,27 @@ def _live_collect(region: str, window_days: int) -> dict:
     return result
 
 
-def collect(region: str, mock: bool = True, window_days: int = 7) -> dict:
-    """Collect Seerist intelligence for a region."""
+def collect(
+    region: str,
+    mock: bool = True,
+    window_days: int = 7,
+    no_org_context: bool = False,
+) -> dict:
+    """Collect Seerist intelligence for a region.
+
+    no_org_context: region-guided mode — skip the facility-keyed POI search
+    (live) / strip baked-in poi_alerts (mock) so the region is the only scoping
+    input and no org site names reach downstream consumers.
+    """
     region = region.upper()
     if region not in VALID_REGIONS:
         raise ValueError(f"invalid region '{region}' — must be one of {VALID_REGIONS}")
 
-    data = _mock_collect(region, window_days) if mock else _live_collect(region, window_days)
+    data = (
+        _mock_collect(region, window_days, no_org_context=no_org_context)
+        if mock
+        else _live_collect(region, window_days, no_org_context=no_org_context)
+    )
 
     out_dir = OUTPUT_ROOT / "regional" / region.lower()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -415,11 +437,12 @@ def collect(region: str, mock: bool = True, window_days: int = 7) -> dict:
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage: seerist_collector.py REGION [--mock] [--window 7d]", file=sys.stderr)
+        print("Usage: seerist_collector.py REGION [--mock] [--window 7d] [--no-org-context]", file=sys.stderr)
         sys.exit(1)
 
     region = args[0].upper()
     mock = "--mock" in args or not os.environ.get("SEERIST_API_KEY")
+    no_org_context = "--no-org-context" in args
 
     window_days = 7
     if "--window" in args:
@@ -432,7 +455,7 @@ def main():
                 pass
 
     try:
-        collect(region, mock=mock, window_days=window_days)
+        collect(region, mock=mock, window_days=window_days, no_org_context=no_org_context)
     except (ValueError, FileNotFoundError) as e:
         print(f"[seerist_collector] {e}", file=sys.stderr)
         sys.exit(1)

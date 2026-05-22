@@ -55,8 +55,22 @@ def _run(cmd: list[str]) -> None:
         raise SystemExit(f"[poc_runner] command failed: {' '.join(cmd)} (exit {result.returncode})")
 
 
-def phase_collect(region: str, date_iso: str, *, window_days: int, require_live: bool) -> None:
-    """Phase A: collect, compute POI, build manifest, write analyst_request.md."""
+def phase_collect(
+    region: str,
+    date_iso: str,
+    *,
+    window_days: int,
+    require_live: bool,
+    no_org_context: bool = False,
+    brand: str | None = None,
+) -> None:
+    """Phase A: collect, compute POI, build manifest, write analyst_request.md.
+
+    no_org_context: region-guided mode — collect region-wide signals only (no
+    facility POI), skip the site-proximity step, and build a manifest with no
+    org grounding. brand: header brand label override (defaults handled by the
+    input builder per mode).
+    """
     day = _day_dir(region, date_iso)
     print(
         f"[poc_runner] PHASE A — collect for {region} / {date_iso} (window={window_days}d)",
@@ -73,17 +87,22 @@ def phase_collect(region: str, date_iso: str, *, window_days: int, require_live:
         )
 
     # 1. Seerist collect (window configurable: --window 1 daily, --window 7 for Day 0 variety)
-    _run([sys.executable, "tools/seerist_collector.py", region, "--window", str(window_days)])
+    collect_cmd = [sys.executable, "tools/seerist_collector.py", region, "--window", str(window_days)]
+    if no_org_context:
+        collect_cmd.append("--no-org-context")
+    _run(collect_cmd)
     canonical = OUTPUT_ROOT / "regional" / region.lower() / "seerist_signals.json"
     if not canonical.exists():
         raise SystemExit(f"[poc_runner] expected {canonical} after collect")
     shutil.copy2(canonical, day / "seerist_signals.json")
 
-    # 2. POI proximity (downstream tool)
-    _run([sys.executable, "tools/poi_proximity.py", region])
-    poi_canonical = OUTPUT_ROOT / "regional" / region.lower() / "poi_proximity.json"
-    if poi_canonical.exists():
-        shutil.copy2(poi_canonical, day / "poi_proximity.json")
+    # 2. POI proximity (downstream tool) — site-keyed, so skipped in
+    #    region-guided mode where there is no org footprint to join against.
+    if not no_org_context:
+        _run([sys.executable, "tools/poi_proximity.py", region])
+        poi_canonical = OUTPUT_ROOT / "regional" / region.lower() / "poi_proximity.json"
+        if poi_canonical.exists():
+            shutil.copy2(poi_canonical, day / "poi_proximity.json")
 
     # 3. Build the manifest (reads aerowind_sites.json + optional signals)
     sys.path.insert(0, str(REPO_ROOT))
@@ -95,7 +114,12 @@ def phase_collect(region: str, date_iso: str, *, window_days: int, require_live:
         _stub_path = _regional_dir / _stub_name
         if not _stub_path.exists():
             _stub_path.write_text("{}", encoding="utf-8")
-    manifest = build_rsm_inputs(region, cadence="daily")
+    manifest = build_rsm_inputs(
+        region,
+        cadence="daily",
+        include_org_context=not no_org_context,
+        brand_label=brand,
+    )
     manifest_path = day / "_rsm_manifest_daily.json"
     manifest_path.write_text(
         json.dumps(manifest, indent=2, default=str),
@@ -247,7 +271,12 @@ def phase_render(region: str, date_iso: str) -> None:
 
     # 3. Render HTML
     html_path = day / "email.html"
-    subject = f"AEROWIND // {region} Daily Intelligence — {date_iso}"
+    # Brand the subject from the manifest (region-guided runs use a neutral brand).
+    try:
+        _brand = json.loads(manifest_path.read_text(encoding="utf-8")).get("brand_label") or "AEROWIND"
+    except Exception:
+        _brand = "AEROWIND"
+    subject = f"{_brand} // {region} Daily Intelligence — {date_iso}"
     _run([
         sys.executable, "tools/render_brief_html.py",
         str(brief_path), str(manifest_path),
@@ -293,6 +322,16 @@ def main() -> int:
         "--require-live", action="store_true",
         help="Fail if SEERIST_API_KEY is absent (prevents silent mock fallback)",
     )
+    p.add_argument(
+        "--no-org-context", action="store_true", dest="no_org_context",
+        help="Region-guided mode: region is the only scoping input. No sites, "
+             "facilities, personnel, or footprint. Produces a company-agnostic brief.",
+    )
+    p.add_argument(
+        "--brand", default=None,
+        help="Header brand label override (default: AEROWIND, or a neutral label "
+             "in --no-org-context mode)",
+    )
     args = p.parse_args()
 
     if not (args.collect or args.prep_format or args.render):
@@ -303,6 +342,8 @@ def main() -> int:
             args.region, args.date_iso,
             window_days=args.window,
             require_live=args.require_live,
+            no_org_context=args.no_org_context,
+            brand=args.brand,
         )
     if args.prep_format:
         phase_prep_format(args.region, args.date_iso)

@@ -19,7 +19,9 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATE_DIR = REPO_ROOT / "tools" / "briefs" / "templates"
 TEMPLATE_NAME = "rsm_email.html.j2"
 
-_HEADER_RE = re.compile(r"^AEROWIND // (\S+) DAILY // (\S+)\s*$")
+# Brand is parameterized: capture it so region-guided / neutrally-branded briefs
+# render. Group order: brand, region, date_z.
+_HEADER_RE = re.compile(r"^(?P<brand>.+?) // (?P<region>\S+) DAILY // (?P<date>\S+)\s*$")
 _STAT_RE = re.compile(
     r"^PULSE:\s*(.+?)\s*\|\s*ADM:\s*(.+?)\s*\|\s*NEW:\s*"
     r"(\d+)\s*EVT.*?(\d+)\s*HOT.*?(\d+)\s*CYB\s*$"
@@ -219,15 +221,16 @@ def _parse_brief(text: str) -> dict:
         sections.append(current)
 
     if header_match is None or stat_match is None:
-        raise ValueError("Brief is missing AEROWIND header band or PULSE stat strip.")
+        raise ValueError("Brief is missing the '<BRAND> // <REGION> DAILY // <date>' header band or PULSE stat strip.")
 
     for s in sections:
         s["body"] = "\n".join(s["body_lines"]).strip()
         del s["body_lines"]
 
     return {
-        "region": header_match.group(1),
-        "date_z": header_match.group(2),
+        "brand": header_match.group("brand"),
+        "region": header_match.group("region"),
+        "date_z": header_match.group("date"),
         "pulse_summary": stat_match.group(1),
         "admiralty": stat_match.group(2),
         "n_events": stat_match.group(3),
@@ -266,6 +269,7 @@ def render(brief_md: Path, manifest_json: Path, *, subject: str) -> str:
     # markup we authored). All user-supplied text fields are manually escaped
     # here BEFORE template render. The template's `white-space: pre-wrap`
     # preserves the tree-glyph layout (├─ └─ ▪) in the rendered output.
+    parsed["brand"] = escape(parsed["brand"])
     parsed["pulse_summary"] = escape(parsed["pulse_summary"])
     parsed["admiralty"] = escape(parsed["admiralty"])
     for s in parsed["sections"]:

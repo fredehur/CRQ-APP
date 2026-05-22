@@ -33,13 +33,40 @@ do not put it in the brief — that is the hallucination guard.
 
 ---
 
+## Mode: region-guided (no org context)
+
+Check the manifest field `org_context_included`.
+
+- If **true** (default): format the brief exactly as specified below, grounding
+  the exposure section in the manifest `site_registry`. Use the brand
+  `manifest.brand_label` (normally `AEROWIND`) in the header band.
+- If **false** (region-guided mode): the brief is **company-agnostic** — the
+  region is the only scoping input. You MUST NOT name any specific site,
+  facility, or personnel count, and the manifest `site_registry` is empty by
+  design. Two changes to the output shape below:
+  1. Use `manifest.brand_label` (a neutral label such as
+     `REGIONAL RISK INTELLIGENCE`) in the header band, not `AEROWIND`.
+  2. Rename the `█ AEROWIND EXPOSURE` section to `█ REGIONAL EXPOSURE` and fill
+     it with a **region-level** exposure read (which countries / sub-areas in
+     the region are most elevated this period, drawn from the analyst's
+     pulse / risk-rating context) — prose only, with **no `▪` site rows**.
+  Every other section is unchanged.
+
+  Write the brief as a finished product. Do NOT add meta-commentary about the
+  mode itself — no phrases like "no organisation-specific exposure assessed",
+  "region-level read only", "in this mode", or "no org context". The reader
+  should not be able to tell a mode toggle exists; the brief simply reads as a
+  regional risk product.
+
+---
+
 ## Required output shape
 
 Write a single markdown file conforming exactly to this structure. Field tokens
 in curly braces must be replaced with real values from the inputs.
 
 ```
-AEROWIND // MED DAILY // {date}Z
+{brand_label} // MED DAILY // {date}Z
 PULSE: {pulse} | ADM: {admiralty} | NEW: {n_events} EVT · {n_hotspots} HOT · {n_cyber} CYB
 
 █ SITUATION
@@ -47,11 +74,16 @@ PULSE: {pulse} | ADM: {admiralty} | NEW: {n_events} EVT · {n_hotspots} HOT · {
 claims.json "primary_scenario". If no events: state it plainly.}
 
 █ AEROWIND EXPOSURE
-{One block per registered site in the manifest site_registry. Sites with
-matching events inside radius get a structured block (see format below). Sites
-with zero events inside radius get a single "No new events" line.
-Cyber claims with geographic_resonance="facility" also render here as sub-rows
-under their site block — see AEROWIND EXPOSURE block format section.}
+{Org-context mode (org_context_included=true): one block per registered site in
+the manifest site_registry. Sites with matching events inside radius get a
+structured block (see format below). Sites with zero events inside radius get a
+single "No new events" line. Cyber claims with geographic_resonance="facility"
+also render here as sub-rows under their site block — see AEROWIND EXPOSURE
+block format section.
+
+Region-guided mode (org_context_included=false): rename this header to
+"█ REGIONAL EXPOSURE" and write a region-level exposure read (prose only, no
+site rows) — see the "Mode: region-guided" section above.}
 
 █ PHYSICAL & GEOPOLITICAL — LAST 24H
 {Severity-labeled event bullets sourced from claims.json bullets[].section=="intel".
