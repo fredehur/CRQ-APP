@@ -11,6 +11,7 @@ political, disaster. Distinct from cyber pillar handled by osint_collector.py.
 """
 import json
 import os
+import re as _re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,6 +35,148 @@ VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_ROOT = REPO_ROOT / "output"
 FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
+
+REGION_QUERY_TERMS = {
+    "MED": "Mediterranean (Italy, Spain, Greece, Turkey, Morocco, Egypt)",
+    "APAC": "Asia-Pacific",
+    "AME": "Africa and Middle East",
+    "LATAM": "Latin America",
+    "NCE": "Northern and Central Europe",
+}
+_OSINT_TOPICS = [
+    "unrest protest",
+    "armed conflict terrorism",
+    "maritime shipping disruption",
+    "natural disaster",
+]
+
+
+def _geo_terms(region: str) -> str:
+    return REGION_QUERY_TERMS.get(region.upper(), region)
+
+
+def _build_queries(region: str) -> list[str]:
+    geo = _geo_terms(region)
+    return [f"{geo} {topic} 2026" for topic in _OSINT_TOPICS]
+
+
+def _truncate(text: str | None, max_chars: int = 3000) -> str:
+    """Middle-truncate scraped content so the enrichment LLM call cannot blow
+    past context/cost. Mirrors firecrawl_scraper._truncate in the parent repo."""
+    if not text:
+        return ""
+    if len(text) <= max_chars:
+        return text
+    half = max_chars // 2
+    return text[:half] + "\n…[truncated]…\n" + text[-half:]
+
+
+def _load_seerist_events(region: str, output_root: Path | None = None) -> tuple[list[dict], bool]:
+    """Return (events, seerist_unavailable). events is a compact list for the
+    enrichment prompt's corroboration step. Absent file → ([], True)."""
+    root = output_root or OUTPUT_ROOT
+    path = root / "regional" / region.lower() / "seerist_signals.json"
+    if not path.exists():
+        return [], True
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return [], True
+    events = [
+        {
+            "signal_id": e.get("signal_id", ""),
+            "title": e.get("title", ""),
+            "category": e.get("category", ""),
+        }
+        for e in doc.get("situational", {}).get("events", [])
+    ]
+    return events, False
+
+
+def _apply_enrichment(region: str, scraped: list[dict], verdicts: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Split scraped items into kept signals (relevant) and dropped items, using
+    the LLM verdicts (keyed by index). Re-numbers kept signal_ids 001..N."""
+    by_index = {v.get("index"): v for v in verdicts}
+    signals: list[dict] = []
+    dropped: list[dict] = []
+    seq = 0
+    for i, item in enumerate(scraped):
+        v = by_index.get(i, {"relevant": False, "relevance_reason": "no enrichment verdict"})
+        if not v.get("relevant"):
+            dropped.append({
+                "title": item.get("title", ""),
+                "url": item.get("url", ""),
+                "relevance_reason": v.get("relevance_reason", ""),
+            })
+            continue
+        seq += 1
+        signals.append({
+            "signal_id": f"osint:physical:{region.lower()}-{seq:03d}",
+            "title": item.get("title", ""),
+            "url": item.get("url", ""),
+            "outlet": item.get("source", ""),
+            "published_at": item.get("published_date", ""),
+            "content_excerpt": item.get("content", ""),
+            "summary": v.get("summary", ""),
+            "corroborates_event": v.get("corroborates_event"),
+            "pillar": "physical",
+            "category": "physical",
+        })
+    return signals, dropped
+
+
+def _call_llm(prompt: str, model: str = "claude-haiku-4-5-20251001", max_tokens: int = 2048) -> dict:
+    """One Anthropic call; strip markdown fences; parse JSON. Mirrors the parent
+    osint_collector._call_llm. Raises ValueError on non-JSON."""
+    import anthropic
+
+    client = anthropic.Anthropic()
+    resp = client.messages.create(
+        model=model,
+        max_tokens=max_tokens,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    text = resp.content[0].text.strip()
+    text = _re.sub(r"^```(?:json)?\s*|\s*```$", "", text, flags=_re.MULTILINE).strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"enrichment LLM returned non-JSON: {text[:200]!r}") from exc
+
+
+def _enrich(region: str, scraped: list[dict], seerist_events: list[dict]) -> list[dict]:
+    """Build the enrichment prompt (truncated items + seerist events) and return
+    the per-item verdicts list."""
+    items_txt = "\n\n".join(
+        f"[{i}] {it.get('title', '')} ({it.get('url', '')})\n{it.get('content', '')[:1500]}"
+        for i, it in enumerate(scraped)
+    ) or "(no items)"
+    ev_txt = "\n".join(
+        f"- {e['signal_id']}: {e['title']} ({e['category']})" for e in (seerist_events or [])
+    ) or "(none available)"
+    geo = _geo_terms(region)
+    prompt = f"""You are filtering OSINT physical-risk search results for the {region} region ({geo}).
+
+SEERIST EVENTS TODAY (for corroboration):
+{ev_txt}
+
+OSINT ITEMS (index, title, url, content excerpt):
+{items_txt}
+
+For EACH item, decide if it is genuinely relevant to {region} PHYSICAL risk
+(unrest, armed conflict/terrorism, maritime/shipping disruption, natural
+disaster affecting the region). Drop items that are off-region or off-topic
+(e.g. US-domestic, healthcare/Medicare, generic explainers).
+
+Return ONLY JSON (no markdown fences):
+{{"items": [
+  {{"index": <int>, "relevant": <bool>, "relevance_reason": "<short>",
+    "summary": "<1-2 sentence factual summary of the item body>",
+    "corroborates_event": "<a SEERIST signal_id from the list above that this item supports, or null>"}}
+]}}
+Include one object per OSINT item index. summary/corroborates_event may be omitted when relevant is false."""
+    result = _call_llm(prompt)
+    return result.get("items", [])
 
 
 def _mock_collect(region: str) -> dict:
@@ -100,24 +243,10 @@ def _firecrawl_extract(url: str) -> dict | None:
 
 
 def _live_collect(region: str) -> dict:
-    """Tavily search + Firecrawl deep extraction for physical-pillar signals.
-
-    Region-keyed queries (no site/org context), so this is safe in both
-    org-grounded and region-guided runs. The key guard lives in collect().
-
-    Tavily errors propagate (an auth/SDK failure fails the run loudly rather than
-    silently producing an empty brief). Per-URL Firecrawl failures are tolerated
-    — one unscrapable page should not abort the whole collection.
-    """
-    queries = [
-        f"{region} unrest protest 2026",
-        f"{region} terrorism attack 2026",
-        f"{region} maritime shipping disruption 2026",
-        f"{region} natural disaster 2026",
-    ]
-
-    raw_signals = []
-    for q in queries:
+    """Search (geo queries) -> scrape (truncated excerpt) -> Haiku enrichment.
+    Region-keyed, safe in both org-grounded and region-guided runs."""
+    scraped: list[dict] = []
+    for q in _build_queries(region):
         hits = _tavily_search(q, max_results=5)
         for hit in hits:
             try:
@@ -127,29 +256,39 @@ def _live_collect(region: str) -> dict:
                 continue
             if not extracted:
                 continue
-            raw_signals.append({
-                "signal_id": f"osint:physical:{region.lower()}-{len(raw_signals) + 1:03d}",
+            scraped.append({
                 "title": hit.get("title", ""),
-                "category": "physical",
-                "pillar": "physical",
-                "severity": 0,
-                "location": extracted.get("location") or {},
                 "url": hit.get("url", ""),
-                "outlet": hit.get("source", ""),
-                "source_count": 1,
-                "published_at": hit.get("published_date", ""),
+                "source": hit.get("source", ""),
+                "published_date": hit.get("published_date", ""),
+                "content": _truncate(extracted.get("content", "")),
+                "location": extracted.get("location") or {},
             })
+
+    seerist_events, seerist_unavailable = _load_seerist_events(region)
+    verdicts = _enrich(region, scraped, seerist_events) if scraped else []
+    signals, dropped = _apply_enrichment(region, scraped, verdicts)
+
+    # dropped-items audit trail (so over-aggressive filtering is visible)
+    out_dir = OUTPUT_ROOT / "regional" / region.lower()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "osint_dropped.json").write_text(
+        json.dumps({"region": region, "dropped": dropped}, indent=2, ensure_ascii=False),
+        encoding="utf-8",
+    )
 
     return {
         "region": region,
         "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "pillar": "physical",
-        "signals": raw_signals,
-        "source_provenance": "tavily+firecrawl",
+        "seerist_unavailable": seerist_unavailable,
+        "dropped_count": len(dropped),
+        "signals": signals,
+        "source_provenance": "tavily+firecrawl+haiku",
     }
 
 
-REQUIRED_LIVE_KEYS = ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
+REQUIRED_LIVE_KEYS = ("TAVILY_API_KEY", "FIRECRAWL_API_KEY", "ANTHROPIC_API_KEY")
 
 
 def collect(region: str, mock: bool = True, require_live: bool = False) -> dict:

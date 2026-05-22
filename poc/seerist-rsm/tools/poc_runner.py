@@ -112,7 +112,7 @@ def phase_collect(
     osint_canonical = OUTPUT_ROOT / "regional" / region.lower() / "osint_physical_signals.json"
     if osint:
         if require_live:
-            _missing = [k for k in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY") if not os.environ.get(k)]
+            _missing = [k for k in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY", "ANTHROPIC_API_KEY") if not os.environ.get(k)]
             if _missing:
                 raise SystemExit(
                     f"[poc_runner] --osint requires {', '.join(_missing)} in .env. "

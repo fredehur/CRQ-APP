@@ -198,6 +198,9 @@ def build_rsm_inputs(
         previous_incidents = []
         poi_proximity = None
 
+    # ── OSINT physical inline (if present) ───────────────────────────────────
+    osint_physical = _load_json(osint_physical_path) if osint_physical_path.exists() else None
+
     # ── cyber watchlist (global, non-region-specific) ────────────────────────
     cyber_watchlist = _load_json(WATCHLIST_FILE)
 
@@ -237,6 +240,7 @@ def build_rsm_inputs(
         "notable_dates": notable_dates,
         "previous_incidents": previous_incidents,
         "poi_proximity": poi_proximity,
+        "osint_physical": osint_physical,
         "cyber_watchlist": cyber_watchlist,
     }
 
@@ -297,6 +301,15 @@ def manifest_summary(manifest: dict) -> str:
         lines.append(
             f"\nPOI proximity: {n_within} event(s) within site radii, "
             f"{n_cascades} cascade(s)"
+        )
+
+    op = manifest.get("osint_physical")
+    if isinstance(op, dict):
+        sigs = op.get("signals", []) or []
+        corr = sum(1 for s in sigs if s.get("corroborates_event"))
+        lines.append(
+            f"\nOSINT physical: {len(sigs)} signal(s) "
+            f"({corr} corroborating Seerist; {op.get('dropped_count', 0)} dropped)"
         )
 
     bh = manifest.get("brief_headlines", {})

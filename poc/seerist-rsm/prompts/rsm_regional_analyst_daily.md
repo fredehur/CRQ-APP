@@ -21,6 +21,7 @@ path given.
 | SIGNALS_PATH  | file path   | `seerist_signals.json` — today's full Seerist payload, including `poi_alerts` |
 | CLAIMS_PATH   | file path   | Where to write `claims.json` (your structured output)    |
 | REPORT_PATH   | file path   | Where to write `analyst_report.md` (your narrative output) |
+| OSINT (in manifest) | inlined | MANIFEST_PATH → `osint_physical` — enriched web/news signals: each has `signal_id`, `summary`, `corroborates_event` (a Seerist signal_id or null) |
 
 Within SIGNALS_PATH, the following top-level keys feed the cyber pillar:
 
@@ -81,6 +82,25 @@ is **empty by design** and the manifest `site_registry` is empty. You MUST:
 
 If `org_context_included` is true (default), follow the per-facility guidance
 above unchanged.
+
+---
+
+## OSINT physical pillar — manifest `osint_physical`
+
+When the manifest has `osint_physical.signals`, use them (already noise-filtered
+and summarized — read `summary`, not the raw page):
+
+- **Macro / strategic context** — fold region-wide items (e.g. shipping/maritime
+  disruption) into SITUATION and PHYSICAL & GEOPOLITICAL.
+- **Corroboration** — if an item has `corroborates_event` set, you MAY cite it
+  alongside that Seerist event and raise confidence/Admiralty accordingly.
+- **Early warning** — route genuinely emerging items to the EARLY WARNING pillar.
+
+Cite OSINT items by their `signal_id` (e.g. `osint:physical:med-001`) in a
+claim's `signal_ids` — they flow into the APPENDIX like Seerist signals. YOU
+assign severity and decide the section; the collector does not. If
+`osint_physical.seerist_unavailable` is true, corroboration was not attempted —
+do not infer absence of overlap.
 
 ---
 
