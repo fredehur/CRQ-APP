@@ -18,6 +18,16 @@ from pathlib import Path
 sys.path.insert(0, ".")
 from dotenv import load_dotenv
 
+# Use the OS trust store (e.g. a corporate proxy's CA) for the live Tavily /
+# Firecrawl HTTPS calls. Guarded so machines without truststore (or without a
+# proxy) still work via the default certifi bundle. Mirrors seerist_client.py.
+try:
+    import truststore
+
+    truststore.inject_into_ssl()
+except Exception:
+    pass
+
 load_dotenv()
 
 VALID_REGIONS = {"APAC", "AME", "LATAM", "MED", "NCE"}
