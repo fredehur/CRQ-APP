@@ -24,7 +24,7 @@ def test_require_live_passes_when_keys_present_then_uses_live(tmp_path, monkeypa
     monkeypatch.setenv("FIRECRAWL_API_KEY", "y")
     monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path / "output")
     # stub the live collector so no real HTTP happens
-    monkeypatch.setattr(opc, "_live_collect", lambda region: {"region": region, "pillar": "physical", "signals": []})
+    monkeypatch.setattr(opc, "_live_collect", lambda region, enrich_api=False: {"region": region, "pillar": "physical", "signals": []})
     result = opc.collect("MED", require_live=True)
     assert result["pillar"] == "physical"
     out = tmp_path / "output" / "regional" / "med" / "osint_physical_signals.json"

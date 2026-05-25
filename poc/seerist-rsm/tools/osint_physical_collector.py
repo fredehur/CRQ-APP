@@ -242,9 +242,8 @@ def _firecrawl_extract(url: str) -> dict | None:
     return {"content": markdown, "location": location}
 
 
-def _live_collect(region: str) -> dict:
-    """Search (geo queries) -> scrape (truncated excerpt) -> Haiku enrichment.
-    Region-keyed, safe in both org-grounded and region-guided runs."""
+def _collect_raw(region: str) -> list[dict]:
+    """Search (geo queries) -> scrape (truncated excerpt). Returns raw signal dicts."""
     scraped: list[dict] = []
     for q in _build_queries(region):
         hits = _tavily_search(q, max_results=5)
@@ -264,7 +263,43 @@ def _live_collect(region: str) -> dict:
                 "content": _truncate(extracted.get("content", "")),
                 "location": extracted.get("location") or {},
             })
+    signals = []
+    for i, item in enumerate(scraped, start=1):
+        signals.append({
+            "signal_id": f"osint:physical:{region.lower()}-{i:03d}",
+            "title": item["title"],
+            "url": item["url"],
+            "outlet": item["source"],
+            "published_at": item["published_date"],
+            "content_excerpt": item["content"],
+            "pillar": "physical",
+            "category": "physical",
+        })
+    return signals
 
+
+def _live_collect(region: str, enrich_api: bool = False) -> dict:
+    """Default: RAW signals (no LLM). enrich_api=True: in-process Haiku enrichment
+    (optional/headless path); the normal flow enriches via the Copilot agent."""
+    base = {
+        "region": region,
+        "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "pillar": "physical",
+        "source_provenance": "tavily+firecrawl",
+    }
+    if not enrich_api:
+        base["signals"] = _collect_raw(region)
+        return base
+
+    # Optional in-process enrichment (kept for headless/CI use).
+    # Rebuild scraped items with the same shape _enrich/_apply_enrichment expect.
+    scraped = [
+        {
+            "title": s["title"], "url": s["url"], "source": s["outlet"],
+            "published_date": s["published_at"], "content": s["content_excerpt"],
+        }
+        for s in _collect_raw(region)
+    ]
     seerist_events, seerist_unavailable = _load_seerist_events(region)
     verdicts = _enrich(region, scraped, seerist_events) if scraped else []
     signals, dropped = _apply_enrichment(region, scraped, verdicts)
@@ -276,30 +311,30 @@ def _live_collect(region: str) -> dict:
         json.dumps({"region": region, "dropped": dropped}, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
-
-    return {
-        "region": region,
-        "collected_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "pillar": "physical",
+    base.update({
         "seerist_unavailable": seerist_unavailable,
         "dropped_count": len(dropped),
         "signals": signals,
         "source_provenance": "tavily+firecrawl+haiku",
-    }
+    })
+    return base
 
 
-REQUIRED_LIVE_KEYS = ("TAVILY_API_KEY", "FIRECRAWL_API_KEY", "ANTHROPIC_API_KEY")
+REQUIRED_LIVE_KEYS = ("TAVILY_API_KEY", "FIRECRAWL_API_KEY")
+ENRICH_API_KEYS = ("ANTHROPIC_API_KEY",)
 
 
-def collect(region: str, mock: bool = True, require_live: bool = False) -> dict:
+def collect(region: str, mock: bool = True, require_live: bool = False, enrich_api: bool = False) -> dict:
     region = region.upper()
     if region not in VALID_REGIONS:
         raise ValueError(f"invalid region '{region}' — must be one of {VALID_REGIONS}")
 
     # Live-only guard: if OSINT is requested live, fail loudly when the keys are
-    # absent rather than silently falling back to mock fixtures.
+    # absent rather than silently falling back to mock fixtures. ANTHROPIC is only
+    # required on the optional --enrich-api path.
     if require_live:
-        missing = [k for k in REQUIRED_LIVE_KEYS if not os.environ.get(k)]
+        needed = REQUIRED_LIVE_KEYS + (ENRICH_API_KEYS if enrich_api else ())
+        missing = [k for k in needed if not os.environ.get(k)]
         if missing:
             raise ValueError(
                 f"OSINT requested live but missing key(s): {', '.join(missing)}. "
@@ -307,7 +342,7 @@ def collect(region: str, mock: bool = True, require_live: bool = False) -> dict:
             )
         mock = False
 
-    data = _mock_collect(region) if mock else _live_collect(region)
+    data = _mock_collect(region) if mock else _live_collect(region, enrich_api=enrich_api)
 
     out_dir = OUTPUT_ROOT / "regional" / region.lower()
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -320,16 +355,17 @@ def collect(region: str, mock: bool = True, require_live: bool = False) -> dict:
 def main():
     args = sys.argv[1:]
     if not args:
-        print("Usage: osint_physical_collector.py REGION [--mock] [--require-live]", file=sys.stderr)
+        print("Usage: osint_physical_collector.py REGION [--mock] [--require-live] [--enrich-api]", file=sys.stderr)
         sys.exit(1)
     region = args[0].upper()
     require_live = "--require-live" in args
+    enrich_api = "--enrich-api" in args
     if require_live:
         mock = False  # collect() guards the keys and fails loudly if absent
     else:
         mock = "--mock" in args or not os.environ.get("TAVILY_API_KEY")
     try:
-        collect(region, mock=mock, require_live=require_live)
+        collect(region, mock=mock, require_live=require_live, enrich_api=enrich_api)
     except (ValueError, FileNotFoundError) as e:
         print(f"[osint_physical] {e}", file=sys.stderr)
         sys.exit(1)

@@ -170,7 +170,8 @@ def test_live_collect_chains_search_scrape_enrich(tmp_path, monkeypatch):
         {"index": i, "relevant": (i == 0), "relevance_reason": "r", "summary": "Hormuz reroute.", "corroborates_event": None}
         for i in range(len(scraped))
     ])
-    data = opc._live_collect("MED")
+    # rev-2: must pass enrich_api=True to exercise the enriched path
+    data = opc._live_collect("MED", enrich_api=True)
     assert data["pillar"] == "physical"
     assert data["seerist_unavailable"] is False
     assert len(data["signals"]) >= 1
@@ -188,7 +189,42 @@ def test_collect_require_live_needs_anthropic(tmp_path, monkeypatch):
     monkeypatch.setenv("FIRECRAWL_API_KEY", "f")
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
-        opc.collect("MED", require_live=True)
+        opc.collect("MED", require_live=True, enrich_api=True)
+
+
+def test_live_collect_raw_default_no_enrichment(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=5: [
+        {"title": "Hormuz disruption", "url": "http://a", "source": "http://a", "published_date": "", "summary": ""}
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 9000, "location": {}})
+    # _enrich must NOT be called in raw mode
+    monkeypatch.setattr(opc, "_enrich", lambda *a, **k: (_ for _ in ()).throw(AssertionError("enrich called in raw mode")))
+    data = opc._live_collect("MED")  # raw default
+    assert data["source_provenance"] == "tavily+firecrawl"
+    s = data["signals"][0]
+    assert s["signal_id"].startswith("osint:physical:med-")
+    assert "summary" not in s and "corroborates_event" not in s
+    assert len(s["content_excerpt"]) <= 3100  # truncated
+
+
+def test_collect_raw_requires_only_tavily_firecrawl(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setenv("TAVILY_API_KEY", "t")
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "f")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr(opc, "_live_collect", lambda region, enrich_api=False: {"region": region, "signals": []})
+    # raw require_live must NOT raise for missing ANTHROPIC
+    opc.collect("MED", require_live=True)  # no exception
+
+
+def test_collect_enrich_api_requires_anthropic(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setenv("TAVILY_API_KEY", "t")
+    monkeypatch.setenv("FIRECRAWL_API_KEY", "f")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    with pytest.raises(ValueError, match="ANTHROPIC_API_KEY"):
+        opc.collect("MED", require_live=True, enrich_api=True)
 
 
 from tools.rsm_input_builder import build_rsm_inputs, manifest_summary  # noqa: E402
