@@ -48,10 +48,10 @@ def test_tavily_search_uses_sdk(monkeypatch):
         def __init__(self, api_key=None):
             captured["key"] = api_key
 
-        def search(self, query, max_results=None, search_depth=None):
+        def search(self, query, max_results=None, **kwargs):
             captured["query"] = query
             captured["max_results"] = max_results
-            return {"results": [{"title": "T", "url": "http://x", "content": "C", "published_date": "2026-05-01"}]}
+            return {"results": [{"title": "T", "url": "http://x", "content": "C", "published_date": "2026-05-01", "score": 0.9}]}
 
     fake = types.ModuleType("tavily")
     fake.TavilyClient = FakeClient
@@ -71,7 +71,7 @@ def test_firecrawl_extract_uses_v4_scrape(monkeypatch):
 
     class FakeDoc:
         markdown = "# content"
-        metadata = {"location": {"name": "Rabat"}}
+        metadata = {"publishedTime": "2026-05-01T10:00:00Z"}
 
     class FakeApp:
         def __init__(self, api_key=None):
@@ -87,7 +87,7 @@ def test_firecrawl_extract_uses_v4_scrape(monkeypatch):
 
     out = opc._firecrawl_extract("http://x")
     assert captured["formats"] == ["markdown"] and captured["only_main_content"] is True
-    assert out["content"] == "# content" and out["location"] == {"name": "Rabat"}
+    assert out["content"] == "# content" and out["metadata"] == {"publishedTime": "2026-05-01T10:00:00Z"}
 
 
 def test_firecrawl_extract_empty_returns_none(monkeypatch):
@@ -110,3 +110,166 @@ def test_firecrawl_extract_empty_returns_none(monkeypatch):
     monkeypatch.setitem(sys.modules, "firecrawl", fake)
 
     assert opc._firecrawl_extract("http://x") is None
+
+
+# ── Task 1: per-country queries ──────────────────────────────────────────────
+
+def test_build_queries_uses_per_country_not_umbrella():
+    qs = opc._build_queries("MED")
+    # MED has 6+ countries → at least 6 queries; current returns 4
+    assert len(qs) >= 6
+    # No umbrella term — each query names a specific country
+    assert not any("Mediterranean" in q for q in qs)
+    # Country names appear
+    joined = " | ".join(qs)
+    for c in ("Italy", "Spain", "Greece", "Turkey", "Morocco", "Egypt"):
+        assert c in joined, f"missing country in queries: {c}"
+
+
+def test_build_queries_includes_negative_terms_for_med_collision():
+    qs = opc._build_queries("MED")
+    # at least one MED query must exclude Medicare/healthcare to break the semantic collision
+    assert any("-Medicare" in q or "-healthcare" in q for q in qs)
+
+
+def test_build_queries_other_regions_unchanged_shape():
+    # APAC/AME/LATAM/NCE keep umbrella behavior (no country split yet) but the
+    # function must still return a non-empty list and reference the region geo term
+    for r in ("APAC", "AME", "LATAM", "NCE"):
+        qs = opc._build_queries(r)
+        assert qs, f"empty queries for {r}"
+        assert any(any(tok in q for tok in opc._geo_terms(r).split()) for q in qs)
+
+
+# ── Task 2: Tavily news + recency + advanced + exclude_domains + score ───────
+
+def test_tavily_search_uses_news_recency_advanced(monkeypatch):
+    import types
+    captured = {}
+    class FakeClient:
+        def __init__(self, api_key): pass
+        def search(self, query, **kwargs):
+            captured.update(kwargs)
+            captured["query"] = query
+            return {"results": []}
+    fake = types.ModuleType("tavily")
+    fake.TavilyClient = FakeClient
+    monkeypatch.setitem(sys.modules, "tavily", fake)
+    monkeypatch.setenv("TAVILY_API_KEY", "k")
+    opc._tavily_search("Italy unrest 2026")
+    assert captured.get("topic") == "news"
+    assert captured.get("days") == 7
+    assert captured.get("search_depth") == "advanced"
+
+
+def test_tavily_search_includes_exclude_domains(monkeypatch):
+    import types
+    captured = {}
+    class FakeClient:
+        def __init__(self, api_key): pass
+        def search(self, query, **kwargs):
+            captured.update(kwargs)
+            return {"results": []}
+    fake = types.ModuleType("tavily")
+    fake.TavilyClient = FakeClient
+    monkeypatch.setitem(sys.modules, "tavily", fake)
+    monkeypatch.setenv("TAVILY_API_KEY", "k")
+    opc._tavily_search("anything")
+    exclude = captured.get("exclude_domains") or []
+    # Known noise domains from the 2026-05-22 live run
+    for d in ("medicare2026.healthplan.org", "health-isac.org", "aha.org", "directrelief.org"):
+        assert d in exclude, f"exclude_domains missing {d}"
+
+
+def test_collect_raw_drops_low_score_results(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Good", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.82},
+        {"title": "Junk", "url": "http://b", "source": "http://b", "published_date": "", "summary": "", "score": 0.15},
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 500, "metadata": {}})
+    sigs = opc._collect_raw("MED")
+    # Only the high-score item kept
+    assert len(sigs) == 1
+    assert sigs[0]["url"] == "http://a"
+
+
+# ── Task 3: raw shape cleanup ─────────────────────────────────────────────────
+
+def test_outlet_name_maps_known_domains():
+    assert opc._outlet_name("https://www.npr.org/2026/05/01/x") == "NPR"
+    assert opc._outlet_name("https://www.reuters.com/world/eu/x") == "Reuters"
+    assert opc._outlet_name("https://en.wikipedia.org/wiki/X") == "Wikipedia"
+    assert opc._outlet_name("https://www.aljazeera.com/news/x") == "Al Jazeera"
+    # Unknown domain falls back to the bare domain (no scheme, no www)
+    assert opc._outlet_name("https://obscure.example.com/x") == "obscure.example.com"
+    # Bad input
+    assert opc._outlet_name("") == ""
+    assert opc._outlet_name(None) == ""
+
+
+def test_collect_raw_uses_outlet_name_not_url(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Article", "url": "https://www.npr.org/2026/01/x", "source": "https://www.npr.org/2026/01/x",
+         "published_date": "", "summary": "", "score": 0.9}
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 500, "metadata": {}})
+    sigs = opc._collect_raw("MED")
+    assert sigs[0]["outlet"] == "NPR"
+    assert sigs[0]["outlet"] != sigs[0]["url"]
+
+
+def test_collect_raw_falls_back_to_firecrawl_published_at(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "T", "url": "http://a", "source": "http://a",
+         "published_date": "", "summary": "", "score": 0.9}
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {
+        "content": "C" * 500,
+        "metadata": {"publishedTime": "2026-05-21T10:00:00Z"},
+    })
+    sigs = opc._collect_raw("MED")
+    assert sigs[0]["published_at"] == "2026-05-21T10:00:00Z"
+
+
+def test_collect_raw_drops_broken_scrapes(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Home", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.9},
+        {"title": "", "url": "http://b", "source": "http://b", "published_date": "", "summary": "", "score": 0.9},
+        {"title": "Real Article", "url": "http://c", "source": "http://c", "published_date": "", "summary": "", "score": 0.9},
+    ])
+    # First two have valid content but bad titles; the real one has enough content
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 500, "metadata": {}})
+    sigs = opc._collect_raw("MED")
+    assert len(sigs) == 1
+    assert sigs[0]["title"] == "Real Article"
+
+
+def test_collect_raw_drops_short_content(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "T", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.9}
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "tiny", "metadata": {}})
+    sigs = opc._collect_raw("MED")
+    assert sigs == []
+
+
+def test_collect_raw_no_location_field(tmp_path, monkeypatch):
+    monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
+    monkeypatch.setattr(opc, "_build_queries", lambda region: ["q"])
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Article", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.9}
+    ])
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 500, "metadata": {}})
+    sigs = opc._collect_raw("MED")
+    # location field was always empty {} — drop it from the raw shape
+    assert "location" not in sigs[0]

@@ -36,6 +36,16 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_ROOT = REPO_ROOT / "output"
 FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
 
+REGION_COUNTRIES = {
+    "MED": ["Italy", "Spain", "Greece", "Turkey", "Morocco", "Egypt", "Tunisia", "Libya"],
+    # Other regions keep umbrella behavior for now (per-country fan-out comes later).
+}
+
+REGION_NEGATIVE_TERMS = {
+    # MED collides hard with "Medicare"/"medical" in US news. Strip them at search time.
+    "MED": "-Medicare -healthcare -insurance",
+}
+
 REGION_QUERY_TERMS = {
     "MED": "Mediterranean (Italy, Spain, Greece, Turkey, Morocco, Egypt)",
     "APAC": "Asia-Pacific",
@@ -56,8 +66,17 @@ def _geo_terms(region: str) -> str:
 
 
 def _build_queries(region: str) -> list[str]:
+    """Per-country fan-out where defined; falls back to the umbrella geo term."""
+    countries = REGION_COUNTRIES.get(region.upper())
+    negative = REGION_NEGATIVE_TERMS.get(region.upper(), "")
+    if countries:
+        return [
+            f"{country} {topic} 2026 {negative}".strip()
+            for country in countries
+            for topic in _OSINT_TOPICS
+        ]
     geo = _geo_terms(region)
-    return [f"{geo} {topic} 2026" for topic in _OSINT_TOPICS]
+    return [f"{geo} {topic} 2026 {negative}".strip() for topic in _OSINT_TOPICS]
 
 
 def _truncate(text: str | None, max_chars: int = 3000) -> str:
@@ -114,7 +133,7 @@ def _apply_enrichment(region: str, scraped: list[dict], verdicts: list[dict]) ->
             "signal_id": f"osint:physical:{region.lower()}-{seq:03d}",
             "title": item.get("title", ""),
             "url": item.get("url", ""),
-            "outlet": item.get("source", ""),
+            "outlet": _outlet_name(item.get("url", "")),
             "published_at": item.get("published_date", ""),
             "content_excerpt": item.get("content", ""),
             "summary": v.get("summary", ""),
@@ -197,17 +216,40 @@ def _field(obj, name):
     return getattr(obj, name, None)
 
 
-def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
-    """Tavily search via the official tavily-python SDK. Requires TAVILY_API_KEY.
+# Domains observed dominating the MED live run with US-healthcare / Medicare /
+# disaster-prep noise that triggers on "Med-" stem. Permanent allowlist exclude.
+TAVILY_EXCLUDE_DOMAINS = [
+    "medicare2026.healthplan.org",
+    "health-isac.org",
+    "aha.org",
+    "directrelief.org",
+    "files.asprtracie.hhs.gov",
+    "societyfordisastermedicineandpublichealthinc.wildapricot.org",
+    "automotivelogistics.media",  # niche industry blog, low news value
+]
 
-    Uses the pinned SDK (which handles auth correctly) rather than hand-rolled
-    HTTP. Errors propagate so an auth/SDK failure fails the run loudly instead of
-    yielding an empty brief.
+# Tavily relevance score floor — drop garbage before paying for Firecrawl scrape.
+TAVILY_SCORE_FLOOR = 0.4
+
+
+def _tavily_search(query: str, max_results: int = 3) -> list[dict]:
+    """Tavily news search via the official tavily-python SDK. Requires TAVILY_API_KEY.
+
+    Uses topic="news" + days=7 + search_depth="advanced" + exclude_domains for the
+    daily-brief use case. Errors propagate so an auth/SDK failure fails the run
+    loudly instead of yielding an empty brief.
     """
     from tavily import TavilyClient
 
     client = TavilyClient(api_key=os.environ["TAVILY_API_KEY"])
-    resp = client.search(query, max_results=max_results, search_depth="basic")
+    resp = client.search(
+        query,
+        max_results=max_results,
+        topic="news",
+        days=7,
+        search_depth="advanced",
+        exclude_domains=TAVILY_EXCLUDE_DOMAINS,
+    )
     results = _field(resp, "results") or []
     return [
         {
@@ -216,6 +258,7 @@ def _tavily_search(query: str, max_results: int = 5) -> list[dict]:
             "source": _field(r, "url") or "",
             "published_date": _field(r, "published_date") or "",
             "summary": _field(r, "content") or "",
+            "score": _field(r, "score") or 0.0,
         }
         for r in results
     ]
@@ -227,7 +270,7 @@ def _firecrawl_extract(url: str) -> dict | None:
     v4 SDK: `Firecrawl(api_key=...).scrape(url, formats=["markdown"],
     only_main_content=True)` returns a Document (attribute access). Field reads
     go through `_field` to tolerate dict-vs-object differences across v4 point
-    releases. Returns {content, location} or None on empty extraction.
+    releases. Returns {content, metadata} or None on empty extraction.
     """
     if not url:
         return None
@@ -238,16 +281,66 @@ def _firecrawl_extract(url: str) -> dict | None:
     markdown = (_field(doc, "markdown") or "").strip()
     if not markdown:
         return None
-    location = _field(_field(doc, "metadata"), "location") or {}
-    return {"content": markdown, "location": location}
+    metadata = _field(doc, "metadata") or {}
+    return {"content": markdown, "metadata": metadata}
+
+
+OUTLET_NAME_MAP = {
+    "npr.org": "NPR",
+    "reuters.com": "Reuters",
+    "apnews.com": "AP",
+    "bbc.com": "BBC",
+    "bbc.co.uk": "BBC",
+    "aljazeera.com": "Al Jazeera",
+    "ft.com": "Financial Times",
+    "wsj.com": "WSJ",
+    "nytimes.com": "New York Times",
+    "washingtonpost.com": "Washington Post",
+    "theguardian.com": "The Guardian",
+    "lemonde.fr": "Le Monde",
+    "elpais.com": "El País",
+    "spiegel.de": "Der Spiegel",
+    "wikipedia.org": "Wikipedia",
+    "breakingdefense.com": "Breaking Defense",
+    "seavantage.com": "Sea Vantage",
+    "dni.gov": "US DNI",
+    "bloomberg.com": "Bloomberg",
+}
+
+CONTENT_MIN_CHARS = 200
+BROKEN_TITLES = {"", "home", "homepage", "404", "not found"}
+
+
+def _outlet_name(url: str | None) -> str:
+    """Map a URL to a human-readable publication name. Unknown domains fall back
+    to the bare domain (no scheme, no www)."""
+    if not url:
+        return ""
+    m = _re.match(r"https?://([^/]+)", url)
+    if not m:
+        return ""
+    host = m.group(1).lower()
+    if host.startswith("www."):
+        host = host[4:]
+    # Match longest suffix in the map
+    for suffix, name in sorted(OUTLET_NAME_MAP.items(), key=lambda kv: -len(kv[0])):
+        if host == suffix or host.endswith("." + suffix):
+            return name
+    return host
 
 
 def _collect_raw(region: str) -> list[dict]:
-    """Search (geo queries) -> scrape (truncated excerpt). Returns raw signal dicts."""
+    """Search (geo queries) -> scrape (truncated excerpt). Returns raw signal dicts.
+    Filters: Tavily score floor, broken titles, short content."""
     scraped: list[dict] = []
     for q in _build_queries(region):
-        hits = _tavily_search(q, max_results=5)
+        hits = _tavily_search(q, max_results=3)
         for hit in hits:
+            if (hit.get("score") or 0.0) < TAVILY_SCORE_FLOOR:
+                continue
+            title = (hit.get("title") or "").strip()
+            if title.lower() in BROKEN_TITLES:
+                continue
             try:
                 extracted = _firecrawl_extract(hit.get("url", ""))
             except Exception as e:
@@ -255,13 +348,23 @@ def _collect_raw(region: str) -> list[dict]:
                 continue
             if not extracted:
                 continue
+            content = extracted.get("content", "")
+            if len(content) < CONTENT_MIN_CHARS:
+                continue
+            metadata = extracted.get("metadata") or {}
+            published_at = (
+                hit.get("published_date")
+                or _field(metadata, "publishedTime")
+                or _field(metadata, "article:published_time")
+                or _field(metadata, "dc.date")
+                or ""
+            )
             scraped.append({
-                "title": hit.get("title", ""),
+                "title": title,
                 "url": hit.get("url", ""),
-                "source": hit.get("source", ""),
-                "published_date": hit.get("published_date", ""),
-                "content": _truncate(extracted.get("content", "")),
-                "location": extracted.get("location") or {},
+                "outlet": _outlet_name(hit.get("url", "")),
+                "published_at": published_at,
+                "content": _truncate(content),
             })
     signals = []
     for i, item in enumerate(scraped, start=1):
@@ -269,8 +372,8 @@ def _collect_raw(region: str) -> list[dict]:
             "signal_id": f"osint:physical:{region.lower()}-{i:03d}",
             "title": item["title"],
             "url": item["url"],
-            "outlet": item["source"],
-            "published_at": item["published_date"],
+            "outlet": item["outlet"],
+            "published_at": item["published_at"],
             "content_excerpt": item["content"],
             "pillar": "physical",
             "category": "physical",
@@ -295,7 +398,7 @@ def _live_collect(region: str, enrich_api: bool = False) -> dict:
     # Rebuild scraped items with the same shape _enrich/_apply_enrichment expect.
     scraped = [
         {
-            "title": s["title"], "url": s["url"], "source": s["outlet"],
+            "title": s["title"], "url": s["url"], "source": s["url"],
             "published_date": s["published_at"], "content": s["content_excerpt"],
         }
         for s in _collect_raw(region)

@@ -18,10 +18,14 @@ def test_geo_terms_maps_code_to_geography():
 
 def test_build_queries_use_geo_not_raw_code():
     qs = opc._build_queries("MED")
-    assert len(qs) == 4
+    # MED now fans out per-country — at least 6 queries (8 countries × 4 topics)
+    assert len(qs) >= 6
     # the raw region code must NOT appear as a standalone query token
-    assert all("Mediterranean" in q for q in qs)
     assert not any(q.startswith("MED ") for q in qs)
+    # country names used instead of umbrella
+    joined = " | ".join(qs)
+    for c in ("Italy", "Spain", "Greece", "Turkey", "Morocco", "Egypt"):
+        assert c in joined, f"missing country in queries: {c}"
 
 
 def test_truncate_short_text_unchanged():
@@ -162,10 +166,10 @@ def test_live_collect_chains_search_scrape_enrich(tmp_path, monkeypatch):
     reg = tmp_path / "regional" / "med"; reg.mkdir(parents=True)
     (reg / "seerist_signals.json").write_text(json.dumps({"situational": {"events": []}}), encoding="utf-8")
     # stub search + scrape + enrich (no network/LLM)
-    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=5: [
-        {"title": "Hormuz disruption", "url": "http://a", "source": "http://a", "published_date": "", "summary": ""}
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Hormuz disruption", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.9}
     ])
-    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 9000, "location": {}})
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 9000, "metadata": {}})
     monkeypatch.setattr(opc, "_enrich", lambda region, scraped, events: [
         {"index": i, "relevant": (i == 0), "relevance_reason": "r", "summary": "Hormuz reroute.", "corroborates_event": None}
         for i in range(len(scraped))
@@ -194,10 +198,10 @@ def test_collect_require_live_needs_anthropic(tmp_path, monkeypatch):
 
 def test_live_collect_raw_default_no_enrichment(tmp_path, monkeypatch):
     monkeypatch.setattr(opc, "OUTPUT_ROOT", tmp_path)
-    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=5: [
-        {"title": "Hormuz disruption", "url": "http://a", "source": "http://a", "published_date": "", "summary": ""}
+    monkeypatch.setattr(opc, "_tavily_search", lambda q, max_results=3: [
+        {"title": "Hormuz disruption", "url": "http://a", "source": "http://a", "published_date": "", "summary": "", "score": 0.9}
     ])
-    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 9000, "location": {}})
+    monkeypatch.setattr(opc, "_firecrawl_extract", lambda url: {"content": "C" * 9000, "metadata": {}})
     # _enrich must NOT be called in raw mode
     monkeypatch.setattr(opc, "_enrich", lambda *a, **k: (_ for _ in ()).throw(AssertionError("enrich called in raw mode")))
     data = opc._live_collect("MED")  # raw default
