@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Per-day MED RSM PoC orchestrator — three deterministic phases bracketing
-two operator-in-the-loop LLM steps (analyst + formatter).
+"""Per-day MED RSM PoC orchestrator — four deterministic phases bracketing the
+two operator-in-the-loop LLM steps (analyst + formatter), with an optional
+OSINT-enrichment pause between collect and analyze.
 
 Usage:
-    # Phase A: collect signals + build analyst_request.md
+    # Phase A: collect signals (+ write osint_enrich_request.md when --osint)
     uv run python tools/poc_runner.py MED 2026-05-17 --collect
+
+    # [Optional operator step: run osint_enrich_request in IDE -> enriched osint_physical_signals.json]
+
+    # Phase A-prime: build manifest + analyst_request.md
+    uv run python tools/poc_runner.py MED 2026-05-17 --analyze
 
     # [Operator step 1: run analyst_request in IDE -> claims.json + analyst_report.md]
 
@@ -16,16 +22,18 @@ Usage:
     # Phase C: validate + render email.html
     uv run python tools/poc_runner.py MED 2026-05-17 --render
 
-All three phases write to output/poc/<region.lower()>/<date>/:
-    seerist_signals.json     (--collect)
-    poi_proximity.json       (--collect, if available)
-    _rsm_manifest_daily.json (--collect)
-    analyst_request.md       (--collect — operator runs in IDE)
-    claims.json              (between --collect and --prep-format, by operator+model)
-    analyst_report.md        (between --collect and --prep-format, by operator+model)
-    formatter_request.md     (--prep-format — operator runs in IDE)
-    brief.md                 (between --prep-format and --render, by operator+model)
-    email.html               (--render — operator copies + sends manually)
+All phases write to output/poc/<region.lower()>/<date>/:
+    seerist_signals.json       (--collect)
+    poi_proximity.json         (--collect, if available)
+    osint_physical_signals.json (--collect, if --osint; raw; enriched in the agent pause)
+    osint_enrich_request.md    (--collect, if --osint — operator runs in IDE)
+    _rsm_manifest_daily.json   (--analyze)
+    analyst_request.md         (--analyze — operator runs in IDE)
+    claims.json                (between --analyze and --prep-format, by operator+model)
+    analyst_report.md          (between --analyze and --prep-format, by operator+model)
+    formatter_request.md       (--prep-format — operator runs in IDE)
+    brief.md                   (between --prep-format and --render, by operator+model)
+    email.html                 (--render — operator copies + sends manually)
 """
 from __future__ import annotations
 
@@ -53,6 +61,23 @@ def _run(cmd: list[str]) -> None:
     result = subprocess.run(cmd, cwd=REPO_ROOT)
     if result.returncode != 0:
         raise SystemExit(f"[poc_runner] command failed: {' '.join(cmd)} (exit {result.returncode})")
+
+
+def _write_osint_enrich_request(region: str, date_iso: str, day: Path, osint_canonical: Path) -> None:
+    prompt = (REPO_ROOT / "prompts" / "rsm_osint_enrichment.md").read_text(encoding="utf-8")
+    seerist_path = OUTPUT_ROOT / "regional" / region.lower() / "seerist_signals.json"
+    (day / "osint_enrich_request.md").write_text(
+        f"# OSINT enrich request — {region.upper()} {date_iso}\n\n"
+        f"OSINT_PATH: {osint_canonical}\n"
+        f"SEERIST_PATH: {seerist_path}\n"
+        f"OSINT_DROPPED_PATH: {osint_canonical.parent / 'osint_dropped.json'}\n\n"
+        "## Operator/model instruction\n\n"
+        "Run this in your agent workbench. Read OSINT_PATH + SEERIST_PATH, rewrite "
+        "OSINT_PATH enriched, and write OSINT_DROPPED_PATH per the prompt below.\n\n"
+        "## Canonical enrichment prompt\n\n"
+        f"{prompt}\n",
+        encoding="utf-8",
+    )
 
 
 def phase_collect(
@@ -105,14 +130,12 @@ def phase_collect(
         if poi_canonical.exists():
             shutil.copy2(poi_canonical, day / "poi_proximity.json")
 
-    # 2b. OSINT physical pillar (optional, region-keyed → safe in both modes).
-    #     build_rsm_inputs reads osint_physical_signals.json from the canonical
-    #     regional dir. When OSINT is off, remove any stale file so it can't leak
-    #     into this run's manifest.
+    # 2b. OSINT physical pillar (optional, region-keyed). RAW collect; the
+    #     Copilot agent enriches it next (osint_enrich_request.md).
     osint_canonical = OUTPUT_ROOT / "regional" / region.lower() / "osint_physical_signals.json"
     if osint:
         if require_live:
-            _missing = [k for k in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY", "ANTHROPIC_API_KEY") if not os.environ.get(k)]
+            _missing = [k for k in ("TAVILY_API_KEY", "FIRECRAWL_API_KEY") if not os.environ.get(k)]
             if _missing:
                 raise SystemExit(
                     f"[poc_runner] --osint requires {', '.join(_missing)} in .env. "
@@ -124,8 +147,26 @@ def phase_collect(
         _run(osint_cmd)
         if osint_canonical.exists():
             shutil.copy2(osint_canonical, day / "osint_physical_signals.json")
+            _write_osint_enrich_request(region, date_iso, day, osint_canonical)
     elif osint_canonical.exists():
         osint_canonical.unlink()
+
+    print(
+        f"\n[poc_runner] PHASE COLLECT COMPLETE — {region} / {date_iso}.\n"
+        f"  {'Enrich OSINT, then ' if osint else ''}run --analyze next.",
+        file=sys.stderr,
+    )
+
+
+def phase_analyze(
+    region: str,
+    date_iso: str,
+    *,
+    no_org_context: bool = False,
+    brand: str | None = None,
+) -> None:
+    """Phase A-prime: build manifest + analyst_request (after OSINT enrichment)."""
+    day = _day_dir(region, date_iso)
 
     # 3. Build the manifest (reads aerowind_sites.json + optional signals)
     sys.path.insert(0, str(REPO_ROOT))
@@ -360,10 +401,14 @@ def main() -> int:
         help="Include the OSINT physical pillar (Tavily/Firecrawl web+news enrichment). "
              "With --require-live, fails loudly if the OSINT keys are absent.",
     )
+    p.add_argument(
+        "--analyze", action="store_true",
+        help="Build manifest + analyst_request (after OSINT enrichment)",
+    )
     args = p.parse_args()
 
-    if not (args.collect or args.prep_format or args.render):
-        raise SystemExit("Specify at least one phase flag: --collect, --prep-format, or --render")
+    if not (args.collect or args.analyze or args.prep_format or args.render):
+        raise SystemExit("Specify at least one phase flag: --collect, --analyze, --prep-format, or --render")
 
     if args.collect:
         phase_collect(
@@ -374,6 +419,9 @@ def main() -> int:
             brand=args.brand,
             osint=args.osint,
         )
+    if args.analyze:
+        phase_analyze(args.region, args.date_iso,
+                      no_org_context=args.no_org_context, brand=args.brand)
     if args.prep_format:
         phase_prep_format(args.region, args.date_iso)
     if args.render:
