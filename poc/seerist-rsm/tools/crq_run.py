@@ -100,6 +100,10 @@ def build_phase_argv(region: str, date: str, phase: str) -> list[str]:
     return [sys.executable, POC_RUNNER, region, date, phase]
 
 
+def build_analyze_argv(region: str, date: str) -> list[str]:
+    return [sys.executable, POC_RUNNER, region, date, "--analyze"]
+
+
 def today_iso() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -144,15 +148,17 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
         state_path,
     )
     print(f"\n[crq_run] Collected signals for {date}: {', '.join(region_list)}.")
-    print("Analyst request(s) to work through:")
-    for region in region_list:
-        print(f"  {_day_dir(region, date) / 'analyst_request.md'}")
-    print(
-        "\nAGENT STEP REQUIRED: for each analyst_request.md above, read it, then write\n"
-        "claims.json and analyst_report.md into the SAME folder (follow the AUTHORING\n"
-        "CONTRACT in the /crq-run skill). When all regions are done, run:\n"
-        "  uv run python tools/crq_run.py prep"
-    )
+    if osint:
+        print("OSINT enrich request(s) to work through:")
+        for region in region_list:
+            print(f"  {_day_dir(region, date) / 'osint_enrich_request.md'}")
+        print(
+            "\nAGENT STEP REQUIRED: for each osint_enrich_request.md above, read it and\n"
+            "rewrite osint_physical_signals.json enriched (+ osint_dropped.json). Then run:\n"
+            "  uv run python tools/crq_run.py analyze"
+        )
+    else:
+        print("Next: uv run python tools/crq_run.py analyze")
 
 
 def cmd_prep(state_path=STATE_PATH):
@@ -181,6 +187,21 @@ def cmd_render(state_path=STATE_PATH):
         print(f"  {_day_dir(region, state['date']) / 'email.html'}")
 
 
+def cmd_analyze(state_path=STATE_PATH):
+    state = read_state(state_path)
+    for region in state["regions"]:
+        _run(build_analyze_argv(region, state["date"]))
+    print(f"\n[crq_run] Built manifest + analyst request: {', '.join(state['regions'])}.")
+    for region in state["regions"]:
+        print(f"  {_day_dir(region, state['date']) / 'analyst_request.md'}")
+    print(
+        "\nAGENT STEP REQUIRED: for each analyst_request.md above, read it, then write\n"
+        "claims.json and analyst_report.md into the SAME folder (follow the AUTHORING\n"
+        "CONTRACT in the /crq-run skill). When all regions are done, run:\n"
+        "  uv run python tools/crq_run.py prep"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Deterministic orchestrator for the CRQ Copilot run skill.")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -199,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
                       help="Skip the OSINT physical pillar this run (Seerist-only)")
     pc.add_argument("--date", default=None, help="YYYY-MM-DD; defaults to today (UTC)")
 
+    sub.add_parser("analyze", help="Build manifest + analyst_request (after OSINT enrichment).")
     sub.add_parser("prep", help="Run --prep-format for each region in run-state.")
     sub.add_parser("render", help="Run --render for each region in run-state.")
 
@@ -207,6 +229,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.cmd == "collect":
             cmd_collect(regions=args.regions, org_grounded_override=args.override,
                         osint_override=args.osint_override, date=args.date)
+        elif args.cmd == "analyze":
+            cmd_analyze()
         elif args.cmd == "prep":
             cmd_prep()
         elif args.cmd == "render":

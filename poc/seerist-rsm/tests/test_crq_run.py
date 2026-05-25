@@ -152,10 +152,9 @@ def test_cmd_collect_loops_regions_and_writes_state(tmp_path, monkeypatch, capsy
     # state persisted
     saved = json.loads(state.read_text())
     assert saved == {"date": "2026-05-22", "regions": ["MED", "NCE"], "org_context": True, "brand_label": "ACME"}
-    # prints the analyst_request path + agent-step marker
+    # no-osint collect prints the "analyze" next-step guidance (not analyst_request)
     out = capsys.readouterr().out
-    assert "analyst_request.md" in out
-    assert "AGENT STEP REQUIRED" in out
+    assert "uv run python tools/crq_run.py analyze" in out
 
 
 def test_cmd_collect_region_guided_override(tmp_path, monkeypatch):
@@ -300,3 +299,36 @@ def test_main_collect_osint_flags(monkeypatch):
     assert captured["osint"] is False
     crq_run.main(["collect", "--regions", "MED"])
     assert captured["osint"] is None
+
+
+def test_build_analyze_argv():
+    argv = crq_run.build_analyze_argv("MED", "2026-05-22")
+    assert argv[2:] == ["MED", "2026-05-22", "--analyze"]
+
+
+def test_cmd_analyze_uses_state_regions(tmp_path, monkeypatch, capsys):
+    state = tmp_path / "state.json"
+    state.write_text(json.dumps({"date": "2026-05-22", "regions": ["MED", "NCE"],
+                                 "org_context": True, "brand_label": "ACME"}), encoding="utf-8")
+    calls = _patch_run(monkeypatch)
+    crq_run.cmd_analyze(state_path=state)
+    assert [c[2] for c in calls] == ["MED", "NCE"]
+    assert all(c[-1] == "--analyze" for c in calls)
+    assert "AGENT STEP REQUIRED" in capsys.readouterr().out
+
+
+def test_main_analyze_routes(monkeypatch):
+    called = {}
+    monkeypatch.setattr(crq_run, "cmd_analyze", lambda **k: called.setdefault("ok", True))
+    crq_run.main(["analyze"])
+    assert called["ok"]
+
+
+def test_cmd_collect_osint_prints_enrich_pause(tmp_path, monkeypatch, capsys):
+    cfg = tmp_path / "crq.config.json"
+    cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True, "osint_default": True}), encoding="utf-8")
+    _patch_run(monkeypatch)
+    crq_run.cmd_collect(regions=["MED"], org_grounded_override=None, osint_override=None,
+                        date="2026-05-22", config_path=cfg, state_path=tmp_path / "s.json")
+    out = capsys.readouterr().out
+    assert "osint_enrich_request.md" in out and "crq_run.py analyze" in out
