@@ -35,16 +35,18 @@ tools: ['editFiles']
    2. Run: `uv run python tools/crq_run.py collect --regions <THEIR REGIONS>`
       Add overrides ONLY when they differ from the defaults:
       `--region-guided` / `--org-grounded`, and `--osint` / `--no-osint`.
-      The command prints one `analyst_request.md` path per region.
-   3. For EACH printed `analyst_request.md`: read it and write `claims.json` +
-      `analyst_report.md` into the SAME directory. Follow the AUTHORING CONTRACT
-      below — the render step enforces it deterministically.
-   4. Run: `uv run python tools/crq_run.py prep`
+   3. IF OSINT is on, the command prints `osint_enrich_request.md` path(s). For EACH:
+      read it and rewrite `osint_physical_signals.json` enriched (+ `osint_dropped.json`)
+      per the enrichment prompt it embeds — relevance-drop, `summary`,
+      `corroborates_event`; do NOT assign severity.
+   4. Run: `uv run python tools/crq_run.py analyze` (builds the manifest from the
+      enriched OSINT + prints analyst_request paths).
+   5. For EACH `analyst_request.md`: write `claims.json` + `analyst_report.md` (AUTHORING CONTRACT).
+   6. Run: `uv run python tools/crq_run.py prep`
       It prints one `formatter_request.md` path per region.
-   5. For EACH printed `formatter_request.md`: read it and write `brief.md` into
+   7. For EACH printed `formatter_request.md`: read it and write `brief.md` into
       the SAME directory, following the AUTHORING CONTRACT.
-   6. Run: `uv run python tools/crq_run.py render`
-      Report the `email.html` path it prints for each region.
+   8. Run: `uv run python tools/crq_run.py render`; report the `email.html` paths.
 
    ## AUTHORING CONTRACT (the render step fails if you break these)
    - Body citations use `[<claim_id>]` form (e.g. `[med-001]`) — NEVER raw numbers.
