@@ -13,7 +13,7 @@ If you are on the VSCode + Copilot workstation, you do not need to learn the CLI
 | Step | Command in Copilot Chat | What it does |
 |---|---|---|
 | 1 | `/install` | Checks Python + `uv`, installs dependencies, creates your `.env`. |
-| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env` (required — the pipeline runs against the live Seerist API, not mock data). If you plan to use OSINT mode, also set `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` + `ANTHROPIC_API_KEY` (OSINT enrichment needs Tavily + Firecrawl + Anthropic keys). |
+| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env` (required — the pipeline runs against the live Seerist API, not mock data). If you plan to use OSINT mode, also set `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` (OSINT enrichment runs through your agent — no extra key needed). |
 | 3 | `/setup` | Asks for your **brand label** (the name on the brief header), whether briefs default to **org-grounded** or **region-guided**, and whether to include the **OSINT physical pillar** by default. Writes `crq.config.json`. |
 | 4 | `/create-skill` | Generates the `/crq-run` command. (You may need to reload the VSCode window before it appears.) |
 
@@ -25,7 +25,7 @@ Copilot asks three things: which region(s) today (APAC, AME, LATAM, MED, NCE, or
 
 > **Org-grounded vs region-guided:** *org-grounded* briefs name your specific sites, personnel, and exposure. *region-guided* briefs cover the region's risk landscape with no company details — useful for a prospect who hasn't shared their footprint yet.
 >
-> **OSINT physical pillar:** optional web/news enrichment (protests, conflict, maritime, disasters) via Tavily + Firecrawl + Anthropic Haiku (relevance filtering + summaries), layered on top of the Seerist signals. OSINT enrichment needs Tavily + Firecrawl + Anthropic keys; if any are missing when OSINT is on, the run stops with a clear message rather than silently producing a thinner brief.
+> **OSINT physical pillar:** optional web/news enrichment (protests, conflict, maritime, disasters) via Tavily + Firecrawl (enrichment via your agent — Copilot Enterprise, Claude Code, etc.), layered on top of the Seerist signals. OSINT enrichment needs Tavily + Firecrawl keys; if any are missing when OSINT is on, the run stops with a clear message rather than silently producing a thinner brief.
 
 The rest of this README documents the underlying CLI (what those prompt files call) for anyone who wants to run it by hand or without Copilot.
 
@@ -123,7 +123,7 @@ Note: `test_client_none_without_key` reads from the environment after `load_dote
    # cp .env.example .env       # macOS / Linux
    ```
 
-2. Edit `.env` and set `SEERIST_API_KEY=...`. (Optional: set `TAVILY_API_KEY`, `FIRECRAWL_API_KEY`, and `ANTHROPIC_API_KEY` to exercise the full live OSINT path — all three are required for OSINT enrichment.)
+2. Edit `.env` and set `SEERIST_API_KEY=...`. (Optional: set `TAVILY_API_KEY` and `FIRECRAWL_API_KEY` to exercise the live OSINT path — both are required when OSINT is on. `ANTHROPIC_API_KEY` is only needed for the `--enrich-api` headless path; normal OSINT enrichment runs through your agent.)
 
 3. Run the same commands as above **without** `--mock`:
 
