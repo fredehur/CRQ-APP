@@ -107,6 +107,18 @@ def test_build_phase_argv():
     ]
 
 
+def test_day_dir_shape_briefs_date_region():
+    """Brief folders live at output/briefs/<date>/<REGION>/ (date-first grouping)."""
+    p = crq_run._day_dir("MED", "2026-05-27")
+    assert p.parts[-3:] == ("briefs", "2026-05-27", "MED")
+
+
+def test_day_dir_region_uppercased():
+    """Region is uppercased in the folder name (matches header in brief.md)."""
+    assert crq_run._day_dir("med", "2026-05-27").name == "MED"
+    assert crq_run._day_dir("apac", "2026-05-27").name == "APAC"
+
+
 # Task 4 — date helper + run-state round-trip
 def test_today_iso_format():
     assert re.fullmatch(r"\d{4}-\d{2}-\d{2}", crq_run.today_iso())

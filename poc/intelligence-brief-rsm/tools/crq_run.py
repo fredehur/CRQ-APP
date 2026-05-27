@@ -155,7 +155,11 @@ def _run(argv: list[str]) -> None:
 
 
 def _day_dir(region: str, date: str) -> Path:
-    return PROJECT_ROOT / "output" / "poc" / region.lower() / date
+    """Per-(date, region) brief folder. Mirrors poc_runner._day_dir.
+
+    Shape: output/briefs/<YYYY-MM-DD>/<REGION>/
+    """
+    return PROJECT_ROOT / "output" / "briefs" / date / region.upper()
 
 
 def cmd_collect(regions, org_grounded_override, date, osint_override=None,

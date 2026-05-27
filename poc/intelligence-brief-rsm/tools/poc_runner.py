@@ -23,7 +23,7 @@ Usage:
     # Phase C: validate + render email.html
     uv run python tools/poc_runner.py MED 2026-05-17 --render
 
-All phases write to output/poc/<region.lower()>/<date>/:
+All phases write to output/briefs/<date>/<REGION>/:
     seerist_signals.json       (--collect)
     poi_proximity.json         (--collect, if available)
     osint_physical_signals.json (--collect, if --osint; raw; enriched in the agent pause)
@@ -48,11 +48,16 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 OUTPUT_ROOT = REPO_ROOT / "output"
-POC_ROOT = OUTPUT_ROOT / "poc"
+BRIEFS_ROOT = OUTPUT_ROOT / "briefs"
 
 
 def _day_dir(region: str, date_iso: str) -> Path:
-    d = POC_ROOT / region.lower() / date_iso
+    """Return the per-(date, region) brief folder, creating it if absent.
+
+    Shape: output/briefs/<YYYY-MM-DD>/<REGION>/
+    Date-first grouping makes a full day's run easy to inspect together.
+    """
+    d = BRIEFS_ROOT / date_iso / region.upper()
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -347,6 +352,13 @@ def phase_render(region: str, date_iso: str) -> None:
         str(brief_path), str(manifest_path),
         "--out", str(html_path),
         "--subject", subject,
+    ])
+
+    # 4. Write the per-run transparency log alongside email.html. Pure
+    #    derivation from existing artifacts — does not gate the render.
+    _run([
+        sys.executable, "tools/intel_decisions.py",
+        str(day),
     ])
 
     print(
