@@ -114,7 +114,13 @@ def test_today_iso_format():
 
 def test_state_round_trip(tmp_path):
     p = tmp_path / "crq_run_state.json"
-    state = {"date": "2026-05-22", "regions": ["MED", "NCE"], "org_context": False, "brand_label": "X"}
+    state = {
+        "date": "2026-05-22",
+        "regions": ["MED", "NCE"],
+        "org_context": False,
+        "region_org_context": {"MED": False, "NCE": False},
+        "brand_label": "X",
+    }
     crq_run.write_state(state, p)
     assert crq_run.read_state(p) == state
 
@@ -132,15 +138,26 @@ def _patch_run(monkeypatch):
     return calls
 
 
+def _write_sites(tmp_path: Path, regions_with_sites) -> Path:
+    """Write an aerowind_sites.json containing 1 site per listed region."""
+    p = tmp_path / "aerowind_sites.json"
+    p.write_text(json.dumps({"sites": [
+        {"site_id": f"{r.lower()}-test-001", "name": f"{r} test site", "region": r}
+        for r in regions_with_sites
+    ]}), encoding="utf-8")
+    return p
+
+
 def test_cmd_collect_loops_regions_and_writes_state(tmp_path, monkeypatch, capsys):
     cfg = tmp_path / "crq.config.json"
     cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True}), encoding="utf-8")
     state = tmp_path / "state.json"
+    sites = _write_sites(tmp_path, ["MED", "NCE"])
     calls = _patch_run(monkeypatch)
 
     crq_run.cmd_collect(
         regions=["MED", "NCE"], org_grounded_override=None, date="2026-05-22",
-        config_path=cfg, state_path=state,
+        config_path=cfg, state_path=state, sites_path=sites,
     )
 
     # one collect call per region, org-grounded (no --no-org-context), brand passed, require-live on
@@ -151,7 +168,13 @@ def test_cmd_collect_loops_regions_and_writes_state(tmp_path, monkeypatch, capsy
     assert calls[1][2] == "NCE"
     # state persisted
     saved = json.loads(state.read_text())
-    assert saved == {"date": "2026-05-22", "regions": ["MED", "NCE"], "org_context": True, "brand_label": "ACME"}
+    assert saved == {
+        "date": "2026-05-22",
+        "regions": ["MED", "NCE"],
+        "org_context": True,
+        "region_org_context": {"MED": True, "NCE": True},
+        "brand_label": "ACME",
+    }
     # no-osint collect prints the "analyze" next-step guidance (not analyst_request)
     out = capsys.readouterr().out
     assert "uv run python tools/crq_run.py analyze" in out
@@ -161,14 +184,101 @@ def test_cmd_collect_region_guided_override(tmp_path, monkeypatch):
     cfg = tmp_path / "crq.config.json"
     cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True}), encoding="utf-8")
     state = tmp_path / "state.json"
+    sites = _write_sites(tmp_path, ["MED"])
     calls = _patch_run(monkeypatch)
 
     crq_run.cmd_collect(
         regions=["MED"], org_grounded_override=False, date="2026-05-22",
-        config_path=cfg, state_path=state,
+        config_path=cfg, state_path=state, sites_path=sites,
     )
     assert "--no-org-context" in calls[0]
     assert json.loads(state.read_text())["org_context"] is False
+
+
+# Task 7 — auto-fallback to region-guided when a region has no sites
+def test_region_has_sites_true_when_present(tmp_path):
+    sites = _write_sites(tmp_path, ["MED"])
+    assert crq_run._region_has_sites("MED", sites) is True
+
+
+def test_region_has_sites_false_when_absent(tmp_path):
+    sites = _write_sites(tmp_path, ["MED"])
+    assert crq_run._region_has_sites("NCE", sites) is False
+
+
+def test_region_has_sites_false_when_file_missing(tmp_path):
+    assert crq_run._region_has_sites("MED", tmp_path / "nope.json") is False
+
+
+def test_region_has_sites_false_when_file_malformed(tmp_path):
+    p = tmp_path / "bad.json"
+    p.write_text("{not json", encoding="utf-8")
+    assert crq_run._region_has_sites("MED", p) is False
+
+
+def test_cmd_collect_auto_falls_back_when_region_has_no_sites(tmp_path, monkeypatch, capsys):
+    """User asks org-grounded for MED+NCE; only MED has sites. NCE auto-falls-back."""
+    cfg = tmp_path / "crq.config.json"
+    cfg.write_text(json.dumps({"brand_label": "ACME", "org_context_default": True}), encoding="utf-8")
+    state = tmp_path / "state.json"
+    sites = _write_sites(tmp_path, ["MED"])  # MED has sites, NCE does not
+    calls = _patch_run(monkeypatch)
+
+    crq_run.cmd_collect(
+        regions=["MED", "NCE"], org_grounded_override=True, date="2026-05-22",
+        config_path=cfg, state_path=state, sites_path=sites,
+    )
+
+    # MED: org-grounded honored (no --no-org-context)
+    assert "--no-org-context" not in calls[0]
+    # NCE: auto-fell-back (has --no-org-context)
+    assert "--no-org-context" in calls[1]
+    # state captures the per-region effective context
+    saved = json.loads(state.read_text())
+    assert saved["org_context"] is True  # what the user requested
+    assert saved["region_org_context"] == {"MED": True, "NCE": False}
+    # operator notice printed for the fallback
+    err = capsys.readouterr().err
+    assert "NCE" in err and "no sites" in err and "region-guided" in err
+
+
+def test_cmd_analyze_passes_per_region_org_context_and_brand(tmp_path, monkeypatch):
+    """cmd_analyze must propagate per-region org_context + brand to poc_runner."""
+    state = tmp_path / "state.json"
+    state.write_text(json.dumps({
+        "date": "2026-05-22",
+        "regions": ["MED", "NCE"],
+        "org_context": True,
+        "region_org_context": {"MED": True, "NCE": False},
+        "brand_label": "ACME",
+    }), encoding="utf-8")
+    calls = _patch_run(monkeypatch)
+
+    crq_run.cmd_analyze(state_path=state)
+
+    assert len(calls) == 2
+    # MED: org-grounded, brand passed
+    med = calls[0]
+    assert med[2] == "MED" and "--analyze" in med
+    assert "--no-org-context" not in med
+    assert med[-2:] == ["--brand", "ACME"]
+    # NCE: region-guided, brand passed
+    nce = calls[1]
+    assert nce[2] == "NCE" and "--analyze" in nce
+    assert "--no-org-context" in nce
+    assert nce[-2:] == ["--brand", "ACME"]
+
+
+def test_build_analyze_argv_region_guided_adds_no_org_context():
+    argv = crq_run.build_analyze_argv("NCE", "2026-05-22", org_context=False, brand_label="Neutral")
+    assert "--no-org-context" in argv
+    assert argv[-2:] == ["--brand", "Neutral"]
+
+
+def test_build_analyze_argv_org_grounded_no_flag():
+    argv = crq_run.build_analyze_argv("MED", "2026-05-22", org_context=True, brand_label="ACME")
+    assert "--no-org-context" not in argv
+    assert argv[-2:] == ["--brand", "ACME"]
 
 
 def test_cmd_prep_uses_state_regions(tmp_path, monkeypatch, capsys):
@@ -301,19 +411,25 @@ def test_main_collect_osint_flags(monkeypatch):
     assert captured["osint"] is None
 
 
-def test_build_analyze_argv():
+def test_build_analyze_argv_defaults_org_grounded():
     argv = crq_run.build_analyze_argv("MED", "2026-05-22")
-    assert argv[2:] == ["MED", "2026-05-22", "--analyze"]
+    assert argv[2:5] == ["MED", "2026-05-22", "--analyze"]
+    assert "--no-org-context" not in argv
 
 
 def test_cmd_analyze_uses_state_regions(tmp_path, monkeypatch, capsys):
     state = tmp_path / "state.json"
-    state.write_text(json.dumps({"date": "2026-05-22", "regions": ["MED", "NCE"],
-                                 "org_context": True, "brand_label": "ACME"}), encoding="utf-8")
+    state.write_text(json.dumps({
+        "date": "2026-05-22",
+        "regions": ["MED", "NCE"],
+        "org_context": True,
+        "region_org_context": {"MED": True, "NCE": True},
+        "brand_label": "ACME",
+    }), encoding="utf-8")
     calls = _patch_run(monkeypatch)
     crq_run.cmd_analyze(state_path=state)
     assert [c[2] for c in calls] == ["MED", "NCE"]
-    assert all(c[-1] == "--analyze" for c in calls)
+    assert all("--analyze" in c for c in calls)
     assert "AGENT STEP REQUIRED" in capsys.readouterr().out
 
 
