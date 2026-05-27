@@ -8,7 +8,7 @@ Mail folder and record the sent timestamp in the `Sent UTC` column.
 
 | Date | Artifact | Sent? | Sent UTC | QA time | Corrections made | RSM replied? | Reply class | Sponsor-worthy? | Notes |
 |---|---|---|---|---|---|---|---|---|---|
-| 2026-05-DD | `poc/seerist-rsm/output/poc/med/2026-05-DD/email.html` | yes/no/skip | 2026-05-DDT07:32Z | 7m | "fixed Palermo personnel count" | yes/no | useful / noise / missed context / false positive | yes/no | free-form |
+| 2026-05-DD | `poc/intelligence-brief-rsm/output/poc/med/2026-05-DD/email.html` | yes/no/skip | 2026-05-DDT07:32Z | 7m | "fixed Palermo personnel count" | yes/no | useful / noise / missed context / false positive | yes/no | free-form |
 
 Notes on columns:
 - `Artifact` — path to the rendered `email.html` (the SOURCE artifact). The
