@@ -41,11 +41,13 @@ Write `osint_dropped.json`: `{"region": "...", "dropped": [{"title","url","relev
 - `corroborates_event` only if an item clearly supports a listed Seerist event; else null.
 - Do NOT assign severity or a brief-section role — those are the analyst's job.
 - If SEERIST_PATH is absent, set `seerist_unavailable: true` and all `corroborates_event` to null.
-- **Cross-region maritime is in-scope when it cascades.** Strait of Hormuz / Suez
-  Canal / Bab-el-Mandeb disruption affects MED shipping even though the incident
-  is in AME. Keep these items and use `corroborates_event` to link to any MED-side
-  Seerist event (e.g., a Suez backlog notice). If no MED-side cascade is observable,
-  drop the item with `relevance_reason: "off-region; no MED cascade"`.
+- **Cross-region maritime is in-scope when it cascades.** Chokepoint disruption
+  (Strait of Hormuz, Suez Canal, Bab-el-Mandeb, Bosphorus, Strait of Malacca,
+  Panama Canal, etc.) can affect a region's shipping even though the incident is
+  outside it. Keep these items and use `corroborates_event` to link to any
+  same-region Seerist event (e.g., a regional port backlog or supply-chain
+  notice). If no same-region cascade is observable, drop the item with
+  `relevance_reason: "off-region; no <REGION> cascade"`.
 - **Outlet attribution:** `outlet` now contains a publication name (NPR, Reuters,
   Wikipedia, etc.), not a URL. Use it verbatim in `summary` when attribution helps.
 - **Date:** `published_at` is best-effort — empty when both Tavily and Firecrawl

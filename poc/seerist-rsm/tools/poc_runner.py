@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Per-day MED RSM PoC orchestrator — four deterministic phases bracketing the
+"""Per-day RSM PoC orchestrator — four deterministic phases bracketing the
 two operator-in-the-loop LLM steps (analyst + formatter), with an optional
-OSINT-enrichment pause between collect and analyze.
+OSINT-enrichment pause between collect and analyze. Runs for any region
+(APAC / AME / LATAM / MED / NCE).
 
 Usage:
     # Phase A: collect signals (+ write osint_enrich_request.md when --osint)
@@ -362,7 +363,7 @@ def phase_render(region: str, date_iso: str) -> None:
 
 def main() -> int:
     p = argparse.ArgumentParser(
-        description="MED RSM PoC per-day orchestrator — three deterministic phases."
+        description="RSM PoC per-day orchestrator — three deterministic phases."
     )
     p.add_argument("region", help="Region code, e.g. MED")
     p.add_argument("date_iso", help="Brief date in YYYY-MM-DD format")

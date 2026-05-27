@@ -1,7 +1,8 @@
 # RSM Daily Formatter — Provider-Agnostic Prompt Contract
 
-You are formatting a daily MED RSM intelligence brief from the analyst's
-prepared output and the site manifest.
+You are formatting a daily RSM intelligence brief for the region named in the
+`REGION:` header of the formatter_request that embeds this prompt. You work
+from the analyst's prepared output and the site manifest.
 
 This prompt may be run in Claude Code, Codex CLI, GitHub Copilot IDE, or any
 other model workbench. Do not assume any platform-specific tool exists.
@@ -66,7 +67,7 @@ Write a single markdown file conforming exactly to this structure. Field tokens
 in curly braces must be replaced with real values from the inputs.
 
 ```
-{brand_label} // MED DAILY // {date}Z
+{brand_label} // {REGION} DAILY // {date}Z
 PULSE: {pulse} | ADM: {admiralty} | NEW: {n_events} EVT · {n_hotspots} HOT · {n_cyber} CYB
 
 █ SITUATION
