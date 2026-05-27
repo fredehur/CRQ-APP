@@ -132,13 +132,31 @@ def test_build_queries_includes_negative_terms_for_med_collision():
     assert any("-Medicare" in q or "-healthcare" in q for q in qs)
 
 
-def test_build_queries_other_regions_unchanged_shape():
-    # APAC/AME/LATAM/NCE keep umbrella behavior (no country split yet) but the
-    # function must still return a non-empty list and reference the region geo term
-    for r in ("APAC", "AME", "LATAM", "NCE"):
+def test_build_queries_per_country_fanout_all_regions():
+    """All five regions use per-country fan-out (not umbrella terms)."""
+    for r in ("MED", "NCE", "APAC", "AME", "LATAM"):
         qs = opc._build_queries(r)
         assert qs, f"empty queries for {r}"
-        assert any(any(tok in q for tok in opc._geo_terms(r).split()) for q in qs)
+        # at least one country from each region's list must appear in the joined queries
+        joined = " | ".join(qs)
+        for country in opc.REGION_COUNTRIES[r]:
+            assert country in joined, f"{r}: missing country {country} in queries"
+        # at least 4 topics × however many countries → >=4 queries
+        assert len(qs) >= 4 * len(opc.REGION_COUNTRIES[r])
+
+
+def test_build_queries_negative_terms_per_region():
+    """Each region has at least one targeted negative term to break semantic collisions."""
+    expected_negatives = {
+        "MED":   "-Medicare",
+        "NCE":   "-NICE",
+        "APAC":  "-CES",
+        "AME":   "-AME",
+        "LATAM": "-airlines",
+    }
+    for r, neg in expected_negatives.items():
+        qs = opc._build_queries(r)
+        assert any(neg in q for q in qs), f"{r}: missing negative term {neg}"
 
 
 # ── Task 2: Tavily news + recency + advanced + exclude_domains + score ───────

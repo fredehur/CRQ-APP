@@ -37,13 +37,24 @@ OUTPUT_ROOT = REPO_ROOT / "output"
 FIXTURES_DIR = REPO_ROOT / "data" / "mock_osint_fixtures"
 
 REGION_COUNTRIES = {
-    "MED": ["Italy", "Spain", "Greece", "Turkey", "Morocco", "Egypt", "Tunisia", "Libya"],
-    # Other regions keep umbrella behavior for now (per-country fan-out comes later).
+    "MED":   ["Italy", "Spain", "Greece", "Turkey", "Morocco", "Egypt", "Tunisia", "Libya"],
+    "NCE":   ["Germany", "Denmark", "Norway", "Sweden", "Netherlands", "United Kingdom", "Ireland", "Poland"],
+    "APAC":  ["Japan", "South Korea", "Taiwan", "Vietnam", "Philippines", "Indonesia", "Australia", "India"],
+    "AME":   ["United Arab Emirates", "Saudi Arabia", "Israel", "Jordan", "Kenya", "Nigeria", "South Africa", "Ghana"],
+    "LATAM": ["Brazil", "Chile", "Mexico", "Colombia", "Argentina", "Peru"],
 }
 
 REGION_NEGATIVE_TERMS = {
     # MED collides hard with "Medicare"/"medical" in US news. Strip them at search time.
-    "MED": "-Medicare -healthcare -insurance",
+    "MED":   "-Medicare -healthcare -insurance",
+    # NCE collides with NICE (UK regulator + French city) and CES (consumer-electronics show).
+    "NCE":   "-NICE -CES -conference",
+    # APAC collides with CES Asia and various trade-show coverage.
+    "APAC":  "-CES -conference -trade-show",
+    # AME collides with American Music Awards.
+    "AME":   "-AME -awards -music",
+    # LATAM collides with LATAM Airlines and tour announcements.
+    "LATAM": "-airlines -music -concert -tour",
 }
 
 REGION_QUERY_TERMS = {
