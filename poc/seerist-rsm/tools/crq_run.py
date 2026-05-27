@@ -243,7 +243,7 @@ def cmd_analyze(state_path=STATE_PATH):
     print(
         "\nAGENT STEP REQUIRED: for each analyst_request.md above, read it, then write\n"
         "claims.json and analyst_report.md into the SAME folder (follow the AUTHORING\n"
-        "CONTRACT in the /crq-run skill). When all regions are done, run:\n"
+        "CONTRACT in the /intel-brief skill). When all regions are done, run:\n"
         "  uv run python tools/crq_run.py prep"
     )
 

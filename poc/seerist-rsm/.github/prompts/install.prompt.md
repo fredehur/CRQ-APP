@@ -19,5 +19,5 @@ Do the following, in order. Run all terminal commands from the repo root
    user — this prompt cannot run them for you):
    - Fill `SEERIST_API_KEY` in `.env`.
    - Run `/setup` to configure brand + org-context default.
-   - Run `/create-skill` to generate the `/crq-run` skill.
-   - Then run `/crq-run` to produce briefs.
+   - Run `/create-skill` to generate the `/intel-brief` skill.
+   - Then run `/intel-brief` to produce briefs.

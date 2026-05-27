@@ -1,16 +1,16 @@
 ---
-description: Generate the thin /crq-run skill from crq.config.json.
+description: Generate the thin /intel-brief skill from crq.config.json.
 agent: agent
 tools: ['editFiles']
 ---
 
-# /create-skill — Generate the /crq-run skill
+# /create-skill — Generate the /intel-brief skill
 
 > Frontmatter keys are version-sensitive (see /setup note).
 
 1. Read `crq.config.json`. If it is missing or invalid, STOP and tell the operator
    to run `/setup` first.
-2. Write `.github/prompts/crq-run.prompt.md` with EXACTLY the content below
+2. Write `.github/prompts/intel-brief.prompt.md` with EXACTLY the content below
    (verbatim — it delegates all orchestration to `tools/crq_run.py` and carries
    only the operator Q&A + the two authoring steps):
 
@@ -21,7 +21,7 @@ tools: ['editFiles']
    tools: ['editFiles', 'runCommands']
    ---
 
-   # /crq-run — Produce today's regional brief(s)
+   # /intel-brief — Produce today's regional brief(s)
 
    1. Ask the operator three things:
       - Which region(s) for today's brief? (APAC / AME / LATAM / MED / NCE, or ALL.)
@@ -62,5 +62,5 @@ tools: ['editFiles']
      taxonomy — the template injects those and the validator rejects them in the body.
    ```
 
-3. Tell the operator: "Generated `/crq-run`. You may need to reload the VSCode
-   window before it appears in the `/` list. Then run `/crq-run`."
+3. Tell the operator: "Generated `/intel-brief`. You may need to reload the VSCode
+   window before it appears in the `/` list. Then run `/intel-brief`."

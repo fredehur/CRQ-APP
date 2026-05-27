@@ -11,4 +11,4 @@ output/
 # CRQ Copilot packaging — per-install / per-run / generated artifacts
 crq.config.json
 crq_run_state.json
-.github/prompts/crq-run.prompt.md
+.github/prompts/intel-brief.prompt.md

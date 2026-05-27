@@ -15,11 +15,11 @@ If you are on the VSCode + Copilot workstation, you do not need to learn the CLI
 | 1 | `/install` | Checks Python + `uv`, installs dependencies, creates your `.env`. |
 | 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env` (required — the pipeline runs against the live Seerist API, not mock data). If you plan to use OSINT mode, also set `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` (OSINT enrichment runs through your agent — no extra key needed). |
 | 3 | `/setup` | Asks for your **brand label** (the name on the brief header), whether briefs default to **org-grounded** or **region-guided**, and whether to include the **OSINT physical pillar** by default. Writes `crq.config.json`. |
-| 4 | `/create-skill` | Generates the `/crq-run` command. (You may need to reload the VSCode window before it appears.) |
+| 4 | `/create-skill` | Generates the `/intel-brief` command. (You may need to reload the VSCode window before it appears.) |
 
 **Every time you want a brief:**
 
-> `/crq-run`
+> `/intel-brief`
 
 Copilot asks three things: which region(s) today (APAC, AME, LATAM, MED, NCE, or all), whether to ground it in your sites or keep it region-only, and whether to add OSINT enrichment. It then collects live signals, writes the analysis and the brief, and gives you a finished `email.html` per region — ready to read or send.
 
@@ -39,8 +39,8 @@ The rest of this README documents the underlying CLI (what those prompt files ca
 | `tools/poi_proximity.py` | Joins Seerist + OSINT events with site coordinates → distance + cascade output |
 | `tools/rsm_dispatcher.py` | Async per-region fan-out, emits placeholder mock briefs in `--mock` mode |
 | `tools/rsm_input_builder.py` | Builds the structured input manifest the RSM formatter agent reads |
-| `tools/crq_run.py` | Orchestrator behind `/crq-run` — loops regions, sequences the phases, threads one date, translates config to flags |
-| `.github/prompts/*.prompt.md` | The Copilot commands: `/install`, `/setup`, `/create-skill` (which generates `/crq-run`) |
+| `tools/crq_run.py` | Orchestrator behind `/intel-brief` — loops regions, sequences the phases, threads one date, translates config to flags |
+| `.github/prompts/*.prompt.md` | The Copilot commands: `/install`, `/setup`, `/create-skill` (which generates `/intel-brief`) |
 | `crq.config.example.json` | Example config — `/setup` writes the real `crq.config.json` from it |
 | `tools/notifier.py` | SMTP delivery (mock-friendly) |
 | `tools/config.py` | Path constants used by the dispatcher |
@@ -134,11 +134,11 @@ Note: `test_client_none_without_key` reads from the environment after `load_dote
    python tools/rsm_dispatcher.py --daily --region MED
    ```
 
-When run **directly** (the manual CLI above), the collectors fall back to mock fixtures if the relevant API key is missing — handy for a partial test (e.g. Seerist live, OSINT mock). This is the bare-CLI behavior only. The `/crq-run` flow always passes `--require-live`, so there a missing key **fails loudly** rather than silently mocking — that is the live-only guarantee described at the top of this README.
+When run **directly** (the manual CLI above), the collectors fall back to mock fixtures if the relevant API key is missing — handy for a partial test (e.g. Seerist live, OSINT mock). This is the bare-CLI behavior only. The `/intel-brief` flow always passes `--require-live`, so there a missing key **fails loudly** rather than silently mocking — that is the live-only guarantee described at the top of this README.
 
 ## Working without Claude Code
 
-> **Most operators should use the `/crq-run` flow at the top of this README instead** — it produces a real, finished brief with no manual pasting. The notes below are the older manual fallback, kept for reference.
+> **Most operators should use the `/intel-brief` flow at the top of this README instead** — it produces a real, finished brief with no manual pasting. The notes below are the older manual fallback, kept for reference.
 
 The `.claude/agents/rsm-formatter-agent.md` and `.claude/agents/rsm-weekly-synthesizer.md` files are agent prompts originally invoked by Claude Code's subagent system. **They will not auto-execute under VSCode + Copilot.** Two options:
 

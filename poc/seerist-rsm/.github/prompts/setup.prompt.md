@@ -21,7 +21,7 @@ Do the following, in order:
      (uses the site registry).
    - **region-guided** — the brief covers the region's risk landscape only, with
      no company details (good for prospects who haven't shared their sites).
-   This is only the *default*; `/crq-run` asks again each run, so they can switch
+   This is only the *default*; `/intel-brief` asks again each run, so they can switch
    per brief.
 3. Ask whether to include the **OSINT physical pillar** by default — extra
    web/news enrichment (protests, conflict, maritime, disasters) on top of the
@@ -30,14 +30,14 @@ Do the following, in order:
    (Copilot Enterprise, Claude Code, etc.) — no `ANTHROPIC_API_KEY` needed for the
    normal OSINT path. `ANTHROPIC_API_KEY` is only required for the optional
    `--enrich-api` headless/CI path. Default **off** if they have no preference.
-   Again, only the *default* — `/crq-run` asks per run.
+   Again, only the *default* — `/intel-brief` asks per run.
 4. **Verify the keys.** Confirm `.env` exists and contains a non-empty
    `SEERIST_API_KEY`. If `.env` is missing, copy `.env.example` to `.env` and tell
    the operator to fill `SEERIST_API_KEY`, then STOP — do not write config until a
    key is present. This pipeline is **live-only**; there is no mock fallback.
    - `SEERIST_API_KEY` is always required — briefs are built from Seerist signals.
    - `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` are required ONLY when OSINT is used
-     (the default from step 3, or a per-run choice in `/crq-run`). Both or OSINT
+     (the default from step 3, or a per-run choice in `/intel-brief`). Both or OSINT
      runs fail loudly. If the OSINT default is on, verify both are present; if
      absent, warn the operator that OSINT runs will fail loudly until they set them.
    - `ANTHROPIC_API_KEY` is optional — only needed for the `--enrich-api` headless
