@@ -47,6 +47,23 @@ tools: ['editFiles']
    7. For EACH printed `formatter_request.md`: read it and write `brief.md` into
       the SAME directory, following the AUTHORING CONTRACT.
    8. Run: `uv run python tools/crq_run.py render`; report the `email.html` paths.
+      The render step also writes `intel_decisions.md` next to `email.html` —
+      it logs which intel was pulled, which was used in claims, and which was
+      dropped (with reasons). Surface this path to the operator alongside
+      `email.html` so they can audit the run.
+
+   ## Output structure
+
+   Every run lands at `output/briefs/<YYYY-MM-DD>/<REGION>/` and contains:
+   - `email.html` — the finished brief (open in browser, copy/paste into Gmail)
+   - `brief.md` — the markdown source
+   - `intel_decisions.md` — per-run transparency log (kept/dropped intel + reasons)
+   - `claims.json` — analyst's structured claims registry (powers the appendix)
+   - `analyst_report.md` — analyst's narrative read
+   - `osint_physical_signals.json` / `osint_dropped.json` — kept/dropped OSINT
+   - `seerist_signals.json` — the Seerist payload the analyst worked from
+   - `_rsm_manifest_daily.json` — the manifest the analyst + formatter consumed
+   - The `*_request.md` files used by each agent step (osint_enrich / analyst / formatter)
 
    ## AUTHORING CONTRACT (the render step fails if you break these)
    - Body citations use `[<claim_id>]` form (e.g. `[med-001]`) — NEVER raw numbers.
