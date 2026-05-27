@@ -55,10 +55,10 @@ The rest of this README documents the underlying CLI (what those prompt files ca
 
 ## Important: working directory
 
-**Every command in this README assumes your shell is in `poc/seerist-rsm/`.** The Python files use `from tools.X` imports plus `Path(__file__).resolve().parent.parent` for repo-root resolution; both of those expect this folder to be the project root. If you run from a parent or child directory, imports and file lookups will silently fail.
+**Every command in this README assumes your shell is in `poc/intelligence-brief-rsm/`.** The Python files use `from tools.X` imports plus `Path(__file__).resolve().parent.parent` for repo-root resolution; both of those expect this folder to be the project root. If you run from a parent or child directory, imports and file lookups will silently fail.
 
 ```
-cd poc/seerist-rsm
+cd poc/intelligence-brief-rsm
 ```
 
 ## Setup — option A: uv (recommended)
@@ -161,7 +161,7 @@ To keep this carve narrow and runnable, the following are intentionally absent:
 - The full test suite — only the two Seerist tests are included
 - All `.claude/hooks/` (stop-hook validators, telemetry). The `Stop:` hook reference inside `rsm-formatter-agent.md` will not resolve — ignore it; it has no effect outside Claude Code.
 
-If you need any of those, pull from the parent repo (branch `poc/seerist-rsm-med` was carved from `main`).
+If you need any of those, pull from the parent repo (branch `poc/intelligence-brief-rsm` was carved from `main`).
 
 ## Limitations
 

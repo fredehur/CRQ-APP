@@ -1,7 +1,7 @@
 [project]
-name = "seerist-rsm-poc"
+name = "intelligence-brief-rsm"
 version = "0.1.0"
-description = "Self-contained slice of the AeroGrid CRQ workspace — Seerist API + RSM pipeline for the MED region. Carved from parent branch poc/seerist-rsm-med."
+description = "RSM-grade regional intelligence brief pipeline — Seerist + OSINT ingestion, agent enrichment, deterministic render. Multi-region (APAC / AME / LATAM / MED / NCE) with org-grounded or region-guided modes."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

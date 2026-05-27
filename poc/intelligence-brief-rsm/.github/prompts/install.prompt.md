@@ -9,7 +9,7 @@ tools: ['editFiles', 'runCommands']
 > Frontmatter keys are version-sensitive (see /setup note).
 
 Do the following, in order. Run all terminal commands from the repo root
-(`poc/seerist-rsm/`).
+(`poc/intelligence-brief-rsm/`).
 
 1. Check `python --version` (need 3.11+) and `uv --version`. If `uv` is missing,
    tell the operator to install it (`https://docs.astral.sh/uv/`) and STOP.
