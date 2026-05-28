@@ -18,6 +18,6 @@ Do the following, in order. Run all terminal commands from the repo root
 4. Tell the operator the remaining manual steps (prompt files are invoked by the
    user — this prompt cannot run them for you):
    - Fill `SEERIST_API_KEY` in `.env`.
-   - Run `/setup` to configure brand + org-context default.
+   - Run `/setup` to configure brand + org-context default + timeframe default.
    - Run `/create-skill` to generate the `/intel-brief` skill.
    - Then run `/intel-brief` to produce briefs.

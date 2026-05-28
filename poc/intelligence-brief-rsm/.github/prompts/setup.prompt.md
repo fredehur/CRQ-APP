@@ -1,5 +1,5 @@
 ---
-description: Configure the CRQ regional-brief pipeline (brand, org-context default, live API key).
+description: Configure the CRQ regional-brief pipeline (brand, defaults, live API key).
 agent: agent
 tools: ['editFiles', 'runCommands']
 ---
@@ -23,7 +23,12 @@ Do the following, in order:
      no company details (good for prospects who haven't shared their sites).
    This is only the *default*; `/intel-brief` asks again each run, so they can switch
    per brief.
-3. Ask whether to include the **OSINT physical pillar** by default — extra
+3. Ask for the default **timeframe window**:
+  - **daily** = 1 day lookback (`window_days_default: 1`)
+  - **weekly** = 7 day lookback (`window_days_default: 7`)
+  This is only the *default*; `/intel-brief` asks each run, so they can switch.
+  Default to **daily** if they have no preference.
+4. Ask whether to include the **OSINT physical pillar** by default — extra
    web/news enrichment (protests, conflict, maritime, disasters) on top of the
    Seerist signals. It needs `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` in `.env`.
    OSINT enrichment (relevance filtering + summaries) runs through your agent
@@ -31,7 +36,7 @@ Do the following, in order:
    normal OSINT path. `ANTHROPIC_API_KEY` is only required for the optional
    `--enrich-api` headless/CI path. Default **off** if they have no preference.
    Again, only the *default* — `/intel-brief` asks per run.
-4. **Verify the keys.** Confirm `.env` exists and contains a non-empty
+5. **Verify the keys.** Confirm `.env` exists and contains a non-empty
    `SEERIST_API_KEY`. If `.env` is missing, copy `.env.example` to `.env` and tell
    the operator to fill `SEERIST_API_KEY`, then STOP — do not write config until a
    key is present. This pipeline is **live-only**; there is no mock fallback.
@@ -43,16 +48,17 @@ Do the following, in order:
    - `ANTHROPIC_API_KEY` is optional — only needed for the `--enrich-api` headless
      path (`osint_physical_collector --enrich-api`). Not required for the normal
      agent-enrichment flow.
-5. Write `crq.config.json` at the repo root with exactly:
+6. Write `crq.config.json` at the repo root with exactly:
 
    ```json
    {
      "brand_label": "<their brand>",
      "org_context_default": <true|false>,
+     "window_days_default": <1|7>,
      "osint_default": <true|false>
    }
    ```
 
-6. Confirm: "Setup complete. Next: run `/create-skill`."
+7. Confirm: "Setup complete. Next: run `/create-skill`."
 
 Re-running `/setup` overwrites the config and re-checks the key.

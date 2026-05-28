@@ -39,7 +39,7 @@ One-time setup:
 |---|---|---|
 | 1 | `/install` | Install dependencies and create local environment files. |
 | 2 | Edit `.env` | Add required API keys. |
-| 3 | `/setup` | Write `crq.config.json` with brand, grounding, and OSINT defaults. |
+| 3 | `/setup` | Write `crq.config.json` with brand, grounding, timeframe, and OSINT defaults. |
 | 4 | `/create-skill` | Create or refresh the `/intel-brief` command. |
 
 Run a brief:

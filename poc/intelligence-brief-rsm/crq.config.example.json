@@ -1,5 +1,6 @@
 {
   "brand_label": "REGIONAL RISK INTELLIGENCE",
   "org_context_default": false,
+  "window_days_default": 1,
   "osint_default": false
 }

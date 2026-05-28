@@ -18,6 +18,7 @@ import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import TypeVar
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = PROJECT_ROOT / "crq.config.json"
@@ -25,6 +26,7 @@ STATE_PATH = PROJECT_ROOT / "crq_run_state.json"
 SITES_PATH = PROJECT_ROOT / "data" / "aerowind_sites.json"
 POC_RUNNER = "tools/poc_runner.py"
 VALID_REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
+T = TypeVar("T")
 
 
 class CrqRunError(Exception):
@@ -51,6 +53,11 @@ def load_config(path: Path = CONFIG_PATH) -> dict:
     if not isinstance(osint_default, bool):
         raise CrqRunError("crq.config.json: osint_default must be a boolean. Re-run /setup.")
     cfg["osint_default"] = osint_default
+    # window_days_default is optional (older configs predate it); defaults to daily.
+    window_days_default = cfg.get("window_days_default", 1)
+    if window_days_default not in (1, 7):
+        raise CrqRunError("crq.config.json: window_days_default must be 1 or 7. Re-run /setup.")
+    cfg["window_days_default"] = int(window_days_default)
     return cfg
 
 
@@ -93,7 +100,7 @@ def expand_regions(regions: list[str]) -> list[str]:
     return deduped
 
 
-def resolve_override(override: bool | None, config_default: bool) -> bool:
+def resolve_override(override: T | None, config_default: T) -> T:
     """Generic per-run override: None means use the config default."""
     return config_default if override is None else override
 
@@ -104,9 +111,24 @@ def resolve_org_context(override: bool | None, config_default: bool) -> bool:
 
 
 def build_collect_argv(
-    region: str, date: str, *, org_context: bool, brand_label: str, osint: bool = False
+    region: str,
+    date: str,
+    *,
+    org_context: bool,
+    brand_label: str,
+    osint: bool = False,
+    window_days: int = 1,
 ) -> list[str]:
-    argv = [sys.executable, POC_RUNNER, region, date, "--collect", "--require-live"]
+    argv = [
+        sys.executable,
+        POC_RUNNER,
+        region,
+        date,
+        "--collect",
+        "--require-live",
+        "--window",
+        str(window_days),
+    ]
     if osint:
         argv.append("--osint")
     if not org_context:
@@ -163,6 +185,7 @@ def _day_dir(region: str, date: str) -> Path:
 
 
 def cmd_collect(regions, org_grounded_override, date, osint_override=None,
+                window_days: int = 1,
                 config_path=CONFIG_PATH, state_path=STATE_PATH,
                 sites_path=SITES_PATH):
     cfg = load_config(config_path)
@@ -170,6 +193,7 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
     date = date or today_iso()
     org_context_requested = resolve_org_context(org_grounded_override, cfg["org_context_default"])
     osint = resolve_override(osint_override, cfg["osint_default"])
+    window_days = resolve_override(window_days, cfg["window_days_default"])
     brand_label = cfg["brand_label"]
     region_org_context: dict[str, bool] = {}
     for region in region_list:
@@ -181,7 +205,8 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
                 file=sys.stderr,
             )
         _run(build_collect_argv(region, date, org_context=effective,
-                                brand_label=brand_label, osint=osint))
+                                brand_label=brand_label, osint=osint,
+                                window_days=window_days))
     write_state(
         {
             "date": date,
@@ -189,6 +214,7 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
             "org_context": org_context_requested,
             "region_org_context": region_org_context,
             "brand_label": brand_label,
+            "window_days": int(window_days),
         },
         state_path,
     )
@@ -268,6 +294,13 @@ def main(argv: list[str] | None = None) -> int:
                       help="Include the OSINT physical pillar (web/news) this run (needs Tavily/Firecrawl keys)")
     ogrp.add_argument("--no-osint", dest="osint_override", action="store_const", const=False,
                       help="Skip the OSINT physical pillar this run (Seerist-only)")
+    pc.add_argument(
+        "--window",
+        type=int,
+        choices=[1, 7],
+        default=None,
+        help="Seerist collection window in days: 1 for daily, 7 for weekly",
+    )
     pc.add_argument("--date", default=None, help="YYYY-MM-DD; defaults to today (UTC)")
 
     sub.add_parser("analyze", help="Build manifest + analyst_request (after OSINT enrichment).")
@@ -278,7 +311,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         if args.cmd == "collect":
             cmd_collect(regions=args.regions, org_grounded_override=args.override,
-                        osint_override=args.osint_override, date=args.date)
+                        osint_override=args.osint_override, date=args.date,
+                        window_days=args.window)
         elif args.cmd == "analyze":
             cmd_analyze()
         elif args.cmd == "prep":

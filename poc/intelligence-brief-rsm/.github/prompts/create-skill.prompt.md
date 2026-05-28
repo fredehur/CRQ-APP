@@ -23,7 +23,10 @@ tools: ['editFiles']
 
    # /intel-brief — Produce today's regional brief(s)
 
-   1. Ask the operator three things:
+   1. Ask the operator four things:
+      - Timeframe: Daily brief (1 day lookback) or Weekly brief (7 day lookback)?
+        Default comes from crq.config.json (`window_days_default`: 1=Daily, 7=Weekly).
+        If no preference, use the default.
       - Which region(s) for today's brief? (APAC / AME / LATAM / MED / NCE, or ALL.)
       - Org-grounded (names their sites + people) or region-guided (region only,
         no company details)? Default comes from crq.config.json.
@@ -32,7 +35,9 @@ tools: ['editFiles']
         comes from crq.config.json.
       For any choice where they have no preference, just use the default (omit the
       override flag).
-   2. Run: `uv run python tools/crq_run.py collect --regions <THEIR REGIONS>`
+   2. Run: `uv run python tools/crq_run.py collect --regions <THEIR REGIONS> [--window 1|7]`
+      Map Daily => `--window 1`, Weekly => `--window 7`.
+      If operator chose default timeframe, omit `--window` and let config default apply.
       Add overrides ONLY when they differ from the defaults:
       `--region-guided` / `--org-grounded`, and `--osint` / `--no-osint`.
    3. IF OSINT is on, the command prints `osint_enrich_request.md` path(s). For EACH:
