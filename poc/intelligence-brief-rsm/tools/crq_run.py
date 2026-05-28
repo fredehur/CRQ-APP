@@ -29,6 +29,10 @@ VALID_REGIONS = ["APAC", "AME", "LATAM", "MED", "NCE"]
 T = TypeVar("T")
 
 
+def cadence_from_window(window_days: int) -> str:
+    return "weekly" if int(window_days) == 7 else "daily"
+
+
 class CrqRunError(Exception):
     """Operator-facing orchestration error."""
 
@@ -137,14 +141,14 @@ def build_collect_argv(
     return argv
 
 
-def build_phase_argv(region: str, date: str, phase: str) -> list[str]:
+def build_phase_argv(region: str, date: str, phase: str, cadence: str) -> list[str]:
     """phase is '--prep-format' or '--render'."""
-    return [sys.executable, POC_RUNNER, region, date, phase]
+    return [sys.executable, POC_RUNNER, region, date, phase, "--cadence", cadence]
 
 
 def build_analyze_argv(region: str, date: str, *, org_context: bool = True,
-                       brand_label: str | None = None) -> list[str]:
-    argv = [sys.executable, POC_RUNNER, region, date, "--analyze"]
+                       brand_label: str | None = None, cadence: str = "daily") -> list[str]:
+    argv = [sys.executable, POC_RUNNER, region, date, "--analyze", "--cadence", cadence]
     if not org_context:
         argv.append("--no-org-context")
     if brand_label is not None:
@@ -176,12 +180,24 @@ def _run(argv: list[str]) -> None:
         raise CrqRunError(f"command failed (exit {result.returncode}): {' '.join(argv)}")
 
 
-def _day_dir(region: str, date: str) -> Path:
-    """Per-(date, region) brief folder. Mirrors poc_runner._day_dir.
+def _day_dir(region: str, date: str, cadence: str) -> Path:
+    """Per-(date, region, cadence) brief folder. Mirrors poc_runner._day_dir.
 
-    Shape: output/briefs/<YYYY-MM-DD>/<REGION>/
+    Shape: output/briefs/<YYYY-MM-DD>/<daily|weekly>/<REGION>/
     """
-    return PROJECT_ROOT / "output" / "briefs" / date / region.upper()
+    return PROJECT_ROOT / "output" / "briefs" / date / cadence / region.upper()
+
+
+def _latest_render_email_path(region: str, date: str, cadence: str) -> Path:
+    """Return the latest timestamped email HTML path for a run.
+
+    Render outputs are named like email_<YYYYMMDDTHHMMSSZ>.html.
+    """
+    render_dir = _day_dir(region, date, cadence) / "render"
+    candidates = sorted(render_dir.glob("email_*.html"))
+    if candidates:
+        return candidates[-1]
+    return render_dir / "email.html"
 
 
 def cmd_collect(regions, org_grounded_override, date, osint_override=None,
@@ -195,6 +211,7 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
     osint = resolve_override(osint_override, cfg["osint_default"])
     window_days = resolve_override(window_days, cfg["window_days_default"])
     brand_label = cfg["brand_label"]
+    cadence = cadence_from_window(int(window_days))
     region_org_context: dict[str, bool] = {}
     for region in region_list:
         effective = org_context_requested and _region_has_sites(region, sites_path)
@@ -215,6 +232,7 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
             "region_org_context": region_org_context,
             "brand_label": brand_label,
             "window_days": int(window_days),
+            "cadence": cadence,
         },
         state_path,
     )
@@ -222,7 +240,7 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
     if osint:
         print("OSINT enrich request(s) to work through:")
         for region in region_list:
-            print(f"  {_day_dir(region, date) / 'osint_enrich_request.md'}")
+            print(f"  {_day_dir(region, date, cadence) / 'requests' / 'osint_enrich_request.md'}")
         print(
             "\nAGENT STEP REQUIRED: for each osint_enrich_request.md above, read it and\n"
             "rewrite osint_physical_signals.json enriched (+ osint_dropped.json). Then run:\n"
@@ -234,12 +252,13 @@ def cmd_collect(regions, org_grounded_override, date, osint_override=None,
 
 def cmd_prep(state_path=STATE_PATH):
     state = read_state(state_path)
+    cadence = state.get("cadence") or cadence_from_window(int(state.get("window_days", 1)))
     for region in state["regions"]:
-        _run(build_phase_argv(region, state["date"], "--prep-format"))
+        _run(build_phase_argv(region, state["date"], "--prep-format", cadence=cadence))
     print(f"\n[crq_run] Prepared formatter inputs: {', '.join(state['regions'])}.")
     print("Formatter request(s) to work through:")
     for region in state["regions"]:
-        print(f"  {_day_dir(region, state['date']) / 'formatter_request.md'}")
+        print(f"  {_day_dir(region, state['date'], cadence) / 'requests' / 'formatter_request.md'}")
     print(
         "\nAGENT STEP REQUIRED: for each formatter_request.md above, read it, then write\n"
         "brief.md into the SAME folder (follow the AUTHORING CONTRACT). When all regions\n"
@@ -250,26 +269,28 @@ def cmd_prep(state_path=STATE_PATH):
 
 def cmd_render(state_path=STATE_PATH):
     state = read_state(state_path)
+    cadence = state.get("cadence") or cadence_from_window(int(state.get("window_days", 1)))
     for region in state["regions"]:
-        _run(build_phase_argv(region, state["date"], "--render"))
+        _run(build_phase_argv(region, state["date"], "--render", cadence=cadence))
     print(f"\n[crq_run] Done. Briefs rendered for {', '.join(state['regions'])}.")
-    print("Open each email.html in a browser to read or send the brief:")
+    print("Open each rendered email HTML in a browser to read or send the brief:")
     for region in state["regions"]:
-        print(f"  {_day_dir(region, state['date']) / 'email.html'}")
+        print(f"  {_latest_render_email_path(region, state['date'], cadence)}")
 
 
 def cmd_analyze(state_path=STATE_PATH):
     state = read_state(state_path)
+    cadence = state.get("cadence") or cadence_from_window(int(state.get("window_days", 1)))
     region_org_context = state.get("region_org_context", {})
     brand_label = state.get("brand_label")
     for region in state["regions"]:
         # Default true preserves prior behavior for older state files (pre-fallback).
         effective = region_org_context.get(region, state.get("org_context", True))
         _run(build_analyze_argv(region, state["date"],
-                                org_context=effective, brand_label=brand_label))
+                                org_context=effective, brand_label=brand_label, cadence=cadence))
     print(f"\n[crq_run] Built manifest + analyst request: {', '.join(state['regions'])}.")
     for region in state["regions"]:
-        print(f"  {_day_dir(region, state['date']) / 'analyst_request.md'}")
+        print(f"  {_day_dir(region, state['date'], cadence) / 'requests' / 'analyst_request.md'}")
     print(
         "\nAGENT STEP REQUIRED: for each analyst_request.md above, read it, then write\n"
         "claims.json and analyst_report.md into the SAME folder (follow the AUTHORING\n"

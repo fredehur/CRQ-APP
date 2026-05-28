@@ -317,7 +317,7 @@ def test_cmd_render_uses_state_regions(tmp_path, monkeypatch, capsys):
     crq_run.cmd_render(state_path=state)
     assert calls[0][-1] == "--render"
     out = capsys.readouterr().out
-    assert "email.html" in out
+    assert "email_" in out and ".html" in out
 
 
 # Task 6 — CLI entry point
