@@ -7,7 +7,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import base64
 import json
+import os
 import re
 import sys
 from html import escape
@@ -28,26 +30,26 @@ _STAT_RE = re.compile(
 )
 _SECTION_HEADER_RE = re.compile(r"^█\s*(.+?)\s*$")
 
-# V1: severity band → color
+# Vestas semantic palette for severity emphasis.
 _SEVERITY_COLORS = {
-    "CRITICAL": "#b91c1c",
-    "HIGH": "#c2410c",
-    "MED": "#a16207",
-    "LOW": "#525252",
+    "CRITICAL": "#772219",
+    "HIGH": "#E17D28",
+    "MED": "#005AFF",
+    "LOW": "#606D7B",
 }
 
-# V2: cyber surface tag → chip colors
+# Vestas-approved cyber chip mappings.
 _SURFACE_CHIPS = {
-    "OT/ICS": ("background:#dbeafe;color:#1e40af", "OT/ICS"),
-    "IT": ("background:#fce7f3;color:#9d174d", "IT"),
-    "Supply chain": ("background:#fef3c7;color:#92400e", "Supply chain"),
-    "Workforce": ("background:#dcfce7;color:#15803d", "Workforce"),
-    "Baseline": ("background:#f1f5f9;color:#475569", "Baseline"),
+    "OT/ICS": ("background:#96C8F0;color:#1F3144", "OT/ICS"),
+    "IT": ("background:#4BA6F7;color:#FFFFFF", "IT"),
+    "Supply chain": ("background:#E3E5E8;color:#1F3144", "Supply chain"),
+    "Workforce": ("background:#19736E;color:#FFFFFF", "Workforce"),
+    "Baseline": ("background:#E3E5E8;color:#606D7B", "Baseline"),
 }
 
 _CHIP_BASE_STYLE = (
-    "display:inline-block;padding:2px 8px;border-radius:3px;"
-    "font-size:11px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;"
+    "display:inline-block;padding:2px 8px;border-radius:0;"
+    "font-size:11px;font-weight:600;text-transform:uppercase;"
 )
 
 # V1: match `[BAND · ...]` — first bracket group on a bullet line
@@ -59,12 +61,102 @@ _SURFACE_TAG_RE = re.compile(r"^(-\s+)?\[([A-Za-z/\s]+)\]\s+")
 _CITATION_RE = re.compile(r"\[(\d+(?:\s*,\s*\d+)*)\]")
 # V9: APPENDIX entry line, e.g. `[1] snippet text — sig:id (label)`
 _APPENDIX_ENTRY_RE = re.compile(r"^\[(\d+)\]\s+(.+)$")
+_SIGNAL_ID_RE = re.compile(r"\b(?:osint|seerist):[A-Za-z0-9_:\-]+\b")
+_URL_FIELDS = ("url", "source_url", "article_url", "web_url", "href", "link")
 
 _SUP_STYLE = (
-    "font-size:10px;vertical-align:super;line-height:0;color:#4f46e5;"
-    "font-family:SF Mono,Menlo,Consolas,monospace;"
+    "font-size:10px;vertical-align:super;line-height:0;color:#005AFF;"
+    "font-family:VestasSans,Helvetica Neue,Helvetica,Arial,sans-serif;"
 )
-_ANCHOR_STYLE = "color:#4f46e5;text-decoration:none;"
+_ANCHOR_STYLE = "color:#005AFF;text-decoration:none;"
+
+
+def _load_vestas_logo_data_uri() -> str:
+    """Return a configured brand logo as a data URI when available.
+
+    The renderer intentionally does not ship a Vestas logo file. Set
+    VESTAS_LOGO_PATH or CRQ_BRAND_LOGO_PATH locally, or provide a repo-local
+    static/design/logo/Vestas_Primary_Logo_RGB.png file in deployments that are
+    allowed to distribute the logo asset.
+    """
+    candidates: list[Path] = []
+    for env_name in ("VESTAS_LOGO_PATH", "CRQ_BRAND_LOGO_PATH"):
+        value = os.environ.get(env_name)
+        if value:
+            candidates.append(Path(value))
+    candidates.extend([
+        REPO_ROOT / "static" / "design" / "logo" / "Vestas_Primary_Logo_RGB.png",
+        REPO_ROOT / "static" / "design" / "logo" / "brand-logo.png",
+    ])
+
+    logo_path = next((path for path in candidates if path.exists()), None)
+    if logo_path is None:
+        return ""
+    encoded = base64.b64encode(logo_path.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
+def _load_json(path: Path) -> object | None:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _iter_signal_dicts(value: object):
+    """Yield nested dictionaries that carry a signal_id."""
+    if isinstance(value, dict):
+        if value.get("signal_id"):
+            yield value
+        for child in value.values():
+            yield from _iter_signal_dicts(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _iter_signal_dicts(child)
+
+
+def _collect_signal_urls(manifest: dict) -> dict[str, str]:
+    """Build signal_id -> URL map from manifest inlines and referenced signal files."""
+    urls: dict[str, str] = {}
+
+    def _absorb(doc: object) -> None:
+        for signal in _iter_signal_dicts(doc):
+            signal_id = str(signal.get("signal_id") or "")
+            if not signal_id or signal_id in urls:
+                continue
+            for field in _URL_FIELDS:
+                url = signal.get(field)
+                if isinstance(url, str) and url.startswith(("http://", "https://")):
+                    urls[signal_id] = url
+                    break
+
+    _absorb(manifest)
+    optional = manifest.get("optional", {}) if isinstance(manifest, dict) else {}
+    if isinstance(optional, dict):
+        for key in ("osint_physical_signals", "seerist_signals"):
+            path_value = optional.get(key)
+            if isinstance(path_value, str):
+                loaded = _load_json(Path(path_value))
+                if loaded is not None:
+                    _absorb(loaded)
+
+    return urls
+
+
+def _link_appendix_sources(entry: str, source_urls: dict[str, str]) -> str:
+    """Link signal IDs in an escaped appendix entry when a source URL exists."""
+    def _replace(match: re.Match) -> str:
+        signal_id = match.group(0)
+        url = source_urls.get(signal_id)
+        if not url:
+            return signal_id
+        safe_url = escape(url, quote=True)
+        return (
+            f'<a href="{safe_url}" target="_blank" '
+            f'style="color:#005AFF;text-decoration:underline;">{signal_id}</a>'
+        )
+
+    return _SIGNAL_ID_RE.sub(_replace, entry)
 
 
 def _apply_severity_color(text: str) -> str:
@@ -99,7 +191,7 @@ def _apply_citation_anchors(text: str) -> str:
     return _CITATION_RE.sub(_replace, text)
 
 
-def _render_appendix_block(body: str) -> str:
+def _render_appendix_block(body: str, source_urls: dict[str, str]) -> str:
     """Render the APPENDIX body as a list of anchored `<div id="ref-N">` rows.
 
     Body lines are expected to be either `[N] entry_text` rows or a single
@@ -118,11 +210,11 @@ def _render_appendix_block(body: str) -> str:
                 f'{line}</div>'
             )
             continue
-        n, entry = m.group(1), m.group(2)
+        n, entry = m.group(1), _link_appendix_sources(m.group(2), source_urls)
         rows.append(
             f'<div id="ref-{n}" style="font-size:12px;line-height:1.55;color:#374151;'
             f'margin-bottom:4px;padding-left:4px;">'
-            f'<span style="color:#4f46e5;font-weight:600;">[{n}]</span> {entry}'
+            f'<span style="color:#005AFF;font-weight:600;">[{n}]</span> {entry}'
             f'</div>'
         )
     return "\n".join(rows)
@@ -263,6 +355,7 @@ def render(brief_md: Path, manifest_json: Path, *, subject: str) -> str:
     manifest = json.loads(manifest_json.read_text(encoding="utf-8"))
     _check_site_discipline(brief_text, manifest)
     parsed = _parse_brief(brief_text)
+    source_urls = _collect_signal_urls(manifest)
 
     # Intentional design: Jinja autoescape is OFF for the .j2 template (it's a
     # whole-document HTML scaffold; we don't want Jinja escaping the table
@@ -286,7 +379,7 @@ def render(brief_md: Path, manifest_json: Path, *, subject: str) -> str:
         if is_appendix:
             # V9: APPENDIX renders as anchored entry rows. No citation anchors
             # applied inside the appendix itself (those would self-link).
-            s["appendix_html"] = _render_appendix_block(raw_body)
+            s["appendix_html"] = _render_appendix_block(raw_body, source_urls)
             s["body"] = raw_body
             s["site_blocks"] = []
         elif is_exposure:
@@ -311,7 +404,11 @@ def render(brief_md: Path, manifest_json: Path, *, subject: str) -> str:
         keep_trailing_newline=True,
     )
     template = env.get_template(TEMPLATE_NAME)
-    return template.render(subject=subject, **parsed)
+    return template.render(
+        subject=subject,
+        logo_data_uri=_load_vestas_logo_data_uri(),
+        **parsed,
+    )
 
 
 def main() -> int:

@@ -1,170 +1,241 @@
-# Seerist + RSM POC Slice (MED region)
+# Regional Intelligence Brief POC
 
-Self-contained slice of the AeroGrid CRQ workspace, carved out so the **Seerist API** and the **RSM brief pipeline** can be tested on a different machine — specifically a workstation running VSCode + GitHub Copilot Enterprise where Claude Code is not available.
+Portable proof of concept for producing regional security intelligence briefs with VS Code, GitHub Copilot, Seerist, and optional OSINT enrichment.
 
-This slice is **MED-only**. The site registry, mock fixtures, and runtime behavior are all narrowed to the Mediterranean region.
+The pipeline collects regional signals, turns them into an analyst-ready brief, normalizes citations, and renders an email-safe HTML output.
 
-## Run it in GitHub Copilot (recommended path)
+## What It Produces
 
-If you are on the VSCode + Copilot workstation, you do not need to learn the CLI below. The repo ships four Copilot prompt files (in `.github/prompts/`) that drive the whole pipeline. In Copilot Chat, type the slash command — Copilot runs the steps for you.
+Each run creates a dated package under:
 
-**One-time setup (run each command once, in order):**
-
-| Step | Command in Copilot Chat | What it does |
-|---|---|---|
-| 1 | `/install` | Checks Python + `uv`, installs dependencies, creates your `.env`. |
-| 2 | *(edit `.env`)* | Paste your `SEERIST_API_KEY` into `.env` (required — the pipeline runs against the live Seerist API, not mock data). If you plan to use OSINT mode, also set `TAVILY_API_KEY` + `FIRECRAWL_API_KEY` (OSINT enrichment runs through your agent — no extra key needed). |
-| 3 | `/setup` | Asks for your **brand label** (the name on the brief header), whether briefs default to **org-grounded** or **region-guided**, and whether to include the **OSINT physical pillar** by default. Writes `crq.config.json`. |
-| 4 | `/create-skill` | Generates the `/intel-brief` command. (You may need to reload the VSCode window before it appears.) |
-
-**Every time you want a brief:**
-
-> `/intel-brief`
-
-Copilot asks three things: which region(s) today (APAC, AME, LATAM, MED, NCE, or all), whether to ground it in your sites or keep it region-only, and whether to add OSINT enrichment. It then collects live signals, writes the analysis and the brief, and gives you a finished `email.html` per region — ready to read or send.
-
-> **Org-grounded vs region-guided:** *org-grounded* briefs name your specific sites, personnel, and exposure. *region-guided* briefs cover the region's risk landscape with no company details — useful for a prospect who hasn't shared their footprint yet.
->
-> **OSINT physical pillar:** optional web/news enrichment (protests, conflict, maritime, disasters) via Tavily + Firecrawl (enrichment via your agent — Copilot Enterprise, Claude Code, etc.), layered on top of the Seerist signals. OSINT enrichment needs Tavily + Firecrawl keys; if any are missing when OSINT is on, the run stops with a clear message rather than silently producing a thinner brief.
-
-The rest of this README documents the underlying CLI (what those prompt files call) for anyone who wants to run it by hand or without Copilot.
-
-## What is in this folder
-
-| Path | Purpose |
-|---|---|
-| `tools/seerist_client.py` | Typed client for the Seerist HTTP API (`https://app.seerist.com/hyperionapi/`) |
-| `tools/seerist_collector.py` | Pulls all Tier-1 Seerist data types and writes `output/regional/{region}/seerist_signals.json` |
-| `tools/osint_physical_collector.py` | Tavily + Firecrawl OSINT collector (physical pillar) — has a mock mode |
-| `tools/poi_proximity.py` | Joins Seerist + OSINT events with site coordinates → distance + cascade output |
-| `tools/rsm_dispatcher.py` | Async per-region fan-out, emits placeholder mock briefs in `--mock` mode |
-| `tools/rsm_input_builder.py` | Builds the structured input manifest the RSM formatter agent reads |
-| `tools/crq_run.py` | Orchestrator behind `/intel-brief` — loops regions, sequences the phases, threads one date, translates config to flags |
-| `.github/prompts/*.prompt.md` | The Copilot commands: `/install`, `/setup`, `/create-skill` (which generates `/intel-brief`) |
-| `crq.config.example.json` | Example config — `/setup` writes the real `crq.config.json` from it |
-| `tools/notifier.py` | SMTP delivery (mock-friendly) |
-| `tools/config.py` | Path constants used by the dispatcher |
-| `tools/briefs/templates/` | Jinja2 brief templates (`rsm.html.j2`, `_partials.html.j2`) |
-| `static/design/styles/rsm.css` | Brief styling |
-| `data/aerowind_sites.json` | **MED-filtered** site registry — 3 sites (Casablanca, Palermo, Málaga) |
-| `data/company_profile.json` | Crown jewels + footprint, used by the formatter |
-| `data/mock_osint_fixtures/med_*.json` | Offline data so the pipeline runs without API keys |
-| `docs/seerist/api-blueprint.apib` | Full Seerist API reference (Apiary blueprint) |
-| `.claude/agents/rsm-*.md` | RSM agent prompts — see "Working without Claude Code" below |
-| `tests/test_seerist_*.py` | Unit tests for the client and collector |
-
-## Important: working directory
-
-**Every command in this README assumes your shell is in `poc/intelligence-brief-rsm/`.** The Python files use `from tools.X` imports plus `Path(__file__).resolve().parent.parent` for repo-root resolution; both of those expect this folder to be the project root. If you run from a parent or child directory, imports and file lookups will silently fail.
-
+```text
+output/briefs/<date>/<REGION>/
 ```
+
+Primary output:
+
+```text
+email.html
+```
+
+Common supporting files:
+
+```text
+brief.md
+claims.json
+analyst_report.md
+formatter_request.md
+_rsm_manifest_daily.json
+intel_decisions.md
+```
+
+## Main Workflow
+
+Use the Copilot slash commands in VS Code.
+
+One-time setup:
+
+| Step | Command | Purpose |
+|---|---|---|
+| 1 | `/install` | Install dependencies and create local environment files. |
+| 2 | Edit `.env` | Add required API keys. |
+| 3 | `/setup` | Write `crq.config.json` with brand, grounding, and OSINT defaults. |
+| 4 | `/create-skill` | Create or refresh the `/intel-brief` command. |
+
+Run a brief:
+
+```text
+/intel-brief
+```
+
+Copilot asks for region, grounding mode, and OSINT mode, then runs the collection, analysis, formatting, and render flow.
+
+## Supported Regions
+
+```text
+APAC
+AME
+LATAM
+MED
+NCE
+ALL
+```
+
+The region list is defined in `tools/crq_run.py`.
+
+## Grounding Modes
+
+Region-guided briefs describe the regional risk picture without company-specific exposure.
+
+Organization-grounded briefs include site and company context where site data exists.
+
+If organization grounding is requested for a region without configured sites, the run falls back to region-guided mode for that region.
+
+## OSINT Mode
+
+OSINT mode adds physical-risk web/news enrichment on top of Seerist signals.
+
+Required when OSINT is enabled:
+
+```text
+TAVILY_API_KEY
+FIRECRAWL_API_KEY
+```
+
+Required for live Seerist collection:
+
+```text
+SEERIST_API_KEY
+```
+
+API keys belong in `.env`.
+
+## Manual CLI
+
+Run commands from the POC folder:
+
+```powershell
 cd poc/intelligence-brief-rsm
 ```
 
-## Setup — option A: uv (recommended)
+Collect:
 
+```powershell
+uv run python tools/crq_run.py collect --regions NCE --osint
 ```
+
+Analyze:
+
+```powershell
+uv run python tools/crq_run.py analyze
+```
+
+Prepare formatter inputs:
+
+```powershell
+uv run python tools/crq_run.py prep
+```
+
+Render:
+
+```powershell
+uv run python tools/crq_run.py render
+```
+
+Multiple regions:
+
+```powershell
+uv run python tools/crq_run.py collect --regions NCE MED APAC --osint
+```
+
+All regions:
+
+```powershell
+uv run python tools/crq_run.py collect --regions ALL --osint
+```
+
+## Setup
+
+Recommended:
+
+```powershell
 uv sync
-uv run playwright install chromium    # only needed if you render PDFs
 ```
 
-## Setup — option B: plain venv + pip (fallback)
+Fallback:
 
-```
+```powershell
 python -m venv .venv
-.venv\Scripts\activate                  # Windows
-# source .venv/bin/activate             # macOS / Linux
+.venv\Scripts\activate
 pip install -r requirements.txt
-playwright install chromium             # only if rendering PDFs
 ```
 
-## Mock walkthrough — no API keys needed
+Install browser support only if needed for PDF/browser rendering:
 
-This walks through the full RSM pipeline using the offline fixtures shipped in `data/mock_osint_fixtures/`. Every command writes a real artifact under `output/`.
-
-```
-# 1) Collect Seerist signals (reads med_seerist.json fixture)
-python tools/seerist_collector.py MED --mock
-
-# 2) Collect OSINT physical-pillar signals
-python tools/osint_physical_collector.py MED --mock
-
-# 3) Join events with the 3 MED sites and compute cascades
-python tools/poi_proximity.py MED --mock
-
-# 4) Run the daily dispatcher — produces mock placeholder briefs
-python tools/rsm_dispatcher.py --daily --mock --region MED
+```powershell
+uv run playwright install chromium
 ```
 
-After step 4 you should see:
+## Email Rendering
 
-```
-output/regional/med/seerist_signals.json
-output/regional/med/osint_physical_signals.json
-output/regional/med/poi_proximity.json
-output/regional/med/rsm_brief_med_<date>.md
-output/delivery_log.json
+The active renderer is:
+
+```text
+tools/render_brief_html.py
 ```
 
-Run the tests:
+The active email template is:
 
+```text
+tools/briefs/templates/rsm_email.html.j2
 ```
-pytest tests/ -q
+
+The renderer converts `brief.md` into `email.html`, applies inline email-safe styles, creates citation anchors, and links appendix source IDs when URLs are available.
+
+Logo lookup order:
+
+```text
+VESTAS_LOGO_PATH
+CRQ_BRAND_LOGO_PATH
+static/design/logo/Vestas_Primary_Logo_RGB.png
+static/design/logo/brand-logo.png
 ```
 
-Note: `test_client_none_without_key` reads from the environment after `load_dotenv()` has already populated `os.environ`. On a fresh clone with no `.env` it passes; if you have a `SEERIST_API_KEY` exported in your shell or a `.env` further up the directory tree, that one test will fail. The other 7 cover the actual client logic.
+If no logo is available, the template renders a text brand mark.
 
-## Live walkthrough — Seerist API
+## Important Files
 
-1. Copy the example env file and fill in your Seerist key:
+| Path | Purpose |
+|---|---|
+| `tools/crq_run.py` | Main orchestrator behind `/intel-brief`. |
+| `tools/poc_runner.py` | Per-region phase runner. |
+| `tools/seerist_client.py` | Seerist API client. |
+| `tools/seerist_collector.py` | Seerist signal collection. |
+| `tools/osint_physical_collector.py` | OSINT physical-risk collection. |
+| `tools/poi_proximity.py` | Site proximity and cascade calculations. |
+| `tools/rsm_input_builder.py` | Formatter input manifest builder. |
+| `tools/normalize_citations.py` | Citation rewrite and appendix generation. |
+| `tools/validate_brief.py` | Brief validation. |
+| `tools/render_brief_html.py` | HTML email renderer. |
+| `tools/briefs/templates/rsm_email.html.j2` | Active email template. |
+| `.github/prompts/*.prompt.md` | Copilot command definitions. |
+| `crq.config.example.json` | Example setup config. |
+| `data/aerowind_sites.json` | Site registry for organization-grounded briefs. |
+| `data/company_profile.json` | Company profile context. |
 
-   ```
-   copy .env.example .env       # Windows
-   # cp .env.example .env       # macOS / Linux
-   ```
+## Local Artifacts
 
-2. Edit `.env` and set `SEERIST_API_KEY=...`. (Optional: set `TAVILY_API_KEY` and `FIRECRAWL_API_KEY` to exercise the live OSINT path — both are required when OSINT is on. `ANTHROPIC_API_KEY` is only needed for the `--enrich-api` headless path; normal OSINT enrichment runs through your agent.)
+Runtime files:
 
-3. Run the same commands as above **without** `--mock`:
+```text
+.env
+.venv/
+crq.config.json
+crq_run_state.json
+output/
+```
 
-   ```
-   python tools/seerist_collector.py MED
-   python tools/osint_physical_collector.py MED
-   python tools/poi_proximity.py MED
-   python tools/rsm_dispatcher.py --daily --region MED
-   ```
+## Tests
 
-When run **directly** (the manual CLI above), the collectors fall back to mock fixtures if the relevant API key is missing — handy for a partial test (e.g. Seerist live, OSINT mock). This is the bare-CLI behavior only. The `/intel-brief` flow always passes `--require-live`, so there a missing key **fails loudly** rather than silently mocking — that is the live-only guarantee described at the top of this README.
+```powershell
+uv run pytest tests/ -q
+```
 
-## Working without Claude Code
+Render validation is part of:
 
-> **Most operators should use the `/intel-brief` flow at the top of this README instead** — it produces a real, finished brief with no manual pasting. The notes below are the older manual fallback, kept for reference.
+```powershell
+uv run python tools/crq_run.py render
+```
 
-The `.claude/agents/rsm-formatter-agent.md` and `.claude/agents/rsm-weekly-synthesizer.md` files are agent prompts originally invoked by Claude Code's subagent system. **They will not auto-execute under VSCode + Copilot.** Two options:
+## Scope
 
-1. **Skip the agent layer.** `rsm_dispatcher.py --mock` writes placeholder briefs and works fine without a model in the loop. This is the right path for testing the Seerist API + data pipeline.
+This POC covers regional brief generation and email rendering.
 
-2. **Drive the formatter manually with Copilot.** When you want a real (non-placeholder) brief:
-   - Run `python -c "from tools.rsm_input_builder import build_rsm_inputs; import json; print(json.dumps(build_rsm_inputs('MED', cadence='daily'), indent=2))"` to produce the input manifest.
-   - Open `.claude/agents/rsm-formatter-agent.md` in VSCode.
-   - Paste the agent prompt body (everything below the YAML frontmatter) into your Copilot chat, prepend `REGION: MED`, `CADENCE: daily`, `BRIEF_PATH: output/regional/med/rsm_brief_med.md`, and append the JSON manifest from the previous step.
-   - The model writes the brief content; copy/save it to `BRIEF_PATH`.
+Out of scope:
 
-## What's NOT in this slice
+- Production dashboard
+- Case management
+- Long-term alert storage
+- Automated approval workflow
+- Global executive synthesis
 
-To keep this carve narrow and runnable, the following are intentionally absent:
-
-- The full 5-region pipeline (`tools/orchestrator.py`, the global synthesis layer, `global-builder-agent`, `global-validator-agent`)
-- The risk register, source librarian, and validation pipeline
-- The board / CISO PDF brief renderers and their templates
-- The CRQ Overview / Reports dashboard (`server.py`, the FastAPI app)
-- The full test suite — only the two Seerist tests are included
-- All `.claude/hooks/` (stop-hook validators, telemetry). The `Stop:` hook reference inside `rsm-formatter-agent.md` will not resolve — ignore it; it has no effect outside Claude Code.
-
-If you need any of those, pull from the parent repo (branch `poc/intelligence-brief-rsm` was carved from `main`).
-
-## Limitations
-
-- This slice does not run the global synthesis or validation layers — output is regional only.
-- Briefs in `--mock` mode are placeholders, not analyst-quality. To produce real briefs you must drive the formatter with Copilot or another model.
-- `tools/notifier.py` will silently no-op on missing SMTP env vars.
